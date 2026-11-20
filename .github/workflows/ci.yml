@@ -237,7 +237,8 @@ jobs:
           key: licenses-cargo-deny-0.20.2-${{ hashFiles('Cargo.lock') }}
       - run: git submodule update --init --depth 1 upstream/mockserver
       - run: sh tools/check-third-party.sh
-      - run: cargo install cargo-deny --version 0.20.2 --locked
+      # The cache restores the binary without cargo's install record, which `cargo install` would refuse to overwrite.
+      - run: cargo deny --version 2>/dev/null | grep -qx 'cargo-deny 0.20.2' || cargo install cargo-deny --version 0.20.2 --locked --force
       - run: cargo deny --locked check licenses
       - run: python3 tools/check-noncargo-licenses.py npm
       - run: apt-get update -qq && apt-get install -y -qq --no-install-recommends openjdk-17-jdk-headless maven >/dev/null
