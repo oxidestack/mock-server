@@ -12,7 +12,8 @@
 # as mockserver/mockserver:integration_testing (and as mockserver/mockserver:mockserver-7.6.0, the image the chart's
 # default values and MockServerContainerIntegrationTest pin, so helm_default_config deploys it too).
 #
-# Environment: CONTAINER_GROUPS=docker,helm (default both), CASES=a,b (only these case names), DELETE_CLUSTER=false keeps a
+# Environment: CONTAINER_GROUPS=docker,helm (default both), CASES=a,b (only these case names), EXCLUDE_CASES=a,b (all but
+# these; tools/ci/e2e-job.sh names the arm64 build gate on amd64, where it would emulate), DELETE_CLUSTER=false keeps a
 # k3d cluster this run created (one that existed before is never deleted), K3D_IGNORE_DISK_PRESSURE=true creates the
 # cluster with the kubelet's disk eviction thresholds at 1% and image garbage collection off (a nearly full Docker disk
 # otherwise taints the node, or collects the imported images, and no pod starts).
@@ -36,6 +37,7 @@ REPO="$(cd "${HERE}/../.." && pwd)"
 IMAGE="${IMAGE:-mock-server}"
 WANTED_GROUPS="${CONTAINER_GROUPS:-docker,helm}"
 ONLY="${CASES:-}"
+EXCLUDED="${EXCLUDE_CASES:-}"
 WORK="${HERE}/target"
 COPY="${WORK}/upstream"
 # a narrowed run (CASES, CONTAINER_GROUPS) updates only the cases it ran
@@ -79,11 +81,12 @@ fi
 # This checkout's suffix for everything named on the shared daemon.
 SUFFIX="$(basename "${REPO}" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9\n' '-' | cut -c1-24)-$(printf '%s' "${REPO}" | cksum | cut -c1-6)"
 FULL_RUN=true
-if [[ -n "${ONLY}" || ",${WANTED_GROUPS}," != *",docker,"* || ",${WANTED_GROUPS}," != *",helm,"* ]]; then FULL_RUN=false; fi
+if [[ -n "${ONLY}" || -n "${EXCLUDED}" || ",${WANTED_GROUPS}," != *",docker,"* || ",${WANTED_GROUPS}," != *",helm,"* ]]; then FULL_RUN=false; fi
 
-# A fresh copy of the three upstream directories the scripts reach through relative paths.
+# A fresh copy of the upstream directories the scripts reach through relative paths (docker_memory_floor_512m sources
+# .buildkite/scripts/steps/lib/perf-cpu-topology.sh).
 mkdir -p "${COPY}/examples"
-for dir in container_integration_tests helm examples/docker-compose; do
+for dir in container_integration_tests helm examples/docker-compose .buildkite; do
   rm -rf "${COPY:?}/${dir}"
   cp -R "${REPO}/upstream/mockserver/${dir}" "${COPY}/${dir}"
 done
@@ -92,6 +95,7 @@ if [[ -d "${HERE}/cases" ]]; then cp -R "${HERE}/cases/." "${COPY}/container_int
 
 wanted() {  # wanted <group> <case>
   [[ ",${WANTED_GROUPS}," == *",$1,"* ]] || return 1
+  [[ ",${EXCLUDED}," != *",$2,"* ]] || return 1
   [[ -z "${ONLY}" || ",${ONLY}," == *",$2,"* ]]
 }
 
@@ -172,6 +176,8 @@ for c in "${DOCKER_CASES[@]}" "${RS_CASES[@]}"; do
 done
 if wanted docker docker_healthcheck; then test_healthcheck; fi
 if wanted docker docker_nonroot_user; then test_nonroot_user; fi
+# The documented 512 MiB floor under sustained load, on the image as shipped (upstream runs it after the two above).
+if wanted docker docker_memory_floor_512m; then test "docker_memory_floor_512m"; fi
 
 if [[ ",${WANTED_GROUPS}," == *",helm,"* ]]; then
   helm_selected=false

@@ -8,7 +8,9 @@
 #    clustered image (oracle.env) in one JGroups cluster, both join orders;
 # 3. upstream's container integration tests (`make container-tests`, conformance/containers/run.sh): the
 #    docker-compose cases and the helm cases on k3d. A case skipped or not run fails the job as a failed one does; a
-#    case listed in conformance/containers/not-applicable.txt is not run, with its reason in the results table.
+#    case listed in conformance/containers/not-applicable.txt is not run, with its reason in the results table. On
+#    amd64 our arm64 build gate (cases/docker_arm64_build_gate_rs) is left to the arm64 runner: here it would build
+#    the whole image under emulation, there it builds natively.
 #
 #   bash tools/ci/e2e-job.sh
 #
@@ -97,10 +99,12 @@ IMAGE="$E2E:clustered-latest" conformance/cluster/run.sh all || failed=1
 say "3. upstream's container integration tests"
 results=conformance/containers/target/results-rs.tsv
 rm -f "$results"
-IMAGE="$E2E" WEBHOOK_IMAGE="$E2E-webhook" SKIP_IMAGE_BUILD=true K3D_IGNORE_DISK_PRESSURE=true \
+excluded=
+[ "$arch" = arm64 ] || excluded=docker_arm64_build_gate_rs
+IMAGE="$E2E" WEBHOOK_IMAGE="$E2E-webhook" SKIP_IMAGE_BUILD=true K3D_IGNORE_DISK_PRESSURE=true EXCLUDE_CASES="$excluded" \
 	conformance/containers/run.sh rs || failed=1
 # run.sh fails on a failed case only; here a case its harness skipped, or never reached, fails too.
-if awk -F '\t' 'NR > 1 && ($3 == "skip:absent" || $3 == "not-run") { print; bad = 1 } END { exit !bad }' "$results"; then
+if awk -F '\t' -v excluded=",$excluded," 'NR > 1 && ($3 == "skip:absent" || $3 == "not-run") && index(excluded, "," $1 ",") == 0 { print; bad = 1 } END { exit !bad }' "$results"; then
 	say "the cases above were skipped or not run"
 	failed=1
 fi
