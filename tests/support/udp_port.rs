@@ -221,10 +221,11 @@ fn udp_holders(port: u16) -> Result<Vec<UdpHolder>, String> {
         for line in text.lines().skip(1) {
             let fields: Vec<&str> = line.split_whitespace().collect();
             let local_port = fields.get(1).and_then(|address| address.rsplit(':').next()).and_then(|p| u16::from_str_radix(p, 16).ok());
-            if let (Some(p), Some(inode)) = (local_port, fields.get(9)) {
-                if p == port && *inode != "0" {
-                    inodes.push((format!("socket:[{inode}]"), fields[1].to_owned()));
-                }
+            if let (Some(p), Some(inode)) = (local_port, fields.get(9))
+                && p == port
+                && *inode != "0"
+            {
+                inodes.push((format!("socket:[{inode}]"), fields[1].to_owned()));
             }
         }
     }
