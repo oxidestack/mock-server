@@ -9,9 +9,6 @@
 MockServer 的 REST API，并接受其命令行、环境变量和属性，因此驱动 MockServer 的客户端（Java、Node、Python、Ruby、
 原生 REST）、Testcontainers 模块和 Helm chart 只需改动镜像名称即可驱动它：单个静态二进制文件，没有 JVM。
 
-> **尚未发布。** 此处的镜像和文档站点使用的是首个版本 `v9.2.0-rc.1` 起的名称。在它发布之前，请从源代码构建镜像
-> （[构建与测试](#构建与测试)）。
-
 **文档：[oxidestack.github.io/mock-server](https://oxidestack.github.io/mock-server/)**
 
 ## 快速开始

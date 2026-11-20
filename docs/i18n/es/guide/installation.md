@@ -10,10 +10,6 @@ Esta página ejecuta su imagen, lo compila desde el código fuente y explica có
 Java. Cada comando de aquí es uno que define el repositorio (`Makefile`, `Dockerfile`, `Cargo.toml`) o que publica una
 de sus versiones.
 
-> **Aún no publicado.** La imagen de abajo se nombra como se llamará desde la primera versión, `v9.2.0-rc.1`. Hasta
-> que salga, [construye la imagen](#construir-la-imagen-de-contenedor) y usa `mock-server:latest` allí donde esta
-> página nombra `quay.io/oxidestack/mock-server`.
-
 ## Ejecutar la imagen
 
 ```sh

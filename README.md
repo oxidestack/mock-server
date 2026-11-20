@@ -9,9 +9,6 @@ its command line, environment variables and properties as the MockServer 9.2.0 i
 Node, Python, Ruby, raw REST), the Testcontainers modules and the Helm chart that drive MockServer drive it with only
 the image's name changed: one static binary, no JVM.
 
-> **Not published yet.** The image and the documentation site are named here as they will be from the first release,
-> `v9.2.0-rc.1`. Until it is out, build the image from source ([Building and testing](#building-and-testing)).
-
 **Documentation: [oxidestack.github.io/mock-server](https://oxidestack.github.io/mock-server/)**
 
 ## Quick start

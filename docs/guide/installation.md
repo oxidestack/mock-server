@@ -8,10 +8,6 @@ mock-server is one static executable, `mock-server`, that behaves as MockServer 
 image, builds it from source, and says how a Java test suite reaches it. Every command here is one the repository
 defines (`Makefile`, `Dockerfile`, `Cargo.toml`) or one its release publishes.
 
-> **Not published yet.** The image below is named as it will be from the first release, `v9.2.0-rc.1`. Until it is
-> out, [build the image](#build-the-container-image) and use `mock-server:latest` wherever this page names
-> `quay.io/oxidestack/mock-server`.
-
 ## Run the image
 
 ```sh

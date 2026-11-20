@@ -9,9 +9,6 @@ mock-server 是一个静态可执行文件 `mock-server`，在网络协议层面
 构建它，并说明 Java 测试套件如何连接到它。这里的每条命令都由仓库定义（`Makefile`、`Dockerfile`、`Cargo.toml`），
 或由其版本发布。
 
-> **尚未发布。** 下面的镜像使用的是首个版本 `v9.2.0-rc.1` 起的名称。在它发布之前，请[构建镜像](#构建容器镜像)，
-> 并在本页提到 `quay.io/oxidestack/mock-server` 的地方改用 `mock-server:latest`。
-
 ## 运行镜像
 
 ```sh

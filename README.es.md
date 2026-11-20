@@ -11,10 +11,6 @@ MockServer 9.2.0, de modo que los clientes (Java, Node, Python, Ruby, REST direc
 chart de Helm que manejan MockServer lo manejan a él con solo cambiar el nombre de la imagen: un único binario
 estático, sin JVM.
 
-> **Aún no publicado.** La imagen y el sitio de documentación se nombran aquí como se llamarán desde la primera
-> versión, `v9.2.0-rc.1`. Hasta que salga, compila la imagen desde el código fuente
-> ([Compilar y probar](#compilar-y-probar)).
-
 **Documentación: [oxidestack.github.io/mock-server](https://oxidestack.github.io/mock-server/)**
 
 ## Inicio rápido
