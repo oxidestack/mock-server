@@ -193,10 +193,7 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends openjdk-21-jdk-headless maven > /dev/null
           # The runner's JAVA_HOME names its own preinstalled JDK 17, which mvn would take.
           echo "JAVA_HOME=/usr/lib/jvm/java-21-openjdk-$(dpkg --print-architecture)" >> "$GITHUB_ENV"
-      # The arm64 runner has lost its own agent during the image build; memory is printed every 30 s to see why.
-      - run: |
-          (while sleep 30; do free -m | awk 'NR==2{printf "memory: used %s MiB, available %s MiB\n", $3, $7}'; done) &
-          sh tools/ci/image-job.sh
+      - run: sh tools/ci/image-job.sh
 
   clippy:
     # Clippy on every target, warnings as errors (CONTRIBUTING.md "The checks"). No lint is turned off package-wide; an
