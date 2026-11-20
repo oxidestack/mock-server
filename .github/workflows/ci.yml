@@ -289,13 +289,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+      # The publication gate's tests run tools/public/public_check.py, which searches with ripgrep.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ripgrep
       - run: make tools-test
 
   public-check:
     # The publication gate's built-in half (`make public-check`, tools/public/): local paths, internal hosts and
     # references to the worklog in the tracked files, without the denylist, which is never in a job. Then its own
-    # tests. NOT BLOCKING YET: the tree still carries what it finds, so the findings are printed and the job passes;
-    # when the public history starts the `|| echo` goes and the job fails the run.
+    # tests. A finding fails the run.
     if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
     runs-on: ubuntu-24.04
     permissions:
@@ -307,7 +308,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - run: make public-check PUBLIC_DENYLIST=none || echo "public-check - findings above; not blocking yet"
+      - run: make public-check PUBLIC_DENYLIST=none
       - run: python3 -m unittest discover -s tools/public
 
   lint-commits:
