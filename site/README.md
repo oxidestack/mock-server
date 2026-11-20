@@ -59,8 +59,9 @@ make site-versions    # into target/site/pages/, as GitHub Pages serves it
 `SITE_BASE`, fails the build with a message naming it.
 
 **No release tag yet.** `make site-versions` still succeeds: it builds the working tree once, at the root, with no
-picker and no `versions.json`, and says so. The first stable tag changes that with no other edit. The deployment that
-publishes `target/site/pages/` is not wired up yet.
+picker and no `versions.json`, and says so. The first stable tag changes that with no other edit.
+[`site.yml`](../.github/workflows/site.yml), ci.yml's `site` job, builds `target/site/pages/` on every push and
+deploys it to GitHub Pages on a push to `main`; the release workflow runs it again after a release.
 
 ## Languages
 

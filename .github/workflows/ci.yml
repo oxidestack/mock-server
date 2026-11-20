@@ -268,21 +268,15 @@ jobs:
         run: STRICT=1 bash scripts/proxy-resolver-e2e.sh all
 
   site:
-    # The documentation site (`make site`, site/build.sh): the lockfile's licences, the Benchmarks page generator's
-    # tests, the build, which fails on a broken internal link or anchor; then the version injector's tests
-    # (site/versions/inject.test.mjs). The node image `make site` pins.
+    # The documentation site built and checked (site.yml: `make site`, the version injector's tests,
+    # `make site-versions`), and deployed to GitHub Pages on a push to `main`. A called workflow can narrow its
+    # caller's permissions and never widen them, so the deploy's are granted here.
     if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
-    runs-on: ubuntu-24.04
+    uses: ./.github/workflows/site.yml  # zizmor: ignore[self-repository]
     permissions:
-      contents: read  # actions/checkout reads the repository
-    container: node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          persist-credentials: false
-      - run: sh site/build.sh
-      - run: node --test site/versions/inject.test.mjs
+      contents: read
+      pages: write
+      id-token: write
 
   clippy:
     # Clippy on every target, warnings as errors (CONTRIBUTING.md "The checks"). No lint is turned off package-wide; an

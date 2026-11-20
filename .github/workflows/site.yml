@@ -1,0 +1,72 @@
+# The documentation site (site/README.md) on GitHub Pages: a project page at
+# https://oxidestack.github.io/mock-server/.
+#
+# A reusable workflow, not a pipeline of its own: ci.yml calls it as its `site` job, so one push is one CI run:
+#
+#   site:
+#     uses: ./.github/workflows/site.yml
+#     permissions:
+#       contents: read
+#       pages: write
+#       id-token: write
+#
+# The caller grants the deploy job's permissions, since a called workflow can narrow its caller's and never widen
+# them. `build` runs on every push and pull request: `make site` in the pinned node image (the lockfile's licences,
+# the Benchmarks page generator's tests, the build, which fails on a broken internal link or anchor), the version
+# injector's tests, then `make site-versions`, the site Pages serves: every release's documentation built by its own
+# tag, the latest at the root, each minor under /mock-server/<x.y>/, with the version picker (site/README.md,
+# "Versions"); with no stable tag yet, the working tree alone at the root. `deploy` publishes it on a push to `main`,
+# and when the release workflow asks after a release (workflow_dispatch on `main`), only while the repository is
+# public: GitHub Pages refuses a private repository of a Free organisation. Pages' source is GitHub Actions. Every
+# action is pinned by its full commit, its release in a comment; every checkout keeps no credential.
+name: site
+
+on:
+  workflow_call:
+  # The release workflow runs it on `main` once a release is out, so the new release becomes the root.
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read  # actions/checkout reads the repository
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0  # every release tag, each release's documentation is built from its own
+      - run: make site
+      - run: >-
+          docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:/src" -w /src
+          "$(sed -n 's/^SITE_NODE_IMAGE ?= //p' Makefile)" node --test site/versions/inject.test.mjs
+      - run: make site-versions
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
+        with:
+          path: target/site/pages
+
+  deploy:
+    name: deploy
+    if: >-
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && !github.event.repository.private &&
+      github.ref == 'refs/heads/main'
+    needs: [build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write  # deploy-pages publishes the uploaded build to the repository's Pages site
+      id-token: write  # deploy-pages proves the run's identity to Pages with an OIDC token
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # One deployment at a time, and a running one is never cancelled half-way: the next push's waits for it.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346  # v5.0.1
