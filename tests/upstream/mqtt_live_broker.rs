@@ -524,8 +524,9 @@ fn client_not_trusting_broker_cert_should_fail_tls_handshake() {
         .err()
         .expect("a client that does not trust the broker certificate must fail, not silently connect");
     assert!(error.message.contains("Failed to connect to MQTT broker"), "{error:?}");
-    let tls = error.find(ErrorKind::Tls).unwrap_or_else(|| panic!("the failure must be a TLS certificate-trust failure: {error:?}"));
-    assert!(tls.message.contains("UnknownIssuer") || tls.message.contains("certificate"), "{tls:?}");
+    // Paho's `MqttException(0)` carries its cause's kind, so the certificate error is the deepest TLS one.
+    let tls = error.chain().filter(|e| e.kind == ErrorKind::Tls).last().unwrap_or_else(|| panic!("the failure must be a TLS certificate-trust failure: {error:?}"));
+    assert!(tls.message.contains("UnknownIssuer") || tls.message.contains("certificate"), "{error:?}");
 }
 
 // ---- Paho's MQTT 3.1 fallback ----

@@ -232,7 +232,10 @@ fn unknown_virtual_host_fails_the_connection_at_once() {
     if !brokers::enabled("unknown_virtual_host_fails_the_connection_at_once") {
         return;
     }
-    let uri = format!("{}/no-such-vhost", amqp_uri());
+    // `127.0.0.1`, not `localhost`: the port is published on IPv4 only, and the Java client (as `connect` does)
+    // tries every address of the host in shuffled order and throws the last failure, so `localhost`'s `::1` would
+    // end it as "Connection refused" whenever it came last.
+    let uri = format!("amqp://127.0.0.1:{}/no-such-vhost", rabbit().port(AMQP_PORT));
     let started = std::time::Instant::now();
     let error = block(AmqpPublisher::connect(&uri, None)).err().expect("the broker refuses the virtual host");
     assert_eq!(error.message, "Failed to connect to AMQP broker: null");
