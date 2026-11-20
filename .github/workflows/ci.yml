@@ -184,6 +184,11 @@ jobs:
       - run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
           df -h /
+          # The arm64 runner lost its own agent twice at the same point of the image build, a memory peak; swap where none is.
+          if [ -z "$(swapon --show --noheadings)" ]; then
+            sudo fallocate -l 8G /swapfile && sudo chmod 600 /swapfile && sudo mkswap -q /swapfile && sudo swapon /swapfile
+          fi
+          free -h
       - run: git submodule update --init --depth 1 upstream/mockserver
       # MockServer's Testcontainers tests (conformance/java) compile for Java 21.
       - run: |

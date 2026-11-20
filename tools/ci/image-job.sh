@@ -96,7 +96,8 @@ else
 		say "no PINNED_MOCKSERVER_IMAGE in upstream/mockserver (is the submodule checked out?)"
 		exit 1
 	}
-	(cd conformance/java && ../../scripts/with-image-tags.sh "$IMAGE" "$pinned" -- mvn -B -q test)
+	# mockServerImage names the image to the suites that start it by name (the pom's default is mock-server:latest).
+	(cd conformance/java && ../../scripts/with-image-tags.sh "$IMAGE" "$pinned" -- mvn -B -q test -DmockServerImage="$IMAGE")
 fi
 
 say "4. the SBOMs"
