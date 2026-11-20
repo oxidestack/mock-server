@@ -16,11 +16,11 @@
 #   sh tools/ci/image-job.sh
 #
 # Needs Docker, git, curl, a JDK 21 and Maven (the runner's), and the upstream/mockserver submodule checked out.
-# Everything it starts is named after the job and removed at exit, the image too unless it was saved.
+# Everything it starts is named after the job and removed at exit, the image too unless it was saved or kept.
 #
 # Environment: IMAGE, the tag to build (default mock-server-ci:<arch>); IMAGE_VERSION and IMAGE_SOURCE, the OCI
 # version and source labels (default the commit, and nothing); IMAGE_SAVE, the file `docker save` writes; SKIP_JAVA=1
-# leaves out step 3 (a quick local run).
+# leaves out step 3 (a quick local run); IMAGE_KEEP=1 keeps the image at exit, for tools/ci/e2e-job.sh after it.
 # Exit 0: every step passed; 1: one failed.
 set -eu
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
@@ -45,7 +45,7 @@ say() { echo "image-job: $*" >&2; }
 
 cleanup() {
 	docker rm -f -v "$name" > /dev/null 2>&1 || true
-	[ -n "${IMAGE_SAVE:-}" ] || docker rmi "$IMAGE" > /dev/null 2>&1 || true
+	[ -n "${IMAGE_SAVE:-}" ] || [ "${IMAGE_KEEP:-}" = 1 ] || docker rmi "$IMAGE" > /dev/null 2>&1 || true
 }
 trap cleanup EXIT
 

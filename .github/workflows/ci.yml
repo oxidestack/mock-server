@@ -6,9 +6,12 @@
 #   `target/`.
 # - A failed job keeps its diagnostics as the run's artifacts (`if: failure()` steps).
 # - `image` builds and tests the image natively on amd64 (`ubuntu-24.04`) and arm64 (`ubuntu-24.04-arm`), never
-#   emulated (tools/ci/image-job.sh: a request answered, MockServer's Testcontainers tests against it, the SBOMs);
+#   emulated (tools/ci/image-job.sh: a request answered, MockServer's Testcontainers tests against it, the SBOMs),
+#   then its end-to-end suites (tools/ci/e2e-job.sh: the mixed cluster, upstream's docker-compose and helm cases);
 #   `lint-commits` is the commit-message gate over a pull request's commits; `lint-actions` is this directory's own
-#   gate. `tools-test` runs on the runner itself, where Docker is, so the release-notes drafts run.
+#   gate. `tools-test` and `docker-tests` run on the runner itself, where Docker is.
+# - Every test the repository has runs in one of these jobs, none skipped: a test that needs Docker runs where Docker
+#   is, with MOCK_SERVER_REQUIRE_DOCKER=1, so a missing daemon fails it instead of skipping it.
 #
 # Every action is pinned by its full commit, its release in a comment; every checkout keeps no credential.
 
@@ -49,8 +52,9 @@ jobs:
   test:
     # lib, the oracle scenarios (replayed against their goldens) and the Rust ports of upstream tests; every test
     # binary runs even after one fails. Trixie, not bookworm: the k8s webhook's DSA tests drive `openssl s_client`,
-    # and need OpenSSL 3.5 (bookworm has 3.0, without the ML-KEM groups and with another output). The job container
-    # has no Docker, so the process scenarios that run the oracle image are skipped here.
+    # and need OpenSSL 3.5 (bookworm has 3.0, without the ML-KEM groups and with another output). Every package of the
+    # workspace (the webhook's own unit tests, the plugins'). The job container has no Docker: the process scenarios
+    # that run the oracle image, and the tests against containers, run in `docker-tests`.
     if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
     runs-on: ubuntu-24.04
     permissions:
@@ -83,7 +87,7 @@ jobs:
       - run: |
           export MOCK_SERVER_DUMP="$PWD/scenario-actuals"
           mkdir -p "$MOCK_SERVER_DUMP"
-          cargo test --locked --no-fail-fast
+          cargo test --locked --workspace --no-fail-fast
       - if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
@@ -139,7 +143,7 @@ jobs:
             /usr/local/cargo/registry/index
             /usr/local/cargo/registry/cache
             /root/.m2/repository
-          key: conformance-${{ hashFiles('Cargo.lock', 'conformance/upstream/pom.xml') }}
+          key: conformance-${{ hashFiles('Cargo.lock', 'conformance/upstream/pom.xml', 'java-launcher/pom.xml') }}
       - run: git submodule update --init --depth 1 upstream/mockserver
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
@@ -150,6 +154,9 @@ jobs:
       - run: MOCK_SERVER_GIT_HASH="$(git rev-parse --short=8 HEAD)" cargo build --locked --release
       - run: cargo build --locked --release -p mock-server-integration-testing-callbacks
       - run: cd conformance/upstream && mvn -B -q test -Dtarget=rs-process
+      # The Java launcher (`make java-launcher`): upstream's own tests of ClientAndServer, the JUnit rule and extension,
+      # the Spring listener and starter, over the same release binary. `verify`: nothing is installed.
+      - run: cd java-launcher && mvn -B -q verify -DmockServerBin="$GITHUB_WORKSPACE/target/release/mock-server" -DrsCallbackPluginDir="$GITHUB_WORKSPACE/target/release"
       - if: ${{ failure() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
@@ -157,12 +164,14 @@ jobs:
           path: |
             conformance/upstream/target/surefire-reports/rs-process/
             conformance/upstream/target/server-logs/rs-process/
+            java-launcher/target/surefire-reports/
           retention-days: 7
           if-no-files-found: ignore
 
   image:
-    # The image built and tested on each architecture's own runner (tools/ci/image-job.sh). The runner's VM has its
-    # own Docker, so the tests reach the container on the VM's loopback.
+    # The image built and tested on each architecture's own runner (tools/ci/image-job.sh), then kept for its
+    # end-to-end suites (tools/ci/e2e-job.sh). The runner's VM has its own Docker, so the tests reach the container on
+    # the VM's loopback.
     if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
     name: image (${{ matrix.arch }})
     strategy:
@@ -176,7 +185,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read  # actions/checkout reads the repository
-    timeout-minutes: 180
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -194,6 +203,81 @@ jobs:
           # The runner's JAVA_HOME names its own preinstalled JDK 17, which mvn would take.
           echo "JAVA_HOME=/usr/lib/jvm/java-21-openjdk-$(dpkg --print-architecture)" >> "$GITHUB_ENV"
       - run: sh tools/ci/image-job.sh
+        env:
+          IMAGE_KEEP: "1"
+      - run: bash tools/ci/e2e-job.sh
+      - if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: e2e-${{ matrix.arch }}
+          path: |
+            conformance/cluster/target/runs/
+            conformance/containers/target/results-rs.tsv
+          retention-days: 7
+          if-no-files-found: ignore
+
+  docker-tests:
+    # The tests that need a Docker daemon next to them, on the runner itself (no job container: the daemon must see the
+    # checkout at its own paths): the process scenarios that run the oracle image (`oracleDocker`), and every
+    # `"target": "both"` scenario once more against the oracle (MOCK_SERVER_PROCESS_ORACLE), proving its golden is still
+    # the oracle's; the AsyncAPI live-broker ports (`make broker-tests`) and the blob store ports against their
+    # emulators (`make blob-tests`); the OTLP exports decoded by the reference protobuf classes
+    # (scripts/verify-otlp-*.sh); the original-destination resolvers in privileged containers (`make
+    # proxy-resolver-e2e`). MOCK_SERVER_REQUIRE_DOCKER makes a missing Docker a failure, not a skip, and STRICT a
+    # resolver case the kernel cannot run. The runner's own architecture, natively; nothing here names one.
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read  # actions/checkout reads the repository
+    timeout-minutes: 150
+    env:
+      RUSTUP_TOOLCHAIN: 1.98.0
+      MOCK_SERVER_REQUIRE_DOCKER: "1"
+      MOCK_SERVER_PROCESS_ORACLE: "1"
+      MOCK_SERVER_BROKER_TESTS: "1"
+      MOCK_SERVER_BLOB_TESTS: "1"
+      CARGO_BUILD_JOBS: "2"
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      CARGO_PROFILE_TEST_DEBUG: line-tables-only
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+          key: docker-tests-cargo-${{ hashFiles('Cargo.lock') }}
+      # The test builds and the containers' images outgrow the runner's free disk: drop the toolchains preinstalled for
+      # other languages, none of which the job uses.
+      - run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h /
+      - run: git submodule update --init --depth 1 upstream/mockserver
+      - run: rustup toolchain install 1.98.0 --profile minimal
+      - run: cargo test --locked --test process_scenarios
+      - run: cargo test --locked --no-fail-fast --test upstream -- live_broker blob_
+      - run: bash scripts/verify-otlp-metrics.sh
+      - run: bash scripts/verify-otlp-trace.sh
+      - run: STRICT=1 bash scripts/proxy-resolver-e2e.sh all
+
+  site:
+    # The documentation site (`make site`, site/build.sh): the lockfile's licences, the Benchmarks page generator's
+    # tests, the build, which fails on a broken internal link or anchor; then the version injector's tests
+    # (site/versions/inject.test.mjs). The node image `make site` pins.
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read  # actions/checkout reads the repository
+    container: node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - run: sh site/build.sh
+      - run: node --test site/versions/inject.test.mjs
 
   clippy:
     # Clippy on every target, warnings as errors (CONTRIBUTING.md "The checks"). No lint is turned off package-wide; an
@@ -216,7 +300,7 @@ jobs:
           key: cargo-${{ hashFiles('Cargo.lock') }}
       - run: git submodule update --init --depth 1 upstream/mockserver
       - run: rustup component add clippy
-      - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo clippy --locked --workspace --all-targets -- -D warnings
 
   licenses:
     # The CNCF third-party licence policy (`make licenses`): third_party/ byte for byte as third_party/MANIFEST

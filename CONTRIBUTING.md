@@ -53,16 +53,20 @@ In a clone made without `--recursive`, run `git submodule update --init` once.
   directory's `README.md` says how a scenario is written, how one is recorded and how the harness normalises ids,
   timestamps and ports. Record one scenario at a time, and do not change an existing golden unless the change is the
   point of your pull request.
-- `make conformance`, `make upstream-tests` and `make container-tests` run MockServer's own Java and container test
-  suites against the server. They are slow and need Docker and a JDK; the maintainers run them before a release.
+- `make conformance`, `make upstream-tests`, `make java-launcher`, `make container-tests` and `make cluster-tests` run
+  MockServer's own Java and container test suites against the server, and `make broker-tests`, `make blob-tests` and
+  `make proxy-resolver-e2e` the tests against live brokers, blob store emulators and privileged containers. They are
+  slow and need Docker (and a JDK for the Java suites); CI runs every one of them on each push.
 - The tests sit at a few seams only: the scenarios, the Java suites, the ports of MockServer's tests, the matcher's
   interface and the JSON printer. Add a test at one of them, not next to a private function.
 
 ## The checks
 
-Every pull request runs formatting, clippy with warnings as errors, the unit tests, the scenarios, the licence gate
-(`make licenses`: `cargo deny` against the CNCF allowlist, and the files under `third_party/`) and the container image
-build. A red check names the gate and why.
+Every pull request runs formatting, clippy with warnings as errors, every test of the repository (the unit tests, the
+scenarios, the ports of MockServer's tests, the Java and container suites above, the site build and the tools'
+tests), the licence gate (`make licenses`: `cargo deny` against the CNCF allowlist, and the files under
+`third_party/`) and the container image build. A test that needs Docker fails where Docker is missing rather than
+skipping (`MOCK_SERVER_REQUIRE_DOCKER=1`). A red check names the gate and why.
 
 The code is formatted by hand in the style of the file around it. Do not run `cargo fmt` over the repository: it
 rewrites files you did not change.

@@ -4,6 +4,7 @@
 //!
 //! The emulator tests run only with `MOCK_SERVER_BLOB_TESTS=1` (`make blob-tests`) and a reachable Docker daemon;
 //! otherwise each test says why and passes, as upstream's `Assume.assumeTrue(dockerAvailable)` skips.
+//! `MOCK_SERVER_REQUIRE_DOCKER=1` makes a missing Docker a failure instead, for a machine meant to have one (CI).
 
 use std::process::Command;
 use std::sync::OnceLock;
@@ -22,6 +23,8 @@ pub fn enabled(test: &str) -> bool {
     }
     static DOCKER: OnceLock<bool> = OnceLock::new();
     let available = *DOCKER.get_or_init(|| Command::new("docker").args(["info", "--format", "{{.ServerVersion}}"]).output().is_ok_and(|o| o.status.success()));
+    let required = std::env::var("MOCK_SERVER_REQUIRE_DOCKER").ok().as_deref() == Some("1");
+    assert!(available || !required, "{test}: MOCK_SERVER_REQUIRE_DOCKER=1, but Docker is not available");
     if !available {
         eprintln!("{test}: skipped, Docker is not available");
     }

@@ -10,7 +10,8 @@
 # Each case is a `--rm` container named mock-server-126-<case>. A case whose underlying kernel feature is
 # unsupported (no xt_TPROXY module, no BPF, or the daemon refuses --privileged/--cap-add=NET_ADMIN, e.g. a
 # user-namespace-remapped Docker VM) SKIPs — printed, not fatal — exactly as the upstream JUnit `Assume`s do; a
-# wrong HTTP code or exit status is a hard FAIL.
+# wrong HTTP code or exit status is a hard FAIL. STRICT=1 makes a SKIP a FAIL too, for a machine meant to run every
+# case (CI).
 set -uo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 cd "$root"
@@ -133,18 +134,28 @@ rm -f /sys/fs/bpf/mockserver_orig_dst
   evaluate ebpf "$rc" "$out" "ebpf-ok" "BPF_UNSUPPORTED=true BPF_MAP_CREATE_FAILED=true"
 }
 
+# skipped <name> <why>: a SKIP, or under STRICT=1 a FAIL
+skipped() {
+  if [[ "${STRICT:-}" == 1 ]]; then
+    log "$1: FAIL (STRICT=1, would skip: $2)"
+    FAILED=1
+    return 1
+  fi
+  log "$1: SKIP ($2)"
+}
+
 # evaluate <name> <exit-code> <output> <expected-body-marker> <skip-markers...>
 evaluate() {
   local name=$1 rc=$2 out=$3 marker=$4 skip_markers=$5
   for skip in $skip_markers; do
     if [[ "$out" == *"$skip"* ]]; then
-      log "$name: SKIP ($skip)"
-      return 0
+      skipped "$name" "$skip"
+      return
     fi
   done
   if [[ "$out" == *"container not running in privileged mode"* || "$out" == *"could not select device driver"* || "$out" == *"operation not permitted"* ]]; then
-    log "$name: SKIP (daemon refused the requested capability/privilege)"
-    return 0
+    skipped "$name" "daemon refused the requested capability/privilege"
+    return
   fi
   if [[ $rc -ne 0 ]]; then
     log "$name: FAIL (container exited $rc)"
