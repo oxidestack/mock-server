@@ -112,7 +112,7 @@ fn encrypt(keys: &Keys, plain: &[u8], rng: &mut Rng) -> Vec<u8> {
     rng.fill(&mut iv);
     let mut wire = iv.to_vec();
     let mut previous = iv;
-    for chunk in plain.chunks_exact(BLOCK) {
+    for chunk in plain.as_chunks::<BLOCK>().0 {
         let mut block = [0u8; BLOCK];
         for i in 0..BLOCK {
             block[i] = chunk[i] ^ previous[i];
@@ -317,10 +317,10 @@ mod stages {
     pub fn tag_select(plain: &[u8], mac_len: usize, data_len: usize) -> Vec<u8> {
         let n = plain.len();
         let mut received = vec![0u8; mac_len];
-        for i in n.saturating_sub(mac_len + 256)..n {
+        for (i, value) in plain.iter().enumerate().skip(n.saturating_sub(mac_len + 256)) {
             for (j, byte) in received.iter_mut().enumerate() {
                 let here = (i as u32).ct_eq(&((data_len + j) as u32));
-                *byte = u8::conditional_select(byte, &plain[i], here);
+                *byte = u8::conditional_select(byte, value, here);
             }
         }
         received
