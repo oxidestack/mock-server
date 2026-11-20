@@ -105,7 +105,9 @@ out="$ROOT/target/sbom"
 mkdir -p "$out"
 tar="$out/mock-server-$arch.tar"
 docker save -o "$tar" "$IMAGE"
-docker run --rm --name "$name-syft" --user "$(id -u):$(id -g)" -v "$out:/sbom" "$SYFT" \
+# syft runs as the caller, and its image leaves /tmp (its unpacking room) and $HOME (its cache) to root only.
+docker run --rm --name "$name-syft" --user "$(id -u):$(id -g)" --tmpfs /tmp:rw,mode=1777 -e XDG_CACHE_HOME=/tmp/cache \
+	-v "$out:/sbom" "$SYFT" \
 	scan "docker-archive:/sbom/mock-server-$arch.tar" --source-name mock-server -q \
 	-o "spdx-json=/sbom/mock-server-$arch.spdx.json" -o "cyclonedx-json=/sbom/mock-server-$arch.cdx.json"
 rm -f "$tar"

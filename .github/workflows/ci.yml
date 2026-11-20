@@ -186,11 +186,6 @@ jobs:
       - run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
           df -h /
-          # The arm64 runner lost its own agent twice at the same point of the image build, a memory peak; swap where none is.
-          if [ -z "$(swapon --show --noheadings)" ]; then
-            sudo fallocate -l 8G /swapfile && sudo chmod 600 /swapfile && sudo mkswap -q /swapfile && sudo swapon /swapfile
-          fi
-          free -h
       - run: git submodule update --init --depth 1 upstream/mockserver
       # MockServer's Testcontainers tests (conformance/java) compile for Java 21.
       - run: |
@@ -198,7 +193,10 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends openjdk-21-jdk-headless maven > /dev/null
           # The runner's JAVA_HOME names its own preinstalled JDK 17, which mvn would take.
           echo "JAVA_HOME=/usr/lib/jvm/java-21-openjdk-$(dpkg --print-architecture)" >> "$GITHUB_ENV"
-      - run: sh tools/ci/image-job.sh
+      # The arm64 runner has lost its own agent during the image build; memory is printed every 30 s to see why.
+      - run: |
+          (while sleep 30; do free -m | awk 'NR==2{printf "memory: used %s MiB, available %s MiB\n", $3, $7}'; done) &
+          sh tools/ci/image-job.sh
 
   clippy:
     # Clippy on every target, warnings as errors (CONTRIBUTING.md "The checks"). No lint is turned off package-wide; an
