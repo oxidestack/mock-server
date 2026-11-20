@@ -48,12 +48,14 @@ env:
 jobs:
   test:
     # lib, the oracle scenarios (replayed against their goldens) and the Rust ports of upstream tests; every test
-    # binary runs even after one fails.
+    # binary runs even after one fails. Trixie, not bookworm: the k8s webhook's DSA tests drive `openssl s_client`,
+    # and need OpenSSL 3.5 (bookworm has 3.0, without the ML-KEM groups and with another output). The job container
+    # has no Docker, so the process scenarios that run the oracle image are skipped here.
     if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read  # actions/checkout reads the repository
-    container: rust:1.98.0-bookworm@sha256:82150a52ec202c1b14d7817e14516c392bb7f5cfebd88f1ed531cb37ebd39922
+    container: rust:1.98.0-trixie@sha256:620dbcd124499c59e2406d3741574b5c5838cf9eb9656f0c3a03948f79b02959
     timeout-minutes: 120
     env:
       # The callback-class scenarios build the integration-testing callbacks as a WASM plugin with a rustup toolchain

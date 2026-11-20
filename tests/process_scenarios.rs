@@ -110,6 +110,13 @@
 //! `{{files}}` in `args`, `env` values and `propertyFile` is the absolute path of `tests/files`; the
 //! `oracleDocker` target mounts it at that same path, so one scenario file serves both targets.
 //!
+//! An `oracleDocker` scenario (the `*_oracle.json` files, which prove what the oracle image does) needs a Docker daemon
+//! that sees this checkout's paths at the same paths and publishes the container's port on this machine's loopback.
+//! Without a reachable Docker it is skipped with its name printed, as `tests/upstream/blob_stores.rs` skips its
+//! emulators; `MOCK_SERVER_REQUIRE_DOCKER=1` makes a missing Docker a failure instead, for a machine meant to have one.
+//! A CI job container (rust image, no Docker CLI, a workspace path the runner's daemon does not see) is no such
+//! machine; our binary's own scenarios run there all the same.
+//!
 //! `"readiness"` decides how long the runner waits before asserting: `{"logContains": s}` polls combined
 //! stdout+stderr until `s` appears — use this when `expect.running` is `true`, the process is meant to keep
 //! running past that point. `{"exit": true}` waits for the process to exit on its own — use this when
@@ -841,6 +848,9 @@ fn normalise_output(text: &str, scenario: &Value) -> String {
 fn run_scenario(file: &Path, scenario: &Value) {
     let target = scenario["target"].as_str().expect("scenario needs a \"target\"");
     if target != "both" {
+        if target == "oracleDocker" && !docker_available(file) {
+            return;
+        }
         run_target(file, scenario, target, Mode::Check);
         return;
     }
@@ -853,6 +863,19 @@ fn run_scenario(file: &Path, scenario: &Value) {
     if std::env::var("MOCK_SERVER_PROCESS_ORACLE").is_ok_and(|v| !v.is_empty()) {
         run_target(file, scenario, "oracleDocker", Mode::Check);
     }
+}
+
+/// Whether a Docker daemon answers, for an `oracleDocker` scenario (see the header): prints why `file` is skipped when
+/// none does, and fails instead under `MOCK_SERVER_REQUIRE_DOCKER=1`.
+fn docker_available(file: &Path) -> bool {
+    static DOCKER: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    let available = *DOCKER.get_or_init(|| Command::new("docker").args(["info", "--format", "{{.ServerVersion}}"]).output().is_ok_and(|o| o.status.success()));
+    let required = std::env::var("MOCK_SERVER_REQUIRE_DOCKER").ok().as_deref() == Some("1");
+    assert!(available || !required, "{}: MOCK_SERVER_REQUIRE_DOCKER=1, but there is no Docker for the oracle image", file.display());
+    if !available {
+        eprintln!("{}: skipped, Docker is not available for the oracle image", file.display());
+    }
+    available
 }
 
 fn run_target(file: &Path, scenario: &Value, target: &str, mode: Mode) {

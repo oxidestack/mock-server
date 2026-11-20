@@ -2,8 +2,10 @@
 //! a DHE-DSS suite (`openssl s_client -tls1_2 -cipher DHE-DSS-AES128-GCM-SHA256:@SECLEVEL=0` against
 //! `mockserver/mockserver-webhook:9.2.0`: `dsa_sha224` or `dsa_sha256`, the first the client lists, over ffdhe2048)
 //! and ends every other handshake with a `handshake_failure` alert. The DHE-DSS clients are `openssl s_client`
-//! (OpenSSL 3, on the PATH): rustls' client refuses a signature scheme it has no name for. The tests fail where it is
-//! missing.
+//! (OpenSSL 3.5 or later, on the PATH): rustls' client refuses a signature scheme it has no name for. The tests fail
+//! where it is missing or older: the probes against the image were made with OpenSSL 3.5, and 3.0 (Debian bookworm's)
+//! has no ML-KEM groups, prints no received ChangeCipherSpec under `-msg` in TLS 1.3, and names a peer's signature
+//! and key differently (`Peer signature type: DSA`, `Server Temp Key`).
 
 use k8s_webhook::dsa::DsaKey;
 use k8s_webhook::{SidecarInjectionConfig, WebhookServer, tls};
@@ -32,6 +34,7 @@ async fn s_client_with(port: u16, cipher: &str, sigalgs: &str, extra: &[&str]) -
     let (cipher, sigalgs) = (format!("{cipher}:@SECLEVEL=0"), sigalgs.to_string());
     let extra: Vec<String> = extra.iter().map(|a| a.to_string()).collect();
     tokio::task::spawn_blocking(move || {
+        require_openssl_3_5();
         let mut child = Command::new("openssl")
             .args(["s_client", "-connect", &format!("127.0.0.1:{port}"), "-cipher", &cipher, "-sigalgs", &sigalgs, "-ign_eof"])
             .args(&extra)
@@ -41,13 +44,33 @@ async fn s_client_with(port: u16, cipher: &str, sigalgs: &str, extra: &[&str]) -
             .spawn()
             .expect("openssl s_client is needed on the PATH");
         let mut stdin = child.stdin.take().unwrap();
-        stdin.write_all(b"GET /healthz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n").unwrap();
+        // An s_client that ends before reading its input (a refused handshake, a group it cannot set) closes the pipe
+        // first, and the write fails with a broken pipe: what it printed is the result either way.
+        let _ = stdin.write_all(b"GET /healthz HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n");
         drop(stdin);
         let out = child.wait_with_output().unwrap();
         format!("{}{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr))
     })
     .await
     .unwrap()
+}
+
+/// Fails unless `openssl` on the PATH is OpenSSL 3.5 or later (see the header), so an older one is named as the cause
+/// rather than read as the server's difference from the image.
+fn require_openssl_3_5() {
+    static CHECKED: std::sync::OnceLock<Result<(), String>> = std::sync::OnceLock::new();
+    let checked = CHECKED.get_or_init(|| {
+        let out = Command::new("openssl").arg("version").output().map_err(|e| format!("openssl s_client is needed on the PATH: {e}"))?;
+        let version = String::from_utf8_lossy(&out.stdout).into_owned();
+        let numbers: Vec<u32> = version.strip_prefix("OpenSSL ").and_then(|v| v.split_whitespace().next()).unwrap_or("").split('.').map_while(|n| n.parse().ok()).collect();
+        match numbers[..] {
+            [major, minor, ..] if (major, minor) >= (3, 5) => Ok(()),
+            _ => Err(format!("these tests need OpenSSL 3.5 or later on the PATH, found {}", version.trim())),
+        }
+    });
+    if let Err(e) = checked {
+        panic!("{e}");
+    }
 }
 
 #[tokio::test]
