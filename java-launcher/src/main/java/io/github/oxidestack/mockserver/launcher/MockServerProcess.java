@@ -349,6 +349,9 @@ public final class MockServerProcess {
      * the answer is yes, as before.
      */
     private boolean listensOn(int port) {
+        if (!process.isAlive()) {
+            return false;
+        }
         List<Long> pids = new ArrayList<>();
         pids.add(process.pid());
         process.descendants().forEach(child -> pids.add(child.pid()));
@@ -366,9 +369,13 @@ public final class MockServerProcess {
         }
     }
 
-    /** The TCP sockets of process {@code pid} as {local port, 1 if listening}. */
+    /**
+     * The TCP sockets of process {@code pid} as {local port, 1 if listening}. Linux is told by the launcher's own
+     * {@code /proc/self}, not the process's: a process that has exited but is not yet reaped keeps its
+     * {@code /proc/<pid>} without a readable {@code net/}, and it holds no socket.
+     */
     private static List<long[]> sockets(long pid) throws IOException {
-        return new File("/proc/" + pid + "/net/tcp").isFile() ? procSockets(pid) : lsofSockets(pid);
+        return new File("/proc/self/net/tcp").isFile() ? procSockets(pid) : lsofSockets(pid);
     }
 
     /** The process's TCP sockets as {local port, 1 if listening}, from {@code lsof}. */
@@ -428,8 +435,15 @@ public final class MockServerProcess {
             }
         }
         List<long[]> sockets = new ArrayList<>();
+        if (inodes.isEmpty()) {
+            return sockets;
+        }
         for (String table : List.of("tcp", "tcp6")) {
+            // the process's own network namespace, else the launcher's, which a child it started shares
             File file = new File("/proc/" + pid + "/net/" + table);
+            if (!file.isFile()) {
+                file = new File("/proc/self/net/" + table);
+            }
             if (!file.isFile()) {
                 continue;
             }
