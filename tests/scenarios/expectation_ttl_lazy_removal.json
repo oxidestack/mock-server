@@ -1,0 +1,34 @@
+{
+ "steps": [
+  {
+   "note": "two expectations that expire after a second (one on another path) and one that lives",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"id": "ttl-a", "httpRequest": {"path": "/ttl"}, "httpResponse": {"body": "a"}, "timeToLive": {"timeUnit": "SECONDS", "timeToLive": 1}},
+    {"id": "ttl-b", "httpRequest": {"path": "/ttl-other"}, "httpResponse": {"body": "b"}, "timeToLive": {"timeUnit": "SECONDS", "timeToLive": 1}},
+    {"id": "live", "httpRequest": {"path": "/live"}, "httpResponse": {"body": "live"}}
+   ]
+  },
+  {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"note": "before expiry: served", "method": "GET", "path": "/ttl"},
+  {"sleepMillis": 1600},
+  {"note": "after expiry: the scan meets both expired ones (ttl-b on another path too), logs them as not matching, and drops them on the scheduler", "method": "GET", "path": "/ttl"},
+  {"sleepMillis": 500},
+  {"method": "GET", "path": "/live"},
+  {"sleepMillis": 300},
+  {"note": "the oracle's scheduler threads race the request's own entries, so the entries are compared as a multiset", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "compare": "unordered", "mask": ["(?<=\"endDate\" : )\\d+"]},
+  {"note": "only ttl-b's removal: no request was made to its path", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/ttl-other"}, "mask": ["(?<=\"endDate\" : )\\d+"]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/ttl-other"}, "mask": ["(?<=epochTime\" : )\\d+", {"regex": "(endDate\\\\*\" : )\\d+", "replace": "${1}0"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "an expectation that expires, dropped by a listing", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "ttl-c", "httpRequest": {"path": "/ttl-c"}, "httpResponse": {"body": "c"}, "timeToLive": {"timeUnit": "SECONDS", "timeToLive": 1}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"sleepMillis": 1600},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"sleepMillis": 500},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "compare": "unordered", "mask": ["(?<=\"endDate\" : )\\d+"]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/ttl-c"}, "mask": ["(?<=epochTime\" : )\\d+", {"regex": "(endDate\\\\*\" : )\\d+", "replace": "${1}0"}]},
+  {"note": "an unfiltered clear's own entry goes with the next unfiltered clear", "method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS"}
+ ]
+}

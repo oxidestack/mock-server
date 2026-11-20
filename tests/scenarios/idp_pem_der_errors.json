@@ -1,0 +1,1188 @@
+{
+  "note": "A private key or certificate PEM that fails inside the DER, or carries PEM headers: BouncyCastle's ASN.1 and PEMParser exceptions (private keys) and the JDK's Pem.readPEM, java.util.Base64, DerValue and X509CertImpl exceptions (certificates) beneath PEMToFile's RuntimeExceptions.",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "privateKeyPem, PRIVATE KEY: BouncyCastle's ASN1InputStream rejects a BOOLEAN of length 0 (an ASN1Exception wrapping the IllegalArgumentException), beneath ASN1Sequence.getInstance's IllegalArgumentException and PEMParser's PEMException",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nAQA=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a length past the end of the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAUCAQ==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a definite length within the input whose contents are cut short",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAMCAQ==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an empty SEQUENCE: PrivateKeyInfo's Enumeration has no version (NoSuchElementException, no message)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAA=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a SEQUENCE of the version only",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAMCAQA=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a valid key followed by two bytes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9cAAA==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a NULL is not a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nBQA=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an INTEGER is not a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nAgEF\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a NULL with contents",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nBQEA\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nHwA=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a length of more than 31 bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIT/////\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAICAA==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an INTEGER with a redundant leading byte",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAQCAgAB\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAIDAA==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an OID with a malformed sub-identifier",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAZkFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAIOAA==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an end-of-contents octet where an element is expected",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAIAAA==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "version 2 is not a PrivateKeyInfo version",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAMCAQI=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "the version is not an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAMBAf8=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the algorithm is not a SEQUENCE: a SEC1 key under PRIVATE KEY",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMHcCAQEEIOIhjH9C0aZ0p2c2g5rmgoOprREtfQ4OOX09jYTrq9QkoAoGCCqGSM49\nAwEHoUQDQgAE9ly8gc7oeQpE0Y/O4dfvbOfAbnZQiHwR75pe1H+lN0Zs7iyOKLrA\naw9A3lcozAURc4XlKM+Fo1gzPW/tcQ6JVw==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an empty AlgorithmIdentifier",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAcCAQAwAAQA\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "the private key is not an OCTET STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMA4CAQAwBwYFK4EEACIFAA==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an indefinite-length SEQUENCE of the version only",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIACAQAAAA==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a key cut short",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtA==\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "RSA PRIVATE KEY: the parser's PEMException is wrapped once more by KeyPairParser",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nAQA=\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an INTEGER is not a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nAgEF\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an empty SEQUENCE: a PEMException of its own, rethrown as an IOException's message",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMAA=\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a PKCS#8 key under RSA PRIVATE KEY",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a valid key followed by two bytes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEAvbPv1ql7rZQO9OwLySfbKlQ4Qh8fxAZpqAZ2/yvwAoOhTr7v\nQRYv1VIH/0jGepU9YMmU9tXjA90DMEvTxAM3HsQDrtfBs/54yOiDpVh546PSS9Vx\nWNBJTkkv3uRJYxQ1tDOxGEVaWlVIu7G+2ZGf52jl5LhvoMaqJIG3K0hElx72GC+P\n1PPpiqWIiwD2EUsZnEogUV0cuGLEOy8OBnmZBN7rRv1wEG5G+9smGOk74XDSxrvI\n6oDY3mjlnt08Pv/5CKmFZ7MMN/O23ZavPV3sFT9rOu5DV6Fy3+cJXxQdA5jJ77cc\nkgZsPM4EBxpCt9eRPWMgAwCSoNVuuUYah7HMXwIDAQABAoIBAEWVRekgW7xMrbvL\nBXuwgeSh5czjK7y0eXbngCiTDkNt0vJWeN4P7FW79DEAmcUHDu98oYZ06ANXwz6o\n4bFpWIORdKRigaurMNTI7Njufi8wvQeR8DSamfj8QXHpnL2aASTrPQ9hCQZPeBFY\n3l9h2hyAzqq5uEBp/qjLZ8uZg4dGcqMcQo5e5Tot1616LbEjr7rZlU8NO9qIwHml\nFM9L0vRbmUbPlXT466RF8rvbwFisYaDd3DDoTjqvdkpuf7h0Hq+Dy7VE62tLcwwE\nY89WWkTFTDUs7IlrOxvSggHv9HUXuiW6VVTrECA99dSx+9dgMDuT5nL8VmrgjICq\naF9bkHkCgYEA8snaBbO9GvLmWyp/ZUYzvCENL7Ixi15aMStyb5Sz8y962z/yWIK4\naYErtAKIyB3AJ8DhWDxWdnfK8EKoP7ClESZesRbskfevWQcm1JqNHtbKXjjzk+AF\n+iOBxUEitXPEbRRTLg5F7tRwZxLywHkoGE5FwimL+S0CV3UMSRc4eNMCgYEAyAaU\ncDEb2NuivrdPgwUzaAS/+oeQv5VCQFU/+VUr+Y6RFNN1lTBVMcGX2LpfLA7IGqWW\nqAcM7UIKLXDbu42Ja7Sk3gmm9XDJdWkNfNxSCTLVLs3DlrQsNk38sPAj9qgj247p\nhENnfiDrDqDxM7O2AS848rqNpHYq9GirPnsMpsUCgYAC1nUj5+vn6rriieafSmjE\nZCaBTjXiCSJIvNdDkptf1kg7U84DVtPM9+OI4Ra0MBTU4h5AJ8Ri8hd/I2hQBkKH\npskojLoLIrf79GdxyLSpjZ0j6MqACfhH6i5UHeTH9ihvlfM68JPErNr7eW847LGZ\nRyDtmgq2yN3kI8wW9pyEXQKBgBYZrALtWh9OvR+HT3CxfWmLxM5gdhzE2AoVoTji\nMTakiuEbMA2oxnD169oVVXiftXpEO24bQVFhj5BPvOdvDvTog6LIvDq4GHoxfj0C\ndsnvZOCD+Y1IIO5rFXVTQxX4o+WZV7G2ZNPpvS7jl2LYA08EMa2X8RhvufVBL1J6\n8/3lAoGBAMayFgTcrIN5Dt1OGhYe0bIWy+tHrZ7MGPYhZ0yHuHB/adjBHHEWB6VE\nRxwB2Cv33j4JkRpgGvAvQ72U6sWip4LoXt4jN97qa/mI5x/ki2NAK8ot4EfZOfGg\nw4JoYtGUZvViU0IaQa05VnQbiSAyrUtW0Hk207R++XL3w7Fe/i/XAAA=\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a length past the end",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMAUCAQ==\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "EC PRIVATE KEY: an OCTET STRING is not a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nBAIBAg==\n-----END EC PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an empty SEQUENCE: the key pair has no public key, and JcaPEMKeyConverter dereferences it",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMAA=\n-----END EC PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a PKCS#8 key under EC PRIVATE KEY",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg4iGMf0LRpnSnZzaD\nmuaCg6mtES19Dg45fT2NhOur1CShRANCAAT2XLyBzuh5CkTRj87h1+9s58BudlCI\nfBHvml7Uf6U3RmzuLI4ousBrD0DeVyjMBRFzheUoz4WjWDM9b+1xDolX\n-----END EC PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a BOOLEAN of two bytes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nAQIAAA==\n-----END EC PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "headers: Proc-Type 4,ENCRYPTED without DEK-Info",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\n\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a DEK-Info without an IV",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC\n\nMIIEowIBAAKCAQEAvbPv1ql7rZQO9OwLySfbKlQ4Qh8fxAZpqAZ2/yvwAoOhTr7v\nQRYv1VIH/0jGepU9YMmU9tXjA90DMEvTxAM3HsQDrtfBs/54yOiDpVh546PSS9Vx\nWNBJTkkv3uRJYxQ1tDOxGEVaWlVIu7G+2ZGf52jl5LhvoMaqJIG3K0hElx72GC+P\n1PPpiqWIiwD2EUsZnEogUV0cuGLEOy8OBnmZBN7rRv1wEG5G+9smGOk74XDSxrvI\n6oDY3mjlnt08Pv/5CKmFZ7MMN/O23ZavPV3sFT9rOu5DV6Fy3+cJXxQdA5jJ77cc\nkgZsPM4EBxpCt9eRPWMgAwCSoNVuuUYah7HMXwIDAQABAoIBAEWVRekgW7xMrbvL\nBXuwgeSh5czjK7y0eXbngCiTDkNt0vJWeN4P7FW79DEAmcUHDu98oYZ06ANXwz6o\n4bFpWIORdKRigaurMNTI7Njufi8wvQeR8DSamfj8QXHpnL2aASTrPQ9hCQZPeBFY\n3l9h2hyAzqq5uEBp/qjLZ8uZg4dGcqMcQo5e5Tot1616LbEjr7rZlU8NO9qIwHml\nFM9L0vRbmUbPlXT466RF8rvbwFisYaDd3DDoTjqvdkpuf7h0Hq+Dy7VE62tLcwwE\nY89WWkTFTDUs7IlrOxvSggHv9HUXuiW6VVTrECA99dSx+9dgMDuT5nL8VmrgjICq\naF9bkHkCgYEA8snaBbO9GvLmWyp/ZUYzvCENL7Ixi15aMStyb5Sz8y962z/yWIK4\naYErtAKIyB3AJ8DhWDxWdnfK8EKoP7ClESZesRbskfevWQcm1JqNHtbKXjjzk+AF\n+iOBxUEitXPEbRRTLg5F7tRwZxLywHkoGE5FwimL+S0CV3UMSRc4eNMCgYEAyAaU\ncDEb2NuivrdPgwUzaAS/+oeQv5VCQFU/+VUr+Y6RFNN1lTBVMcGX2LpfLA7IGqWW\nqAcM7UIKLXDbu42Ja7Sk3gmm9XDJdWkNfNxSCTLVLs3DlrQsNk38sPAj9qgj247p\nhENnfiDrDqDxM7O2AS848rqNpHYq9GirPnsMpsUCgYAC1nUj5+vn6rriieafSmjE\nZCaBTjXiCSJIvNdDkptf1kg7U84DVtPM9+OI4Ra0MBTU4h5AJ8Ri8hd/I2hQBkKH\npskojLoLIrf79GdxyLSpjZ0j6MqACfhH6i5UHeTH9ihvlfM68JPErNr7eW847LGZ\nRyDtmgq2yN3kI8wW9pyEXQKBgBYZrALtWh9OvR+HT3CxfWmLxM5gdhzE2AoVoTji\nMTakiuEbMA2oxnD169oVVXiftXpEO24bQVFhj5BPvOdvDvTog6LIvDq4GHoxfj0C\ndsnvZOCD+Y1IIO5rFXVTQxX4o+WZV7G2ZNPpvS7jl2LYA08EMa2X8RhvufVBL1J6\n8/3lAoGBAMayFgTcrIN5Dt1OGhYe0bIWy+tHrZ7MGPYhZ0yHuHB/adjBHHEWB6VE\nRxwB2Cv33j4JkRpgGvAvQ72U6sWip4LoXt4jN97qa/mI5x/ki2NAK8ot4EfZOfGg\nw4JoYtGUZvViU0IaQa05VnQbiSAyrUtW0Hk207R++XL3w7Fe/i/X\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a DEK-Info with three parts",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,00,11\n\nMHcCAQEEIOIhjH9C0aZ0p2c2g5rmgoOprREtfQ4OOX09jYTrq9QkoAoGCCqGSM49\nAwEHoUQDQgAE9ly8gc7oeQpE0Y/O4dfvbOfAbnZQiHwR75pe1H+lN0Zs7iyOKLrA\naw9A3lcozAURc4XlKM+Fo1gzPW/tcQ6JVw==\n-----END EC PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "a well-formed DEK-Info: PEMParser returns a PEMEncryptedKeyPair, which PrivateKeyInfo.getInstance does not take",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,00112233445566778899AABBCCDDEEFF\n\nMIIEowIBAAKCAQEAvbPv1ql7rZQO9OwLySfbKlQ4Qh8fxAZpqAZ2/yvwAoOhTr7v\nQRYv1VIH/0jGepU9YMmU9tXjA90DMEvTxAM3HsQDrtfBs/54yOiDpVh546PSS9Vx\nWNBJTkkv3uRJYxQ1tDOxGEVaWlVIu7G+2ZGf52jl5LhvoMaqJIG3K0hElx72GC+P\n1PPpiqWIiwD2EUsZnEogUV0cuGLEOy8OBnmZBN7rRv1wEG5G+9smGOk74XDSxrvI\n6oDY3mjlnt08Pv/5CKmFZ7MMN/O23ZavPV3sFT9rOu5DV6Fy3+cJXxQdA5jJ77cc\nkgZsPM4EBxpCt9eRPWMgAwCSoNVuuUYah7HMXwIDAQABAoIBAEWVRekgW7xMrbvL\nBXuwgeSh5czjK7y0eXbngCiTDkNt0vJWeN4P7FW79DEAmcUHDu98oYZ06ANXwz6o\n4bFpWIORdKRigaurMNTI7Njufi8wvQeR8DSamfj8QXHpnL2aASTrPQ9hCQZPeBFY\n3l9h2hyAzqq5uEBp/qjLZ8uZg4dGcqMcQo5e5Tot1616LbEjr7rZlU8NO9qIwHml\nFM9L0vRbmUbPlXT466RF8rvbwFisYaDd3DDoTjqvdkpuf7h0Hq+Dy7VE62tLcwwE\nY89WWkTFTDUs7IlrOxvSggHv9HUXuiW6VVTrECA99dSx+9dgMDuT5nL8VmrgjICq\naF9bkHkCgYEA8snaBbO9GvLmWyp/ZUYzvCENL7Ixi15aMStyb5Sz8y962z/yWIK4\naYErtAKIyB3AJ8DhWDxWdnfK8EKoP7ClESZesRbskfevWQcm1JqNHtbKXjjzk+AF\n+iOBxUEitXPEbRRTLg5F7tRwZxLywHkoGE5FwimL+S0CV3UMSRc4eNMCgYEAyAaU\ncDEb2NuivrdPgwUzaAS/+oeQv5VCQFU/+VUr+Y6RFNN1lTBVMcGX2LpfLA7IGqWW\nqAcM7UIKLXDbu42Ja7Sk3gmm9XDJdWkNfNxSCTLVLs3DlrQsNk38sPAj9qgj247p\nhENnfiDrDqDxM7O2AS848rqNpHYq9GirPnsMpsUCgYAC1nUj5+vn6rriieafSmjE\nZCaBTjXiCSJIvNdDkptf1kg7U84DVtPM9+OI4Ra0MBTU4h5AJ8Ri8hd/I2hQBkKH\npskojLoLIrf79GdxyLSpjZ0j6MqACfhH6i5UHeTH9ihvlfM68JPErNr7eW847LGZ\nRyDtmgq2yN3kI8wW9pyEXQKBgBYZrALtWh9OvR+HT3CxfWmLxM5gdhzE2AoVoTji\nMTakiuEbMA2oxnD169oVVXiftXpEO24bQVFhj5BPvOdvDvTog6LIvDq4GHoxfj0C\ndsnvZOCD+Y1IIO5rFXVTQxX4o+WZV7G2ZNPpvS7jl2LYA08EMa2X8RhvufVBL1J6\n8/3lAoGBAMayFgTcrIN5Dt1OGhYe0bIWy+tHrZ7MGPYhZ0yHuHB/adjBHHEWB6VE\nRxwB2Cv33j4JkRpgGvAvQ72U6sWip4LoXt4jN97qa/mI5x/ki2NAK8ot4EfZOfGg\nw4JoYtGUZvViU0IaQa05VnQbiSAyrUtW0Hk207R++XL3w7Fe/i/X\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an IV that is not hex",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,XYZ\n\nMIIEowIBAAKCAQEAvbPv1ql7rZQO9OwLySfbKlQ4Qh8fxAZpqAZ2/yvwAoOhTr7v\nQRYv1VIH/0jGepU9YMmU9tXjA90DMEvTxAM3HsQDrtfBs/54yOiDpVh546PSS9Vx\nWNBJTkkv3uRJYxQ1tDOxGEVaWlVIu7G+2ZGf52jl5LhvoMaqJIG3K0hElx72GC+P\n1PPpiqWIiwD2EUsZnEogUV0cuGLEOy8OBnmZBN7rRv1wEG5G+9smGOk74XDSxrvI\n6oDY3mjlnt08Pv/5CKmFZ7MMN/O23ZavPV3sFT9rOu5DV6Fy3+cJXxQdA5jJ77cc\nkgZsPM4EBxpCt9eRPWMgAwCSoNVuuUYah7HMXwIDAQABAoIBAEWVRekgW7xMrbvL\nBXuwgeSh5czjK7y0eXbngCiTDkNt0vJWeN4P7FW79DEAmcUHDu98oYZ06ANXwz6o\n4bFpWIORdKRigaurMNTI7Njufi8wvQeR8DSamfj8QXHpnL2aASTrPQ9hCQZPeBFY\n3l9h2hyAzqq5uEBp/qjLZ8uZg4dGcqMcQo5e5Tot1616LbEjr7rZlU8NO9qIwHml\nFM9L0vRbmUbPlXT466RF8rvbwFisYaDd3DDoTjqvdkpuf7h0Hq+Dy7VE62tLcwwE\nY89WWkTFTDUs7IlrOxvSggHv9HUXuiW6VVTrECA99dSx+9dgMDuT5nL8VmrgjICq\naF9bkHkCgYEA8snaBbO9GvLmWyp/ZUYzvCENL7Ixi15aMStyb5Sz8y962z/yWIK4\naYErtAKIyB3AJ8DhWDxWdnfK8EKoP7ClESZesRbskfevWQcm1JqNHtbKXjjzk+AF\n+iOBxUEitXPEbRRTLg5F7tRwZxLywHkoGE5FwimL+S0CV3UMSRc4eNMCgYEAyAaU\ncDEb2NuivrdPgwUzaAS/+oeQv5VCQFU/+VUr+Y6RFNN1lTBVMcGX2LpfLA7IGqWW\nqAcM7UIKLXDbu42Ja7Sk3gmm9XDJdWkNfNxSCTLVLs3DlrQsNk38sPAj9qgj247p\nhENnfiDrDqDxM7O2AS848rqNpHYq9GirPnsMpsUCgYAC1nUj5+vn6rriieafSmjE\nZCaBTjXiCSJIvNdDkptf1kg7U84DVtPM9+OI4Ra0MBTU4h5AJ8Ri8hd/I2hQBkKH\npskojLoLIrf79GdxyLSpjZ0j6MqACfhH6i5UHeTH9ihvlfM68JPErNr7eW847LGZ\nRyDtmgq2yN3kI8wW9pyEXQKBgBYZrALtWh9OvR+HT3CxfWmLxM5gdhzE2AoVoTji\nMTakiuEbMA2oxnD169oVVXiftXpEO24bQVFhj5BPvOdvDvTog6LIvDq4GHoxfj0C\ndsnvZOCD+Y1IIO5rFXVTQxX4o+WZV7G2ZNPpvS7jl2LYA08EMa2X8RhvufVBL1J6\n8/3lAoGBAMayFgTcrIN5Dt1OGhYe0bIWy+tHrZ7MGPYhZ0yHuHB/adjBHHEWB6VE\nRxwB2Cv33j4JkRpgGvAvQ72U6sWip4LoXt4jN97qa/mI5x/ki2NAK8ot4EfZOfGg\nw4JoYtGUZvViU0IaQa05VnQbiSAyrUtW0Hk207R++XL3w7Fe/i/X\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an encrypted PRIVATE KEY",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: DES-EDE3-CBC,0011223344556677\n\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "accepted: a DEK-Info without Proc-Type is ignored",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nDEK-Info: AES-128-CBC\n\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "accepted: other headers are ignored",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nComment: hello\n\nMIIEowIBAAKCAQEAvbPv1ql7rZQO9OwLySfbKlQ4Qh8fxAZpqAZ2/yvwAoOhTr7v\nQRYv1VIH/0jGepU9YMmU9tXjA90DMEvTxAM3HsQDrtfBs/54yOiDpVh546PSS9Vx\nWNBJTkkv3uRJYxQ1tDOxGEVaWlVIu7G+2ZGf52jl5LhvoMaqJIG3K0hElx72GC+P\n1PPpiqWIiwD2EUsZnEogUV0cuGLEOy8OBnmZBN7rRv1wEG5G+9smGOk74XDSxrvI\n6oDY3mjlnt08Pv/5CKmFZ7MMN/O23ZavPV3sFT9rOu5DV6Fy3+cJXxQdA5jJ77cc\nkgZsPM4EBxpCt9eRPWMgAwCSoNVuuUYah7HMXwIDAQABAoIBAEWVRekgW7xMrbvL\nBXuwgeSh5czjK7y0eXbngCiTDkNt0vJWeN4P7FW79DEAmcUHDu98oYZ06ANXwz6o\n4bFpWIORdKRigaurMNTI7Njufi8wvQeR8DSamfj8QXHpnL2aASTrPQ9hCQZPeBFY\n3l9h2hyAzqq5uEBp/qjLZ8uZg4dGcqMcQo5e5Tot1616LbEjr7rZlU8NO9qIwHml\nFM9L0vRbmUbPlXT466RF8rvbwFisYaDd3DDoTjqvdkpuf7h0Hq+Dy7VE62tLcwwE\nY89WWkTFTDUs7IlrOxvSggHv9HUXuiW6VVTrECA99dSx+9dgMDuT5nL8VmrgjICq\naF9bkHkCgYEA8snaBbO9GvLmWyp/ZUYzvCENL7Ixi15aMStyb5Sz8y962z/yWIK4\naYErtAKIyB3AJ8DhWDxWdnfK8EKoP7ClESZesRbskfevWQcm1JqNHtbKXjjzk+AF\n+iOBxUEitXPEbRRTLg5F7tRwZxLywHkoGE5FwimL+S0CV3UMSRc4eNMCgYEAyAaU\ncDEb2NuivrdPgwUzaAS/+oeQv5VCQFU/+VUr+Y6RFNN1lTBVMcGX2LpfLA7IGqWW\nqAcM7UIKLXDbu42Ja7Sk3gmm9XDJdWkNfNxSCTLVLs3DlrQsNk38sPAj9qgj247p\nhENnfiDrDqDxM7O2AS848rqNpHYq9GirPnsMpsUCgYAC1nUj5+vn6rriieafSmjE\nZCaBTjXiCSJIvNdDkptf1kg7U84DVtPM9+OI4Ra0MBTU4h5AJ8Ri8hd/I2hQBkKH\npskojLoLIrf79GdxyLSpjZ0j6MqACfhH6i5UHeTH9ihvlfM68JPErNr7eW847LGZ\nRyDtmgq2yN3kI8wW9pyEXQKBgBYZrALtWh9OvR+HT3CxfWmLxM5gdhzE2AoVoTji\nMTakiuEbMA2oxnD169oVVXiftXpEO24bQVFhj5BPvOdvDvTog6LIvDq4GHoxfj0C\ndsnvZOCD+Y1IIO5rFXVTQxX4o+WZV7G2ZNPpvS7jl2LYA08EMa2X8RhvufVBL1J6\n8/3lAoGBAMayFgTcrIN5Dt1OGhYe0bIWy+tHrZ7MGPYhZ0yHuHB/adjBHHEWB6VE\nRxwB2Cv33j4JkRpgGvAvQ72U6sWip4LoXt4jN97qa/mI5x/ki2NAK8ot4EfZOfGg\nw4JoYtGUZvViU0IaQa05VnQbiSAyrUtW0Hk207R++XL3w7Fe/i/X\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "certificatePem: the DER is not a SEQUENCE (X509CertImpl's CertificateParsingException, no cause)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nAQA=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "a length past the end: DerValue's EOFException",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMAUCAQ==\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "an empty SEQUENCE: the TBSCertificate's DerValue is too short",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMAA=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a SEQUENCE of one INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMAMCAQA=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "a valid certificate followed by two bytes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9AAA=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "a high tag number",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nHwA=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a negative length",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIT/////\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "too many length bytes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIUBAQEBAQ==\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "an indefinite-length SEQUENCE of one INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIACAQAAAA==\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a certificate cut short",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvc=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the TBSCertificate's version is not context-tagged: X509CertInfo's CertificateParsingException",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhoFAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the signed fields are not a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMAkCAQAwAAMCAAA=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "four elements in the certificate SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMAwwADAAAwIAAAUA\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "base64 that java.util.Base64 rejects",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMII!!\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "a header line: java.util.Base64 rejects the colon",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nComment: x\n\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "no END line: Pem.readPEM's EOFException reads as no input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9\n"
+      }
+    },
+    {
+      "note": "END of another type",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "base64 of a length that is not a multiple of four",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBAg\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "accepted: the label is not checked",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN PRIVATE KEY-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "RSA PRIVATE KEY of nine elements whose second is a NULL: RSAPrivateKey's cast, a ClassCastException",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMBoCAQAFAAIBAAIBAAIBAAIBAAIBAAIBAAIBAA==\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "RSA PRIVATE KEY of nine INTEGERs, version 5",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMBsCAQUCAQACAQACAQACAQACAQACAQACAQACAQA=\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "PRIVATE KEY whose version does not fit an int",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMAcCBQEAAAAA\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "PRIVATE KEY with an INTEGER after the key: the optional fields are cast to ASN1TaggedObject",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEwAIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9cCAQA=\n-----END PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "an IV of an odd number of hex digits: HexEncoder reads past the end",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\nDEK-Info: AES-128-CBC,001\n\nMIIEowIBAAKCAQEAvbPv1ql7rZQO9OwLySfbKlQ4Qh8fxAZpqAZ2/yvwAoOhTr7v\nQRYv1VIH/0jGepU9YMmU9tXjA90DMEvTxAM3HsQDrtfBs/54yOiDpVh546PSS9Vx\nWNBJTkkv3uRJYxQ1tDOxGEVaWlVIu7G+2ZGf52jl5LhvoMaqJIG3K0hElx72GC+P\n1PPpiqWIiwD2EUsZnEogUV0cuGLEOy8OBnmZBN7rRv1wEG5G+9smGOk74XDSxrvI\n6oDY3mjlnt08Pv/5CKmFZ7MMN/O23ZavPV3sFT9rOu5DV6Fy3+cJXxQdA5jJ77cc\nkgZsPM4EBxpCt9eRPWMgAwCSoNVuuUYah7HMXwIDAQABAoIBAEWVRekgW7xMrbvL\nBXuwgeSh5czjK7y0eXbngCiTDkNt0vJWeN4P7FW79DEAmcUHDu98oYZ06ANXwz6o\n4bFpWIORdKRigaurMNTI7Njufi8wvQeR8DSamfj8QXHpnL2aASTrPQ9hCQZPeBFY\n3l9h2hyAzqq5uEBp/qjLZ8uZg4dGcqMcQo5e5Tot1616LbEjr7rZlU8NO9qIwHml\nFM9L0vRbmUbPlXT466RF8rvbwFisYaDd3DDoTjqvdkpuf7h0Hq+Dy7VE62tLcwwE\nY89WWkTFTDUs7IlrOxvSggHv9HUXuiW6VVTrECA99dSx+9dgMDuT5nL8VmrgjICq\naF9bkHkCgYEA8snaBbO9GvLmWyp/ZUYzvCENL7Ixi15aMStyb5Sz8y962z/yWIK4\naYErtAKIyB3AJ8DhWDxWdnfK8EKoP7ClESZesRbskfevWQcm1JqNHtbKXjjzk+AF\n+iOBxUEitXPEbRRTLg5F7tRwZxLywHkoGE5FwimL+S0CV3UMSRc4eNMCgYEAyAaU\ncDEb2NuivrdPgwUzaAS/+oeQv5VCQFU/+VUr+Y6RFNN1lTBVMcGX2LpfLA7IGqWW\nqAcM7UIKLXDbu42Ja7Sk3gmm9XDJdWkNfNxSCTLVLs3DlrQsNk38sPAj9qgj247p\nhENnfiDrDqDxM7O2AS848rqNpHYq9GirPnsMpsUCgYAC1nUj5+vn6rriieafSmjE\nZCaBTjXiCSJIvNdDkptf1kg7U84DVtPM9+OI4Ra0MBTU4h5AJ8Ri8hd/I2hQBkKH\npskojLoLIrf79GdxyLSpjZ0j6MqACfhH6i5UHeTH9ihvlfM68JPErNr7eW847LGZ\nRyDtmgq2yN3kI8wW9pyEXQKBgBYZrALtWh9OvR+HT3CxfWmLxM5gdhzE2AoVoTji\nMTakiuEbMA2oxnD169oVVXiftXpEO24bQVFhj5BPvOdvDvTog6LIvDq4GHoxfj0C\ndsnvZOCD+Y1IIO5rFXVTQxX4o+WZV7G2ZNPpvS7jl2LYA08EMa2X8RhvufVBL1J6\n8/3lAoGBAMayFgTcrIN5Dt1OGhYe0bIWy+tHrZ7MGPYhZ0yHuHB/adjBHHEWB6VE\nRxwB2Cv33j4JkRpgGvAvQ72U6sWip4LoXt4jN97qa/mI5x/ki2NAK8ot4EfZOfGg\nw4JoYtGUZvViU0IaQa05VnQbiSAyrUtW0Hk207R++XL3w7Fe/i/X\n-----END RSA PRIVATE KEY-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "certificatePem: the signature algorithm is an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMAgwAAIBAAMBAA==\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the signature is not a BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMAowADADBgEqAgEA\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "a fourth element after the signature",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMA0wADADBgEqAwEAAgEA\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an empty TBSCertificate: X509CertInfo's CertificateParsingException over DerValue's IOException",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMAowADADBgEqAwEA\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "SAML: the RuntimeException is the thrown exception itself; a key of a BOOLEAN of length 0",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nAQA=\n-----END PRIVATE KEY-----\n",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "an empty RSA PRIVATE KEY SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMAA=\n-----END RSA PRIVATE KEY-----\n",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a missing DEK-Info",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nProc-Type: 4,ENCRYPTED\n\nMHcCAQEEIOIhjH9C0aZ0p2c2g5rmgoOprREtfQ4OOX09jYTrq9QkoAoGCCqGSM49\nAwEHoUQDQgAE9ly8gc7oeQpE0Y/O4dfvbOfAbnZQiHwR75pe1H+lN0Zs7iyOKLrA\naw9A3lcozAURc4XlKM+Fo1gzPW/tcQ6JVw==\n-----END EC PRIVATE KEY-----\n",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "signingCertificatePem: an empty SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMAA=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "a valid certificate followed by two bytes",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIDMjCCAhqgAwIBAgITI+JvyCQpgV9TrS3Fy950qnfLtzANBgkqhkiG9w0BAQsF\nADBiMRswGQYDVQQDDBJ3d3cubW9ja3NlcnZlci5jb20xEzARBgNVBAoMCk1vY2tT\nZXJ2ZXIxDzANBgNVBAcMBkxvbmRvbjEQMA4GA1UECAwHRW5nbGFuZDELMAkGA1UE\nBhMCVUswIBcNMjYxMDAxMTUyNjI4WhgPMjEyNjA5MDgxNTI2MjhaMBQxEjAQBgNV\nBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAL2z\n79ape62UDvTsC8kn2ypUOEIfH8QGaagGdv8r8AKDoU6+70EWL9VSB/9IxnqVPWDJ\nlPbV4wPdAzBL08QDNx7EA67XwbP+eMjog6VYeeOj0kvVcVjQSU5JL97kSWMUNbQz\nsRhFWlpVSLuxvtmRn+do5eS4b6DGqiSBtytIRJce9hgvj9Tz6YqliIsA9hFLGZxK\nIFFdHLhixDsvDgZ5mQTe60b9cBBuRvvbJhjpO+Fw0sa7yOqA2N5o5Z7dPD7/+Qip\nhWezDDfztt2Wrz1d7BU/azruQ1ehct/nCV8UHQOYye+3HJIGbDzOBAcaQrfXkT1j\nIAMAkqDVbrlGGoexzF8CAwEAAaMtMCswFAYDVR0RBA0wC4IJbG9jYWxob3N0MBMG\nA1UdJQQMMAoGCCsGAQUFBwMBMA0GCSqGSIb3DQEBCwUAA4IBAQAaL9AZnhSdj3+V\nsLhuHQzYELEtJM2+MRFkAnr1cBGfjcZSvuDL4HFycdUM4CwTTQ8912NUk3DvVTMo\n/5F9/C/AebnsDw4W93s3KaV2qTPUzVxbdOULfUl3bRWmEIevlUNtQwpUgq7/X+d5\ngiUGFbgCLTruYwdfC2VCnYaI+32+EKGiT1FEu7DKo1+Raui1GFH5DCGJC3t0XsXa\n93tsqzeTdbAZ100iCHlApd1Tv3SpnAn1hbcaXZ+FocAqhDlCDz2fLOWgSia8jqrD\n3xjQFHiOCxCVBud6oNu3f3d4qsbeqmiaediC4h7Oj83D40wURwC+MH6YBvcDl0Hs\nCTxUjI/9AAA=\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "base64 that java.util.Base64 rejects",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC9s+/WqXutlA70\n7AvJJ9sqVDhCHx/EBmmoBnb/K/ACg6FOvu9BFi/VUgf/SMZ6lT1gyZT21eMD3QMw\nS9PEAzcexAOu18Gz/njI6IOlWHnjo9JL1XFY0ElOSS/e5EljFDW0M7EYRVpaVUi7\nsb7ZkZ/naOXkuG+gxqokgbcrSESXHvYYL4/U8+mKpYiLAPYRSxmcSiBRXRy4YsQ7\nLw4GeZkE3utG/XAQbkb72yYY6TvhcNLGu8jqgNjeaOWe3Tw+//kIqYVnsww387bd\nlq89XewVP2s67kNXoXLf5wlfFB0DmMnvtxySBmw8zgQHGkK315E9YyADAJKg1W65\nRhqHscxfAgMBAAECggEARZVF6SBbvEytu8sFe7CB5KHlzOMrvLR5dueAKJMOQ23S\n8lZ43g/sVbv0MQCZxQcO73yhhnToA1fDPqjhsWlYg5F0pGKBq6sw1Mjs2O5+LzC9\nB5HwNJqZ+PxBcemcvZoBJOs9D2EJBk94EVjeX2HaHIDOqrm4QGn+qMtny5mDh0Zy\noxxCjl7lOi3XrXotsSOvutmVTw072ojAeaUUz0vS9FuZRs+VdPjrpEXyu9vAWKxh\noN3cMOhOOq92Sm5/uHQer4PLtUTra0tzDARjz1ZaRMVMNSzsiWs7G9KCAe/0dRe6\nJbpVVOsQID311LH712AwO5PmcvxWauCMgKpoX1uQeQKBgQDyydoFs70a8uZbKn9l\nRjO8IQ0vsjGLXloxK3JvlLPzL3rbP/JYgrhpgSu0AojIHcAnwOFYPFZ2d8rwQqg/\nsKURJl6xFuyR969ZBybUmo0e1speOPOT4AX6I4HFQSK1c8RtFFMuDkXu1HBnEvLA\neSgYTkXCKYv5LQJXdQxJFzh40wKBgQDIBpRwMRvY26K+t0+DBTNoBL/6h5C/lUJA\nVT/5VSv5jpEU03WVMFUxwZfYul8sDsgapZaoBwztQgotcNu7jYlrtKTeCab1cMl1\naQ183FIJMtUuzcOWtCw2Tfyw8CP2qCPbjumEQ2d+IOsOoPEzs7YBLzjyuo2kdir0\naKs+ewymxQKBgALWdSPn6+fquuKJ5p9KaMRkJoFONeIJIki810OSm1/WSDtTzgNW\n08z344jhFrQwFNTiHkAnxGLyF38jaFAGQoemySiMugsit/v0Z3HItKmNnSPoyoAJ\n+EfqLlQd5Mf2KG+V8zrwk8Ss2vt5bzjssZlHIO2aCrbI3eQjzBb2nIRdAoGAFhms\nAu1aH069H4dPcLF9aYvEzmB2HMTYChWhOOIxNqSK4RswDajGcPXr2hVVeJ+1ekQ7\nbhtBUWGPkE+8528O9OiDosi8OrgYejF+PQJ2ye9k4IP5jUgg7msVdVNDFfij5ZlX\nsbZk0+m9LuOXYtgDTwQxrZfxGG+59UEvUnrz/eUCgYEAxrIWBNysg3kO3U4aFh7R\nshbL60etnswY9iFnTIe4cH9p2MEccRYHpURHHAHYK/fePgmRGmAa8C9DvZTqxaKn\nguhe3iM33upr+YjnH+SLY0Aryi3gR9k58aDDgmhi0ZRm9WJTQhpBrTlWdBuJIDKt\nS1bQeTbTtH75cvfDsV7+L9c=\n-----END PRIVATE KEY-----\n",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMII!!\n-----END CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    }
+  ]
+}

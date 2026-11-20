@@ -1,0 +1,36 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 512",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/first\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"first\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/second\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"second\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ntraceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\r\ntracestate: rojo=00f067aa0ba902b7\r\ncontent-length: 5\r\n\r\nfirstHTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 6\r\n\r\nsecond",
+      "closed": false,
+      "note": "TraceContextHandler: the second request on one keep-alive connection sends no traceparent; the 8.0.0 oracle answers it with the first request's context (second-traceparent), upstream a48d37181 with none"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ntraceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\r\ncontent-length: 5\r\n\r\nfirstHTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 6\r\n\r\nsecond",
+      "closed": false,
+      "note": "an invalid traceparent on the second request clears the context too (TraceContextHandlerTest.shouldNotCarryTraceContextOverToLaterRequestWithInvalidTraceparent)"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ntraceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\r\ncontent-length: 5\r\n\r\nfirstHTTP/1.1 200 OK\r\nconnection: keep-alive\r\ntraceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01\r\ncontent-length: 6\r\n\r\nsecond",
+      "closed": false,
+      "note": "control, unchanged by the fix: a second valid traceparent replaces the first"
+    }
+  ]
+}

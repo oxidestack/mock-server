@@ -1,0 +1,25 @@
+{
+  "note": "Upstream #230: a tlsMutualAuthenticationCertificateChain holding the bundled CA is refused at startup even without tlsMutualAuthenticationRequired",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "propertyFile": "mockserver.tlsMutualAuthenticationCertificateChain={{files}}/tls/fwd-ca.pem\n",
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": false,
+    "exitCode": 0,
+    "stdoutInOrder": [
+      "[INFO] stopped for ports: []",
+      "java -jar <path to mockserver-netty-jar-with-dependencies.jar> -serverPort <port>"
+    ],
+    "stdoutNotContains": [
+      "started on port",
+      "tlsMutualAuthenticationCertificateChain contains"
+    ]
+  }
+}

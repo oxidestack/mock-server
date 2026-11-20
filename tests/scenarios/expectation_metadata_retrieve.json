@@ -1,0 +1,497 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "four expectations, two without or with different metadata",
+   "body": [
+    {
+     "id": "m-a",
+     "httpRequest": {
+      "path": "/a"
+     },
+     "httpResponse": {
+      "body": "a"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "n": 42,
+      "tags": [
+       "smoke",
+       "x"
+      ],
+      "nul": null,
+      "nested": {
+       "k": "v"
+      }
+     }
+    },
+    {
+     "id": "m-b",
+     "httpRequest": {
+      "path": "/b"
+     },
+     "httpResponse": {
+      "body": "b"
+     }
+    },
+    {
+     "id": "m-c",
+     "httpRequest": {
+      "path": "/c"
+     },
+     "httpResponse": {
+      "body": "c"
+     },
+     "metadata": {
+      "owner": "team-b",
+      "n": "42",
+      "flag": true,
+      "f": 1.5
+     }
+    },
+    {
+     "id": "m-d",
+     "httpRequest": {
+      "path": "/d"
+     },
+     "httpResponse": {
+      "body": "d"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "tags": [
+       "other"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/a",
+   "note": "m-a matches once"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations",
+   "note": "metadata echoed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=owner",
+   "note": "metadataKey=owner"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=owner&metadataValue=team-a",
+   "note": "metadataKey=owner&metadataValue=team-a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=n&metadataValue=42",
+   "note": "number 42 and string 42 both match"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=n&metadataValue=%2242%22",
+   "note": "quoted text"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=tags&metadataValue=%5B%22smoke%22%2C%22x%22%5D",
+   "note": "array as JSON"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=flag&metadataValue=true",
+   "note": "metadataKey=flag&metadataValue=true"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=f&metadataValue=1.5",
+   "note": "numeric equality"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=nul&metadataValue=null",
+   "note": "metadataKey=nul&metadataValue=null"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=nested&metadataValue=%7B%22k%22%3A%22v%22%7D",
+   "note": "metadataKey=nested&metadataValue=%7B%22k%22%3A%22v%22%7D"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=missing",
+   "note": "metadataKey=missing"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataJsonPath=%24.tags%5B%3F(%40%3D%3D%27smoke%27)%5D",
+   "note": "metadataJsonPath=%24.tags%5B%3F(%40%3D%3D%27smoke%27)%5D"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataJsonPath=%24%5B%3F(%40.owner%3D%3D%27team-a%27)%5D",
+   "note": "metadataJsonPath=%24%5B%3F(%40.owner%3D%3D%27team-a%27)%5D"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataJsonPath=%24.owner",
+   "note": "metadataJsonPath=%24.owner"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataJsonPath=%24.nothing",
+   "note": "metadataJsonPath=%24.nothing"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=owner&metadataJsonPath=%24.tags%5B%3F(%40%3D%3D%27other%27)%5D",
+   "note": "both selections hold"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&METADATAKEY=owner&MetadataValue=team-b",
+   "note": "names ignore case"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatched=true",
+   "note": "unmatched=true"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatched=TRUE&metadataKey=owner",
+   "note": "unmatched and metadata"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatched=false&metadataKey=owner",
+   "note": "unmatched=false is no selection"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&limit=2",
+   "note": "limit=2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&offset=1&limit=2",
+   "note": "offset=1&limit=2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&offset=3",
+   "note": "offset=3"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&offset=9",
+   "note": "offset=9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&limit=0",
+   "note": "limit=0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&limit=+1+&offset=%201",
+   "note": "integers are trimmed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=owner&offset=1&limit=1",
+   "note": "paging after selection"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatched=true&limit=1",
+   "note": "unmatched=true&limit=1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadata_key=x",
+   "note": "metadata_key=x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadatakey2=x",
+   "note": "metadatakey2=x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatchedX=true",
+   "note": "unmatchedX=true"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatched=maybe",
+   "note": "unmatched=maybe"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatched=false",
+   "note": "unmatched=false"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatched=",
+   "note": "unmatched="
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&limit=-1",
+   "note": "limit=-1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&limit=x",
+   "note": "limit=x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&limit=",
+   "note": "limit="
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&offset=1.5",
+   "note": "offset=1.5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&limit=99999999999",
+   "note": "limit=99999999999"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataValue=x",
+   "note": "metadataValue=x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=",
+   "note": "metadataKey="
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=%20%20",
+   "note": "metadataKey=%20%20"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=a&metadataKey=b",
+   "note": "metadataKey=a&metadataKey=b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&unmatched=true&unmatched=true",
+   "note": "unmatched=true&unmatched=true"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataJsonPath=",
+   "note": "metadataJsonPath="
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&%",
+   "note": "%"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=%ZZ",
+   "note": "metadataKey=%ZZ"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=%FF",
+   "note": "metadataKey=%FF"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&metadataKey=a%",
+   "note": "metadataKey=a%"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&namespace=",
+   "note": "a blank namespace on retrieve is allowed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=logs&unmatched=true"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=requests&metadataKey=owner"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=request_responses&metadataJsonPath=%24"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=recorded_expectations&metadataKey=owner"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=logs&limit=1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=requests&offset=1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=request_responses&limit=1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=recorded_expectations&limit=1&offset=1",
+   "note": "paging on recorded is allowed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=recorded_expectations&limit=x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&format=java&limit=1",
+   "note": "java format paged"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations&format=json&metadataKey=owner&metadataValue=team-b&limit=1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "metadata {}",
+   "body": {
+    "httpRequest": {
+     "path": "/z"
+    },
+    "httpResponse": {},
+    "metadata": {}
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "metadata null",
+   "body": {
+    "httpRequest": {
+     "path": "/z"
+    },
+    "httpResponse": {},
+    "metadata": null
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "metadata \"x\"",
+   "body": {
+    "httpRequest": {
+     "path": "/z"
+    },
+    "httpResponse": {},
+    "metadata": "x"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "metadata [1]",
+   "body": {
+    "httpRequest": {
+     "path": "/z"
+    },
+    "httpResponse": {},
+    "metadata": [
+     1
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "metadata {\"\": 1}",
+   "body": {
+    "httpRequest": {
+     "path": "/z"
+    },
+    "httpResponse": {},
+    "metadata": {
+     "": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "metadata {\" \": 1}",
+   "body": {
+    "httpRequest": {
+     "path": "/z"
+    },
+    "httpResponse": {},
+    "metadata": {
+     " ": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "metadata {\"a\": {\"b\": null}}",
+   "body": {
+    "httpRequest": {
+     "path": "/z"
+    },
+    "httpResponse": {},
+    "metadata": {
+     "a": {
+      "b": null
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "metadata {\"a\": [], \"b\": \"x\", \"c\": {}, \"d\": [null, {\"e\": null}], \"f\": \"\"}",
+   "body": {
+    "httpRequest": {
+     "path": "/z"
+    },
+    "httpResponse": {},
+    "metadata": {
+     "a": [],
+     "b": "x",
+     "c": {},
+     "d": [
+      null,
+      {
+       "e": null
+      }
+     ],
+     "f": ""
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=logs",
+   "note": "the failures and the retrievals as logged",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,76 @@
+{
+ "source": "9.1.0 (upstream 64b856d9d): NettyHttpClient.connectBinaryRelay through connectThroughTunnel: a binary connection whose only upstream proxy is forwardHttpProxy is relayed on one upstream connection, a CONNECT tunnel through that proxy (here the peer node) to the binary target (a dead port, never contacted: the peer handles the tunnel itself); the peer reads the tunnelled bytes as HTTP and answers with a 400",
+ "peer": true,
+ "properties": {
+  "proxyRemoteHost": "localhost",
+  "proxyRemotePort": "{{deadport}}",
+  "forwardHttpProxy": "{{peerhost}}:{{peerport}}",
+  "logLevel": "DEBUG"
+ },
+ "steps": [
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the proxy's startup entries are not the point"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 60000,
+   "body": {
+    "httpRequest": {
+     "binaryData": "CQgHBgUEAwIBAA=="
+    },
+    "binaryResponse": {
+     "binaryData": "AQIDBA=="
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "note": "relayed through a CONNECT tunnel through the HTTP proxy (the peer) to the dead target; the peer reads the tunnelled bytes as HTTP, answers with a 400 and closes, which closes the client"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+",
+     "replace": "/<client>",
+     "reason": "the binary client's address: the Docker gateway's when recorded, loopback on replay"
+    },
+    {
+     "regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+     "replace": "/<peer>",
+     "reason": "the peer's address: its container's when recorded, loopback on replay"
+    }
+   ],
+   "compare": "unordered",
+   "note": "what the forwarding node logged"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+",
+     "replace": "/<client>",
+     "reason": "the forwarder's address as the peer sees it"
+    }
+   ],
+   "compare": "unordered",
+   "note": "what the proxy (and target) logged"
+  }
+ ]
+}

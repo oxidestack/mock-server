@@ -1,0 +1,189 @@
+{
+ "source": "at DEBUG, 8.0.0's `matcher{}would match{}if matcher was used for control plane` from a conditional expectation's branches (in the scan only; each request differs from the conditional in one field, so the closest-match hint is deterministic), from a -bin header (values without base64 padding), and never from an OpenAPI expectation (its operation matchers are control-plane matchers, so the reversed regex matches); an invalid regex logs no `error while matching regex` entry (NottableString.matches swallows the PatternSyntaxException).",
+ "properties": {
+  "logLevel": "DEBUG"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "conditional",
+    "httpRequest": {
+     "if": {
+      "method": "GET",
+      "headers": {
+       "x-key": [
+        "abcdef"
+       ]
+      }
+     },
+     "then": {
+      "headers": {
+       "x-then": [
+        "abc"
+       ]
+      }
+     },
+     "else": {
+      "path": "/b"
+     }
+    },
+    "httpResponse": {
+     "body": "conditional"
+    }
+   }
+  },
+  {
+   "note": "the then branch's header value, read as a regex, would match (the if's header scan and the then branch differ in headers only, so the closest-match hint names one field, not the first of a HashMap<Field, ...> in identity-hash order)",
+   "method": "GET",
+   "path": "/abc",
+   "headers": {
+    "x-key": "abcdef",
+    "x-then": "a.c"
+   }
+  },
+  {
+   "note": "the if branch's header value, read as a regex, would match; the else branch matches (no hint)",
+   "method": "GET",
+   "path": "/b",
+   "headers": {
+    "x-key": "ab.*"
+   }
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "binary-header",
+    "httpRequest": {
+     "path": "/bin",
+     "headers": {
+      "x-bin": [
+       "QQE="
+      ]
+     }
+    },
+    "httpResponse": {
+     "body": "binary-header"
+    }
+   }
+  },
+  {
+   "note": "a -bin header compares base64 values without their padding, and would match prints them so",
+   "method": "GET",
+   "path": "/bin",
+   "headers": {
+    "x-bin": "Q+E="
+   }
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "openapi",
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"t\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+    },
+    "httpResponse": {
+     "body": "openapi"
+    }
+   }
+  },
+  {
+   "note": "OpenAPI operation matchers are control-plane matchers: a path that matches as a regex matches, and nothing is logged",
+   "method": "GET",
+   "path": "/a.c"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "invalid-regex",
+    "httpRequest": {
+     "path": "/a(b"
+    },
+    "httpResponse": {
+     "body": "invalid-regex"
+    }
+   }
+  },
+  {
+   "note": "NottableString.matches swallows the PatternSyntaxException: no 'error while matching regex' entry",
+   "method": "GET",
+   "path": "/x("
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  }
+ ]
+}

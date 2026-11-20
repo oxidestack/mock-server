@@ -1,0 +1,23 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_LOCAL_BOUND_IP": "10.255.255.1"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception binding to port(s) [",
+      "Caused by: shaded_package.io.netty.channel.unix.Errors$NativeIoException: bind(..) failed with error(-99): Cannot assign requested address",
+      "[ERROR] exception while starting:{}\njava.lang.RuntimeException: Exception while binding MockServer to port",
+      "Caused by: shaded_package.io.netty.channel.unix.Errors$NativeIoException: bind(..) failed with error(-99): Cannot assign requested address"
+    ],
+    "stdoutNotContains": ["started on port"]
+  }
+}

@@ -1,0 +1,1333 @@
+{
+ "note": "Xerces reports src-resolve for a namespace without a grammar once per SchemaFactory (per JVM): the first schema referring into it is refused, later ones compile with the reference degraded, across resets. The properties give the scenario an oracle (and a server) of its own, so it starts with nothing reported.",
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "note": "element reference: first schema referring into urn:unloaded:elemref is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n1",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:elemref\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:elemref\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element ref=\"g:e\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "element reference: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n2",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:elemref\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:elemref\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element ref=\"g:e\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "element reference: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n2",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "element reference: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n2",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "element type: first schema referring into urn:unloaded:type is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n3",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:type\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:type\"/><xs:element name=\"r\" type=\"g:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "element type: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n4",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:type\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:type\"/><xs:element name=\"r\" type=\"g:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "element type: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n4",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "element type: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n4",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "element type: a later one compiles with the reference degraded: <r xmlns=\"urn:t\">text</r>",
+   "method": "POST",
+   "path": "/n4",
+   "body": "<r xmlns=\"urn:t\">text</r>"
+  },
+  {
+   "note": "element type: a later one compiles with the reference degraded: <r xmlns=\"urn:t\" a=\"1\"/>",
+   "method": "POST",
+   "path": "/n4",
+   "body": "<r xmlns=\"urn:t\" a=\"1\"/>"
+  },
+  {
+   "note": "simple restriction base (facets ignored): first schema referring into urn:unloaded:simplebase is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n5",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:simplebase\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:simplebase\"/><xs:simpleType name=\"s\"><xs:restriction base=\"g:s\"><xs:maxLength value=\"2\"/></xs:restriction></xs:simpleType><xs:element name=\"r\" type=\"s\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "simple restriction base (facets ignored): a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n6",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:simplebase\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:simplebase\"/><xs:simpleType name=\"s\"><xs:restriction base=\"g:s\"><xs:maxLength value=\"2\"/></xs:restriction></xs:simpleType><xs:element name=\"r\" type=\"s\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "simple restriction base (facets ignored): a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n6",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "simple restriction base (facets ignored): a later one compiles with the reference degraded: <r xmlns=\"urn:t\">text</r>",
+   "method": "POST",
+   "path": "/n6",
+   "body": "<r xmlns=\"urn:t\">text</r>"
+  },
+  {
+   "note": "simple restriction base (facets ignored): a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n6",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "complexContent extension base: first schema referring into urn:unloaded:extbase is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n7",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:extbase\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:extbase\"/><xs:complexType name=\"c\"><xs:complexContent><xs:extension base=\"g:c\"><xs:sequence><xs:element name=\"x\"/></xs:sequence></xs:extension></xs:complexContent></xs:complexType><xs:element name=\"r\" type=\"c\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "complexContent extension base: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n8",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:extbase\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:extbase\"/><xs:complexType name=\"c\"><xs:complexContent><xs:extension base=\"g:c\"><xs:sequence><xs:element name=\"x\"/></xs:sequence></xs:extension></xs:complexContent></xs:complexType><xs:element name=\"r\" type=\"c\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "complexContent extension base: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n8",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "complexContent extension base: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><x/></r>",
+   "method": "POST",
+   "path": "/n8",
+   "body": "<r xmlns=\"urn:t\"><x/></r>"
+  },
+  {
+   "note": "complexContent extension base: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n8",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "complexContent extension base: a later one compiles with the reference degraded: <r xmlns=\"urn:t\" a=\"1\"/>",
+   "method": "POST",
+   "path": "/n8",
+   "body": "<r xmlns=\"urn:t\" a=\"1\"/>"
+  },
+  {
+   "note": "simpleContent extension base: first schema referring into urn:unloaded:simplecontent is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n9",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:simplecontent\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:simplecontent\"/><xs:complexType name=\"c\"><xs:simpleContent><xs:extension base=\"g:c\"><xs:attribute name=\"b\"/></xs:extension></xs:simpleContent></xs:complexType><xs:element name=\"r\" type=\"c\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "simpleContent extension base: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n10",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:simplecontent\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:simplecontent\"/><xs:complexType name=\"c\"><xs:simpleContent><xs:extension base=\"g:c\"><xs:attribute name=\"b\"/></xs:extension></xs:simpleContent></xs:complexType><xs:element name=\"r\" type=\"c\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "simpleContent extension base: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n10",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "simpleContent extension base: a later one compiles with the reference degraded: <r xmlns=\"urn:t\">text</r>",
+   "method": "POST",
+   "path": "/n10",
+   "body": "<r xmlns=\"urn:t\">text</r>"
+  },
+  {
+   "note": "simpleContent extension base: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n10",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "simpleContent extension base: a later one compiles with the reference degraded: <r xmlns=\"urn:t\" a=\"1\"/>",
+   "method": "POST",
+   "path": "/n10",
+   "body": "<r xmlns=\"urn:t\" a=\"1\"/>"
+  },
+  {
+   "note": "group reference: first schema referring into urn:unloaded:group is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n11",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:group\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:group\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:group ref=\"g:gr\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "group reference: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n12",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:group\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:group\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:group ref=\"g:gr\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "group reference: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n12",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "group reference: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n12",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "group reference as the content: first schema referring into urn:unloaded:groupcontent is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n13",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:groupcontent\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:groupcontent\"/><xs:element name=\"r\"><xs:complexType><xs:group ref=\"g:gr\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "group reference as the content: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n14",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:groupcontent\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:groupcontent\"/><xs:element name=\"r\"><xs:complexType><xs:group ref=\"g:gr\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "group reference as the content: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n14",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "group reference as the content: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n14",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "group reference as the content: a later one compiles with the reference degraded: <r xmlns=\"urn:t\">text</r>",
+   "method": "POST",
+   "path": "/n14",
+   "body": "<r xmlns=\"urn:t\">text</r>"
+  },
+  {
+   "note": "attribute group reference: first schema referring into urn:unloaded:attrgroup is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n15",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:attrgroup\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:attrgroup\"/><xs:element name=\"r\"><xs:complexType><xs:attributeGroup ref=\"g:ag\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute group reference: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n16",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:attrgroup\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:attrgroup\"/><xs:element name=\"r\"><xs:complexType><xs:attributeGroup ref=\"g:ag\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute group reference: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n16",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "attribute group reference: a later one compiles with the reference degraded: <r xmlns=\"urn:t\" a=\"1\"/>",
+   "method": "POST",
+   "path": "/n16",
+   "body": "<r xmlns=\"urn:t\" a=\"1\"/>"
+  },
+  {
+   "note": "attribute reference: first schema referring into urn:unloaded:attrref is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n17",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:attrref\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:attrref\"/><xs:element name=\"r\"><xs:complexType><xs:attribute ref=\"g:a\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute reference: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n18",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:attrref\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:attrref\"/><xs:element name=\"r\"><xs:complexType><xs:attribute ref=\"g:a\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute reference: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n18",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "attribute reference: a later one compiles with the reference degraded: <r xmlns=\"urn:t\" a=\"1\"/>",
+   "method": "POST",
+   "path": "/n18",
+   "body": "<r xmlns=\"urn:t\" a=\"1\"/>"
+  },
+  {
+   "note": "attribute type (refused every time): first schema referring into urn:unloaded:attrtype is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n19",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:attrtype\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:attrtype\"/><xs:element name=\"r\"><xs:complexType><xs:attribute name=\"a\" type=\"g:s\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute type (refused every time): a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n20",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:attrtype\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:attrtype\"/><xs:element name=\"r\"><xs:complexType><xs:attribute name=\"a\" type=\"g:s\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute type (refused every time): a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n20",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "attribute type (refused every time): a later one compiles with the reference degraded: <r xmlns=\"urn:t\" a=\"1\"/>",
+   "method": "POST",
+   "path": "/n20",
+   "body": "<r xmlns=\"urn:t\" a=\"1\"/>"
+  },
+  {
+   "note": "list item type: first schema referring into urn:unloaded:list is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n21",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:list\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:list\"/><xs:simpleType name=\"s\"><xs:list itemType=\"g:s\"/></xs:simpleType><xs:element name=\"r\" type=\"s\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "list item type: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n22",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:list\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:list\"/><xs:simpleType name=\"s\"><xs:list itemType=\"g:s\"/></xs:simpleType><xs:element name=\"r\" type=\"s\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "list item type: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n22",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "list item type: a later one compiles with the reference degraded: <r xmlns=\"urn:t\">text</r>",
+   "method": "POST",
+   "path": "/n22",
+   "body": "<r xmlns=\"urn:t\">text</r>"
+  },
+  {
+   "note": "list item type: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n22",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "union member types: first schema referring into urn:unloaded:union is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n23",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:union\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:union\"/><xs:simpleType name=\"s\"><xs:union memberTypes=\"g:s xs:int\"/></xs:simpleType><xs:element name=\"r\" type=\"s\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "union member types: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n24",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:union\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:union\"/><xs:simpleType name=\"s\"><xs:union memberTypes=\"g:s xs:int\"/></xs:simpleType><xs:element name=\"r\" type=\"s\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "union member types: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n24",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "union member types: a later one compiles with the reference degraded: <r xmlns=\"urn:t\">12</r>",
+   "method": "POST",
+   "path": "/n24",
+   "body": "<r xmlns=\"urn:t\">12</r>"
+  },
+  {
+   "note": "union member types: a later one compiles with the reference degraded: <r xmlns=\"urn:t\">text</r>",
+   "method": "POST",
+   "path": "/n24",
+   "body": "<r xmlns=\"urn:t\">text</r>"
+  },
+  {
+   "note": "union of only unloaded members: first schema referring into urn:unloaded:unionall is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n25",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:unionall\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:unionall\"/><xs:simpleType name=\"s\"><xs:union memberTypes=\"g:s\"/></xs:simpleType><xs:element name=\"r\" type=\"s\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "union of only unloaded members: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n26",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:unionall\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:unionall\"/><xs:simpleType name=\"s\"><xs:union memberTypes=\"g:s\"/></xs:simpleType><xs:element name=\"r\" type=\"s\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "union of only unloaded members: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n26",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "union of only unloaded members: a later one compiles with the reference degraded: <r xmlns=\"urn:t\">text</r>",
+   "method": "POST",
+   "path": "/n26",
+   "body": "<r xmlns=\"urn:t\">text</r>"
+  },
+  {
+   "note": "union of only unloaded members: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n26",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "substitution group head: first schema referring into urn:unloaded:subst is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n27",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:subst\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:subst\"/><xs:element name=\"r\" substitutionGroup=\"g:h\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "substitution group head: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n28",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:subst\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:subst\"/><xs:element name=\"r\" substitutionGroup=\"g:h\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "substitution group head: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n28",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "substitution group head: a later one compiles with the reference degraded: <r xmlns=\"urn:t\">text</r>",
+   "method": "POST",
+   "path": "/n28",
+   "body": "<r xmlns=\"urn:t\">text</r>"
+  },
+  {
+   "note": "substitution group head: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n28",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "keyref refer: first schema referring into urn:unloaded:keyref is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n29",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:keyref\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:keyref\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element name=\"e\" minOccurs=\"0\"/></xs:sequence></xs:complexType><xs:keyref name=\"k\" refer=\"g:k\"><xs:selector xpath=\"e\"/><xs:field xpath=\".\"/></xs:keyref></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "keyref refer: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n30",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:keyref\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:keyref\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element name=\"e\" minOccurs=\"0\"/></xs:sequence></xs:complexType><xs:keyref name=\"k\" refer=\"g:k\"><xs:selector xpath=\"e\"/><xs:field xpath=\".\"/></xs:keyref></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "keyref refer: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n30",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "keyref refer: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n30",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "element reference in xs:all: first schema referring into urn:unloaded:all is refused",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n31",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:all\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:all\"/><xs:element name=\"r\"><xs:complexType><xs:all><xs:element ref=\"g:e\"/><xs:element name=\"x\" minOccurs=\"0\"/></xs:all></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "element reference in xs:all: a later one compiles with the reference degraded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n32",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:all\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:all\"/><xs:element name=\"r\"><xs:complexType><xs:all><xs:element ref=\"g:e\"/><xs:element name=\"x\" minOccurs=\"0\"/></xs:all></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "element reference in xs:all: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n32",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "element reference in xs:all: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><x/></r>",
+   "method": "POST",
+   "path": "/n32",
+   "body": "<r xmlns=\"urn:t\"><x/></r>"
+  },
+  {
+   "note": "element reference in xs:all: a later one compiles with the reference degraded: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n32",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "element type into urn:unloaded:A (first: refused)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n33",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:A\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:A\"/><xs:element name=\"r\" type=\"g:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "an element reference into urn:unloaded:A: the namespace was reported by another kind",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n34",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:A\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:A\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element ref=\"g:e\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "an element reference into urn:unloaded:A: the namespace was reported by another kind: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n34",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "an element reference into urn:unloaded:A: the namespace was reported by another kind: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n34",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "reset keeps the reported namespaces",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "attribute reference into urn:unloaded:A after reset",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n35",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:A\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:A\"/><xs:element name=\"r\"><xs:complexType><xs:attribute ref=\"g:a\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute reference into urn:unloaded:A after reset: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n35",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "attribute reference into urn:unloaded:A after reset: <r xmlns=\"urn:t\" a=\"1\"/>",
+   "method": "POST",
+   "path": "/n35",
+   "body": "<r xmlns=\"urn:t\" a=\"1\"/>"
+  },
+  {
+   "note": "not imported: src-resolve.4.2, every time",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n36",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:B\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:element name=\"r\" type=\"g:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "not imported again",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n37",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:B\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:element name=\"r\" type=\"g:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "imported: reported once",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n38",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:B\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:B\"/><xs:element name=\"r\" type=\"g:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "imported again",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n39",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:B\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:B\"/><xs:element name=\"r\" type=\"g:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "imported again: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n39",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "imported again: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n39",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "not imported after the report: still src-resolve.4.2",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n40",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:B\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:element name=\"r\" type=\"g:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "no namespace, not imported: src-resolve.4.1 (multi-line, for the location)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n41",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"urn:t\" xmlns=\"urn:t\">\n<xs:element name=\"r\">\n  <xs:complexType><xs:sequence><xs:element ref=\"e\" xmlns=\"\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "no namespace imported without location: reported once",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n42",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"urn:t\" xmlns=\"urn:t\">\n<xs:import/><xs:element name=\"r\">\n  <xs:complexType><xs:sequence><xs:element ref=\"e\" xmlns=\"\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "no namespace imported again",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n43",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"urn:t\" xmlns=\"urn:t\">\n<xs:import/><xs:element name=\"r\">\n  <xs:complexType><xs:sequence><xs:element ref=\"e\" xmlns=\"\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "no namespace imported again: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n43",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "no namespace imported again: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n43",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "the XML Schema namespace beyond its built-in types: first",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n44",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:import namespace=\"http://www.w3.org/2001/XMLSchema\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element ref=\"xs:annotation\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "the XML Schema namespace: later",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n45",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:import namespace=\"http://www.w3.org/2001/XMLSchema\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element ref=\"xs:annotation\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "the XML Schema namespace: later: <r/>",
+   "method": "POST",
+   "path": "/n45",
+   "body": "<r/>"
+  },
+  {
+   "note": "the XML Schema namespace: later: <r><annotation/></r>",
+   "method": "POST",
+   "path": "/n45",
+   "body": "<r><annotation/></r>"
+  },
+  {
+   "note": "a built-in type of the XML Schema namespace is always there",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n46",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:element name=\"r\" type=\"xs:int\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "a built-in type of the XML Schema namespace is always there: <r>1</r>",
+   "method": "POST",
+   "path": "/n46",
+   "body": "<r>1</r>"
+  },
+  {
+   "note": "a built-in type of the XML Schema namespace is always there: <r>x</r>",
+   "method": "POST",
+   "path": "/n46",
+   "body": "<r>x</r>"
+  },
+  {
+   "note": "two unloaded namespaces: the first is reported",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n47",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:C\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:C\"/><xs:import namespace=\"urn:unloaded:D\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element ref=\"g:e\"/><xs:element ref=\"d:e\" xmlns:d=\"urn:unloaded:D\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "two unloaded namespaces: then the second",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n48",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:C\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:C\"/><xs:import namespace=\"urn:unloaded:D\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element ref=\"g:e\"/><xs:element ref=\"d:e\" xmlns:d=\"urn:unloaded:D\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "two unloaded namespaces: then none",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n49",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:g=\"urn:unloaded:C\" targetNamespace=\"urn:t\" xmlns=\"urn:t\" elementFormDefault=\"qualified\"><xs:import namespace=\"urn:unloaded:C\"/><xs:import namespace=\"urn:unloaded:D\"/><xs:element name=\"r\"><xs:complexType><xs:sequence><xs:element ref=\"g:e\"/><xs:element ref=\"d:e\" xmlns:d=\"urn:unloaded:D\"/></xs:sequence></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "two unloaded namespaces: then none: <r xmlns=\"urn:t\"/>",
+   "method": "POST",
+   "path": "/n49",
+   "body": "<r xmlns=\"urn:t\"/>"
+  },
+  {
+   "note": "two unloaded namespaces: then none: <r xmlns=\"urn:t\"><e/></r>",
+   "method": "POST",
+   "path": "/n49",
+   "body": "<r xmlns=\"urn:t\"><e/></r>"
+  },
+  {
+   "note": "a schema file: the throwable names it (systemId) and the line",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n50",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "{{files}}/xsd/unloaded-namespace.xsd"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "the schema file again",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n51",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "{{files}}/xsd/unloaded-namespace.xsd"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "the schema file again: <r xmlns=\"urn:t\"><a/></r>",
+   "method": "POST",
+   "path": "/n51",
+   "body": "<r xmlns=\"urn:t\"><a/></r>"
+  },
+  {
+   "note": "the schema file again: <r xmlns=\"urn:t\"><a/><e/></r>",
+   "method": "POST",
+   "path": "/n51",
+   "body": "<r xmlns=\"urn:t\"><a/><e/></r>"
+  },
+  {
+   "note": "missing name in the loaded namespace: refused every time",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n52",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:element name=\"r\" type=\"nope\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "missing name in the loaded namespace, again",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n53",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:element name=\"r\" type=\"nope\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "neither a document nor a path: IllegalArgumentException",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n54",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "nonsense"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "a missing schema file",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/n55",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "{{files}}/xsd/missing.xsd"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "the exception parsing schema entries (no request: a filter matching no request keeps only them), each with Xerces' SAXParseException as the throwable; JVM frames masked",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/no-such-request"
+   },
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[( \\]|[\\s\\S]*?\\n\\s*\\])",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}"
+   ]
+  }
+ ]
+}

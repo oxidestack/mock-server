@@ -1,0 +1,67 @@
+{
+  "mappings": [
+    {
+      "id": "get-user",
+      "priority": 1,
+      "scenarioName": "user-flow",
+      "requiredScenarioState": "Started",
+      "newScenarioState": "user-fetched",
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/users/123",
+        "queryParameters": {
+          "expand": { "equalTo": "profile" },
+          "fields": { "matches": "^[a-z,]+$" }
+        },
+        "headers": {
+          "Accept": { "equalTo": "application/json" },
+          "X-Trace": { "contains": "abc" }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "id": 123, "name": "Alice" },
+        "fixedDelayMilliseconds": 250
+      }
+    },
+    {
+      "request": {
+        "method": "POST",
+        "urlPattern": "/api/orders/[0-9]+\\?draft=true",
+        "bodyPatterns": [
+          { "equalToJson": "{\"item\":\"book\"}", "ignoreExtraElements": true }
+        ]
+      },
+      "response": {
+        "status": 201,
+        "body": "created"
+      }
+    },
+    {
+      "request": { "method": "GET", "urlPath": "/api/matchjsonpath" },
+      "request2": {},
+      "response": { "status": 200, "body": "ok" }
+    },
+    {
+      "request": { "method": "GET", "urlPath": "/api/flaky" },
+      "response": { "fault": "CONNECTION_RESET_BY_PEER" }
+    },
+    {
+      "request": { "method": "GET", "urlPath": "/api/legacy" },
+      "response": { "proxyBaseUrl": "https://origin.example.com:8443" }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPath": "/api/xml",
+        "bodyPatterns": [ { "matchesXPath": "//book/title" } ]
+      },
+      "response": {
+        "status": 200,
+        "body": "xml-ok",
+        "transformers": [ "response-template" ]
+      }
+    }
+  ]
+}

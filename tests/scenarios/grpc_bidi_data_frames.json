@@ -1,0 +1,194 @@
+{
+ "source": "IncrementalGrpcFrameDecoder reassembly on a bidi stream with well-formed ChatRequest messages, complementing the harvested B4-grpcfeed files (whose upstream payloads are not ChatRequests)",
+ "properties": {
+  "grpcBidiStreamingEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "expectation: one greeting per inbound message, naming it",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hello $jsonPath.find(\"$.name\")\"}",
+         "templateType": "VELOCITY"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "two messages in one DATA frame",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAAAcKBUFsaWNlAAAAAAUKA0JvYg=="
+   ]
+  },
+  {
+   "note": "prefix split after 3 bytes",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAA",
+    "AAcKBUFsaWNl"
+   ]
+  },
+  {
+   "note": "payload split after 2 bytes",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAAAcKBQ==",
+    "QWxpY2U="
+   ]
+  },
+  {
+   "note": "two messages and a partial prefix, then the rest",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAAAcKBUFsaWNlAAAAAAUKA0JvYgAAAA==",
+    "AAcKBUNhcm9s"
+   ]
+  },
+  {
+   "note": "empty DATA frames around a split",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "",
+    "AAAAAA==",
+    "",
+    "BwoFQWxpY2U="
+   ]
+  },
+  {
+   "note": "one byte per DATA frame",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AA==",
+    "AA==",
+    "AA==",
+    "AA==",
+    "Bw==",
+    "Cg==",
+    "BQ==",
+    "QQ==",
+    "bA==",
+    "aQ==",
+    "Yw==",
+    "ZQ=="
+   ]
+  },
+  {
+   "note": "a partial message left when the stream ends",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAAAcKBUFsaWNlAAAAAAUK"
+   ]
+  },
+  {
+   "note": "a gzip-flagged message split inside its prefix, no grpc-encoding",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AQA=",
+    "AAAcH4sIAA==",
+    "AAAAAAIT42KLyiwoSE0BAFk6nsMIAAAA"
+   ]
+  },
+  {
+   "note": "a message per DATA frame",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAAAcKBUFsaWNl",
+    "AAAAAAUKA0JvYg==",
+    "AAAAAAcKBUNhcm9s"
+   ]
+  }
+ ]
+}

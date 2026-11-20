@@ -1,0 +1,32 @@
+{
+ "note": "tlsMutualAuthenticationCertificateChain names an empty file, which reads as no certificates: the server trusts only its CA and serves TLS; socketConnectionTimeoutInMillis bounds the first handshake, whose certificate generation can take over the default 20 s on a loaded machine",
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/x509/mtls/chain-empty.pem"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\", \"secure\": true}, \"httpResponse\": {\"statusCode\": 200, \"body\": \"over tls\"}}]"
+  },
+  {
+   "note": "a TLS request to the data plane",
+   "tcp": [
+    {
+     "text": "GET /target HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true
+  },
+  {
+   "note": "the log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]"
+   ]
+  }
+ ]
+}

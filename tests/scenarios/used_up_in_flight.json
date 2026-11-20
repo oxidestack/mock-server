@@ -1,0 +1,92 @@
+{
+ "properties": {
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"used-once\", \"httpRequest\": {\"path\": \"/used\"}, \"priority\": 20, \"times\": {\"remainingTimes\": 1}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}, {\"id\": \"target\", \"httpRequest\": {\"path\": \"/used\", \"headers\": {\"connection\": [\"keep-alive\"]}}, \"priority\": 10, \"httpResponse\": {\"statusCode\": 200, \"body\": \"served by target\"}}]"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "method": "GET",
+   "path": "/used",
+   "note": "uses up used-once; its forward comes back while it is in flight"
+  },
+  {
+   "method": "GET",
+   "path": "/used",
+   "note": "used-once is gone once the first response was written"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "\\\\?\"host\\\\?\" : \\[\\s*\\\\?\"[^\"\\\\]*\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\]|\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"Host\\\\?\" : \\[\\s*\\\\?\"localhost:(?:<port>|1)\\\\?\"\\s*\\]",
+     "replace": "<received request headers>"
+    }
+   ],
+   "note": "upstream rewrites the forwarded request's Host while other threads log it: those header pairs are masked"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "\\\\?\"host\\\\?\" : \\[\\s*\\\\?\"[^\"\\\\]*\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\]|\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"Host\\\\?\" : \\[\\s*\\\\?\"localhost:(?:<port>|1)\\\\?\"\\s*\\]",
+     "replace": "<received request headers>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"peek-once\", \"httpRequest\": {\"path\": \"/peek\"}, \"times\": {\"remainingTimes\": 1}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"method\": \"PUT\", \"path\": \"/mockserver/retrieve\", \"queryStringParameters\": {\"type\": [\"ACTIVE_EXPECTATIONS\"]}, \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}}}]"
+  },
+  {
+   "method": "GET",
+   "path": "/peek",
+   "note": "the forward retrieves the active expectations while peek-once, used up, is in flight"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "and afterwards"
+  }
+ ]
+}

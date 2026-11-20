@@ -1,0 +1,16 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "sse1", "httpRequest": {"path": "/sse"}, "httpSseResponse": {"headers": {"X-Custom": ["one"], "Cache-Control": ["private"]}, "events": [
+    {"event": "first", "data": "sse_event_one", "id": "1"},
+    {"data": "line one\nline two", "retry": 3000, "delay": {"timeUnit": "MILLISECONDS", "value": 50}},
+    {"event": "multi\nline", "data": "carriage\rreturn"}
+  ]}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "sse2", "httpRequest": {"path": "/sse-empty"}, "httpSseResponse": {"statusCode": 202, "closeConnection": true}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "sse3", "httpRequest": {"path": "/sse-template"}, "httpSseResponse": {"templateType": "VELOCITY", "events": [{"data": "path is $request.path"}]}}},
+  {"note": "events", "method": "GET", "path": "/sse"},
+  {"note": "no events, closed", "method": "GET", "path": "/sse-empty"},
+  {"note": "template", "method": "GET", "path": "/sse-template"},
+  {"note": "exchanges", "method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES"},
+  {"note": "logs", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/sse"}},
+  {"note": "verify by id", "method": "PUT", "path": "/mockserver/verify", "body": {"expectationId": {"id": "sse1"}}},
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}], "body": {"path": "/sse"}}
+]}

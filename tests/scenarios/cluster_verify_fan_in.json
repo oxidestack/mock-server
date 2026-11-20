@@ -1,0 +1,236 @@
+{
+ "note": "T1.9: clusterVerifyFanIn with a second plain node as its one peer (it served one /api, the first node two): retrieve of REQUESTS and REQUEST_RESPONSES concatenates local then peer, fanInLocalOnly=true serves the local log only (the recursion guard), a count verify sums the peer's matches, verifySequence, a response-aware verify and an expectationId verify stay node-local.",
+ "properties": {
+  "clusterVerifyFanIn": "true",
+  "clusterVerifyFanInPeers": "{{peerurl}}"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "api",
+    "httpRequest": {
+     "path": "/api"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api"
+  },
+  {
+   "method": "GET",
+   "path": "/api"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "api",
+    "httpRequest": {
+     "path": "/api"
+    },
+    "httpResponse": {
+     "body": "y"
+    }
+   }
+  },
+  {
+   "node": "peer",
+   "method": "GET",
+   "path": "/api"
+  },
+  {
+   "note": "local two plus the peer's one",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "note": "the peer's own query: local log only",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&fanInLocalOnly=true",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "note": "any other value of the marker is not true: fans in",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&fanInLocalOnly=false",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&fanInLocalOnly=true",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "note": "every format of REQUESTS shares the merged list",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=CURL",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "note": "LOG_ENTRIES of REQUESTS is the local log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/api"
+   },
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "note": "no match anywhere: an empty list from the peer is no remote match",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/none"
+   }
+  },
+  {
+   "note": "exactly three fleet-wide",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/api"
+    },
+    "times": {
+     "atLeast": 3,
+     "atMost": 3
+    }
+   }
+  },
+  {
+   "note": "the per-node answer fails: the fleet served three",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/api"
+    },
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "at least four fails",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/api"
+    },
+    "times": {
+     "atLeast": 4
+    }
+   }
+  },
+  {
+   "note": "never fails once anywhere has it",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/api"
+    },
+    "times": {
+     "atMost": 0
+    }
+   }
+  },
+  {
+   "note": "a request nobody saw is never",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/none"
+    },
+    "times": {
+     "atMost": 0
+    }
+   }
+  },
+  {
+   "note": "response-aware verify stays node-local: two",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/api"
+    },
+    "httpResponse": {
+     "body": "x"
+    },
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "expectationId verify stays node-local: two",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "expectationId": {
+     "id": "api"
+    },
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "verifySequence stays node-local",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/api"
+     },
+     {
+      "path": "/api"
+     }
+    ]
+   }
+  },
+  {
+   "note": "other retrieve types are untouched",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  }
+ ],
+ "peer": true
+}

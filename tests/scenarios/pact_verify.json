@@ -1,0 +1,317 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "get-user",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/users/1"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "Content-Type": [
+        "application/json"
+       ],
+       "X-A": [
+        "1",
+        "2"
+       ]
+      },
+      "body": {
+       "type": "JSON",
+       "json": {
+        "id": 1,
+        "name": "a"
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/text"
+     },
+     "httpResponse": {
+      "body": "hello world"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/state"
+     },
+     "httpResponse": {
+      "body": "with state"
+     },
+     "scenarioName": "pact-provider-state",
+     "scenarioState": "user exists"
+    },
+    {
+     "httpRequest": {
+      "path": "/forward"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/empty"
+     },
+     "httpResponse": {
+      "statusCode": 204
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact/verify",
+   "body": {
+    "consumer": {
+     "name": "c"
+    },
+    "provider": {
+     "name": "p"
+    },
+    "interactions": [
+     {
+      "description": "ok json",
+      "request": {
+       "method": "GET",
+       "path": "/users/1"
+      },
+      "response": {
+       "status": 200,
+       "headers": {
+        "content-type": "application/json",
+        "X-A": [
+         "2"
+        ]
+       },
+       "body": {
+        "name": "a",
+        "id": 1
+       }
+      }
+     },
+     {
+      "description": "wrong status",
+      "request": {
+       "method": "GET",
+       "path": "/users/1"
+      },
+      "response": {
+       "status": 201
+      }
+     },
+     {
+      "description": "missing header",
+      "request": {
+       "method": "GET",
+       "path": "/users/1"
+      },
+      "response": {
+       "headers": {
+        "X-B": "1"
+       }
+      }
+     },
+     {
+      "description": "header value",
+      "request": {
+       "method": "GET",
+       "path": "/users/1"
+      },
+      "response": {
+       "headers": {
+        "X-A": [
+         "3"
+        ]
+       }
+      }
+     },
+     {
+      "description": "json differs",
+      "request": {
+       "method": "GET",
+       "path": "/users/1"
+      },
+      "response": {
+       "body": {
+        "id": 2
+       }
+      }
+     },
+     {
+      "description": "text ok",
+      "request": {
+       "path": "/text"
+      },
+      "response": {
+       "body": "hello world"
+      }
+     },
+     {
+      "description": "text differs",
+      "request": {
+       "path": "/text"
+      },
+      "response": {
+       "body": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+     },
+     {
+      "description": "text vs json",
+      "request": {
+       "path": "/text"
+      },
+      "response": {
+       "body": {
+        "a": 1
+       }
+      }
+     },
+     {
+      "description": "no body served",
+      "request": {
+       "path": "/empty"
+      },
+      "response": {
+       "status": 204,
+       "body": "x"
+      }
+     },
+     {
+      "description": "state ok",
+      "providerStates": [
+       {
+        "name": "user exists"
+       }
+      ],
+      "request": {
+       "path": "/state"
+      },
+      "response": {
+       "body": "with state"
+      }
+     },
+     {
+      "description": "state other",
+      "providerState": "nobody",
+      "request": {
+       "path": "/state"
+      },
+      "response": {
+       "body": "with state"
+      }
+     },
+     {
+      "description": "state missing",
+      "request": {
+       "path": "/state"
+      },
+      "response": {
+       "body": "with state"
+      }
+     },
+     {
+      "description": "forward",
+      "request": {
+       "path": "/forward"
+      },
+      "response": {
+       "status": 200
+      }
+     },
+     {
+      "description": "unmatched",
+      "request": {
+       "path": "/nothing"
+      },
+      "response": {
+       "status": 200
+      }
+     },
+     {
+      "request": {
+       "path": "/text"
+      }
+     },
+     {
+      "description": "no request"
+     }
+    ]
+   },
+   "note": "mixed"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario/pact-provider-state",
+   "note": "state restored"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact/verify",
+   "body": {
+    "interactions": [
+     {
+      "description": "ok json",
+      "request": {
+       "method": "GET",
+       "path": "/users/1"
+      },
+      "response": {
+       "status": 200,
+       "headers": {
+        "content-type": "application/json",
+        "X-A": [
+         "2"
+        ]
+       },
+       "body": {
+        "name": "a",
+        "id": 1
+       }
+      }
+     },
+     {
+      "description": "text ok",
+      "request": {
+       "path": "/text"
+      },
+      "response": {
+       "body": "hello world"
+      }
+     }
+    ]
+   },
+   "note": "all verified"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact/verify",
+   "note": "empty"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact/verify",
+   "body": "{bad",
+   "note": "malformed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact/verify",
+   "body": {
+    "interactions": []
+   },
+   "note": "no interactions"
+  }
+ ]
+}

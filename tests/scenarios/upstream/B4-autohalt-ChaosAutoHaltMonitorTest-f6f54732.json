@@ -1,0 +1,67 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) autohalt-ChaosAutoHaltMonitorTest-f6f54732 (conformance/harvest)",
+ "properties": {
+  "metricsEnabled": "true",
+  "chaosAutoHaltEnabled": "false",
+  "chaosAutoHaltErrorThreshold": "50",
+  "chaosAutoHaltWindowMillis": "60000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "47cf7d9c21da",
+   "note": "singletonInstanceRecordErrorIsNoOpWhenDisabled (autohalt): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorStatus": 503
+    }
+   },
+   "note": "singletonInstanceRecordErrorIsNoOpWhenDisabled (autohalt): ServiceChaosRegistry.put",
+   "case": "47cf7d9c21da"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-error",
+    "httpRequest": {
+     "path": "/harvested/autohalt/error"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1.0
+    }
+   },
+   "note": "singletonInstanceRecordErrorIsNoOpWhenDisabled (autohalt): the expectation whose chaos injects a error fault",
+   "case": "47cf7d9c21da"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "singletonInstanceRecordErrorIsNoOpWhenDisabled (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "47cf7d9c21da"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "singletonInstanceRecordErrorIsNoOpWhenDisabled (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "47cf7d9c21da"
+  }
+ ]
+}

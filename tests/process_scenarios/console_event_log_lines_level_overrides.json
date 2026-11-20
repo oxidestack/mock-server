@@ -1,0 +1,89 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"id\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"httpRequest\": {\"path\": \"/a\"}, \"httpResponse\": {\"body\": \"x\"}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/a",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/nomatch",
+        "ownHost": true,
+        "expectStatus": 404
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/verify",
+        "ownHost": true,
+        "body": "{\"httpRequest\": {\"path\": \"/a\"}, \"times\": {\"atLeast\": 1}}",
+        "expectStatus": 202
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve?type=REQUESTS",
+        "ownHost": true,
+        "body": "{\"path\": \"/a\"}",
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "body": "{\"path\": \"/a\"}",
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      " returning response:\n\n  {\n    \"body\" : \"x\"\n  }\n\n for request:",
+      "creating expectation:",
+      "cleared expectations that match:"
+    ],
+    "stdoutNotContains": [
+      "received request:",
+      " matched expectation:",
+      "didn't match expectation",
+      "no expectation for:",
+      "verifying requests that match:",
+      " found at least once",
+      "retrieved requests in json"
+    ]
+  },
+  "env": {
+    "MOCKSERVER_LOG_LEVEL_OVERRIDES": "{\"RECEIVED_REQUEST\": \"WARN\", \"MATCHING\": \"ERROR\", \"VERIFICATION\": \"WARN\"}"
+  }
+}

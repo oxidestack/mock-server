@@ -1,0 +1,103 @@
+{
+ "source": "CircularHashMapTest.shouldNotContainMoreThenMaximumNumberOfEntries, shouldCallEvictionListenerWhenEntryEvicted: the callback WebSocket client registry holds at most maxWebSocketExpectations clients; registering one more evicts the eldest and closes its channel (WebSocketClientRegistry's eviction listener). The newer client still serves its object callback, and a callback addressed to the evicted one finds no client.",
+ "properties": {
+  "maxWebSocketExpectations": "1",
+  "maxFutureTimeoutInMillis": "3000"
+ },
+ "steps": [
+  {
+   "wsOpen": "first",
+   "headers": {
+    "X-CLIENT-REGISTRATION-ID": "registry-first"
+   }
+  },
+  {
+   "wsRead": "first",
+   "note": "the client id message"
+  },
+  {
+   "wsOpen": "second",
+   "headers": {
+    "X-CLIENT-REGISTRATION-ID": "registry-second"
+   },
+   "note": "one client more than maxWebSocketExpectations"
+  },
+  {
+   "wsRead": "second",
+   "note": "the client id message"
+  },
+  {
+   "wsRead": "first",
+   "note": "the eldest client was evicted and its channel closed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/registry-second"
+    },
+    "httpResponseObjectCallback": {
+     "clientId": "registry-second"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/registry-second",
+   "async": "second",
+   "note": "answered by the second client"
+  },
+  {
+   "wsRead": "second",
+   "capture": {
+    "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+    "as": "correlation"
+   },
+   "mask": [
+    "(?<=\"WebSocketCorrelationId\" : \\[ \")[^\"]+",
+    "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+   ],
+   "note": "the request handed to the callback client"
+  },
+  {
+   "wsSend": "second",
+   "envelope": {
+    "type": "org.mockserver.model.HttpResponse",
+    "value": {
+     "statusCode": 202,
+     "headers": {
+      "WebSocketCorrelationId": [
+       "{{capture:correlation}}"
+      ]
+     },
+     "body": "from the second client"
+    }
+   }
+  },
+  {
+   "await": "second"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/registry-first"
+    },
+    "httpResponseObjectCallback": {
+     "clientId": "registry-first"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/registry-first",
+   "maxMillis": 20000,
+   "note": "the evicted client is no longer registered"
+  },
+  {
+   "wsClose": "second"
+  }
+ ]
+}

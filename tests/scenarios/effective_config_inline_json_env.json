@@ -1,0 +1,31 @@
+{
+ "source": "the same inline JSON llmBackendsConfig through the environment tier (MOCKSERVER_LLM_BACKENDS_CONFIG, passed without any shell or launcher quoting) and a header-list prometheusRemoteWriteHeaders through the system-property tier, whose value the properties file and the environment also carry (system property wins).",
+ "properties": {
+  "prometheusRemoteWriteHeaders": "Authorization=Bearer REAL-SYS-TOKEN,X-Scope-OrgID=tenant-a"
+ },
+ "env": {
+  "MOCKSERVER_LLM_BACKENDS_CONFIG": "[{\"name\":\"openai\",\"apiKey\":\"REAL-KEY-1\",\"model\":\"it's-gpt\",\"nested\":{\"token\":[\"t1\",\"t2\"]}},{\"name\":\"azure\",\"apiKey\":\"REAL-KEY-2\"}]",
+  "MOCKSERVER_PROMETHEUS_REMOTE_WRITE_HEADERS": "X-Api-Key=REAL-ENV-KEY"
+ },
+ "propertiesFile": [
+  "mockserver.prometheusRemoteWriteHeaders=X-Api-Key=REAL-FILE-KEY"
+ ],
+ "steps": [
+  {
+   "note": "the effective configuration redacts the environment-supplied JSON document field by field and keeps its source",
+   "method": "GET",
+   "path": "/mockserver/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "note": "the sibling /mockserver/configuration redacts the same values",
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  }
+ ]
+}

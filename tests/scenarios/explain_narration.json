@@ -1,0 +1,25 @@
+{
+ "source": "hand-written: ?narrate=true on PUT /mockserver/explain and explainUnmatched with llmExplainNarrationEnabled and a reachable LLM backend (the scenario's peer answers OpenAI chat completions), and the prompt the backend receives",
+ "peer": true,
+ "properties": {
+  "llmExplainNarrationEnabled": "true",
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "30000"
+ },
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/reset", "node": "peer"},
+  {"note": "the LLM: any chat completion", "method": "PUT", "path": "/mockserver/expectation", "maxMillis": 60000, "node": "peer", "body": {"id": "llm", "httpRequest": {"method": "POST", "path": "/v1/chat/completions"}, "httpResponse": {"statusCode": 200, "headers": {"content-type": ["application/json"]}, "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-narrator\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"  The request matched expectation nr-a.  \"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"}}, "mask": ["content-length: \\d+"]},
+  {"method": "PUT", "path": "/mockserver/expectation", "maxMillis": 60000, "body": {"id": "nr-a", "httpRequest": {"path": "/nr", "headers": {"Authorization": ["Bearer s3cr3t-token"]}}, "httpResponse": {"body": "a"}}, "mask": ["content-length: \\d+"]},
+  {"method": "GET", "path": "/nr", "headers": {"Authorization": "Bearer s3cr3t-token"}},
+  {"note": "a miss on the header only, whose credential values the prompt must not quote", "method": "GET", "path": "/nr", "headers": {"Authorization": "Bearer wrong-token"}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "maxMillis": 60000, "body": {"path": "/nr"}, "capture": {"bodyRegex": "\"RECEIVED_REQUEST\",\\s*\"correlationId\" : \"([^\"]+)\"", "as": "cn"}, "mask": [{"regex": "^[\\s\\S]*$", "replace": "<log entries>"}, "content-length: \\d+"]},
+  {"note": "narrated by the LLM, the facts unchanged", "method": "PUT", "path": "/mockserver/explain?narrate=TRUE&correlationId={{capture:cn}}", "compare": "json", "maxMillis": 40000, "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "narrate=false: no narration", "method": "PUT", "path": "/mockserver/explain?narrate=false&correlationId={{capture:cn}}", "compare": "json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "an explain error is not narrated", "method": "PUT", "path": "/mockserver/explain?narrate=true&correlationId=never-recorded", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"note": "explainUnmatched narrated too", "method": "PUT", "path": "/mockserver/explainUnmatched?narrate=true", "compare": "json", "maxMillis": 40000, "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "the prompts the LLM received", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "node": "peer", "body": {"path": "/v1/chat/completions"}, "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+", "\"(?:content-length|Content-Length)\" : \\[ \"\\d+\" \\]", "\"host\" : \\[ \"[0-9.]+:"]}
+ ]
+}

@@ -1,0 +1,148 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "getUsers",
+    "httpRequest": {
+     "method": "GET",
+     "path": "/users",
+     "queryStringParameters": {
+      "page": [
+       "1"
+      ]
+     },
+     "headers": {
+      "Accept": [
+       "application/json"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"users\":[]}"
+    }
+   },
+   "note": "roundTripExportThenImportYieldsMatchingExpectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "getUser",
+    "httpRequest": {
+     "method": "GET",
+     "path": "/users/\\d+",
+     "queryStringParameters": {
+      "count": [
+       {
+        "schema": {
+         "type": "integer"
+        }
+       }
+      ]
+     },
+     "headers": {
+      "X-Trace": [
+       "[0-9a-f]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   },
+   "note": "regexAndSchemaMatchersRoundTripThroughExportThenImport"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "getState",
+    "scenarioName": "pact-provider-state",
+    "scenarioState": "a user exists",
+    "httpRequest": {
+     "method": "GET",
+     "path": "/state/1"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "state"
+    }
+   },
+   "note": "providerStateRoundTripsThroughExportThenImport"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact?consumer=c&provider=p",
+   "capture": {
+    "body": true,
+    "as": "pact"
+   },
+   "note": "export"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": "{{capture:pact}}",
+   "note": "import the export"
+  },
+  {
+   "method": "GET",
+   "path": "/users?page=1",
+   "headers": {
+    "Accept": "application/json"
+   },
+   "note": "round-tripped plain expectation"
+  },
+  {
+   "method": "GET",
+   "path": "/users/42?count=7",
+   "headers": {
+    "X-Trace": "deadbeef"
+   },
+   "note": "regex path matches a numeric id"
+  },
+  {
+   "method": "GET",
+   "path": "/users/abc?count=7",
+   "headers": {
+    "X-Trace": "deadbeef"
+   },
+   "note": "regex path does not match a non-numeric id"
+  },
+  {
+   "method": "GET",
+   "path": "/state/1",
+   "note": "gated until the provider state is active"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/pact-provider-state",
+   "body": {
+    "state": "a user exists"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/state/1",
+   "note": "provider state active"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact/import?redactSensitiveData=false",
+   "body": "{{capture:pact}}",
+   "note": "the pact import endpoint takes it too"
+  }
+ ]
+}

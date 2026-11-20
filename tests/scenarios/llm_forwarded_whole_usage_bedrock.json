@@ -1,0 +1,619 @@
+{
+ "source": "hand-written (cases from upstream's HttpActionHandlerStreamedLlmUsageTest, 9.1.0): whole forwarded BEDROCK responses accounted by HttpActionHandler.emitForwardGenAiSpan (accountableOperation, isPolledCompletion, the provider clients' parseCompletionResponse), forwarded to this server's own mocks",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "BEDROCK"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-titan-embed",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/amazon.titan-embed-text-v2:0/invoke",
+      "headers": {
+       "x-case": [
+        "titan-embed"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"embedding\":[0.1,0.2],\"embeddingsByType\":{\"float\":[0.1,0.2]},\"inputTextTokenCount\":2}"
+     }
+    },
+    {
+     "id": "forward-titan-embed",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/titan-embed"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/amazon.titan-embed-text-v2:0/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "titan-embed"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-cohere-rerank",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/cohere.rerank-v3-5:0/invoke",
+      "headers": {
+       "x-case": [
+        "cohere-rerank"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "14"
+       ],
+       "X-Amzn-Bedrock-Output-Token-Count": [
+        "0"
+       ]
+      },
+      "body": "{\"id\":\"5ee5c1c8-b3e0-4b1c-9b1a-1c2f3e4d5a6b\",\"results\":[{\"index\":0,\"relevance_score\":0.9}]}"
+     }
+    },
+    {
+     "id": "forward-cohere-rerank",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/cohere-rerank"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/cohere.rerank-v3-5:0/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "cohere-rerank"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-cohere-embed",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/cohere.embed-english-v3/invoke",
+      "headers": {
+       "x-case": [
+        "cohere-embed"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "3"
+       ],
+       "X-Amzn-Bedrock-Output-Token-Count": [
+        "0"
+       ]
+      },
+      "body": "{\"embeddings\":[[0.01,-0.02]],\"id\":\"6b2c4a6e-1e9f-4f3c-9d25-4c2a1f0e8b7d\",\"response_type\":\"embeddings_floats\",\"texts\":[\"hello world\"]}"
+     }
+    },
+    {
+     "id": "forward-cohere-embed",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/cohere-embed"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/cohere.embed-english-v3/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "cohere-embed"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-agent-rerank",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/rerank",
+      "headers": {
+       "x-case": [
+        "agent-rerank"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"results\":[{\"index\":0,\"relevanceScore\":0.86}]}"
+     }
+    },
+    {
+     "id": "forward-agent-rerank",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/agent-rerank"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/rerank",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "agent-rerank"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-gpt-oss",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/openai.gpt-oss-20b-1:0/invoke",
+      "headers": {
+       "x-case": [
+        "gpt-oss"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "20"
+       ],
+       "X-Amzn-Bedrock-Output-Token-Count": [
+        "30"
+       ]
+      },
+      "body": "{\"id\":\"chatcmpl-1f2e3d4c\",\"object\":\"chat.completion\",\"created\":1754400000,\"model\":\"openai.gpt-oss-20b-1:0\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Sunny.\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":21,\"completion_tokens\":37,\"total_tokens\":58}}"
+     }
+    },
+    {
+     "id": "forward-gpt-oss",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/gpt-oss"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/openai.gpt-oss-20b-1:0/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "gpt-oss"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-titan-text",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/amazon.titan-text-express-v1/invoke",
+      "headers": {
+       "x-case": [
+        "titan-text"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"inputTextTokenCount\":11,\"results\":[{\"tokenCount\":8,\"outputText\":\"\\nParis.\",\"completionReason\":\"FINISH\"}]}"
+     }
+    },
+    {
+     "id": "forward-titan-text",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/titan-text"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/amazon.titan-text-express-v1/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "titan-text"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-llama",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/meta.llama3-70b-instruct-v1:0/invoke",
+      "headers": {
+       "x-case": [
+        "llama"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "17"
+       ],
+       "X-Amzn-Bedrock-Output-Token-Count": [
+        "8"
+       ]
+      },
+      "body": "{\"generation\":\"\\n\\nHello! How can I help?\",\"prompt_token_count\":17,\"generation_token_count\":8,\"stop_reason\":\"stop\"}"
+     }
+    },
+    {
+     "id": "forward-llama",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/llama"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/meta.llama3-70b-instruct-v1:0/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "llama"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-command-text",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/cohere.command-text-v14/invoke",
+      "headers": {
+       "x-case": [
+        "command-text"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "4"
+       ],
+       "X-Amzn-Bedrock-Output-Token-Count": [
+        "6"
+       ]
+      },
+      "body": "{\"generations\":[{\"finish_reason\":\"COMPLETE\",\"id\":\"5c4ec7a5\",\"text\":\" A customer asks for help.\"}],\"id\":\"6a1b2c3d\",\"prompt\":\"Summarize this dialogue\"}"
+     }
+    },
+    {
+     "id": "forward-command-text",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/command-text"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/cohere.command-text-v14/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "command-text"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-llama-converse",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/meta.llama3-70b-instruct-v1:0/converse",
+      "headers": {
+       "x-case": [
+        "llama-converse"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"output\":{\"message\":{\"role\":\"assistant\",\"content\":[{\"text\":\"Hello!\"}]}},\"stopReason\":\"end_turn\",\"usage\":{\"inputTokens\":10,\"outputTokens\":3,\"totalTokens\":13},\"metrics\":{\"latencyMs\":120}}"
+     }
+    },
+    {
+     "id": "forward-llama-converse",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/llama-converse"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/meta.llama3-70b-instruct-v1:0/converse",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "llama-converse"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-claude-converse",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/us.anthropic.claude-sonnet-4-5-20250929-v1%3A0/converse",
+      "headers": {
+       "x-case": [
+        "claude-converse"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"output\":{\"message\":{\"role\":\"assistant\",\"content\":[{\"text\":\"Hi there\"}]}},\"stopReason\":\"end_turn\",\"usage\":{\"inputTokens\":25,\"outputTokens\":15,\"totalTokens\":40},\"metrics\":{\"latencyMs\":312}}"
+     }
+    },
+    {
+     "id": "forward-claude-converse",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/claude-converse"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/us.anthropic.claude-sonnet-4-5-20250929-v1%3A0/converse",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "claude-converse"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-converse-cached",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/anthropic.claude-3-5-haiku-20241022-v1:0/converse",
+      "headers": {
+       "x-case": [
+        "converse-cached"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"output\":{\"message\":{\"role\":\"assistant\",\"content\":[{\"text\":\"Hi\"}]}},\"stopReason\":\"end_turn\",\"usage\":{\"inputTokens\":40,\"outputTokens\":2,\"cacheReadInputTokens\":30,\"cacheWriteInputTokens\":4}}"
+     }
+    },
+    {
+     "id": "forward-converse-cached",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/converse-cached"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/anthropic.claude-3-5-haiku-20241022-v1:0/converse",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "converse-cached"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "Titan embeddings report their input tokens in the body: 2 in",
+   "method": "POST",
+   "path": "/client/titan-embed",
+   "body": "{\"inputText\":\"Hello\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a rerank model's body has no usage: counted from the InvokeModel token-count headers, 14 in",
+   "method": "POST",
+   "path": "/client/cohere-rerank",
+   "body": "{\"query\":\"What is the capital?\",\"documents\":[\"Paris\",\"Berlin\"],\"api_version\":2}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "Cohere embeddings on Bedrock: 3 in from the headers",
+   "method": "POST",
+   "path": "/client/cohere-embed",
+   "body": "{\"texts\":[\"hello world\"],\"input_type\":\"search_document\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "an Agent Runtime rerank names its model only in its body",
+   "method": "POST",
+   "path": "/client/agent-rerank",
+   "body": "{\"queries\":[{\"type\":\"TEXT\",\"textQuery\":{\"text\":\"What is the capital?\"}}],\"rerankingConfiguration\":{\"type\":\"BEDROCK_RERANKING_MODEL\",\"bedrockRerankingConfiguration\":{\"numberOfResults\":1,\"modelConfiguration\":{\"modelArn\":\"arn:aws:bedrock:us-west-2::foundation-model/amazon.rerank-v1:0\"}}},\"sources\":[{\"type\":\"INLINE\",\"inlineDocumentSource\":{\"type\":\"TEXT\",\"textDocument\":{\"text\":\"Paris\"}}}]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "an OpenAI usage object in the body wins over the headers: 21 in, 37 out",
+   "method": "POST",
+   "path": "/client/gpt-oss",
+   "body": "{\"messages\":[{\"role\":\"user\",\"content\":\"What is the weather like today?\"}],\"max_completion_tokens\":150}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "Titan Text without headers: 11 in, 8 out from inputTextTokenCount and results[].tokenCount",
+   "method": "POST",
+   "path": "/client/titan-text",
+   "body": "{\"inputText\":\"User: What is the capital of France?\\nBot:\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "Llama on InvokeModel: 17 in, 8 out from the headers",
+   "method": "POST",
+   "path": "/client/llama",
+   "body": "{\"prompt\":\"Hello\",\"max_gen_len\":512}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "Cohere Command Text: 4 in, 6 out from the headers",
+   "method": "POST",
+   "path": "/client/command-text",
+   "body": "{\"prompt\":\"Summarize this dialogue\",\"max_tokens\":200}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a Converse response: 10 in, 3 out from its camelCase usage, the model from the path",
+   "method": "POST",
+   "path": "/client/llama-converse",
+   "body": "{\"messages\":[{\"role\":\"user\",\"content\":[{\"text\":\"Hello\"}]}]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a cross-Region inference profile in the path is priced as its foundation model: 25 in, 15 out",
+   "method": "POST",
+   "path": "/client/claude-converse",
+   "body": "{\"messages\":[{\"role\":\"user\",\"content\":[{\"text\":\"Hello\"}]}]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a Converse response with cache counts: 40 in, 2 out",
+   "method": "POST",
+   "path": "/client/converse-cached",
+   "body": "{\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

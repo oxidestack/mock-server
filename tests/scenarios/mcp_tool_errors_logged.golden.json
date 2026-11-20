@@ -1,0 +1,82 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 200,
+      "headers": [
+        "content-length: 2234",
+        "content-type: application/json",
+        "mcp-session-id: <uuid>"
+      ],
+      "body": "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{\"tools\":{\"listChanged\":false},\"resources\":{\"subscribe\":false,\"listChanged\":false},\"prompts\":{\"listChanged\":false},\"sampling\":{}},\"serverInfo\":{\"name\":\"MockServer\",\"version\":\"9.2.0\"},\"instructions\":\"MockServer is an HTTP(S) mock server and proxy for testing. Use these tools to mock APIs, debug failing requests, and verify implementations:\\n- Mock APIs: 'create_expectation', 'create_expectation_from_openapi', and 'create_expectations_from_recorded_traffic' (turn traffic already recorded via the proxy into mocks).\\n- Debug a request that did not match: call 'explain_unmatched_requests' after a failed test run to see, for each request that hit the server, the closest expectations ranked by similarity with field-level diffs and a remediation hint — no need to reconstruct the request. 'debug_request_mismatch' does the same for a request you supply. 'explain_request' takes one received request's correlation id (from 'retrieve_logs') and says which expectation serves it now and why each one ahead of it lost; 'diagnose_config' shows which settings are in effect and where they came from. 'suggest_expectation_fix' proposes a guarded JSON patch for each close expectation; 'lint_expectations' finds expectations that can never match; 'explain_forward_failure' says why a forward or proxied request got a 502; 'test_template' dry-runs a response or forward template.\\n- Verify an implementation: 'verify_request' / 'verify_request_sequence' check requests were made; 'verify_traffic_against_openapi' checks recorded traffic conforms to an OpenAPI contract; 'run_contract_test' sends spec-derived example requests to a running service and checks the responses; 'run_resiliency_test' sends malformed and boundary-case requests and reports which inputs the service failed to handle gracefully.\\n- Deterministic LLM testing: 'record_llm_fixtures' snapshots LLM/MCP traffic recorded through the proxy into a committable, secret-free fixture file; 'load_expectations_from_file' replays it.\\nReadable resources expose live state: mockserver://expectations, mockserver://requests, mockserver://logs, mockserver://unmatched, mockserver://configuration.\"}}"
+    },
+    {
+      "status": 202,
+      "headers": [
+        "content-length: 0"
+      ],
+      "body": ""
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/api/answer\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"x-up\" : [ \"1\" ],\n      \"Set-Cookie\" : [ \"a=b\" ]\n    },\n    \"body\" : \"it is sunny\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/api/events\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"content-type\" : [ \"text/event-stream\" ]\n    },\n    \"body\" : \"event: a\\ndata: {\\\"token\\\":\\\"t1\\\",\\\"x\\\":1}\\n\\ndata: two\\n\\n\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestModifier\" : {\n      \"path\" : {\n        \"regex\" : \"^/p\"\n      }\n    },\n    \"requestOverride\" : {\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/p/.*\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11",
+        "set-cookie: a=b",
+        "x-up: 1"
+      ],
+      "body": "it is sunny"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-length: 241",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":3,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"Failed to record LLM fixtures\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"Failed to record LLM fixtures\"},\"isError\":true}}",
+      "note": "writing over a directory fails: logged as an MCP tool error"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-length: 257",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":4,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"Failed to load expectations from file\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"Failed to load expectations from file\"},\"isError\":true}}",
+      "note": "reading a directory fails: logged as an MCP tool error"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 429",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - resetting all expectations and request logs\n------------------------------------\n<timestamp> - retrieved recorded expectations in json that match:\n\n  { }\n\n------------------------------------\n<timestamp> - MCP tool error: \n\n  Failed to record LLM fixtures\n\n------------------------------------\n<timestamp> - MCP tool error: \n\n  Failed to load expectations from file\n\n",
+      "note": "the tool errors in the event log (entries without a request match any filter)"
+    }
+  ]
+}

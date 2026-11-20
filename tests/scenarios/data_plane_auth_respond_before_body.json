@@ -1,0 +1,132 @@
+{
+ "source": "upstream 6dcc66b58, DataPlaneAuthenticationControlPlanePathIntegrationTest.shouldNotChangeRespondBeforeBodyStateForRequestWithoutCredentials. EarlyMatchingHandler checks data-plane credentials before firstMatchingEarlyExpectation, which uses up Times and moves scenarios; a request without them falls through to HttpRequestHandler's gate and its 401.",
+ "properties": {
+  "dataPlaneAuthenticationRequired": "true",
+  "dataPlaneBearerAuthenticationToken": "bearer-token-123",
+  "attemptToProxyIfNoMatchingExpectation": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {},
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "catch-all-body"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "a catch-all expectation"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/early-once",
+      "respondBeforeBody": true
+     },
+     "httpResponse": {
+      "body": "early-once-body"
+     },
+     "priority": 10,
+     "times": {
+      "remainingTimes": 1,
+      "unlimited": false
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/early-scenario",
+      "respondBeforeBody": true
+     },
+     "httpResponse": {
+      "body": "early-scenario-body"
+     },
+     "priority": 10,
+     "scenarioName": "early-auth",
+     "scenarioState": "Started",
+     "newScenarioState": "Advanced"
+    },
+    {
+     "httpRequest": {
+      "path": "/scenario-state"
+     },
+     "httpResponse": {
+      "body": "state-is-Advanced"
+     },
+     "priority": 10,
+     "scenarioName": "early-auth",
+     "scenarioState": "Advanced"
+    }
+   ],
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "respondBeforeBody expectations with Times and a scenario"
+  },
+  {
+   "method": "GET",
+   "path": "/early-once",
+   "note": "refused without credentials"
+  },
+  {
+   "method": "GET",
+   "path": "/early-scenario",
+   "note": "refused without credentials"
+  },
+  {
+   "method": "GET",
+   "path": "/early-once",
+   "headers": {
+    "Authorization": "Bearer bearer-token-123"
+   },
+   "note": "the Times.once unit is still there"
+  },
+  {
+   "method": "GET",
+   "path": "/early-once",
+   "headers": {
+    "Authorization": "Bearer bearer-token-123"
+   },
+   "note": "now used up: the catch-all"
+  },
+  {
+   "method": "GET",
+   "path": "/scenario-state",
+   "headers": {
+    "Authorization": "Bearer bearer-token-123"
+   },
+   "note": "the scenario is still Started: the catch-all"
+  },
+  {
+   "method": "GET",
+   "path": "/early-scenario",
+   "headers": {
+    "Authorization": "Bearer bearer-token-123"
+   },
+   "note": "answered early with credentials, and moves the scenario"
+  },
+  {
+   "method": "GET",
+   "path": "/scenario-state",
+   "headers": {
+    "Authorization": "Bearer bearer-token-123"
+   },
+   "note": "now Advanced"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "refusals logged, no early evaluation of a refused request",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}",
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  }
+ ]
+}

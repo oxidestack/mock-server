@@ -1,0 +1,209 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"target-ok\", \"httpRequest\": {\"path\": \"/fb/ok\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"X-Upstream\": [\"ok\"]}, \"body\": \"upstream ok\"}}, {\"id\": \"target-503\", \"httpRequest\": {\"path\": \"/fb/(503|custom-503)\"}, \"httpResponse\": {\"statusCode\": 503, \"body\": \"upstream down\"}}, {\"id\": \"target-404\", \"httpRequest\": {\"path\": \"/fb/(404|custom-404)\"}, \"httpResponse\": {\"statusCode\": 404, \"body\": \"upstream missing\"}}, {\"id\": \"fwf-ok\", \"httpRequest\": {\"path\": \"/fb/ok\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"statusCode\": 203, \"headers\": {\"X-Fallback\": [\"yes\"]}, \"body\": \"fallback for /fb/ok\"}}}, {\"id\": \"fwf-503\", \"httpRequest\": {\"path\": \"/fb/503\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"statusCode\": 203, \"headers\": {\"X-Fallback\": [\"yes\"]}, \"body\": \"fallback for /fb/503\"}}}, {\"id\": \"fwf-404\", \"httpRequest\": {\"path\": \"/fb/404\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"statusCode\": 203, \"headers\": {\"X-Fallback\": [\"yes\"]}, \"body\": \"fallback for /fb/404\"}}}, {\"id\": \"fwf-custom-404\", \"httpRequest\": {\"path\": \"/fb/custom-404\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"statusCode\": 203, \"headers\": {\"X-Fallback\": [\"yes\"]}, \"body\": \"fallback for /fb/custom-404\"}, \"fallbackOnStatusCodes\": [404, 429]}}, {\"id\": \"fwf-custom-503\", \"httpRequest\": {\"path\": \"/fb/custom-503\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"statusCode\": 203, \"headers\": {\"X-Fallback\": [\"yes\"]}, \"body\": \"fallback for /fb/custom-503\"}, \"fallbackOnStatusCodes\": [404, 429]}}, {\"id\": \"fwf-refused\", \"httpRequest\": {\"path\": \"/fb/refused\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{deadport}}}, \"fallbackResponse\": {\"statusCode\": 203, \"headers\": {\"X-Fallback\": [\"yes\"]}, \"body\": \"fallback for /fb/refused\"}}}, {\"id\": \"fwf-refused-no-timeout\", \"httpRequest\": {\"path\": \"/fb/refused-strict\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{deadport}}}, \"fallbackResponse\": {\"statusCode\": 203, \"headers\": {\"X-Fallback\": [\"yes\"]}, \"body\": \"fallback for /fb/refused-strict\"}, \"fallbackOnTimeout\": false}}, {\"id\": \"fwf-json\", \"httpRequest\": {\"path\": \"/fb/json\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{deadport}}}, \"fallbackResponse\": {\"body\": {\"json\": {\"cached\": true}}}}}]"
+  },
+  {
+   "note": "upstream 200: not triggered",
+   "method": "GET",
+   "path": "/fb/ok",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "upstream 503: default 5xx fallback",
+   "method": "GET",
+   "path": "/fb/503",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "upstream 404: not triggered",
+   "method": "GET",
+   "path": "/fb/404",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "404 in fallbackOnStatusCodes",
+   "method": "GET",
+   "path": "/fb/custom-404",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "503 not in fallbackOnStatusCodes",
+   "method": "GET",
+   "path": "/fb/custom-503",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "connection refused: fallback",
+   "method": "GET",
+   "path": "/fb/refused",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "connection refused, fallbackOnTimeout false: 502",
+   "method": "GET",
+   "path": "/fb/refused-strict",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "JSON fallback body",
+   "method": "GET",
+   "path": "/fb/json",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "active expectations",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/fb/.*",
+    "headers": {
+     "Host": [
+      "front.example"
+     ]
+    }
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "as java",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVA",
+   "body": {
+    "path": "/fb/(ok|refused)",
+    "headers": {
+     "Host": [
+      "front.example"
+     ]
+    }
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "requests",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/fb/.*"
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "exchanges",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/fb/.*"
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "recorded expectations",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/fb/.*"
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "verify by request",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/fb/503",
+     "headers": {
+      "Host": [
+       "front.example"
+      ]
+     }
+    },
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "verify by request fails",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/fb/refused"
+    },
+    "times": {
+     "atLeast": 2
+    }
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "verify by expectation id",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "expectationId": {
+     "id": "fwf-503"
+    },
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "verify by expectation id fails",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "expectationId": {
+     "id": "fwf-refused"
+    },
+    "times": {
+     "atLeast": 3
+    }
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  }
+ ]
+}

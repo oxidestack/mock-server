@@ -1,0 +1,67 @@
+{
+ "source": "retrieve?type=RECORDED_EXPECTATIONS under maxLoggedBodyBytes. Probed against the oracle 2026-10-03: the JSON and JAVA forms keep both bodies whole (JSON request body typed, 33/25 bytes), REQUEST_RESPONSES shows them cut (BINARY, x-mockserver-body-truncated), and the LOG_ENTRIES form cuts the FORWARDED_REQUEST entry's httpRequest/httpResponse while its expectation, message and arguments stay whole.",
+ "properties": {
+  "maxLoggedBodyBytes": "5"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target.*\"}, \"httpResponse\": {\"statusCode\": 200, \"body\": \"response body from target\"}}, {\"httpRequest\": {\"path\": \"/target/fwd\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}}]",
+   "maxMillis": 90000
+  },
+  {
+   "method": "POST",
+   "path": "/target/fwd",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"a\": \"a long json request body\"}",
+   "maxMillis": 90000,
+   "note": "the oracle's first body-truncating request on a fresh JVM is slow"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "note": "bodies whole"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=JAVA"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "mask": [
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "[0-9a-f]{5}(?=\\.\\.\\. \\(31 more characters not logged\\))",
+     "replace": "<uuid prefix>",
+     "reason": "the recorded expectation's random id, cut to maxLoggedBodyBytes (5) characters where it is quoted as a text argument"
+    }
+   ]
+  }
+ ]
+}

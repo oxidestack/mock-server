@@ -1,0 +1,34 @@
+{
+ "source": "9.1.0: a TLS binary client is relayed on one upstream connection: tunnelProxy(secure) is forwardHttpsProxy, so the relay opens a CONNECT through it (here the peer node) to the binary target (the peer itself), then TLS inside the tunnel; the peer reads the decrypted bytes as HTTP and answers with a 400, which goes back as the binary response (its binary expectation is not reached, as in binary_relay_tunnel_https); socketConnectionTimeoutInMillis bounds the first handshake, whose certificate generation can take over the default 20 s on a loaded machine",
+ "peer": true,
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "proxyRemoteHost": "{{peerhost}}",
+  "proxyRemotePort": "{{peerport}}",
+  "forwardHttpsProxy": "{{peerhost}}:{{peerport}}"
+ },
+ "steps": [
+  {"node": "peer", "method": "PUT", "path": "/mockserver/reset", "note": "the proxy's startup entries are not the point"},
+  {"node": "peer", "method": "PUT", "path": "/mockserver/expectation", "maxMillis": 60000, "body": {"httpRequest": {"binaryData": "CQgHBgUEAwIBAA=="}, "binaryResponse": {"binaryData": "AQIDBA=="}}, "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"tcp": ["CQgHBgUEAwIBAA=="], "tls": true, "awaitBytes": 66, "note": "one message on a TLS connection, relayed through a CONNECT tunnel over TLS to the peer, which reads the bytes as HTTP, answers with a 400 and closes; the relay's upstream connect and handshake can take longer than a second in the oracle, so a second message would race the answer (9.1.0)"},
+  {"sleepMillis": 500},
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+", "replace": "/<client>", "reason": "the binary client's address: the Docker gateway's when recorded, loopback on replay"},
+    {"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "replace": "/<peer>", "reason": "the peer's address: its container's when recorded, loopback on replay"}
+   ],
+   "compare": "unordered",
+   "note": "what the per-message sends logged"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [{"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+", "replace": "/<client>", "reason": "the sender's address as the peer sees it"}],
+   "compare": "unordered",
+   "note": "what the proxy and TLS target logged: one CONNECT per message"
+  }
+ ]
+}

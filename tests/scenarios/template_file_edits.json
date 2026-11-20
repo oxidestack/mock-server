@@ -1,0 +1,110 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "note": "TemplateFileContentCacheTest.shouldReadFileContent: the template file",
+   "writeFile": {
+    "path": "{{scratch}}/template_file_edits.vm",
+    "content": "{ \"statusCode\": 200, \"body\": \"one: $request.path\" }"
+   }
+  },
+  {
+   "sleepMillis": 2500,
+   "note": "the bind mount shows the oracle container a host-side file change only after its attribute cache expires"
+  },
+  {
+   "note": "create: a templateFile expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/edited"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "templateFile": "{{scratch}}/template_file_edits.vm"
+    },
+    "times": {
+     "unlimited": true
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edited",
+   "note": "request: the file's content"
+  },
+  {
+   "method": "GET",
+   "path": "/edited",
+   "note": "request again: unchanged"
+  },
+  {
+   "note": "shouldPickUpSameSizeSameSecondEdit: the same size, rewritten at once",
+   "writeFile": {
+    "path": "{{scratch}}/template_file_edits.vm",
+    "content": "{ \"statusCode\": 200, \"body\": \"two: $request.path\" }"
+   }
+  },
+  {
+   "sleepMillis": 2500,
+   "note": "the bind mount shows the oracle container a host-side file change only after its attribute cache expires"
+  },
+  {
+   "method": "GET",
+   "path": "/edited",
+   "note": "request: the edit is read"
+  },
+  {
+   "note": "shouldPickUpEditOnNextRequest: another size",
+   "writeFile": {
+    "path": "{{scratch}}/template_file_edits.vm",
+    "content": "{ \"statusCode\": 201, \"body\": \"three, longer: $request.path\" }"
+   }
+  },
+  {
+   "sleepMillis": 2500,
+   "note": "the bind mount shows the oracle container a host-side file change only after its attribute cache expires"
+  },
+  {
+   "method": "GET",
+   "path": "/edited",
+   "note": "request: the edit is read"
+  },
+  {
+   "note": "shouldThrowSameAsUncachedWhenCachedFileDeleted",
+   "deleteFile": "{{scratch}}/template_file_edits.vm"
+  },
+  {
+   "sleepMillis": 2500,
+   "note": "the bind mount shows the oracle container a host-side file change only after its attribute cache expires"
+  },
+  {
+   "method": "GET",
+   "path": "/edited",
+   "note": "request: the file is gone, as an uncached read"
+  },
+  {
+   "note": "the template file back",
+   "writeFile": {
+    "path": "{{scratch}}/template_file_edits.vm",
+    "content": "{ \"statusCode\": 200, \"body\": \"back: $request.path\" }"
+   }
+  },
+  {
+   "sleepMillis": 2500,
+   "note": "the bind mount shows the oracle container a host-side file change only after its attribute cache expires"
+  },
+  {
+   "method": "GET",
+   "path": "/edited",
+   "note": "request: read again"
+  },
+  {
+   "note": "clean up",
+   "deleteFile": "{{scratch}}/template_file_edits.vm"
+  }
+ ]
+}

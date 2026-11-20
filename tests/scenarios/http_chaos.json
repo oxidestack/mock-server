@@ -1,0 +1,554 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/err"
+    },
+    "httpResponse": {
+     "body": "fine"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "retryAfter": "7",
+     "errorProbability": 1.0,
+     "latency": {
+      "timeUnit": "MILLISECONDS",
+      "value": 5
+     }
+    },
+    "id": "err"
+   },
+   "note": "error profile echoed"
+  },
+  {
+   "note": "error injected",
+   "method": "GET",
+   "path": "/err"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/trunc"
+    },
+    "httpResponse": {
+     "body": "0123456789"
+    },
+    "chaos": {
+     "truncateBodyAtFraction": 0.55
+    }
+   },
+   "note": "truncate"
+  },
+  {
+   "note": "truncated",
+   "method": "GET",
+   "path": "/trunc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/malformed"
+    },
+    "httpResponse": {
+     "body": {
+      "type": "JSON",
+      "json": {
+       "a": 1
+      }
+     }
+    },
+    "chaos": {
+     "malformedBody": true
+    }
+   }
+  },
+  {
+   "note": "malformed",
+   "method": "GET",
+   "path": "/malformed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/gql"
+    },
+    "httpResponse": {
+     "statusCode": 500,
+     "body": "x"
+    },
+    "chaos": {
+     "graphqlErrors": true,
+     "graphqlErrorMessage": "boom \"q\"",
+     "graphqlErrorCode": "INTERNAL"
+    }
+   }
+  },
+  {
+   "note": "graphql",
+   "method": "GET",
+   "path": "/gql"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/gqlkeep"
+    },
+    "httpResponse": {
+     "body": {
+      "type": "JSON",
+      "json": {
+       "user": {
+        "id": 1
+       }
+      }
+     }
+    },
+    "chaos": {
+     "graphqlErrors": true,
+     "graphqlNullifyData": false,
+     "truncateBodyAtFraction": 0.1
+    }
+   }
+  },
+  {
+   "note": "graphql keeps data, no truncate",
+   "method": "GET",
+   "path": "/gqlkeep"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/quota"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "quotaName": "q1",
+     "quotaLimit": 1,
+     "quotaWindowMillis": 600000,
+     "retryAfter": "30"
+    }
+   }
+  },
+  {
+   "note": "quota first",
+   "method": "GET",
+   "path": "/quota"
+  },
+  {
+   "note": "quota exceeded",
+   "method": "GET",
+   "path": "/quota"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/window"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": 500,
+     "succeedFirst": 1,
+     "failRequestCount": 1
+    }
+   }
+  },
+  {
+   "note": "window 1",
+   "method": "GET",
+   "path": "/window"
+  },
+  {
+   "note": "window 2",
+   "method": "GET",
+   "path": "/window"
+  },
+  {
+   "note": "window 3",
+   "method": "GET",
+   "path": "/window"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/seed1"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": 502,
+     "errorProbability": 0.5,
+     "seed": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/seed2"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": 502,
+     "errorProbability": 0.5,
+     "seed": 2
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/seed3"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": 502,
+     "errorProbability": 0.5,
+     "seed": 42
+    }
+   }
+  },
+  {
+   "note": "seed 1",
+   "method": "GET",
+   "path": "/seed1"
+  },
+  {
+   "note": "seed 2",
+   "method": "GET",
+   "path": "/seed2"
+  },
+  {
+   "note": "seed 42",
+   "method": "GET",
+   "path": "/seed3"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/never"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": 500,
+     "errorProbability": 0
+    }
+   }
+  },
+  {
+   "note": "probability 0",
+   "method": "GET",
+   "path": "/never"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/later"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": 500,
+     "outageAfterMillis": 600000
+    }
+   }
+  },
+  {
+   "note": "outage not started",
+   "method": "GET",
+   "path": "/later"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/ramp"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": 500,
+     "errorProbability": 1,
+     "degradationRampMillis": 600000
+    }
+   }
+  },
+  {
+   "note": "ramp starts at zero",
+   "method": "GET",
+   "path": "/ramp"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/slow"
+    },
+    "httpResponse": {
+     "body": "abcdefgh"
+    },
+    "chaos": {
+     "slowResponseChunkSize": 3,
+     "slowResponseChunkDelay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1
+     }
+    }
+   }
+  },
+  {
+   "note": "slow dribble",
+   "method": "GET",
+   "path": "/slow"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/drop"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "dropConnectionProbability": 1.0
+    }
+   }
+  },
+  {
+   "note": "drop",
+   "method": "GET",
+   "path": "/drop"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": 700
+    }
+   },
+   "note": "errorStatus out of range"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorProbability": 2
+    }
+   },
+   "note": "probability out of range"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "failRequestCount": 0
+    }
+   },
+   "note": "failRequestCount out of range"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "quotaErrorStatus": 42
+    }
+   },
+   "note": "quotaErrorStatus out of range"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "slowResponseChunkSize": 0,
+     "errorStatus": 99
+    }
+   },
+   "note": "two violations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {
+     "body": "ok"
+    },
+    "chaos": {
+     "errorStatus": "abc"
+    }
+   },
+   "note": "wrong type"
+  },
+  {
+   "note": "retrieve",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/err"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/trunc"
+   },
+   "mask": [
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/err"
+   },
+   "mask": [
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/malformed"
+   },
+   "mask": [
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/gql"
+   },
+   "mask": [
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/quota"
+   },
+   "mask": [
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/slow"
+   },
+   "mask": [
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/drop"
+   },
+   "mask": [
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/window"
+   },
+   "mask": [
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}, "\"totalTimeInMillis\" : \\d+"], "body": {"path": "/window"}}
+]
+}

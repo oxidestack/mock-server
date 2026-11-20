@@ -1,0 +1,35 @@
+{
+  "source": "Shenandoah aligns the ceiling to its region size (a 2048th of the heap, a power of two within 256 KiB-32 MiB), 4 MiB for the 12000001k ceiling, with no 2 MiB floor.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-XX:+UseShenandoahGC -Xmx12000001k"
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "compareBody": "configuration"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

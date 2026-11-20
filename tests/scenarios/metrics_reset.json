@@ -1,0 +1,10 @@
+{"properties": {"metricsEnabled": "true"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": "[{\"httpRequest\": {\"path\": \"/target.*\"}, \"httpResponse\": {\"body\": \"from target\"}}, {\"httpRequest\": {\"path\": \"/target/fwd\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}}]"},
+  {"note": "forward expectation matched, then a response expectation matched by the forwarded request", "method": "GET", "path": "/target/fwd"},
+  {"note": "not matched", "method": "GET", "path": "/nothing"},
+  {"note": "the counts before the reset", "method": "PUT", "path": "/mockserver/retrieve?type=METRICS"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"note": "clearRequestAndExpectationMetrics zeroes three counts only: FORWARD_EXPECTATIONS_MATCHED_COUNT survives a reset", "method": "PUT", "path": "/mockserver/retrieve?type=METRICS"}
+ ]
+}

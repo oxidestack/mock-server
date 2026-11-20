@@ -1,0 +1,27 @@
+{"source": "MetricsTest forwardRequestsCounterLabelsByHostAndStatusClass, forwardUpstreamProtocolCounterLabelsByHostAndProtocol, registersSlowRequestCounter: forwards answered 2xx and 5xx, two upstream host labels, an HTTP/2 upstream connection, a forward that gets no answer, and one slower than slowRequestThresholdMillis The threshold is 2500 ms and the slow upstream answers after 3000 ms: a fresh oracle's first TLS (HTTP/2) forward took over 1 s in the 9.1.0 recordings and counted as a second slow request.",
+ "properties": {"metricsEnabled": "true", "slowRequestThresholdMillis": "2500", "soBacklog": "2048"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+   {"httpRequest": {"path": "/upstream/ok"}, "httpResponse": {"body": "ok"}},
+   {"httpRequest": {"path": "/upstream/bad-gateway"}, "httpResponse": {"statusCode": 502, "body": "bad gateway"}},
+   {"httpRequest": {"path": "/upstream/slow"}, "httpResponse": {"body": "slow", "delay": {"timeUnit": "MILLISECONDS", "value": 3000}}},
+   {"httpRequest": {"path": "/fwd/ok"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/upstream/ok", "headers": {"Host": ["localhost:{{port}}"]}}}},
+   {"httpRequest": {"path": "/fwd/bad-gateway"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/upstream/bad-gateway", "headers": {"Host": ["localhost:{{port}}"]}}}},
+   {"httpRequest": {"path": "/fwd/ip"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/upstream/ok", "headers": {"Host": ["127.0.0.1:{{port}}"]}}}},
+   {"httpRequest": {"path": "/fwd/slow"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/upstream/slow", "headers": {"Host": ["localhost:{{port}}"]}}}},
+   {"httpRequest": {"path": "/fwd/h2"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/upstream/ok", "secure": true, "protocol": "HTTP_2", "headers": {"Host": ["localhost:{{port}}"]}}}},
+   {"httpRequest": {"path": "/fwd/dead"}, "httpForward": {"host": "localhost", "port": "{{deadport}}"}}
+  ]},
+  {"method": "GET", "path": "/fwd/ok"},
+  {"method": "GET", "path": "/fwd/ok"},
+  {"method": "GET", "path": "/fwd/bad-gateway"},
+  {"method": "GET", "path": "/fwd/ip"},
+  {"method": "GET", "path": "/fwd/slow"},
+  {"method": "GET", "path": "/fwd/h2"},
+  {"method": "GET", "path": "/fwd/dead"},
+  {"note": "forward, slow-request and backlog series", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?(?:mock_server_forward_request|mock_server_forward_upstream|mock_server_slow_requests|mock_server_accept_queue_backlog_configured))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   {"regex": "(_seconds_bucket\\{[^}]*\\}|_seconds_sum(\\{[^}]*\\})?) [0-9.E-]+", "replace": "${1} <n>", "reason": "latencies"}
+  ]}
+ ]
+}

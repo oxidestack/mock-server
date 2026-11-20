@@ -1,0 +1,401 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "five expectations",
+   "body": [
+    {
+     "id": "k-a",
+     "httpRequest": {
+      "path": "/a"
+     },
+     "httpResponse": {
+      "body": "a"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "n": 1
+     }
+    },
+    {
+     "id": "k-b",
+     "httpRequest": {
+      "path": "/b"
+     },
+     "httpResponse": {
+      "body": "b"
+     },
+     "metadata": {
+      "owner": "team-a"
+     }
+    },
+    {
+     "id": "k-c",
+     "httpRequest": {
+      "path": "/c"
+     },
+     "httpResponse": {
+      "body": "c"
+     },
+     "metadata": {
+      "owner": "team-b"
+     },
+     "namespace": "ns1"
+    },
+    {
+     "id": "k-d",
+     "httpRequest": {
+      "path": "/d"
+     },
+     "httpResponse": {
+      "body": "d"
+     }
+    },
+    {
+     "id": "k-e",
+     "httpRequest": {
+      "path": "/e"
+     },
+     "httpResponse": {
+      "body": "e"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "tags": [
+       "x"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/b",
+   "note": "k-b matched once"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey=zzz",
+   "note": "nothing to clear: no log entry"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey=owner&metadataValue=team-a&unmatched=true",
+   "note": "unmatched and metadata: k-a and k-e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=logs",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "k-a back, k-d again",
+   "body": [
+    {
+     "id": "k-a",
+     "httpRequest": {
+      "path": "/a"
+     },
+     "httpResponse": {
+      "body": "a"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "n": 1
+     }
+    },
+    {
+     "id": "k-d",
+     "httpRequest": {
+      "path": "/d"
+     },
+     "httpResponse": {
+      "body": "d"
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataJsonPath=%24.owner&namespace=ns1",
+   "note": "other namespace clears nothing"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey=owner&metadataValue=team-b&namespace=ns1",
+   "note": "namespace and metadata: k-c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey=owner",
+   "note": "matcher and metadata: k-b only",
+   "body": {
+    "path": "/b"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey=owner",
+   "note": "id and metadata",
+   "body": {
+    "id": "k-a"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "all back",
+   "body": [
+    {
+     "id": "k-a",
+     "httpRequest": {
+      "path": "/a"
+     },
+     "httpResponse": {
+      "body": "a"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "n": 1
+     }
+    },
+    {
+     "id": "k-b",
+     "httpRequest": {
+      "path": "/b"
+     },
+     "httpResponse": {
+      "body": "b"
+     },
+     "metadata": {
+      "owner": "team-a"
+     }
+    },
+    {
+     "id": "k-c",
+     "httpRequest": {
+      "path": "/c"
+     },
+     "httpResponse": {
+      "body": "c"
+     },
+     "metadata": {
+      "owner": "team-b"
+     },
+     "namespace": "ns1"
+    },
+    {
+     "id": "k-d",
+     "httpRequest": {
+      "path": "/d"
+     },
+     "httpResponse": {
+      "body": "d"
+     }
+    },
+    {
+     "id": "k-e",
+     "httpRequest": {
+      "path": "/e"
+     },
+     "httpResponse": {
+      "body": "e"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "tags": [
+       "x"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=expectations&metadataKey=n&metadataJsonPath=%24.n",
+   "note": "type expectations, key and path"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=all&unmatched=true",
+   "note": "type all, unmatched"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=logs",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "all back for the errors",
+   "body": [
+    {
+     "id": "k-a",
+     "httpRequest": {
+      "path": "/a"
+     },
+     "httpResponse": {
+      "body": "a"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "n": 1
+     }
+    },
+    {
+     "id": "k-b",
+     "httpRequest": {
+      "path": "/b"
+     },
+     "httpResponse": {
+      "body": "b"
+     },
+     "metadata": {
+      "owner": "team-a"
+     }
+    },
+    {
+     "id": "k-c",
+     "httpRequest": {
+      "path": "/c"
+     },
+     "httpResponse": {
+      "body": "c"
+     },
+     "metadata": {
+      "owner": "team-b"
+     },
+     "namespace": "ns1"
+    },
+    {
+     "id": "k-d",
+     "httpRequest": {
+      "path": "/d"
+     },
+     "httpResponse": {
+      "body": "d"
+     }
+    },
+    {
+     "id": "k-e",
+     "httpRequest": {
+      "path": "/e"
+     },
+     "httpResponse": {
+      "body": "e"
+     },
+     "metadata": {
+      "owner": "team-a",
+      "tags": [
+       "x"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?namespace=",
+   "note": "blank namespace"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?namespace=%20%20"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?unmatched=false"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?limit=1&unmatched=true"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?offset=0&metadataKey=owner"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?limit=1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadata_key=owner"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey=a&metadataKey=b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataValue=x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey="
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?unmatched=x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?%"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey=%FF"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=log&metadataKey=owner"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=bogus&metadataKey=owner"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=bogus",
+   "note": "an invalid type without a filter"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?metadataKey=owner",
+   "note": "a body that is no matcher",
+   "body": "not json"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=active_expectations",
+   "note": "nothing was cleared by an error"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=logs",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,159 @@
+{
+  "source": "hand-written: the generateExpectation prompt as LlmPromptRedactor of 9.1.0 sends it (upstream #28 672a2bcfc, #51 560d93c2a): StubGenerationPromptBuilder's path, query, header and body redaction, OAuth codes beside an OAuth signal; three backend calls (see llm_generate_expectation_backend)",
+  "peer": true,
+  "properties": {
+    "llmProvider": "OPENAI",
+    "llmBaseUrl": "{{peerurl}}",
+    "llmApiKey": "test-key",
+    "llmModel": "gpt-test",
+    "llmRequestTimeoutMillis": "5000"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "node": "peer"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "node": "peer",
+      "body": {
+        "httpRequest": {
+          "method": "POST",
+          "path": "/v1/chat/completions"
+        },
+        "httpResponse": {
+          "statusCode": 200,
+          "headers": {
+            "content-type": [
+              "application/json"
+            ]
+          },
+          "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"Sure! Here is an expectation for you.\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "method": "GET",
+          "path": "/existing;token=s3cr3t"
+        },
+        "httpResponse": {
+          "statusCode": 200
+        }
+      }
+    },
+    {
+      "note": "an OAuth callback: code masked beside state; Authorization, X-Auth-Token and key= replaced whole; a ;token= matrix parameter, URL userinfo and key=value credentials in other values masked; code, code_verifier masked in the JSON body",
+      "method": "PUT",
+      "path": "/mockserver/generateExpectation",
+      "body": {
+        "request": {
+          "method": "POST",
+          "path": "/oauth/callback;token=abc123",
+          "queryStringParameters": {
+            "code": [
+              "xyz789"
+            ],
+            "state": [
+              "st1"
+            ],
+            "key": [
+              "AIzaSecret"
+            ],
+            "page": [
+              "1"
+            ]
+          },
+          "headers": {
+            "Authorization": [
+              "Bearer abc.def"
+            ],
+            "X-Auth-Token": [
+              "tok"
+            ],
+            "X-Csrf-Token": [
+              "csrf"
+            ],
+            "X-Trace": [
+              "user=me&password=hunter2"
+            ],
+            "X-Link": [
+              "https://bob:pw@example.com/x"
+            ]
+          },
+          "body": {
+            "type": "JSON",
+            "json": {
+              "code": "c1",
+              "code_verifier": "v1",
+              "grant_type": "authorization_code",
+              "nested": {
+                "code": "inner"
+              },
+              "note": "secret=abc and code=zz"
+            }
+          }
+        }
+      }
+    },
+    {
+      "note": "no OAuth signal: code=GB and error_code are kept",
+      "method": "PUT",
+      "path": "/mockserver/generateExpectation",
+      "body": {
+        "request": {
+          "method": "GET",
+          "path": "/search",
+          "queryStringParameters": {
+            "code": [
+              "GB"
+            ],
+            "q": [
+              "error_code=7&code=GB"
+            ]
+          },
+          "body": "lang=en&code=GB"
+        }
+      }
+    },
+    {
+      "note": "an OAuth signal in a text body: its code is masked",
+      "method": "PUT",
+      "path": "/mockserver/generateExpectation",
+      "body": {
+        "request": {
+          "method": "POST",
+          "path": "/token",
+          "body": "grant_type=authorization_code&code=abc&redirect_uri=https://app/cb&code_verifier=xyz"
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS",
+      "note": "what the backend was sent: one call per distinct prompt",
+      "mask": [
+        "\"epochTime\" : \\d+",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        {
+          "regex": "\"Host\" : \\[ \"[^\"]*\" \\]",
+          "replace": "\"Host\" : [ \"<peer>\" ]"
+        },
+        {
+          "regex": "\"host\" : \"[^\"]*\"",
+          "replace": "\"host\" : \"<host>\""
+        },
+        {
+          "regex": "\"port\" : (<port>|\\d+)",
+          "replace": "\"port\" : <port>"
+        }
+      ],
+      "node": "peer"
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+ "steps": [
+  {
+   "note": "WireMock body patterns: XPath (namespaces, equalTo/contains folding, a sensitive selector masked), equalToXml, binaryEqualTo, urlPathTemplate, redaction warnings",
+   "method": "PUT",
+   "path": "/mockserver/import?format=wiremock",
+   "bodyFile": "import/wiremock_body_patterns.json"
+  },
+  {
+   "note": "the same without redaction",
+   "method": "PUT",
+   "path": "/mockserver/import?format=wiremock&redactSensitiveData=false",
+   "bodyFile": "import/wiremock_body_patterns.json"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "active expectations"
+  },
+  {
+   "note": "the XPath with namespaces matches",
+   "method": "POST",
+   "path": "/xpath/equal",
+   "headers": {
+    "Content-Type": [
+     "application/xml"
+    ]
+   },
+   "body": "<b:shelf xmlns:b=\"urn:books\"><b:book><b:title>Dune</b:title></b:book></b:shelf>"
+  },
+  {
+   "note": "the XML matcher compares for similarity",
+   "method": "POST",
+   "path": "/xml",
+   "headers": {
+    "Content-Type": [
+     "application/xml"
+    ]
+   },
+   "body": "<order>\n  <id>7</id>\n</order>"
+  },
+  {
+   "note": "the binary matcher",
+   "method": "POST",
+   "path": "/binary",
+   "bodyBase64": "AAEC/w=="
+  },
+  {
+   "note": "the path template with a declared and an undeclared parameter",
+   "method": "GET",
+   "path": "/users/12/orders/abc"
+  },
+  {
+   "note": "the path template's declared parameter does not match",
+   "method": "GET",
+   "path": "/users/x/orders/abc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset"
+  },
+  {
+   "note": "WireMock responses: faults, delay distributions, chunked dribble, files directory, response templates, webhooks",
+   "method": "PUT",
+   "path": "/mockserver/import?format=wiremock&filesDirectory={{files}}/import/wiremock_files",
+   "bodyFile": "import/wiremock_responses.json"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "active expectations"
+  },
+  {
+   "note": "a body file served from the files directory, chunked",
+   "method": "GET",
+   "path": "/file"
+  },
+  {
+   "note": "a templated body file, inlined and translated",
+   "method": "GET",
+   "path": "/greet/hi?x=1&name=Bo"
+  },
+  {
+   "note": "an untranslatable template is served verbatim",
+   "method": "GET",
+   "path": "/template/a/b?q=one&q=two",
+   "headers": {
+    "X-In": [
+     "in"
+    ],
+    "Cookie": [
+     "c=v"
+    ]
+   }
+  },
+  {
+   "note": "a JSON template",
+   "method": "GET",
+   "path": "/template/ok"
+  },
+  {
+   "note": "a path-template parameter in a template",
+   "method": "GET",
+   "path": "/template/42?q=z"
+  },
+  {
+   "note": "uniform delay with the fixed part folded in",
+   "method": "GET",
+   "path": "/delay/uniform"
+  }
+ ]
+}

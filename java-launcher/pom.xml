@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!--
+      Design: docs/java-launcher.md. MockServer 9.2.0's in-JVM entry points over the mock-server
+      binary. A drop-in for org.mock-server:mockserver-netty: the same org.mockserver.netty.MockServer,
+      org.mockserver.integration.ClientAndServer and org.mockserver.lifecycle classes, each server a separate process.
+      Upstream's JUnit 4 rule, JUnit 5 extension, Spring test listener and Spring Boot starter run unchanged on it,
+      with mockserver-netty excluded. The coordinates are local only: publishing is undecided.
+    -->
+    <groupId>io.github.oxidestack</groupId>
+    <artifactId>mockserver-netty</artifactId>
+    <version>0.1.0</version>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mockserver.version>9.2.0</mockserver.version>
+        <junit.version>6.1.3</junit.version>
+        <upstreamModules>${project.basedir}/../upstream/mockserver/mockserver</upstreamModules>
+        <!-- the binary the tests start; `make java-launcher` passes a release build -->
+        <mockServerBin>${project.basedir}/../target/debug/mock-server</mockServerBin>
+        <!-- the Rust counterparts of the integration-testing callback classes (plugins/integration-testing):
+             the binary loads no Java classes. `cargo build -p mock-server-integration-testing-callbacks` -->
+        <rsCallbackPluginDir>${project.basedir}/../target/debug</rsCallbackPluginDir>
+        <rsCallbackPluginFile>libmock_server_integration_testing_callbacks.so</rsCallbackPluginFile>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- upstream's own versions (Spring, Spring Boot, Mockito, hamcrest, slf4j) -->
+            <dependency>
+                <groupId>org.mock-server</groupId>
+                <artifactId>mockserver</artifactId>
+                <version>${mockserver.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- MockServerClient, Configuration, ConfigurationProperties, the model; mockserver-core comes with it -->
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-client-java</artifactId>
+            <version>${mockserver.version}</version>
+        </dependency>
+
+        <!-- test: upstream's integrations, unchanged, with mockserver-netty excluded as a user would -->
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-junit-rule</artifactId>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+            <exclusions><exclusion><groupId>org.mock-server</groupId><artifactId>mockserver-netty</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-junit-jupiter</artifactId>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+            <exclusions><exclusion><groupId>org.mock-server</groupId><artifactId>mockserver-netty</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-spring-test-listener</artifactId>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+            <exclusions><exclusion><groupId>org.mock-server</groupId><artifactId>mockserver-netty</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-spring-boot-starter</artifactId>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+            <exclusions><exclusion><groupId>org.mock-server</groupId><artifactId>mockserver-netty</artifactId></exclusion></exclusions>
+        </dependency>
+        <!-- the test-scope dependencies of those modules' own tests -->
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-integration-testing</artifactId>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+            <exclusions><exclusion><groupId>org.mock-server</groupId><artifactId>mockserver-netty</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-testing</artifactId>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+            <exclusions><exclusion><groupId>org.mock-server</groupId><artifactId>mockserver-netty</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency><groupId>junit</groupId><artifactId>junit</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-engine</artifactId><version>${junit.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.vintage</groupId><artifactId>junit-vintage-engine</artifactId><version>${junit.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>org.mockito</groupId><artifactId>mockito-core</artifactId><scope>test</scope></dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+            <exclusions><exclusion><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter-api</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency><groupId>org.hamcrest</groupId><artifactId>hamcrest</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.slf4j</groupId><artifactId>slf4j-jdk14</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-web</artifactId><scope>test</scope></dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>macos</id>
+            <activation><os><family>mac</family></os></activation>
+            <properties><rsCallbackPluginFile>libmock_server_integration_testing_callbacks.dylib</rsCallbackPluginFile></properties>
+        </profile>
+        <profile>
+            <id>windows</id>
+            <activation><os><family>windows</family></os></activation>
+            <properties><rsCallbackPluginFile>mock_server_integration_testing_callbacks.dll</rsCallbackPluginFile></properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <!-- LifeCycle and ExpectationsListener: a root of their own, see LifeCycle's javadoc -->
+                        <id>netty-api</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>add-source</goal></goals>
+                        <configuration>
+                            <sources><source>${project.basedir}/src/main/netty-api</source></sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- upstream's own tests of the classes this jar backs, compiled from the submodule unmodified -->
+                        <id>upstream-tests</id>
+                        <phase>generate-test-sources</phase>
+                        <goals><goal>add-test-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>${upstreamModules}/mockserver-junit-rule/src/test/java</source>
+                                <source>${upstreamModules}/mockserver-junit-jupiter/src/test/java</source>
+                                <source>${upstreamModules}/mockserver-spring-test-listener/src/test/java</source>
+                                <source>${upstreamModules}/mockserver-spring-boot-starter/src/test/java</source>
+                                <source>${upstreamModules}/mockserver-netty/src/integration-tests/maven-netty-jar-with-dependencies-dependency/src/test/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>upstream-test-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>add-test-resource</goal></goals>
+                        <configuration>
+                            <resources>
+                                <resource><directory>${upstreamModules}/mockserver-junit-jupiter/src/test/resources</directory></resource>
+                                <!-- 9.2.0's named instances (#30): initialization files the servers find on the class path -->
+                                <resource><directory>${upstreamModules}/mockserver-spring-test-listener/src/test/resources</directory></resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+                <configuration>
+                    <!-- upstream runs *Test with surefire and *IntegrationTest with failsafe; both here -->
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                    <!-- in the springtest execution below -->
+                    <excludes>
+                        <exclude>org/mockserver/springtest/**</exclude>
+                    </excludes>
+                    <systemPropertyVariables>
+                        <mockServer.binary>${mockServerBin}</mockServer.binary>
+                        <mockServer.log>${project.build.directory}/server-logs/mock-server.log</mockServer.log>
+                        <!-- forwarded to each server process as properties, as the in-JVM server reads them -->
+                        <mockserver.maxLogEntries>1000</mockserver.maxLogEntries>
+                        <mockserver.callbackPlugins>${rsCallbackPluginDir}/${rsCallbackPluginFile}</mockserver.callbackPlugins>
+                    </systemPropertyVariables>
+                    <argLine>-Duser.language=en -Duser.country=GB</argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <!-- mockserver-spring-test-listener's tests in that module's directory, as upstream runs them:
+                             9.2.0's named instances (#30) name initialization files relative to it
+                             (src/test/resources/named-instance-inventory), read by the test JVM and the server process -->
+                        <id>springtest</id>
+                        <goals><goal>test</goal></goals>
+                        <configuration>
+                            <includes combine.self="override"><include>org/mockserver/springtest/**/*Test.java</include></includes>
+                            <excludes combine.self="override"/>
+                            <workingDirectory>${upstreamModules}/mockserver-spring-test-listener</workingDirectory>
+                            <reportNameSuffix>springtest</reportNameSuffix>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

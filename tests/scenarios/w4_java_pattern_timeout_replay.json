@@ -1,0 +1,221 @@
+{
+ "source": "the regex-timeout replay walks Pattern's look-arounds (Pos, Neg, Behind, NotBehind), atomic groups (Ques INDEPENDENT), possessive quantifiers, back references and position tests (\\b, \\B), so RegexStringMatcher (DOTALL | CASE_INSENSITIVE | UNICODE_CASE, matches()) passes regexMatchingTimeoutMillis (here 300) on a 40-character value where the oracle's JVM does and logs its WARN, and stays within it where the JVM does (posIndex kept in look-aheads and atomic groups, possessive loops that give nothing back)",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "ahead",
+     "httpRequest": {
+      "path": "/p(?=(.*a){25}).*"
+     },
+     "httpResponse": {
+      "body": "ahead"
+     }
+    },
+    {
+     "id": "not-ahead",
+     "httpRequest": {
+      "path": "/n(?!(.*a){25}x).*"
+     },
+     "httpResponse": {
+      "body": "not-ahead"
+     }
+    },
+    {
+     "id": "behind",
+     "httpRequest": {
+      "path": "/l.*(?<=a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?aaaaaaaaaaaaaaaaaaaaaaaaaaaac)"
+     },
+     "httpResponse": {
+      "body": "behind"
+     }
+    },
+    {
+     "id": "not-behind",
+     "httpRequest": {
+      "path": "/m.*(?<!a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?aaaaaaaaaaaaaaaaaaaaaaaaaaaac)x"
+     },
+     "httpResponse": {
+      "body": "not-behind"
+     }
+    },
+    {
+     "id": "atomic",
+     "httpRequest": {
+      "path": "/t(?>(.*a){25}x)"
+     },
+     "httpResponse": {
+      "body": "atomic"
+     }
+    },
+    {
+     "id": "possessive",
+     "httpRequest": {
+      "path": "/s((.*a){25}x)++"
+     },
+     "httpResponse": {
+      "body": "possessive"
+     }
+    },
+    {
+     "id": "backref",
+     "httpRequest": {
+      "path": "/r(a|aa)*\\1c"
+     },
+     "httpResponse": {
+      "body": "backref"
+     }
+    },
+    {
+     "id": "ahead-memo",
+     "httpRequest": {
+      "path": "/y(?=(a|aa)*c)"
+     },
+     "httpResponse": {
+      "body": "ahead-memo"
+     }
+    },
+    {
+     "id": "atomic-fast",
+     "httpRequest": {
+      "path": "/k(?>(a|aa)*)c"
+     },
+     "httpResponse": {
+      "body": "atomic-fast"
+     }
+    },
+    {
+     "id": "possessive-fast",
+     "httpRequest": {
+      "path": "/o(a|aa)*+c"
+     },
+     "httpResponse": {
+      "body": "possessive-fast"
+     }
+    },
+    {
+     "id": "possessive-first",
+     "httpRequest": {
+      "path": "/u(.*a){25}+x"
+     },
+     "httpResponse": {
+      "body": "possessive-first"
+     }
+    },
+    {
+     "id": "no-backref",
+     "httpRequest": {
+      "path": "/w(a|aa)*c"
+     },
+     "httpResponse": {
+      "body": "no-backref"
+     }
+    },
+    {
+     "id": "not-bound",
+     "httpRequest": {
+      "path": "/e.(\\B.*a){25}"
+     },
+     "httpResponse": {
+      "body": "not-bound"
+     }
+    },
+    {
+     "id": "bound",
+     "httpRequest": {
+      "path": "/f-(\\b.*a){25}"
+     },
+     "httpResponse": {
+      "body": "bound"
+     }
+    }
+   ]
+  },
+  {
+   "note": "look-ahead (Pos): its body's {25} loop explodes before the look-ahead gives up",
+   "method": "GET",
+   "path": "/paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "negative look-ahead (Neg)",
+   "method": "GET",
+   "path": "/naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "look-behind (Behind): 28 Ques nodes before the body fails at each of .*'s positions",
+   "method": "GET",
+   "path": "/laaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "negative look-behind (NotBehind)",
+   "method": "GET",
+   "path": "/maaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "atomic group (Ques INDEPENDENT): its body still explodes before it fails",
+   "method": "GET",
+   "path": "/taaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "possessive group (Curly POSSESSIVE): its atom explodes before it fails",
+   "method": "GET",
+   "path": "/saaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "a back reference anywhere turns off Loop.posIndex (hasGroupRef), so (a|aa)* is Fibonacci",
+   "method": "GET",
+   "path": "/raaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "note": "a greedy loop in a look-ahead keeps its posIndex: no timeout",
+   "method": "GET",
+   "path": "/yaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "note": "an atomic (a|aa)* keeps its posIndex and gives nothing back: no timeout",
+   "method": "GET",
+   "path": "/kaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "note": "a possessive (a|aa)*+: no timeout",
+   "method": "GET",
+   "path": "/oaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "note": "a possessive (.*a){25}+ stops at its atom's first match: no timeout",
+   "method": "GET",
+   "path": "/uaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "the same (a|aa)* without a back reference: no timeout",
+   "method": "GET",
+   "path": "/waaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "note": "\\B between word characters (Bound) holds at every split, so the loop explodes as without it",
+   "method": "GET",
+   "path": "/eaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"
+  },
+  {
+   "note": "\\b fails inside the run of a's, so each iteration fails at once: no timeout",
+   "method": "GET",
+   "path": "/f-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

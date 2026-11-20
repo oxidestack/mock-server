@@ -1,0 +1,63 @@
+{
+ "steps": [
+  {
+   "note": "expectation: upstream JSON answer (default content type application/json; charset=utf-8)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/fj", "headers": {"x-hop": ["upstream"]}}, "priority": 10, "httpResponse": {"statusCode": 200, "body": {"greeting": "from upstream"}}},
+   "mask": ["\"id\" : \"[0-9a-f-]+\""]
+  },
+  {
+   "note": "expectation: forward /fj to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/fj"}, "httpOverrideForwardedRequest": {"requestOverride": {"headers": {"Host": ["localhost:{{port}}"], "x-hop": ["upstream"]}}}},
+   "mask": ["\"id\" : \"[0-9a-f-]+\""]
+  },
+  {
+   "note": "forwarded call",
+   "method": "GET",
+   "path": "/fj"
+  },
+  {
+   "note": "the forwarded JSON answer in the exchange log: bare JSON, as JsonBodyDTOSerializer writes a body with only default values",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON"
+  },
+  {
+   "note": "the same answer in a recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=JSON",
+   "mask": ["\"id\" : \"[0-9a-f-]+\""]
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "a request with a compact JSON body of the default content type",
+   "method": "POST",
+   "path": "/compact-json",
+   "headers": {"content-type": "application/json; charset=utf-8"},
+   "body": "{\"a\":1}"
+  },
+  {
+   "note": "a request with a pretty JSON body of the default content type",
+   "method": "POST",
+   "path": "/pretty-json",
+   "headers": {"content-type": "application/json; charset=utf-8"},
+   "body": "{ \"a\" : 1 }"
+  },
+  {
+   "note": "both requests as retrieved (rawBytes only when the bytes are not the compact rendering)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "both exchanges",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON"
+  }
+ ]
+}

@@ -1,0 +1,23 @@
+{
+  "source": "hand-written: WireMock's before / after / equalToDateTime (WireMockImporter.dateTimePredicate) on headers, query and path parameters and as the result matcher of matchesJsonPath / matchesXPath; isolated: the clock is frozen.",
+  "isolated": true,
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/reset"},
+    {"method": "PUT", "path": "/mockserver/clock", "body": {"action": "freeze", "instant": "2026-06-15T12:30:45Z"}, "note": "now is 2026-06-15T12:30:45Z"},
+    {"method": "PUT", "path": "/mockserver/import?format=wiremock", "note": "date-time predicates, offsets folded into now, a literal with an offset, and ones that do not compile", "body": {"mappings": [
+      {"request": {"method": "GET", "urlPathTemplate": "/orders/{day}", "pathParameters": {"day": {"after": "2026-01-01", "actualFormat": "yyyy-MM-dd"}},
+        "queryParameters": {"since": {"before": "now", "expectedOffset": 1, "expectedOffsetUnit": "Hours", "truncateExpected": "first hour of day", "applyTruncationLast": true}},
+        "headers": {"X-Issued": {"equalToDateTime": "2026-06-15T00:00:00Z", "expectedOffset": -1, "truncateActual": "startOfDay"}, "X-Seen": {"after": " NOW ", "expectedOffset": "-3"}, "X-Bad": {"after": "now", "truncateActual": "week"}}},
+       "response": {"status": 200, "body": "orders"}},
+      {"request": {"method": "POST", "url": "/json", "bodyPatterns": [{"matchesJsonPath": {"expression": "$.created", "after": "now", "expectedOffset": -7}}]}, "response": {"status": 200, "body": "json"}},
+      {"request": {"method": "POST", "url": "/xml", "bodyPatterns": [{"matchesXPath": {"expression": "/a:order/a:created", "before": "2027-01-01T00:00:00Z"}, "xPathNamespaces": {"a": "urn:a"}}]}, "response": {"status": 200, "body": "xml"}},
+      {"request": {"method": "POST", "url": "/bad", "bodyPatterns": [{"matchesJsonPath": {"expression": "$.created", "after": "soon"}}]}, "response": {"status": 200, "body": "bad"}}
+    ]}},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "note": "what was imported"},
+    {"method": "GET", "path": "/orders/2026-02-01?since=2026-06-14T00:00:00Z", "headers": {"X-Issued": "2026-06-15T09:00:00Z", "X-Seen": "2026-06-15T10:00:00Z"}, "note": "every value matches"},
+    {"method": "GET", "path": "/orders/2025-12-31?since=2026-06-14T00:00:00Z", "headers": {"X-Issued": "2026-06-15T09:00:00Z", "X-Seen": "2026-06-15T10:00:00Z"}, "note": "the day is too early"},
+    {"method": "POST", "path": "/json", "body": {"created": "2026-06-10T00:00:00Z"}, "note": "within the week"},
+    {"method": "POST", "path": "/xml", "headers": {"Content-Type": "application/xml"}, "body": "<a:order xmlns:a=\"urn:a\"><a:created>2026-06-15T00:00:00Z</a:created></a:order>", "note": "with namespaces"},
+    {"method": "PUT", "path": "/mockserver/clock", "body": {"action": "reset"}, "mask": ["\"currentInstant\" : \"[^\"]+\"", "\"currentEpochMillis\" : -?[0-9]+"]}
+  ]
+}

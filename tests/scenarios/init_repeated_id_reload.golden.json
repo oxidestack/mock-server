@@ -1,0 +1,118 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "start from nothing"
+    },
+    {
+      "wrote": true,
+      "note": "a known starting content"
+    },
+    {
+      "wrote": true,
+      "note": "upstream #106 (33cdd577e): a reload repeating an id keeps the last entry, at the first entry's place"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 494",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/shared\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"the last entry for the repeated id\"\n  },\n  \"id\" : \"repeated\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/shared\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"the middle entry\"\n  },\n  \"id\" : \"middle\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "the last entry for the repeated id, ahead of the middle one (polled: the oracle's first load of a file with lint problems can take tens of seconds)"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 34"
+      ],
+      "body": "the last entry for the repeated id",
+      "note": "answered by the kept (last) entry"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "the log and the expectations from here on (clear?type=LOG keeps the first load's init-file lint WARN; a reset does not, and a reload with the same lint problems does not repeat it)"
+    },
+    {
+      "wrote": true,
+      "note": "only the last entry for the repeated id changes (its body, so the lint problems stay the same): the reload recreates what the reset removed"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 502",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/shared\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"the changed last entry for the repeated id\"\n  },\n  \"id\" : \"repeated\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/shared\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"the middle entry\"\n  },\n  \"id\" : \"middle\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "the changed entry, ahead of the middle one"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - resetting all expectations and request logs\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/shared\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"the changed last entry for the repeated id\"\n    },\n    \"id\" : \"repeated\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  repeated\n\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/shared\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"the middle entry\"\n    },\n    \"id\" : \"middle\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  middle\n\n------------------------------------\n<timestamp> - retrieved 2 active expectations in json that match:\n\n  { }\n\n",
+      "note": "one creating expectation for the repeated id, with its changed last entry, then the middle one; nothing for the first entry"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 42"
+      ],
+      "body": "the changed last entry for the repeated id",
+      "note": "answered by the changed entry"
+    }
+  ]
+}

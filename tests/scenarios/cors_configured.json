@@ -1,0 +1,10 @@
+{"properties": {"enableCORSForAllResponses": "true", "corsAllowMethods": "GET, PUT", "corsAllowHeaders": "Authorization, X-Custom", "corsAllowCredentials": "true", "corsMaxAgeInSeconds": "300"},
+ "steps": [
+  {"note": "preflight with origin", "method": "OPTIONS", "path": "/expectation", "headers": {"Access-Control-Request-Method": "PUT", "Origin": "http://127.0.0.1:1234"}},
+  {"note": "preflight with requested headers", "method": "OPTIONS", "path": "/settings/account", "headers": {"Origin": "http://localhost:8000", "Access-Control-Request-Method": "PATCH", "Access-Control-Request-Headers": "extra-header, other-extra-header"}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/mocked"}, "httpResponse": {"body": "mocked"}}},
+  {"note": "mocked response, no origin", "method": "GET", "path": "/mocked"},
+  {"note": "mocked response, origin", "method": "GET", "path": "/mocked", "headers": {"Origin": "http://example.com"}},
+  {"note": "not found, null origin", "method": "GET", "path": "/missing", "headers": {"Origin": "null"}},
+  {"note": "control plane", "method": "PUT", "path": "/mockserver/status", "headers": {"Origin": "http://example.com"}}
+]}

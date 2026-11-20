@@ -1,0 +1,78 @@
+{
+ "source": "velocityTemplateExecutionTimeout stops a runaway #foreach (upstream #53, TemplateFailureIntegrationTest), a failed template answers 500 (#104)",
+ "properties": {
+  "velocityTemplateExecutionTimeout": "250",
+  "actionHandlerThreadCount": "1"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/loops-forever"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#foreach($i in [1..2147483647])#foreach($j in [1..2147483647])#end#end{ 'statusCode': 200 }"
+    }
+   },
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/after-loop"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{ 'statusCode': 200, 'body': 'served' }"
+    }
+   },
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/loops-forever",
+   "note": "the loop is stopped after 250 ms: 500 with the timeout",
+   "maxMillis": 20000
+  },
+  {
+   "method": "GET",
+   "path": "/after-loop",
+   "note": "the only template thread serves the next request"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/loops-forever"
+   },
+   "note": "LOGS as text",
+   "mask": [
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/loops-forever"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ],
+   "note": "LOGS as entries: the timeout WARN, the response, the exception"
+  }
+ ]
+}

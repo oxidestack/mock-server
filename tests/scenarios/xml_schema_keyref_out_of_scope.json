@@ -1,0 +1,120 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "keyref to a child's key, child absent"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n<xs:element name=\"r\"><xs:complexType><xs:sequence>\n <xs:element name=\"u\" minOccurs=\"0\"><xs:complexType><xs:sequence><xs:element name=\"k\" type=\"xs:string\" maxOccurs=\"unbounded\"/></xs:sequence></xs:complexType>\n   <xs:key name=\"inner\"><xs:selector xpath=\"k\"/><xs:field xpath=\".\"/></xs:key></xs:element>\n <xs:element name=\"kr\" type=\"xs:string\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n</xs:sequence></xs:complexType>\n <xs:keyref name=\"toInner\" refer=\"inner\"><xs:selector xpath=\"kr\"/><xs:field xpath=\".\"/></xs:keyref>\n</xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "keyref to a child's key, child absent"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "method": "POST",
+    "path": "/xsd",
+    "body": "<r><kr>q</kr></r>"
+   },
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z",
+    {
+     "regex": "KeyRef@[0-9a-f]+",
+     "replace": "KeyRef@<hex>",
+     "reason": "Xerces names the constraint by IdentityConstraint.toString(), the class name and the JVM identity hash"
+    }
+   ],
+   "note": "keyref to a child's key, child absent"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "method": "POST",
+    "path": "/xsd",
+    "body": "<r><kr>q</kr><kr>z</kr></r>"
+   },
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z",
+    {
+     "regex": "KeyRef@[0-9a-f]+",
+     "replace": "KeyRef@<hex>",
+     "reason": "Xerces names the constraint by IdentityConstraint.toString(), the class name and the JVM identity hash"
+    }
+   ],
+   "note": "keyref to a child's key, child absent"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "method": "POST",
+    "path": "/xsd",
+    "body": "<r><u><k>q</k></u><kr>q</kr></r>"
+   },
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z",
+    {
+     "regex": "KeyRef@[0-9a-f]+",
+     "replace": "KeyRef@<hex>",
+     "reason": "Xerces names the constraint by IdentityConstraint.toString(), the class name and the JVM identity hash"
+    }
+   ],
+   "note": "keyref to a child's key, child absent"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "keyref to a key on an unrelated element"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n<xs:element name=\"other\"><xs:complexType><xs:sequence><xs:element name=\"k\" type=\"xs:string\" maxOccurs=\"unbounded\"/></xs:sequence></xs:complexType>\n <xs:key name=\"elsewhere\"><xs:selector xpath=\"k\"/><xs:field xpath=\".\"/></xs:key></xs:element>\n<xs:element name=\"r\"><xs:complexType><xs:sequence>\n <xs:element name=\"kr\" type=\"xs:string\" maxOccurs=\"unbounded\"/>\n</xs:sequence></xs:complexType>\n <xs:keyref name=\"toElsewhere\" refer=\"elsewhere\"><xs:selector xpath=\"kr\"/><xs:field xpath=\".\"/></xs:keyref>\n</xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "keyref to a key on an unrelated element"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "method": "POST",
+    "path": "/xsd",
+    "body": "<r><kr>q</kr></r>"
+   },
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z",
+    {
+     "regex": "KeyRef@[0-9a-f]+",
+     "replace": "KeyRef@<hex>",
+     "reason": "Xerces names the constraint by IdentityConstraint.toString(), the class name and the JVM identity hash"
+    }
+   ],
+   "note": "keyref to a key on an unrelated element"
+  }
+ ]
+}

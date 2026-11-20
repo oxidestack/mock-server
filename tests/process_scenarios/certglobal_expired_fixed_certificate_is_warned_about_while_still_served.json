@@ -1,0 +1,65 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.privateKeyPath={{scratch}}/live-key.pem",
+    "-Dmockserver.x509CertificatePath={{scratch}}/live-cert.pem",
+    "-Dmockserver.certificateAuthorityCertificate={{scratch}}/live-cert.pem"
+  ],
+  "certificates": [
+    {
+      "name": "live",
+      "late": true
+    }
+  ],
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "certificate": {
+        "name": "live",
+        "notBeforeSecs": -3600,
+        "notAfterSecs": 40
+      }
+    },
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 1,
+      "label": "before"
+    },
+    {
+      "sleepMillis": 66000
+    },
+    {
+      "tls": 2,
+      "label": "after"
+    }
+  ],
+  "timeoutSecs": 300,
+  "expect": {
+    "running": true,
+    "tls": {
+      "before": "served",
+      "after": "served"
+    },
+    "sameCertificate": [
+      [
+        "before",
+        "after"
+      ]
+    ],
+    "stdoutContains": [
+      "[WARN] the configured fixed server certificate at\n\n  {{scratch}}/live-cert.pem\n\n has expired (notAfter\n\n  ",
+      "\n\n ) but is still being served; MockServer does not renew user-supplied certificates"
+    ],
+    "stdoutOccurrences": {
+      " has expired (notAfter\n": 1
+    }
+  }
+}

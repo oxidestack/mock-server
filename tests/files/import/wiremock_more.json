@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Search Books (v2)",
+    "priority": 10,
+    "request": {
+      "method": "ANY",
+      "url": "/books?sort=asc&q=a%20b",
+      "queryParameters": { "lang": { "equalTo": "EN", "caseInsensitive": true }, "gone": { "absent": true }, "odd": { "greaterThan": 3 }, "plain": "text" },
+      "headers": { "X-Api-Key": { "equalTo": "secret" }, "X-Not": { "doesNotMatch": "bad.*" } },
+      "basicAuthCredentials": { "username": "u", "password": "p" },
+      "multipartPatterns": [],
+      "bodyPatterns": [ { "matchesJsonPath": { "absent": "$.x" } }, { "equalToXml": "<a/>" }, { "equalTo": "{\"password\":\"x\"}" }, { "binaryEqualTo": "AAE=" } ]
+    },
+    "response": { "status": 200, "base64Body": "eyJhIjoxfQ", "delayDistribution": { "type": "uniform" }, "bodyFileName": "books.json", "transformerParameters": {} }
+  },
+  {
+    "uuid": "abc-uuid",
+    "request": { "urlPathPattern": "/regex/[a-z]+", "bodyPatterns": [ { "contains": "needle" } ] },
+    "response": { "status": 400, "base64Body": "!!!notbase64" }
+  },
+  {
+    "request": { "urlPattern": "/pattern/.*", "bodyPatterns": [ { "matchesJsonPath": "$.items[0]" } ] },
+    "response": { "status": 200, "headers": { "Content-Type": ["text/plain", "text/html"], "X-Num": 5 }, "fixedDelayMilliseconds": 12.5 }
+  },
+  { "request": { "urlPath": "/empty" }, "response": { "fault": "EMPTY_RESPONSE" } },
+  { "request": { "urlPath": "/malformed" }, "response": { "fault": "MALFORMED_RESPONSE_CHUNK" } },
+  { "request": { "urlPath": "/weird" }, "response": { "fault": "SOMETHING_ELSE" } },
+  { "request": { "urlPath": "/proxy-path" }, "response": { "proxyBaseUrl": "http://origin.example.com/base" } },
+  { "request": { "urlPath": "/proxy-bad" }, "response": { "proxyBaseUrl": "http://bad host" } },
+  { "request": { "method": "GET", "urlPath": "/json-strict", "bodyPatterns": [ { "equalToJson": { "a": [1, 2] }, "ignoreArrayOrder": true } ] } },
+  { "id": "nothing" },
+  { "request": { "urlPath": "/scenario" }, "scenarioName": "flow", "newScenarioState": "done", "response": { "body": "{\"token\":\"x\"}" } }
+]

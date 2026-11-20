@@ -1,0 +1,96 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) importer-RecordedTrafficImporterTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "dd6a1f08a27d",
+   "note": "shouldSkipBlankLines (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "\n\n   \n{ \"httpRequest\" : { \"method\" : \"GET\", \"path\" : \"/only\" }, \"httpResponse\" : { \"statusCode\" : 200 } }\n\n",
+   "note": "shouldSkipBlankLines (importer): RecordedTrafficImporter recording",
+   "case": "dd6a1f08a27d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a242cbefc17d",
+   "note": "shouldSkipTruncatedTrailingLineAndImportTheRest (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{ \"httpRequest\" : { \"method\" : \"GET\", \"path\" : \"/api/first\" }, \"httpResponse\" : { \"statusCode\" : 200, \"body\" : \"first\" } }\n{ \"httpRequest\" : { \"method\" : \"GET\", \"path\" : \"/api/second\" }, \"httpResponse\" : { \"statusCode\" : 200, \"body\" : \"second\" } }\n{ \"httpRequest\" : { \"method\" : \"GET\", \"path\" : \"/api/second\" }",
+   "note": "shouldSkipTruncatedTrailingLineAndImportTheRest (importer): RecordedTrafficImporter recording",
+   "case": "a242cbefc17d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ce8b41117712",
+   "note": "shouldRoundTripFromPersistenceSerializer (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{ \"httpRequest\" : { \"method\" : \"PUT\", \"path\" : \"/round/trip\", \"body\" : \"body\\nwith\\nnewlines\" }, \"httpResponse\" : { \"statusCode\" : 202, \"body\" : \"resp\" } }",
+   "note": "shouldRoundTripFromPersistenceSerializer (importer): RecordedTrafficImporter recording",
+   "case": "ce8b41117712"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c843bcfafe81",
+   "note": "shouldSkipMalformedLineInTheMiddleAndImportTheRest (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{ \"httpRequest\" : { \"method\" : \"GET\", \"path\" : \"/api/good1\" }, \"httpResponse\" : { \"statusCode\" : 200 } }\n{not valid json}\n{ \"httpRequest\" : { \"method\" : \"GET\", \"path\" : \"/api/good2\" }, \"httpResponse\" : { \"statusCode\" : 200 } }",
+   "note": "shouldSkipMalformedLineInTheMiddleAndImportTheRest (importer): RecordedTrafficImporter recording",
+   "case": "c843bcfafe81"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8183d269f369",
+   "note": "shouldParseMultipleNdjsonPairsForwardedAndMocked (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{ \"httpRequest\" : { \"method\" : \"GET\", \"path\" : \"/api/forwarded\" }, \"httpResponse\" : { \"statusCode\" : 200, \"body\" : \"forwarded-body\" } }\n{ \"httpRequest\" : { \"method\" : \"POST\", \"path\" : \"/api/mocked\", \"body\" : \"mocked-request\" }, \"httpResponse\" : { \"statusCode\" : 201, \"body\" : \"mocked-body\" } }\n",
+   "note": "shouldParseMultipleNdjsonPairsForwardedAndMocked (importer): RecordedTrafficImporter recording",
+   "case": "8183d269f369"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "62c7e3199972",
+   "note": "shouldRedactSensitiveDataByDefault (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{ \"httpRequest\" : { \"method\" : \"GET\", \"path\" : \"/api/secured\", \"headers\" : { \"Authorization\" : [ \"Bearer SECRET123\" ], \"Accept\" : [ \"application/json\" ] } }, \"httpResponse\" : { \"statusCode\" : 200, \"body\" : \"ok\" } }",
+   "note": "shouldRedactSensitiveDataByDefault (importer): RecordedTrafficImporter recording",
+   "case": "62c7e3199972"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "20758524845a",
+   "note": "shouldThrowWhenNoLineParses (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{not valid}\n[also not valid]",
+   "note": "shouldThrowWhenNoLineParses (importer): RecordedTrafficImporter recording",
+   "case": "20758524845a"
+  }
+ ]
+}

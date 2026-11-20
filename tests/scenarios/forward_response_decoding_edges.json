@@ -1,0 +1,903 @@
+{
+  "isolated": true,
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_short_preamble"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyNQ0KDQr/BgAAc05hUHBZAAsAAAAAAAADEGhlbGxv"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_short_preamble"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_short_preamble",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "the preamble only sizes the buffer: a literal longer than it is decoded whole, 200 hello",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_short_preamble HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_preamble_larger"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyMw0KDQr/BgAAc05hUHBZAAkAAAAAAAAKCGFiYw=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_preamble_larger"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_preamble_larger",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "output shorter than the preamble is not an error: 200 abc",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_preamble_larger HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_literal_truncated"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyMg0KDQr/BgAAc05hUHBZAAgAAAAAAAAKJGFi"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_literal_truncated"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_literal_truncated",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a literal running past the frame ends the output there: 200, empty",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_literal_truncated HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_preamble_truncated"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAxOQ0KDQr/BgAAc05hUHBZAAUAAAAAAACA"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_preamble_truncated"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_preamble_truncated",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a preamble cut short reads as 0: nothing is decoded, 200, empty",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_preamble_truncated HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_preamble_zero"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyMw0KDQr/BgAAc05hUHBZAAkAAAAAAAAACGFiYw=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_preamble_zero"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_preamble_zero",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a preamble of 0 decodes nothing, even with data after it: 200, empty",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_preamble_zero HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_long_preamble"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyOQ0KDQr/BgAAc05hUHBZAA8AAAAAAACAgICAARBoZWxsbw=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_long_preamble"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_long_preamble",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "Preamble is greater than 4 bytes: 502",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_long_preamble HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "snappy_long_preamble: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_offset_zero"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyMw0KDQr/BgAAc05hUHBZAAkAAAAAAAAIAGEBAA=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_offset_zero"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_offset_zero",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a 1-byte-offset copy at offset 0: Offset is less than minimum permissible value, 502",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_offset_zero HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "snappy_offset_zero: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_offset_beyond"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyMw0KDQr/BgAAc05hUHBZAAkAAAAAAAAIAGEBBQ=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_offset_beyond"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_offset_beyond",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a copy from before the output: Offset exceeds size of chunk, 502",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_offset_beyond HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "snappy_offset_beyond: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_offset2_zero"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyNA0KDQr/BgAAc05hUHBZAAoAAAAAAAAIAGECAAA="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_offset2_zero"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_offset2_zero",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a 2-byte-offset copy at offset 0: 502",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_offset2_zero HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "snappy_offset2_zero: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_offset4_negative"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyNg0KDQr/BgAAc05hUHBZAAwAAAAAAAAIAGED/////w=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_offset4_negative"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_offset4_negative",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a 4-byte offset that is negative as an int: Offset is greater than maximum value supported by this implementation, 502",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_offset4_negative HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "snappy_offset4_negative: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_copy_repeats"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyNA0KDQr/BgAAc05hUHBZAAoAAAAAAAAKBGFiGQI="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_copy_repeats"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_copy_repeats",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a copy longer than its offset repeats the pattern, past the preamble too: 200",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_copy_repeats HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "snappy_copy_repeats: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_copy_truncated"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyMw0KDQr/BgAAc05hUHBZAAkAAAAAAAAKBGFiAQ=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_copy_truncated"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_copy_truncated",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a copy whose offset byte is missing ends the output: 200 ab",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_copy_truncated HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_chunk_length_4"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAxOA0KDQr/BgAAc05hUHBZAAQAAAAAAAA="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_chunk_length_4"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_chunk_length_4",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a compressed chunk of 4 bytes (a checksum, no data): Received COMPRESSED_DATA with invalid chunk length: 4, 502",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_chunk_length_4 HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "snappy_chunk_length_4: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_literal_grows"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyNw0KDQr/BgAAc05hUHBZAA0AAAAAAAADEGhlbGxvCQI="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_literal_grows"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_literal_grows",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a literal past the preamble grows the buffer to its pooled size class (16), which a later copy may fill: 200 hellolololo",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_literal_grows HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/snappy_literal_grows_over"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHNuYXBweQ0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiAyOA0KDQr/BgAAc05hUHBZAA4AAAAAAAADEGhlbGxvLgIA"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/snappy_literal_grows_over"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/snappy_literal_grows_over",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a 2-byte-offset copy of 12 runs past that size class: IndexOutOfBoundsException, 502",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/snappy_literal_grows_over HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "snappy_literal_grows_over: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/inv_two_lengths_gzip"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IGd6aXANCkNvbnRlbnQtTGVuZ3RoOiAyNQ0KQ29udGVudC1MZW5ndGg6IDI1DQp4LWE6IDENCkNvbm5lY3Rpb246IGNsb3NlDQoNCh+LCAAAAAAAAhPLSM3JyQcAhqYQNgUAAAA="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/inv_two_lengths_gzip"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/inv_two_lengths_gzip",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "an invalid head (two Content-Length lines) with Content-Encoding: the decoder still edits the head",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/inv_two_lengths_gzip HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "inv_two_lengths_gzip: the exchange as recorded",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "body": {
+        "path": "/dce/fwd/inv_two_lengths_gzip"
+      },
+      "mask": [
+        "\"(local|remote)Address\" : \"[^\"]*\""
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/inv_http10_te_gzip"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjAgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IGd6aXANClRyYW5zZmVyLUVuY29kaW5nOiBjaHVua2VkDQp4LWE6IDENCg0KMTkNCh+LCAAAAAAAAhPLSM3JyQcAhqYQNgUAAAANCjANCg0K"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/inv_http10_te_gzip"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/inv_http10_te_gzip",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "an invalid head (Transfer-Encoding on HTTP/1.0) with Content-Encoding",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/inv_http10_te_gzip HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "inv_http10_te_gzip: the exchange as recorded",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "body": {
+        "path": "/dce/fwd/inv_http10_te_gzip"
+      },
+      "mask": [
+        "\"(local|remote)Address\" : \"[^\"]*\""
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dce/up/sse_bad_gzip"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQpDb250ZW50LUVuY29kaW5nOiBnemlwDQpUcmFuc2Zlci1FbmNvZGluZzogY2h1bmtlZA0KQ29ubmVjdGlvbjogY2xvc2UNCg0KMWINCh+LCAAAAAAAABNKSSxJtFLIz0vl4gIAAAD//w0KNA0K/////w0KMA0KDQo="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dce/fwd/sse_bad_gzip"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dce/up/sse_bad_gzip",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a streamed gzip body that fails to decode after its first chunk: the decoded part, then the stream ends",
+      "tcp": [
+        {
+          "text": "GET /dce/fwd/sse_bad_gzip HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    }
+  ]
+}

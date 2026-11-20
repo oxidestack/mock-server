@@ -1,0 +1,41 @@
+{
+ "source": "9.1.0: a binary connection whose only upstream proxy is forwardHttpProxy is relayed through a CONNECT tunnel through it (binaryRelayTunnel); the proxy refuses the connection, so the relay's connect fails and the client is closed; whether proxyFailure's once-per-proxy WARN is logged is the oracle's",
+ "properties": {
+  "proxyRemoteHost": "localhost",
+  "proxyRemotePort": "{{deadport}}",
+  "forwardHttpProxy": "{{deadhost}}"
+ },
+ "steps": [
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "note": "binary connection 1: its upstream proxy refuses, the connection is closed"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "note": "binary connection 2: refused again"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+",
+     "replace": "/<client>",
+     "reason": "the binary client's address: the Docker gateway's when recorded, loopback on replay"
+    }
+   ],
+   "compare": "unordered",
+   "note": "two received entries and how each send failed"
+  }
+ ]
+}

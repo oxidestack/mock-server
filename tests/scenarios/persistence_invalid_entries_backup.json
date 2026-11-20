@@ -1,0 +1,113 @@
+{
+ "properties": {
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/persistence_invalid_entries_backup.json",
+  "initializationJsonPath": "{{scratch}}/persistence_invalid_entries_backup.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "deleteFile": "{{scratch}}/persistence_invalid_entries_backup.json.invalid-entries-*.bak",
+   "note": "no reset: the first save is the one under test. The backups of earlier runs are removed"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/persistence_invalid_entries_backup.json",
+    "content": "[ {\n  \"id\" : \"kept\",\n  \"httpRequest\" : {\n    \"path\" : \"/kept\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"kept response\"\n  }\n}, {\n  \"id\" : \"broken\",\n  \"httpRequest\" : {\n    \"path\" : \"/broken\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : \"not a number\"\n  }\n} ]",
+    "replace": true
+   },
+   "note": "an edit of the persisted file, which is also the watched initialisation file: one valid expectation, one invalid"
+  },
+  {
+   "method": "GET",
+   "path": "/kept",
+   "pollUntil": "kept response",
+   "note": "the reload skips the invalid entry and loads the other"
+  },
+  {
+   "method": "GET",
+   "path": "/broken",
+   "note": "the invalid entry is not loaded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "added",
+    "httpRequest": {
+     "path": "/added"
+    },
+    "httpResponse": {
+     "body": "added response"
+    }
+   },
+   "note": "the first save would drop the invalid entry from the file"
+  },
+  {
+   "readFile": "{{scratch}}/persistence_invalid_entries_backup.json",
+   "pollUntil": "added",
+   "note": "saved: the loaded expectations only"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "capture": {
+    "bodyRegex": "the original was copied to (\\S+) - fix",
+    "as": "backup"
+   },
+   "mask": [
+    {
+     "regex": "(?s)^.*?([^\\n]*- skipping an invalid expectation.*?-{36}\\n).*?([^\\n]*- persisted expectations [^\\n]*).*$",
+     "replace": "$1$2"
+    },
+    {
+     "regex": "invalid-entries-\\d{8}-\\d{6}\\.bak",
+     "replace": "invalid-entries-<yyyyMMdd-HHmmss>.bak"
+    }
+   ],
+   "note": "the WARN of the skipped entry on the reload, and the WARN naming the backup before the first save"
+  },
+  {
+   "readFile": "{{capture:backup}}",
+   "note": "the backup is the document as it was before the save, invalid entry included"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "second",
+    "httpRequest": {
+     "path": "/second"
+    },
+    "httpResponse": {
+     "body": "second response"
+    }
+   },
+   "note": "a later save backs up nothing more"
+  },
+  {
+   "readFile": "{{scratch}}/persistence_invalid_entries_backup.json",
+   "pollUntil": "second response"
+  },
+  {
+   "listFiles": "{{scratch}}/persistence_invalid_entries_backup.json*",
+   "mask": [
+    {
+     "regex": "invalid-entries-\\d{8}-\\d{6}\\.bak",
+     "replace": "invalid-entries-<yyyyMMdd-HHmmss>.bak"
+    }
+   ],
+   "note": "the persisted file and one backup"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/persistence_invalid_entries_backup.json",
+    "content": "[ ]",
+    "replace": true
+   },
+   "note": "the next run starts from a file without these expectations, so that the reload of the edit above is what loads them"
+  }
+ ]
+}

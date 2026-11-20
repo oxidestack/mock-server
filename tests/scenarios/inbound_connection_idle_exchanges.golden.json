@@ -1,0 +1,56 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 1677",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpError\" : { },\n  \"httpRequest\" : {\n    \"path\" : \"/held\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/slow\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"slow but sure\",\n    \"delay\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 900\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/upgrade\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 101,\n    \"headers\" : {\n      \"Upgrade\" : [ \"custom\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/upgrade-with-body\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 101,\n    \"headers\" : {\n      \"Upgrade\" : [ \"custom\" ]\n    },\n    \"body\" : \"after the head\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/upgrade-websocket-version\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 101,\n    \"headers\" : {\n      \"Upgrade\" : [ \"custom\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ]\n    },\n    \"body\" : \"never written\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 13\r\n\r\nslow but sure",
+      "closed": true,
+      "note": "a delayed response pipelined behind an abandoned request is answered; then idle"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 13\r\n\r\nslow but sure",
+      "closed": true,
+      "note": "a request sent after an abandoned one is answered"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 13\r\n\r\nslow but sure",
+      "closed": true,
+      "note": "the same inside a CONNECT tunnel"
+    },
+    {
+      "tcpText": "HTTP/1.1 101 Switching Protocols\r\nUpgrade: custom\r\nconnection: keep-alive\r\ncontent-length: 0\r\n\r\n",
+      "closed": false,
+      "note": "a 101 response makes the connection long-lived: it stays open past the timeout"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 101 Switching Protocols\r\nUpgrade: custom\r\nconnection: keep-alive\r\ncontent-length: 0\r\n\r\n",
+      "closed": false,
+      "note": "the same inside a CONNECT tunnel"
+    },
+    {
+      "tcpText": "HTTP/1.1 101 Switching Protocols\r\nUpgrade: custom\r\nconnection: keep-alive\r\ncontent-length: 14\r\n\r\nafter the head",
+      "closed": false,
+      "note": "a 101 without Sec-WebSocket-Version keeps its content-length and body (HttpResponseEncoder.isContentAlwaysEmpty)"
+    },
+    {
+      "tcpText": "HTTP/1.1 101 Switching Protocols\r\nUpgrade: custom\r\nSec-WebSocket-Version: 13\r\nconnection: keep-alive\r\n\r\n",
+      "closed": false,
+      "note": "one with it has neither"
+    }
+  ]
+}

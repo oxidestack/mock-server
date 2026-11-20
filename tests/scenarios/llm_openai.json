@@ -1,0 +1,175 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "llm1",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/v1/chat/completions"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "Hello there, friend!",
+      "usage": {
+       "inputTokens": 5,
+       "outputTokens": 4,
+       "cachedInputTokens": 2
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "llm2",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/v1/chat/completions/stream"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "alpha beta, gamma-delta épsilon 你好 unbelievably!",
+      "streaming": true,
+      "streamingPhysics": {
+       "tokensPerSecond": 200,
+       "jitter": 0.5,
+       "seed": 42
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "llm3",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/v1/chat/completions/tools"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "completion": {
+      "toolCalls": [
+       {
+        "name": "get_weather",
+        "arguments": "{\"city\":\"Paris\"}"
+       }
+      ],
+      "streaming": true,
+      "streamingPhysics": {
+       "subwordStreaming": false
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "llm4",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/v1/chat/completions/words"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "m",
+     "completion": {
+      "text": "one  two\tthree",
+      "stopReason": "max_tokens",
+      "streaming": true,
+      "streamingPhysics": {
+       "subwordStreaming": false
+      }
+     }
+    }
+   }
+  },
+  {
+   "note": "completion",
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": "{\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "call_[0-9a-f]{24}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "streamed",
+   "method": "POST",
+   "path": "/v1/chat/completions/stream",
+   "body": "{\"stream\":true}",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "call_[0-9a-f]{24}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "streamed tool call",
+   "method": "POST",
+   "path": "/v1/chat/completions/tools",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "call_[0-9a-f]{24}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "legacy word split",
+   "method": "POST",
+   "path": "/v1/chat/completions/words",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "call_[0-9a-f]{24}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "exchanges",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "call_[0-9a-f]{24}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "logs",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/v1/chat/completions"
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "call_[0-9a-f]{24}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": "(created\\\\*\":)\\d+", "replace": "${1}0"}, {"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}, "chatcmpl-[0-9a-f]{29}", "call_[0-9a-f]{24}", "created\\\\?\":\\d+", "\"created\" : \\d+"], "body": {"path": "/v1/chat/completions"}}
+]
+}

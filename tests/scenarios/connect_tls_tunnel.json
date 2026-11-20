@@ -1,0 +1,112 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/hello"
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "hello"
+    }
+   },
+   "note": "A CONNECT sent over TLS. The 8.0.0 oracle serves only HTTP/1.1 inside the outer TLS (RelayConnectHandler: an SslHandler is already in the pipeline, so configurePipelines without detection); upstream fix 40939d794 defers detection on every CONNECT, so the snapshot classifies the decrypted first bytes as it does in a cleartext tunnel: a nested TLS record is terminated, the h2c preface is served as HTTP/2. The tunnelled bytes follow the CONNECT after a second (chunkMillis): the oracle opens its loopback to itself before it answers 200, and bytes that arrive while it does so are lost, so a 200 ms gap raced against a cold oracle."
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:443 HTTP/1.1\r\nHost: mocked.example.test:443\r\n\r\n"
+    },
+    {
+     "text": "GET /hello HTTP/1.1\r\nHost: mocked.example.test:443\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "tls": true,
+   "text": true,
+   "awaitBytes": 60,
+   "note": "plaintext HTTP/1.1 inside a CONNECT over TLS: matched"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:443 HTTP/1.1\r\nHost: mocked.example.test:443\r\n\r\n"
+    },
+    {
+     "text": "GET /unmatched HTTP/1.1\r\nHost: mocked.example.test:443\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "tls": true,
+   "text": true,
+   "awaitBytes": 60,
+   "note": "plaintext HTTP/1.1 inside a CONNECT over TLS: unmatched, so proxied to the unresolvable target: 502"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:443 HTTP/1.1\r\nHost: mocked.example.test:443\r\n\r\n"
+    },
+    {
+     "hex": "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a000000040000000000000033010500000001828600053a70617468062f68656c6c6f000a3a617574686f72697479166d6f636b65642e6578616d706c652e746573743a3830"
+    }
+   ],
+   "chunkMillis": 1000,
+   "tls": true,
+   "text": true,
+   "note": "h2c prior knowledge inside a CONNECT over TLS: the preface, an empty SETTINGS and a HEADERS frame (GET /hello, END_STREAM) on stream 1"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:443 HTTP/1.1\r\nHost: mocked.example.test:443\r\n\r\n"
+    },
+    {
+     "hex": "16030100050100000100"
+    }
+   ],
+   "chunkMillis": 1000,
+   "tls": true,
+   "text": true,
+   "awaitBytes": 40,
+   "note": "a malformed TLS ClientHello inside a CONNECT over TLS: 8.0.0 parses it as HTTP (/bad-request, proxied: 502); after the fix it is a TLS record, refused with a decode_error alert"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:443 HTTP/1.1\r\nHost: mocked.example.test:443\r\n\r\n"
+    },
+    {
+     "hex": "16030100c8010000c403034b5d6018f849742b54334809caf9af41888b6535e35c077f9353c8cc7e6087b000001ec02cc030c02bc02fcca9cca8c024c028c023c027009f009e006b006700ff0100007d0000001800160000136d6f636b65642e6578616d706c652e74657374000b000403000102000a000c000a001d0017001e00190018002300000010000b000908687474702f312e310016000000170000000d002a0028040305030603080708080809080a080b080408050806040105010601030303010302040205020602"
+    }
+   ],
+   "chunkMillis": 1000,
+   "tls": true,
+   "text": true,
+   "awaitBytes": 40,
+   "mask": [
+    {
+     "regex": "(?s)(?<=\r\n\r\n\u0016\u0003\u0003).+",
+     "replace": "<server flight>"
+    }
+   ],
+   "note": "a TLS 1.2 ClientHello inside a CONNECT over TLS: after the fix the nested handshake is answered with the server's flight"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/hello"
+    },
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   },
+   "note": "the HTTP/1.1 and (after the fix) the h2c request reached the data plane"
+  }
+ ]
+}

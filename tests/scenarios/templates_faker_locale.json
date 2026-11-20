@@ -1,0 +1,79 @@
+{
+ "source": "faker.locale(tag) picks Datafaker's locale data, 9.2.0",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t0"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"de-DE=$faker.locale('de-DE') | de_AT=$faker.locale('de_AT') | pt-br=$faker.locale('pt-br') | xx=$faker.locale('xx') | null=$faker.locale($null) | en-PAK=$faker.locale('en-PAK') | ca-cat=$faker.locale('CA-cat') | script=$faker.locale('zh-Hant-TW') | zh-TW=$faker.locale('zh-TW-x') | long=$faker.locale('english') | blank=$faker.locale(' ') | same=$faker.locale('de').equals($faker.locale('de-DE')) | class=$faker.locale('fr').getClass().getName() | getLocale=$faker.locale('fr').getLocale() | root=$faker | int=$faker.locale(5)\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t1"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"provider=$faker.locale('ja').name().getClass().getName() | str=$faker.locale('ja').name()\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t2"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    \"statusCode\": 200,\n    \"body\": \"lookup={{faker.locale}} | m={{faker.locale.de-DE}} | x={{faker.locale.xx}}\"\n}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/t0",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/t1",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    },
+    {
+     "regex": "\\)@[0-9a-f]+",
+     "replace": ")@<hash>",
+     "reason": "Object.toString's identity hash code differs per run"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/t2"
+  }
+ ]
+}

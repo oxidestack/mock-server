@@ -1,0 +1,46 @@
+{
+ "source": "systemValue.property reads the JVM's own properties (java.version, user.home, os.name, ...) when allow-listed (9.2.0)",
+ "properties": {
+  "templateSystemValueAllowList": "java.*,jdk.*,sun.*,os.*,user.*,file.*,path.*,line.*,native.*,stdout.*,stderr.*,stdin.*"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/jvm/v"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"java.version=[$systemValue.property('java.version')] user.home=[$systemValue.property('user.home')] user.dir=[$systemValue.property('user.dir')] os.name=[$systemValue.property('os.name')] file.encoding=[$systemValue.property('file.encoding')] file.separator=[$systemValue.property('file.separator')] path.separator=[$systemValue.property('path.separator')] line.separator=[$systemValue.property('line.separator')] java.class.path=[$systemValue.property('java.class.path')] java.class.version=[$systemValue.property('java.class.version')] java.home=[$systemValue.property('java.home')] java.io.tmpdir=[$systemValue.property('java.io.tmpdir')] java.library.path=[$systemValue.property('java.library.path')] java.runtime.name=[$systemValue.property('java.runtime.name')] java.runtime.version=[$systemValue.property('java.runtime.version')] java.specification.name=[$systemValue.property('java.specification.name')] java.specification.vendor=[$systemValue.property('java.specification.vendor')] java.specification.version=[$systemValue.property('java.specification.version')] java.vendor=[$systemValue.property('java.vendor')] java.vendor.url=[$systemValue.property('java.vendor.url')] java.vendor.url.bug=[$systemValue.property('java.vendor.url.bug')] java.vendor.version=[$systemValue.property('java.vendor.version')] java.version.date=[$systemValue.property('java.version.date')] java.vm.info=[$systemValue.property('java.vm.info')] java.vm.name=[$systemValue.property('java.vm.name')] java.vm.specification.name=[$systemValue.property('java.vm.specification.name')] java.vm.specification.vendor=[$systemValue.property('java.vm.specification.vendor')] java.vm.specification.version=[$systemValue.property('java.vm.specification.version')] java.vm.vendor=[$systemValue.property('java.vm.vendor')] java.vm.version=[$systemValue.property('java.vm.version')] java.vm.compressedOopsMode=[$systemValue.property('java.vm.compressedOopsMode')] jdk.debug=[$systemValue.property('jdk.debug')] native.encoding=[$systemValue.property('native.encoding')] os.arch=[$systemValue.property('os.arch')] stderr.encoding=[$systemValue.property('stderr.encoding')] stdin.encoding=[$systemValue.property('stdin.encoding')] stdout.encoding=[$systemValue.property('stdout.encoding')] sun.arch.data.model=[$systemValue.property('sun.arch.data.model')] sun.boot.library.path=[$systemValue.property('sun.boot.library.path')] sun.cpu.endian=[$systemValue.property('sun.cpu.endian')] sun.io.unicode.encoding=[$systemValue.property('sun.io.unicode.encoding')] sun.java.launcher=[$systemValue.property('sun.java.launcher')] sun.jnu.encoding=[$systemValue.property('sun.jnu.encoding')] sun.management.compiler=[$systemValue.property('sun.management.compiler')] sun.java.command=[$systemValue.property('sun.java.command')] sun.cpu.isalist=[$systemValue.property('sun.cpu.isalist')] user.language=[$systemValue.property('user.language')] user.country=[$systemValue.property('user.country')] user.variant=[$systemValue.property('user.variant')] user.script=[$systemValue.property('user.script')] user.name=[$systemValue.property('user.name')] user.timezone=[$systemValue.property('user.timezone')] jdk.module.path=[$systemValue.property('jdk.module.path')] file.encoding.pkg=[$systemValue.property('file.encoding.pkg')] jdk.internal.vm.ci.enabled=[$systemValue.property('jdk.internal.vm.ci.enabled')]\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/jvm/m"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    \"statusCode\": 200,\n    \"body\": \"java.version=[{{#systemValue.property}}java.version{{/systemValue.property}}] user.home=[{{#systemValue.property}}user.home{{/systemValue.property}}] user.dir=[{{#systemValue.property}}user.dir{{/systemValue.property}}] os.name=[{{#systemValue.property}}os.name{{/systemValue.property}}] file.encoding=[{{#systemValue.property}}file.encoding{{/systemValue.property}}]\"\n}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/jvm/v"
+  },
+  {
+   "method": "GET",
+   "path": "/jvm/m"
+  }
+ ]
+}

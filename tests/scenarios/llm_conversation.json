@@ -1,0 +1,550 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "priority": 1,
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "turn one"
+      },
+      "conversationPredicates": {
+       "turnIndex": 0
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "priority": 2,
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "saw weather"
+      },
+      "conversationPredicates": {
+       "containsToolResultFor": "get_weather"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "priority": 3,
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "said hello"
+      },
+      "conversationPredicates": {
+       "latestMessageContains": "HELLO",
+       "normalization": {
+        "lowercase": true
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/messages"
+     },
+     "priority": 0,
+     "httpLlmResponse": {
+      "provider": "ANTHROPIC",
+      "model": "m",
+      "completion": {
+       "text": "anthropic tool"
+      },
+      "conversationPredicates": {
+       "containsToolResultFor": "lookup",
+       "latestMessageRole": "TOOL"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1beta/models/g:generateContent"
+     },
+     "priority": 0,
+     "httpLlmResponse": {
+      "provider": "GEMINI",
+      "model": "m",
+      "completion": {
+       "text": "gemini regex"
+      },
+      "conversationPredicates": {
+       "latestMessageMatches": "^order \\d+$"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/api/chat"
+     },
+     "priority": 0,
+     "httpLlmResponse": {
+      "provider": "OLLAMA",
+      "model": "m",
+      "completion": {
+       "text": "ollama turn"
+      },
+      "conversationPredicates": {
+       "turnIndex": 1
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/responses"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI_RESPONSES",
+      "model": "m",
+      "completion": {
+       "text": "second"
+      },
+      "conversationPredicates": {
+       "turnIndex": 1
+      }
+     },
+     "priority": 5
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/responses"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI_RESPONSES",
+      "model": "m",
+      "completion": {
+       "text": "first"
+      }
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ]
+   },
+   "note": "turn 0",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"system_fingerprint\":\"fp_[0-9a-f]{10}\"",
+     "replace": "\"system_fingerprint\":\"fp_<id>\""
+    },
+    {
+     "regex": "\"req_[0-9a-f]{26}\"",
+     "replace": "\"req_<id>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": "weather?"
+     },
+     {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+       {
+        "id": "c1",
+        "type": "function",
+        "function": {
+         "name": "get_weather",
+         "arguments": "{}"
+        }
+       }
+      ]
+     },
+     {
+      "role": "tool",
+      "tool_call_id": "c1",
+      "content": "sunny"
+     }
+    ]
+   },
+   "note": "tool result",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"system_fingerprint\":\"fp_[0-9a-f]{10}\"",
+     "replace": "\"system_fingerprint\":\"fp_<id>\""
+    },
+    {
+     "regex": "\"req_[0-9a-f]{26}\"",
+     "replace": "\"req_<id>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": "a"
+     },
+     {
+      "role": "assistant",
+      "content": "b"
+     },
+     {
+      "role": "user",
+      "content": "say  hello  now"
+     }
+    ]
+   },
+   "note": "contains normalized",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"system_fingerprint\":\"fp_[0-9a-f]{10}\"",
+     "replace": "\"system_fingerprint\":\"fp_<id>\""
+    },
+    {
+     "regex": "\"req_[0-9a-f]{26}\"",
+     "replace": "\"req_<id>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/messages",
+   "body": {
+    "system": "sys",
+    "messages": [
+     {
+      "role": "user",
+      "content": "x"
+     },
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "tool_use",
+        "id": "t1",
+        "name": "lookup",
+        "input": {}
+       }
+      ]
+     },
+     {
+      "role": "user",
+      "content": [
+       {
+        "type": "tool_result",
+        "tool_use_id": "t1",
+        "content": "found"
+       }
+      ]
+     }
+    ]
+   },
+   "note": "anthropic",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"system_fingerprint\":\"fp_[0-9a-f]{10}\"",
+     "replace": "\"system_fingerprint\":\"fp_<id>\""
+    },
+    {
+     "regex": "\"req_[0-9a-f]{26}\"",
+     "replace": "\"req_<id>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1beta/models/g:generateContent",
+   "body": {
+    "contents": [
+     {
+      "role": "user",
+      "parts": [
+       {
+        "text": "order 42"
+       }
+      ]
+     }
+    ]
+   },
+   "note": "gemini match",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"system_fingerprint\":\"fp_[0-9a-f]{10}\"",
+     "replace": "\"system_fingerprint\":\"fp_<id>\""
+    },
+    {
+     "regex": "\"req_[0-9a-f]{26}\"",
+     "replace": "\"req_<id>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1beta/models/g:generateContent",
+   "body": {
+    "contents": [
+     {
+      "role": "user",
+      "parts": [
+       {
+        "text": "order x"
+       }
+      ]
+     }
+    ]
+   },
+   "note": "gemini no match",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"system_fingerprint\":\"fp_[0-9a-f]{10}\"",
+     "replace": "\"system_fingerprint\":\"fp_<id>\""
+    },
+    {
+     "regex": "\"req_[0-9a-f]{26}\"",
+     "replace": "\"req_<id>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/api/chat",
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": "a"
+     },
+     {
+      "role": "assistant",
+      "content": "b"
+     },
+     {
+      "role": "user",
+      "content": "c"
+     }
+    ]
+   },
+   "note": "ollama",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies with the time>"
+    },
+    {
+     "regex": "\"system_fingerprint\":\"fp_[0-9a-f]{10}\"",
+     "replace": "\"system_fingerprint\":\"fp_<id>\""
+    },
+    {
+     "regex": "\"req_[0-9a-f]{26}\"",
+     "replace": "\"req_<id>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/responses",
+   "body": {
+    "input": "hello"
+   },
+   "note": "responses first",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"system_fingerprint\":\"fp_[0-9a-f]{10}\"",
+     "replace": "\"system_fingerprint\":\"fp_<id>\""
+    },
+    {
+     "regex": "\"req_[0-9a-f]{26}\"",
+     "replace": "\"req_<id>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    }
+   ]
+  }
+ ],
+ "isolated": true
+}

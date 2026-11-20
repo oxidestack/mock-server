@@ -1,0 +1,18 @@
+{
+ "note": "a forward-proxy client certificate chain file as PEM, presented to a data plane that trusts its CA",
+ "properties": {
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/x509/mtls/ca.pem",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/x509/mtls/client.pem;{{files}}/x509/mtls/client-key.pem"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\", \"secure\": true}, \"httpResponseTemplate\": {\"templateType\": \"MUSTACHE\", \"template\": \"{ \\\"statusCode\\\": 200, \\\"body\\\": \\\"{{request.clientCertificateChain}}\\\" }\"}}, {\"httpRequest\": {\"path\": \"/forwarded\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target\", \"secure\": true, \"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTPS\"}}}}]"
+  },
+  {
+   "method": "GET",
+   "path": "/forwarded"
+  }
+ ]
+}

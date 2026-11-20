@@ -1,0 +1,443 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) loadorch-LoadMetricsTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9c8401a05f0b",
+   "note": "exportsLoadFamilyToOtlp (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 8,\n  \"name\" : \"otel-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      },\n      \"body\" : \"req-body\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "exportsLoadFamilyToOtlp (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "9c8401a05f0b"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/otel-load",
+   "note": "exportsLoadFamilyToOtlp (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "9c8401a05f0b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "12cf3cae8cee",
+   "note": "runIdIsStableAcrossSnapshotsAndOnMetricLabels (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 5,\n  \"name\" : \"stable-run\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "runIdIsStableAcrossSnapshotsAndOnMetricLabels (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "12cf3cae8cee"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/stable-run",
+   "note": "runIdIsStableAcrossSnapshotsAndOnMetricLabels (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "12cf3cae8cee"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "531ef3f791b9",
+   "note": "customLabelsAppearAsOtelAttributes (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"labels\" : {\n    \"team\" : \"payments\",\n    \"env\" : \"staging\"\n  },\n  \"maxRequests\" : 5,\n  \"name\" : \"otel-labelled\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "customLabelsAppearAsOtelAttributes (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "531ef3f791b9"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/otel-labelled",
+   "note": "customLabelsAppearAsOtelAttributes (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "531ef3f791b9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "94d6ce0e5d80",
+   "note": "requestsCounterIncrementsWithStructuredLabels (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 10,\n  \"name\" : \"orders-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/api/orders/12345\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      },\n      \"body\" : \"payload-body\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "requestsCounterIncrementsWithStructuredLabels (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "94d6ce0e5d80"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/orders-load",
+   "note": "requestsCounterIncrementsWithStructuredLabels (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "94d6ce0e5d80"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "fcd85696edba",
+   "note": "customLabelAddedAsPrometheusLabelOnlyWhenAllowlisted (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"labels\" : {\n    \"team\" : \"payments\",\n    \"env\" : \"staging\"\n  },\n  \"maxRequests\" : 5,\n  \"name\" : \"labelled-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "customLabelAddedAsPrometheusLabelOnlyWhenAllowlisted (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "fcd85696edba"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/labelled-load",
+   "note": "customLabelAddedAsPrometheusLabelOnlyWhenAllowlisted (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "fcd85696edba"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f6b7a34feecf",
+   "note": "completedRunSeriesRetainedThenEvictedWhenNextRunStarts (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 5,\n  \"name\" : \"evict-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "completedRunSeriesRetainedThenEvictedWhenNextRunStarts (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "f6b7a34feecf"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/evict-load",
+   "note": "completedRunSeriesRetainedThenEvictedWhenNextRunStarts (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "f6b7a34feecf"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 5,\n  \"name\" : \"evict-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "completedRunSeriesRetainedThenEvictedWhenNextRunStarts (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "f6b7a34feecf"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/evict-load",
+   "note": "completedRunSeriesRetainedThenEvictedWhenNextRunStarts (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "f6b7a34feecf"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "4822e601e9c6",
+   "note": "errorsCounterIncrementsOnNullResponse (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 3,\n  \"name\" : \"null-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "errorsCounterIncrementsOnNullResponse (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "4822e601e9c6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/null-load",
+   "note": "errorsCounterIncrementsOnNullResponse (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "4822e601e9c6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "787bf8ca7952",
+   "note": "retriggeringAnActiveNameStopsTheReplacedRunAndEvictsItsSeries (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"retrigger-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "retriggeringAnActiveNameStopsTheReplacedRunAndEvictsItsSeries (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "787bf8ca7952"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/retrigger-load",
+   "note": "retriggeringAnActiveNameStopsTheReplacedRunAndEvictsItsSeries (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "787bf8ca7952"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"retrigger-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "retriggeringAnActiveNameStopsTheReplacedRunAndEvictsItsSeries (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "787bf8ca7952"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/retrigger-load",
+   "note": "retriggeringAnActiveNameStopsTheReplacedRunAndEvictsItsSeries (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "787bf8ca7952"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d6a0afeb17be",
+   "note": "checksCounterIncrementsOnPassAndFail (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 5,\n  \"name\" : \"checks-metric\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"checks\" : [ {\n      \"comparator\" : \"EQUALS\",\n      \"source\" : \"STATUS\",\n      \"valid\" : true,\n      \"value\" : \"200\"\n    }, {\n      \"comparator\" : \"EQUALS\",\n      \"jsonPath\" : \"$.ok\",\n      \"source\" : \"BODY_JSONPATH\",\n      \"valid\" : true,\n      \"value\" : \"true\"\n    } ],\n    \"name\" : \"assert\",\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "checksCounterIncrementsOnPassAndFail (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "d6a0afeb17be"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/checks-metric",
+   "note": "checksCounterIncrementsOnPassAndFail (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "d6a0afeb17be"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b60724bc059c",
+   "note": "liveGaugesReadActiveRunAndDrainWhenStopped (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"gauge-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 3\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "liveGaugesReadActiveRunAndDrainWhenStopped (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "b60724bc059c"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/gauge-load",
+   "note": "liveGaugesReadActiveRunAndDrainWhenStopped (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "b60724bc059c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "07e87e6913fa",
+   "note": "statusDtoPercentilesPopulateFromHistogram (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 20,\n  \"name\" : \"pctl-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "statusDtoPercentilesPopulateFromHistogram (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "07e87e6913fa"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/pctl-load",
+   "note": "statusDtoPercentilesPopulateFromHistogram (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "07e87e6913fa"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "402d0a61c240",
+   "note": "errorsCounterIncrementsOnHttp5xx (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 5,\n  \"name\" : \"errors-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "errorsCounterIncrementsOnHttp5xx (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "402d0a61c240"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/errors-load",
+   "note": "errorsCounterIncrementsOnHttp5xx (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "402d0a61c240"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a943cade9899",
+   "note": "durationHistogramHasObservationsForRun (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 10,\n  \"name\" : \"hist-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "durationHistogramHasObservationsForRun (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "a943cade9899"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/hist-load",
+   "note": "durationHistogramHasObservationsForRun (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "a943cade9899"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "36e64f898d95",
+   "note": "droppedIterationsCountsRateStageVuCapShortfall (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"rate-cap-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"maxVus\" : 2,\n      \"rate\" : 100.0,\n      \"type\" : \"RATE\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "droppedIterationsCountsRateStageVuCapShortfall (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "36e64f898d95"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/rate-cap-load",
+   "note": "droppedIterationsCountsRateStageVuCapShortfall (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "36e64f898d95"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "42802d6ef683",
+   "note": "iterationsCounterIncrements (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 6,\n  \"name\" : \"iter-load\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "iterationsCounterIncrements (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "42802d6ef683"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/iter-load",
+   "note": "iterationsCounterIncrements (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "42802d6ef683"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "1e130b98332b",
+   "note": "stepNameOverridesStepAndRouteLabels (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 5,\n  \"name\" : \"named-step\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"name\" : \"create-order\",\n    \"request\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/api/orders/999\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "stepNameOverridesStepAndRouteLabels (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "1e130b98332b"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/named-step",
+   "note": "stepNameOverridesStepAndRouteLabels (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "1e130b98332b"
+  }
+ ]
+}

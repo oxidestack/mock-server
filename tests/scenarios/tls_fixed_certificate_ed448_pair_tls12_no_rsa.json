@@ -1,0 +1,73 @@
+{
+ "note": "a fixed Ed448 pair whose certificate MockServer's CA signed with sha256WithRSA, and a TLS 1.2-only client offering ed448 and ecdsa_secp256r1_sha256 but no rsa_pkcs1_sha256: the JDK finds no cipher suite whose key the client accepts and fails the handshake with SSLHandshakeException '(handshake_failure) no cipher suites in common'.",
+ "properties": {
+  "privateKeyPath": "{{files}}/tls/fixed-ed448-key.pem",
+  "x509CertificatePath": "{{files}}/tls/fixed-ed448-cert.pem"
+ },
+ "steps": [
+  {
+   "note": "an HTTP request on each event loop",
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "note": "TLS 1.2, ed448 and ECDSA P-256: the handshake fails with a handshake_failure alert",
+   "tcp": [
+    {
+     "text": "GET /target HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "signatureSchemes": [
+    "ED448",
+    "ECDSA_NISTP256_SHA256"
+   ],
+   "tls12": true
+  },
+  {
+   "note": "the log: the CA load, then the failed handshake's WARN",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^  /[0-9.]+:[0-9]+$",
+     "replace": "  <client address>",
+     "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+    }
+   ]
+  },
+  {
+   "note": "the entries as JSON: the CA load carries no port (the context is built off the event loop), the WARN the port of the handshake's event loop",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "\"(   /)?[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+:[0-9]+\"",
+     "replace": "\"${1}<client address>\"",
+     "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,80 @@
+{
+  "log": {
+    "version": "1.2",
+    "entries": [
+      {
+        "request": {
+          "method": "GET",
+          "url": "https://api.example.com/users?page=1&limit=10&key=secret-key",
+          "headers": [
+            { "name": "Accept", "value": "application/json" },
+            { "name": "X-Api-Key", "value": "test-key" },
+            { "name": "Date", "value": "Mon, 01 Jan 2024 00:00:00 GMT" },
+            { "name": "User-Agent", "value": "Mozilla/5.0" },
+            { "name": "X-Tenant", "value": "a" },
+            { "name": "X-Tenant", "value": "b" },
+            { "name": "x-tenant", "value": "c" }
+          ]
+        },
+        "response": {
+          "status": 200,
+          "headers": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Date", "value": "Mon, 01 Jan 2024 00:00:00 GMT" },
+            { "name": "X-Request-Id", "value": "abc-123" },
+            { "name": "Set-Cookie", "value": "sid=1" },
+            { "name": "X-Custom", "value": "custom-value" }
+          ],
+          "content": { "text": "{\"users\":[{\"id\":1,\"password\":\"hunter2\",\"ratio\":0.0001}]}" }
+        }
+      },
+      {
+        "request": {
+          "method": "post",
+          "url": "https://api.example.com/users",
+          "headers": [ { "name": "Content-Type", "value": "application/json" }, { "name": "Authorization", "value": "Bearer abc" } ],
+          "postData": { "text": "{\"name\":\"Alice\",\"nested\":{\"access_token\":\"t0k3n\"}}" }
+        },
+        "response": {
+          "status": 201,
+          "headers": [ { "name": "Content-Type", "value": "application/json" } ],
+          "content": { "text": "{\"id\":2,\"name\":\"Alice\"}" }
+        }
+      },
+      {
+        "request": {
+          "method": "GET",
+          "url": "https://api.example.com/search?ignored=1",
+          "queryString": [ { "name": "q", "value": "a b" }, { "name": "tag" }, { "name": "token", "value": "t" } ]
+        },
+        "response": {
+          "status": 200,
+          "content": { "text": "aGVsbG8gd29ybGQ=", "encoding": "base64" }
+        }
+      },
+      {
+        "request": { "method": "DELETE", "url": "/relative/path%20x?a=%2F&b=1+2&c" },
+        "response": { "status": "204", "content": { "text": "" } }
+      },
+      {
+        "request": { "method": "GET", "url": "http://x/bad path" },
+        "response": { "status": 200, "content": { "text": "data: {\"token\":\"sse-secret\",\"ok\":true}\n\ndata: [DONE]\n" } }
+      },
+      {
+        "request": { "method": "GET", "url": "not a url" },
+        "response": { "content": { "text": "{\"secret\": truncated" } }
+      },
+      {
+        "request": { "url": "https://api.example.com/no-method" },
+        "response": { "status": 200 }
+      },
+      {
+        "request": { "method": "PUT", "url": "https://api.example.com/items/1" }
+      },
+      {
+        "request": { "method": "GET", "url": "https://api.example.com" },
+        "response": { "status": 200, "content": { "text": "plain text with token word" } }
+      }
+    ]
+  }
+}

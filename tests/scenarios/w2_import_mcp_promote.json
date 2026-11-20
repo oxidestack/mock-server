@@ -1,0 +1,132 @@
+{
+ "isolated": true,
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize"
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "promote_recordings",
+     "arguments": {}
+    }
+   },
+   "note": "nothing recorded",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "bodyFile": "import/recording.ndjson"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "promote_recordings",
+     "arguments": {
+      "path": "/api/users/.*",
+      "parameterize": false
+     }
+    }
+   },
+   "note": "promote users",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "promote_recordings",
+     "arguments": {
+      "method": "POST",
+      "consolidate": false,
+      "redactSensitiveData": false
+     }
+    }
+   },
+   "note": "promote posts verbatim",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "promote_recordings",
+     "arguments": {
+      "method": "PUT"
+     }
+    }
+   },
+   "note": "nothing matches",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "promoted"
+  }
+ ]
+}

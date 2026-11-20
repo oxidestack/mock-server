@@ -1,0 +1,82 @@
+{
+ "source": "Http3StreamWriteStallHandler and Http3ConnectionWriteStallWatcher reset an HTTP/3 request stream (RESET_STREAM H3_INTERNAL_ERROR, 258) whose client took none of its response for responseWriteStallTimeoutMillis, here a client that grants the stream 64 KiB of credit and no more, and count it in mock_server_response_write_stalls_total{protocol=http3,scope=stream} (Http3ResponseWriteStallTimeoutIntegrationTest#shouldResetAStalledHttp3StreamOfAnAggregatedResponse)",
+ "quic": true,
+ "properties": {
+  "http3Port": "19494",
+  "metricsEnabled": "true",
+  "responseWriteStallTimeoutMillis": "1000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/stall"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"#foreach($i in [1..2000])aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#end\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/small"
+     },
+     "httpResponse": {
+      "body": "served"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "a 200 KB response on a stream whose client grants 64 KiB and then nothing for 6 s: what fits, then a reset with H3_INTERNAL_ERROR",
+   "h3": true,
+   "method": "GET",
+   "path": "/stall",
+   "stallMillis": 6000
+  },
+  {
+   "note": "a response that fits the stream's credit is taken whole by QUIC: nothing waits, nothing is reset",
+   "h3": true,
+   "method": "GET",
+   "path": "/small",
+   "stallMillis": 2000
+  },
+  {
+   "note": "one HTTP/3 stream reset",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_response_write_stalls)[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "the WARN, among the requests' entries",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "a{100,}",
+     "replace": "a…",
+     "reason": "the response body, 200 KB"
+    },
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, ",
+     "replace": "[id: <channel id>, ",
+     "reason": "the stream channel's id, Netty's DefaultChannelId, random"
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

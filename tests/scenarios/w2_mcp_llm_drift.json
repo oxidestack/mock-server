@@ -1,0 +1,430 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "hi",
+       "usage": {
+        "inputTokens": 1,
+        "outputTokens": 1
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/proxy/v1/chat/completions"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "127.0.0.1:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/proxy/sse"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/sse",
+       "headers": {
+        "Host": [
+         "127.0.0.1:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/sse"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "x"
+       }
+      ],
+      "closeConnection": true
+     }
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/proxy/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "s"
+     },
+     {
+      "role": "user",
+      "content": "hello"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 22,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/w2_mcp_llm_drift.json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "record cassette"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 23,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "OPENAI",
+      "cassettePath": "/tmp/w2_mcp_llm_drift.json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift openai"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 24,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "ANTHROPIC",
+      "cassettePath": "/tmp/w2_mcp_llm_drift.json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift other provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 25,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "COHERE",
+      "cassettePath": "/tmp/w2_mcp_llm_drift.json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift no client"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 26,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "OPENAI",
+      "cassettePath": "/tmp/w2_mcp_llm_drift.json",
+      "backendName": "nope"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift unknown backend"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 27,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "OPENAI"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift no cassette"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "OPENAI",
+      "cassettePath": " "
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift blank cassette"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 29,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "cassettePath": "/tmp/w2_mcp_llm_drift.json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift no provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 30,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "AUTO",
+      "cassettePath": "/tmp/w2_mcp_llm_drift.json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift bad provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 31,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "OPENAI",
+      "cassettePath": "/etc/hosts"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    {
+     "regex": "working directory \\([^)]*\\)",
+     "replace": "working directory (<cwd>)"
+    }
+   ],
+   "note": "drift outside allowed"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 32,
+    "method": "tools/call",
+    "params": {
+     "name": "detect_llm_drift",
+     "arguments": {
+      "provider": "OPENAI",
+      "cassettePath": "/tmp/w2_mcp_llm_drift-missing.json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "drift missing file"
+  }
+ ],
+ "properties": {
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "http://127.0.0.1:{{deadport}}"
+ }
+}

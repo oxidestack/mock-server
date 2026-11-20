@@ -1,0 +1,65 @@
+{
+ "properties": {
+  "controlPlaneOidcAuthenticationRequired": "true",
+  "controlPlaneOidcIssuer": "https://issuer.example",
+  "controlPlaneOidcAudience": "mockserver",
+  "controlPlaneOidcJwksUri": "{{files}}/oidc/jwks.json",
+  "controlPlaneAuthorizationEnabled": "true",
+  "controlPlaneScopeMapping": "readers=read,mutators=mutate,admins=admin,bogus=owner,=read",
+  "controlPlaneTLSMutualAuthenticationRequired": "true",
+  "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/tls/private-ca/ca-cert.pem",
+  "initializationJsonPath": "{{files}}/auth/mtls_forwards.json",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/tls/private-ca/forward-client-cert.pem;{{files}}/tls/private-ca/forward-client-key.pem,0.0.0.0={{files}}/tls/foreign-leaf-cert.pem;{{files}}/tls/foreign-leaf-key.pem"
+ },
+ "steps": [
+  {
+   "note": "mTLS passes, no token: the OIDC failure is not client-safe",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "mTLS passes (no scopes of its own), OIDC grants mutate: the united scopes authorise a mutation",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6Im11dGF0b3IiLCJzY29wZSI6Im11dGF0b3JzIG90aGVyIiwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjE3NjcyMjU2MDB9.YbzQMXycdGgjWp_NaYZZA5_hVy7taatY8jBZjbTHcsHtEOlFknA3c9cPR0oN6ZRpU5wJ-FpgkvFSMR8Pa8e-VVdtTscRMsneXQO5TPe-JliUgRpDOv-nFI1vR9fzhnAtF8W_Cst3XY5cNHaS--YCTpJnc1FkoRwFrxxScIzzsbViloOHlSjArNzFzMbjUSWbrdAmEwnTVxGZlDcSrQrU0yx6xen_GnnH0-mu0a5scUKlWUb0d6W-CudOGUctpNm1HUom1f3tnvxMe6CpOtPs2W-WFb0bnkfL20y8LQvGjPTVTQTrOy85uOo-aRtQTAiN5GGLf-Hc2GFlNA7iKcshNg"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "mTLS passes, OIDC grants read only: a mutation is forbidden",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "and a read is allowed",
+   "method": "GET",
+   "path": "/via-tls/retrieve",
+   "headers": {
+    "Host": "localhost:{{port}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "mTLS fails, OIDC would grant mutate: the mTLS reason answers",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6Im11dGF0b3IiLCJzY29wZSI6Im11dGF0b3JzIG90aGVyIiwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjE3NjcyMjU2MDB9.YbzQMXycdGgjWp_NaYZZA5_hVy7taatY8jBZjbTHcsHtEOlFknA3c9cPR0oN6ZRpU5wJ-FpgkvFSMR8Pa8e-VVdtTscRMsneXQO5TPe-JliUgRpDOv-nFI1vR9fzhnAtF8W_Cst3XY5cNHaS--YCTpJnc1FkoRwFrxxScIzzsbViloOHlSjArNzFzMbjUSWbrdAmEwnTVxGZlDcSrQrU0yx6xen_GnnH0-mu0a5scUKlWUb0d6W-CudOGUctpNm1HUom1f3tnvxMe6CpOtPs2W-WFb0bnkfL20y8LQvGjPTVTQTrOy85uOo-aRtQTAiN5GGLf-Hc2GFlNA7iKcshNg"
+   },
+   "maxMillis": 60000
+  }
+ ]
+}

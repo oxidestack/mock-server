@@ -1,0 +1,22 @@
+{"steps": [
+  {"note": "reset", "method": "PUT", "path": "/mockserver/reset"},
+  {"note": "a response generated from an inline JSON schema", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/gen"}, "httpResponse": {"statusCode": 200, "generateFromSchema": "{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"integer\"},\"name\":{\"type\":\"string\"},\"tags\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}}}"}}},
+  {"note": "an explicit body wins over generateFromSchema", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/gen-with-body"}, "httpResponse": {"body": "explicit", "generateFromSchema": "{\"type\":\"integer\"}"}}},
+  {"note": "a string schema", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/gen-string"}, "httpResponse": {"generateFromSchema": "{\"type\":\"string\"}"}}},
+  {"note": "recoverAfter with the default failure", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/rec"}, "httpResponse": {"statusCode": 200, "body": "ok", "recoverAfter": {"failTimes": 2}}}},
+  {"note": "recoverAfter with a failure response and an idempotency header", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/rec-key"}, "httpResponse": {"statusCode": 201, "body": "created", "recoverAfter": {"failTimes": 1, "idempotencyHeader": "Idempotency-Key", "failResponse": {"statusCode": 429, "headers": {"Retry-After": ["1"]}, "body": "slow down"}}}}},
+  {"note": "generated", "method": "GET", "path": "/gen"},
+  {"note": "explicit body", "method": "GET", "path": "/gen-with-body"},
+  {"note": "generated string", "method": "GET", "path": "/gen-string"},
+  {"note": "first attempt fails", "method": "GET", "path": "/rec"},
+  {"note": "second attempt fails", "method": "GET", "path": "/rec"},
+  {"note": "third attempt recovers", "method": "GET", "path": "/rec"},
+  {"note": "key a, first attempt fails", "method": "GET", "path": "/rec-key", "headers": {"Idempotency-Key": "a"}},
+  {"note": "key a, second attempt recovers", "method": "GET", "path": "/rec-key", "headers": {"Idempotency-Key": "a"}},
+  {"note": "key b has its own window", "method": "GET", "path": "/rec-key", "headers": {"Idempotency-Key": "b"}},
+  {"note": "no key: the expectation's match count (4th match) recovers", "method": "GET", "path": "/rec-key"},
+  {"note": "served responses as recorded", "method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON"},
+  {"note": "reset clears the idempotency windows", "method": "PUT", "path": "/mockserver/reset"},
+  {"note": "recoverAfter again after reset", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/rec-key"}, "httpResponse": {"statusCode": 201, "body": "created", "recoverAfter": {"failTimes": 1, "idempotencyHeader": "Idempotency-Key"}}}},
+  {"note": "key a fails again after reset", "method": "GET", "path": "/rec-key", "headers": {"Idempotency-Key": "a"}}
+]}

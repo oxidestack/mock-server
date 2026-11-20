@@ -1,0 +1,346 @@
+{
+ "source": "hand-written (generated from upstream's ProviderStreamFixtures): forwarded OPENAI responses relayed or aggregated as streams counted by LlmStreamUsageScanner (HttpActionHandler.observeForwardedLlmStream, emitStreamedForwardGenAiSpan, logStreamedUsageUnavailable), forwarded to this server's own mocks; Bedrock's amazon-bedrock-invocationMetrics and include_usage hint are upstream #29 (ab126cc20)",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "OPENAI"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-openai-usage",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "headers": {
+       "x-case": [
+        "openai-usage"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "data: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" there, the \\\"usage\\\":{\\\"prompt_tokens\\\":999} you asked about\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":null}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[],\"usage\":{\"prompt_tokens\":19,\"completion_tokens\":10,\"total_tokens\":29,\"prompt_tokens_details\":{\"cached_tokens\":4,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":3,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}}}\n\ndata: [DONE]\n\n"
+     }
+    },
+    {
+     "id": "forward-openai-usage",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/openai-usage"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "openai-usage"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-openai-no-usage",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "headers": {
+       "x-case": [
+        "openai-no-usage"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "data: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"
+     }
+    },
+    {
+     "id": "forward-openai-no-usage",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/openai-no-usage"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "openai-no-usage"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-openai-no-usage-again",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "headers": {
+       "x-case": [
+        "openai-no-usage-again"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "data: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-mini-2024-07-18\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"
+     }
+    },
+    {
+     "id": "forward-openai-no-usage-again",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/openai-no-usage-again"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "openai-no-usage-again"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-groq",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/openai/v1/chat/completions",
+      "headers": {
+       "x-case": [
+        "groq"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "data: {\"id\":\"chatcmpl-0b4d6f2e-6a0f-4c0e-9a66-3c0f2a2e9d0c\",\"object\":\"chat.completion.chunk\",\"created\":1730241104,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_179b0f92c9\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"logprobs\":null,\"finish_reason\":null}],\"x_groq\":{\"id\":\"req_01jbd6g2qdfw2adyrt2az8hz4w\"}}\n\ndata: {\"id\":\"chatcmpl-0b4d6f2e-6a0f-4c0e-9a66-3c0f2a2e9d0c\",\"object\":\"chat.completion.chunk\",\"created\":1730241104,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_179b0f92c9\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-0b4d6f2e-6a0f-4c0e-9a66-3c0f2a2e9d0c\",\"object\":\"chat.completion.chunk\",\"created\":1730241104,\"model\":\"llama-3.3-70b-versatile\",\"system_fingerprint\":\"fp_179b0f92c9\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"x_groq\":{\"id\":\"req_01jbd6g2qdfw2adyrt2az8hz4w\",\"usage\":{\"queue_time\":0.037493756,\"prompt_tokens\":18,\"prompt_time\":0.000680594,\"completion_tokens\":25,\"completion_time\":0.463333333,\"total_tokens\":43,\"total_time\":0.464013927}}}\n\ndata: [DONE]\n\n"
+     }
+    },
+    {
+     "id": "forward-groq",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/groq"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/openai/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "groq"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-aggregated",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "headers": {
+       "x-case": [
+        "aggregated"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/plain"
+       ]
+      },
+      "body": "data: {\"id\":\"cmpl-e5cc70bb28c444948073e77776eb30ef\",\"object\":\"chat.completion.chunk\",\"created\":1702256327,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"cmpl-e5cc70bb28c444948073e77776eb30ef\",\"object\":\"chat.completion.chunk\",\"created\":1702256327,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"cmpl-e5cc70bb28c444948073e77776eb30ef\",\"object\":\"chat.completion.chunk\",\"created\":1702256327,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":16,\"total_tokens\":34,\"completion_tokens\":18}}\n\ndata: [DONE]\n\n"
+     }
+    },
+    {
+     "id": "forward-aggregated",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/aggregated"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "aggregated"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-embeddings-stream",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/embeddings",
+      "headers": {
+       "x-case": [
+        "embeddings-stream"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "data: {\"id\":\"cmpl-e5cc70bb28c444948073e77776eb30ef\",\"object\":\"chat.completion.chunk\",\"created\":1702256327,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"cmpl-e5cc70bb28c444948073e77776eb30ef\",\"object\":\"chat.completion.chunk\",\"created\":1702256327,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"cmpl-e5cc70bb28c444948073e77776eb30ef\",\"object\":\"chat.completion.chunk\",\"created\":1702256327,\"model\":\"mistral-small-latest\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":16,\"total_tokens\":34,\"completion_tokens\":18}}\n\ndata: [DONE]\n\n"
+     }
+    },
+    {
+     "id": "forward-embeddings-stream",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/embeddings-stream"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/embeddings",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "embeddings-stream"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "OpenAI Chat Completions relayed as a stream, sent with stream_options.include_usage: 19 in, 10 out, 4 cached, 3 reasoning",
+   "method": "POST",
+   "path": "/client/openai-usage",
+   "body": "{\"model\":\"gpt-4o\",\"stream\":true,\"stream_options\":{\"include_usage\":true},\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "OpenAI Chat Completions relayed without include_usage: not counted, the include_usage hint logged at INFO (no budget)",
+   "method": "POST",
+   "path": "/client/openai-no-usage",
+   "body": "{\"model\":\"gpt-4o\",\"stream\":true,\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the same model again: the hint is logged once a minute per provider and model",
+   "method": "POST",
+   "path": "/client/openai-no-usage-again",
+   "body": "{\"model\":\"gpt-4o\",\"stream\":true,\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "usage under x_groq on the final chunk: 18 in, 25 out",
+   "method": "POST",
+   "path": "/client/groq",
+   "body": "{\"model\":\"llama-3.3-70b-versatile\",\"stream\":true}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a Server-Sent Events body not relayed (no stream flag, text/plain): scanned whole, 16 in, 18 out",
+   "method": "POST",
+   "path": "/client/aggregated",
+   "body": "{\"model\":\"mistral-small-latest\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "an event stream from an endpoint that is not a completion is not counted",
+   "method": "POST",
+   "path": "/client/embeddings-stream",
+   "body": "{\"model\":\"text-embedding-3-small\",\"stream\":true}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "the streamed-usage lines of the event log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+     "replace": "",
+     "reason": "every entry but the streamed-usage lines"
+    }
+   ]
+  }
+ ]
+}

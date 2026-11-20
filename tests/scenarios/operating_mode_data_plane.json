@@ -1,0 +1,116 @@
+{
+ "properties": {},
+ "peer": true,
+ "steps": [
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/unmatched"
+    },
+    "httpResponse": {
+     "body": "upstream-body"
+    }
+   },
+   "note": "the upstream (OperatingModeDataPlaneIntegrationTest's second server) answers a known body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=SIMULATE",
+   "note": "simulate"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched",
+   "headers": {
+    "Host": "{{peeraddress}}"
+   },
+   "note": "unmatched, the upstream's Host: the 8.0.0 oracle forwards it although the mode is SIMULATE"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=CAPTURE",
+   "note": "capture"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched",
+   "headers": {
+    "Host": "{{peeraddress}}"
+   },
+   "note": "forwarded in capture"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=SIMULATE",
+   "note": "simulate again"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched",
+   "headers": {
+    "Host": "{{peeraddress}}"
+   },
+   "note": "still forwarded on the 8.0.0 oracle"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "attemptToProxyIfNoMatchingExpectation": false
+   },
+   "note": "the flag itself, unlike the mode, reaches the data plane",
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <configuration>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=SPY",
+   "note": "spy after the flag went false"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched",
+   "headers": {
+    "Host": "{{peeraddress}}"
+   },
+   "note": "8.0.0: not forwarded, the flag decides, not the mode"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/mode",
+   "note": "the mode last set is still reported"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/unmatched"
+    },
+    "times": {
+     "atLeast": 3,
+     "atMost": 3
+    }
+   },
+   "note": "8.0.0: the upstream received exactly the three forwarded requests (their Host, the peer address, is masked: the peer's Docker bridge address when recorded, localhost on replay)",
+   "mask": [
+    {
+     "regex": "(?<=\"host\" : \\[ \")[^\"]+(?=:<port>\" \\])",
+     "replace": "<peerhost>"
+    }
+   ]
+  }
+ ]
+}

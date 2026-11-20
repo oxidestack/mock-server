@@ -1,0 +1,171 @@
+{
+ "source": "a Velocity template's arguments reach Datafaker methods as Velocity binds them: 8.0.0's SecureUberspector has no conversion handler, so no string becomes an enum, char, number or boolean and no number becomes a String (rendered as written); null elements of csv/json/jsona expressions print as null",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/enum-char"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.planet().symbol('EARTH') | 1=$faker.planet().symbol('Planet.EARTH') | 2=$faker.templatify('abc', 'a', 'x') | 3=$faker.templatify('abc', 'a', 'x', 'y') | 4=$faker.date().future(1, 'DAYS', 'yyyy') | 5=$faker.date().future(1, 'DAYS') | 6=$faker.timeAndDate().past(1, 'DAYS')\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "no string converts to an enum constant or a char: rendered as written",
+   "method": "GET",
+   "path": "/enum-char"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/string-to-scalar"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.number().numberBetween('1', '10') | 1=$faker.number().digits('3') | 2=$faker.lorem().characters('5') | 3=$faker.lorem().characters(5, 'true').length() | 4=$faker.bothify('##??', 'true') | 5=$faker.number().randomNumber(3, 'true')\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "no string converts to a number or a boolean without a conversion handler: rendered as written",
+   "method": "GET",
+   "path": "/string-to-scalar"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/scalar-to-string"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.numerify(12) | 1=$faker.numerify(true) | 2=$faker.regexify(5) | 3=$faker.expression(1) | 4=$faker.jsona(1, null, null) | 5=$faker.json(1, 2)\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "no number or boolean converts to a String without a conversion handler: rendered as written",
+   "method": "GET",
+   "path": "/scalar-to-string"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/values"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.number().numberBetween(1, 10).getClass().getName() | 1=$faker.number().numberBetween(1, 10000000000).getClass().getName() | 2=$faker.number().numberBetween(1.5, 10).getClass().getName() | 3=$faker.number().randomDouble(2, 1, 10).getClass().getName() | 4=$faker.bothify('##??', true).length() | 5=$faker.letterify('??', true).length() | 6=$faker.lorem().characters(5, true).length() | 7=$faker.number().digits(3).length() | 8=$faker.options().option('a', 'a')\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "boxed numbers unbox and widen; booleans bind to boolean",
+   "method": "GET",
+   "path": "/values"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/null-elements"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.json(null, null) | 1=$faker.json(null, 'a').replace('\"', '~') | 2=$faker.json('a', null, null, 'b').replace('\"', '~') | 3=$faker.jsona(null, null, null) | 4=$faker.jsona(null, 'a', null).replace('\"', '~') | 5=$faker.jsona('1', null, null) | 6=$faker.jsona('2', null, 'a').replace('\"', '~') | 7=$faker.jsona('1', 'a', null).replace('\"', '~') | 8=$faker.csv(1, null, null) | 9=$faker.csv(1, 'a', null).replace('\"', '~') | 10=$faker.csv(2, null, null, null, null)\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "null elements of csv/json/jsona expressions print as null",
+   "method": "GET",
+   "path": "/null-elements"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/jsona-null-pair"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.jsona(null, null)\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "jsona(null, null): the arity check names the null elements",
+   "method": "GET",
+   "path": "/jsona-null-pair",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/json-null-triple"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.json(null, null, null)\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "json(null, null, null): the arity check names the null elements",
+   "method": "GET",
+   "path": "/json-null-triple",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "note": "what each call threw",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}",
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  }
+ ]
+}

@@ -1,0 +1,47 @@
+{
+  "note": "the PEM files of a fixed server certificate (privateKeyPath, x509CertificatePath, certificateAuthorityCertificate) resolve on the class path roots of MOCK_SERVER_CLASS_PATH before the working directory, as PEMToFile reads them through FileReader.readFileFromClassPathOrPath / openStreamToFileFromClassPathOrPath",
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.privateKeyPath=tls/leaf-key.pem",
+    "-Dmockserver.x509CertificatePath=tls/leaf-cert.pem",
+    "-Dmockserver.certificateAuthorityCertificate=tls/leaf-cert.pem"
+  ],
+  "env": {
+    "MOCK_SERVER_CLASS_PATH": "{{scratch}}/classes"
+  },
+  "files": {
+    "classes/tls/leaf-key.pem": {
+      "from": "tls/foreign-leaf-key.pem"
+    },
+    "classes/tls/leaf-cert.pem": {
+      "from": "tls/foreign-leaf-cert.pem"
+    }
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 3,
+      "label": "t"
+    }
+  ],
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "tls": {
+      "t": "served"
+    },
+    "stdoutNotContains": [
+      "TLS fixed certificate refused",
+      "SSL or decoder fault caught by port unification handler"
+    ]
+  }
+}

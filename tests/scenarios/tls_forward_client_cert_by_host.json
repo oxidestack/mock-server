@@ -1,0 +1,18 @@
+{
+ "properties": {
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/private-ca/ca-cert.pem",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/tls/private-ca/forward-client-cert.pem;{{files}}/tls/private-ca/forward-client-key.pem"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\", \"secure\": true}, \"httpResponseTemplate\": {\"templateType\": \"MUSTACHE\", \"template\": \"{ \\\"statusCode\\\": 200, \\\"body\\\": \\\"{{request.clientCertificateChain}}\\\" }\"}}, {\"httpRequest\": {\"path\": \"/forwarded\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target\", \"secure\": true, \"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTPS\"}}}}]"
+  },
+  {
+   "note": "the per-host pair is presented to localhost",
+   "method": "GET",
+   "path": "/forwarded"
+  }
+ ]
+}

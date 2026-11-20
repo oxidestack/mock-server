@@ -1,0 +1,147 @@
+{
+ "source": "hand-written (generated from upstream's ProviderStreamFixtures): forwarded GEMINI responses relayed or aggregated as streams counted by LlmStreamUsageScanner (HttpActionHandler.observeForwardedLlmStream, emitStreamedForwardGenAiSpan, logStreamedUsageUnavailable), forwarded to this server's own mocks; Bedrock's amazon-bedrock-invocationMetrics and include_usage hint are upstream #29 (ab126cc20)",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "GEMINI"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-gemini",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+      "headers": {
+       "x-case": [
+        "gemini"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Hello\"}],\"role\":\"model\"},\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":8,\"totalTokenCount\":8,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":8}]},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"mAitaL3kLPWtmtkPx5iY8Qk\"}\r\n\r\ndata: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":\" there\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":8,\"candidatesTokenCount\":12,\"totalTokenCount\":47,\"promptTokensDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":8}],\"thoughtsTokenCount\":27},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"mAitaL3kLPWtmtkPx5iY8Qk\"}\r\n\r\n"
+     }
+    },
+    {
+     "id": "forward-gemini",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/gemini"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "gemini"
+        ]
+       },
+       "queryStringParameters": {
+        "alt": [
+         "sse"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-gemini-array",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1beta/models/gemini-2.5-pro:streamGenerateContent",
+      "headers": {
+       "x-case": [
+        "gemini-array"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "[{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \"Hello\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 8,\n    \"totalTokenCount\": 8\n  },\n  \"modelVersion\": \"gemini-2.5-pro\"\n}\n,\r\n{\n  \"candidates\": [\n    {\n      \"content\": {\n        \"parts\": [\n          {\n            \"text\": \" there\"\n          }\n        ],\n        \"role\": \"model\"\n      },\n      \"finishReason\": \"STOP\",\n      \"index\": 0\n    }\n  ],\n  \"usageMetadata\": {\n    \"promptTokenCount\": 8,\n    \"candidatesTokenCount\": 12,\n    \"totalTokenCount\": 47,\n    \"thoughtsTokenCount\": 27\n  },\n  \"modelVersion\": \"gemini-2.5-pro\"\n}\n]"
+     }
+    },
+    {
+     "id": "forward-gemini-array",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/gemini-array"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1beta/models/gemini-2.5-pro:streamGenerateContent",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "gemini-array"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "Gemini streamGenerateContent?alt=sse: the last usageMetadata, thoughts counted as output: 8 in, 39 out",
+   "method": "POST",
+   "path": "/client/gemini",
+   "body": "{\"contents\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "streamGenerateContent without alt=sse, aggregated (application/json): one JSON array of chunks",
+   "method": "POST",
+   "path": "/client/gemini-array",
+   "body": "{\"contents\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "the streamed-usage lines of the event log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+     "replace": "",
+     "reason": "every entry but the streamed-usage lines"
+    }
+   ]
+  }
+ ]
+}

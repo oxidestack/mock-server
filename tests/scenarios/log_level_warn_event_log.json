@@ -1,0 +1,25 @@
+{
+ "source": "MockServerLogger.logEvent keeps RECEIVED_REQUEST, FORWARDED_REQUEST and EXPECTATION_RESPONSE entries whatever the logLevel, unless the caller asks isEnabledForInstance first; at WARN the event log still holds every served response (mocked, template, CRUD, error, SSE, forwarded) but none of the INFO matching or template-generated entries.",
+ "properties": {
+  "logLevel": "WARN"
+ },
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "mocked", "httpRequest": {"path": "/mocked"}, "httpResponse": {"statusCode": 202, "body": "mocked body"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "template", "httpRequest": {"path": "/template"}, "httpResponseTemplate": {"templateType": "VELOCITY", "template": "{ \"statusCode\": 200, \"body\": \"$request.path\" }"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "error", "httpRequest": {"path": "/error"}, "httpError": {"responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpjb250ZW50LWxlbmd0aDogMA0KDQo="}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "sse", "httpRequest": {"path": "/sse"}, "httpSseResponse": {"events": [{"data": "one"}], "closeConnection": true}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "forwarded", "httpRequest": {"path": "/forwarded"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/mocked", "headers": {"Host": ["localhost:{{port}}"]}}}}},
+  {"method": "PUT", "path": "/mockserver/crud", "body": {"basePath": "/api/users", "initialData": [{"id": 1, "name": "alice"}]}},
+  {"method": "GET", "path": "/mocked", "note": "a mocked response"},
+  {"method": "GET", "path": "/template", "note": "a template response: its TEMPLATE_GENERATED entry needs INFO, its returning response does not"},
+  {"method": "GET", "path": "/api/users/1", "note": "a CRUD response"},
+  {"method": "GET", "path": "/error", "note": "an error action's raw bytes"},
+  {"method": "GET", "path": "/sse", "note": "an SSE response"},
+  {"method": "GET", "path": "/forwarded", "note": "a forwarded response, the forward itself answered by /mocked"},
+  {"method": "GET", "path": "/unmatched", "note": "no match: the NO_MATCH_RESPONSE entry needs INFO"},
+  {"sleepMillis": 500, "awaitIdle": true},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "compare": "unordered", "mask": ["\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : \\d+"]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES", "body": {"path": "/api/users/1"}, "note": "the CRUD exchange's response: the JSON content type stays on the body, not a header"}
+ ]
+}

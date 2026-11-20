@@ -1,0 +1,32 @@
+{
+ "properties": {
+  "http3ConnectUdpEnabled": "true",
+  "http3ConnectUdpAllowedTargets": "allowed.example.com:443, [::1]:53"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "the CONNECT-UDP flag and allowlist as configured at startup"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "http3ConnectUdpEnabled": false,
+    "http3ConnectUdpAllowedTargets": "127.0.0.1"
+   },
+   "note": "both change at runtime"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "the runtime values echo back"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "note": "no http3Port: CONNECT-UDP alone starts no listener"
+  }
+ ]
+}

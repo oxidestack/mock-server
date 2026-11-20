@@ -1,0 +1,130 @@
+{
+ "source": "at WARN the stored Responses API answer's EXPECTATION_RESPONSE is still logged (MockServerLogger.logEvent keeps that type whatever the logLevel).",
+ "properties": {
+  "logLevel": "WARN"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "responses",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/v1/responses"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI_RESPONSES",
+     "model": "m",
+     "completion": {
+      "text": "stored answer"
+     }
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v1/responses",
+   "body": {
+    "model": "m",
+    "input": "hello"
+   },
+   "note": "a stored Responses API answer",
+   "capture": {
+    "bodyRegex": "\"id\"\\s*:\\s*\"(resp_[^\"]+)\"",
+    "as": "responseId"
+   },
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/responses/{{capture:responseId}}",
+   "note": "retrieved from the store: no expectation matches",
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 300,
+   "awaitIdle": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    },
+    {
+     "regex": "\"epochTime\" : \\d+",
+     "replace": "\"epochTime\" : <time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ],
+   "compare": "json"
+  }
+ ]
+}

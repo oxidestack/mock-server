@@ -1,0 +1,49 @@
+{
+ "source": "InboundConnectionIdleHandler closes with ctx.channel().close(), which runs through the pipeline: the SslHandler sends close_notify and the Http2ConnectionHandler a GOAWAY before the FIN (b765b8271); socketConnectionTimeoutInMillis bounds the first handshake, whose certificate generation can take over the default 20 s on a loaded machine",
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "inboundConnectionIdleTimeoutMillis": "600",
+  "startupWarmup": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/simple"
+    },
+    "httpResponse": {
+     "body": "simple"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "a TLS connection that only shakes hands: close_notify, then the FIN",
+   "tcp": [],
+   "tls": true,
+   "tlsEnd": true
+  },
+  {
+   "note": "a TLS keep-alive connection, once idle after its response",
+   "tcp": [
+    {
+     "text": "GET /simple HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "tlsEnd": true,
+   "text": true
+  },
+  {
+   "note": "an HTTP/2 (prior knowledge) connection, once idle after its response: a GOAWAY, then the FIN",
+   "h2raw": {
+    "method": "GET",
+    "path": "/simple"
+   }
+  }
+ ]
+}

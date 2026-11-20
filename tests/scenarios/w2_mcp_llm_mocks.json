@@ -1,0 +1,1980 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "ANTHROPIC",
+      "path": "/v1/messages",
+      "model": "claude",
+      "text": "hello",
+      "toolCalls": [
+       {
+        "name": "t1",
+        "arguments": {
+         "b": 1,
+         "a": "x"
+        }
+       },
+       {
+        "name": "t2",
+        "arguments": "{}"
+       },
+       {
+        "name": "t3"
+       }
+      ],
+      "stopReason": "tool_use",
+      "usage": {
+       "inputTokens": 3,
+       "outputTokens": 4
+      },
+      "streaming": true,
+      "outputSchema": {
+       "type": "object",
+       "properties": {
+        "n": {
+         "type": "number",
+         "minimum": 1.0
+        }
+       }
+      },
+      "enforceOutputSchema": true,
+      "chaos": {
+       "errorStatus": 429,
+       "retryAfter": "2",
+       "errorProbability": 1,
+       "truncateMode": "mid_stream",
+       "truncateAtFraction": 0.3,
+       "malformedSse": true,
+       "seed": 7,
+       "quotaName": "q",
+       "quotaLimit": 2,
+       "quotaWindowMillis": 1000,
+       "quotaErrorStatus": 503
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "completion full"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/v1/chat/completions",
+      "text": 42,
+      "stopReason": null,
+      "usage": {},
+      "streaming": "true",
+      "outputSchema": "{\"type\":\"string\"}",
+      "enforceOutputSchema": "true",
+      "chaos": {
+       "errorStatus": "429",
+       "truncateMode": "bogus",
+       "seed": 1.5,
+       "retryAfter": 3
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "completion loose types"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "GEMINI",
+      "path": "/g",
+      "chaos": {}
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "completion minimal"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "completion expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "path": "/x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "completion no provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "FOO",
+      "path": "/x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "completion unknown provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": " OPENAI ",
+      "path": " "
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "completion blank path"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "toolCalls": [
+       {
+        "arguments": "{}"
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "completion unnamed tool"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 18,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "toolCalls": [
+       {
+        "name": "t",
+        "arguments": [
+         1
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "completion bad tool args"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 19,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "usage": {
+       "inputTokens": 1.5
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "completion bad input tokens"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 20,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "usage": {
+       "inputTokens": 1,
+       "outputTokens": "2"
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "completion bad output tokens"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 21,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "outputSchema": [
+       1
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "completion bad schema"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 22,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_completion",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/v1/chat/completions",
+      "model": "gpt-4o",
+      "text": "mocked",
+      "usage": {
+       "inputTokens": 2,
+       "outputTokens": 3
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "completion to use"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "mocked completion answers"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 23,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_adversarial_llm_response",
+     "arguments": {
+      "provider": "ANTHROPIC",
+      "path": "/adv",
+      "model": "m",
+      "payload": "prompt_injection_tool_redirect"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "adversarial"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 24,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_adversarial_llm_response",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/adv2",
+      "payload": "empty_response"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "adversarial empty"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 25,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_adversarial_llm_response",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/adv3",
+      "payload": "overlong_repetition"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "adversarial overlong"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "adversarial expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/adv",
+   "body": {
+    "model": "m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "adversarial answers"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 26,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_adversarial_llm_response",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/adv",
+      "payload": "nope"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "adversarial unknown payload"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 27,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_adversarial_llm_response",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/adv"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "adversarial no payload"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_adversarial_llm_response",
+     "arguments": {
+      "provider": "OPENAI",
+      "payload": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "adversarial no path"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 29,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_adversarial_llm_response",
+     "arguments": {
+      "provider": "AUTO",
+      "path": "/adv",
+      "payload": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "adversarial auto provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 30,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_failover",
+     "arguments": {
+      "provider": "GEMINI",
+      "path": "/v1beta/models/g:generateContent",
+      "model": "g",
+      "failStatuses": [
+       429,
+       429,
+       503,
+       418,
+       429
+      ],
+      "text": "ok",
+      "toolCalls": [
+       {
+        "name": "f",
+        "arguments": {
+         "x": 1
+        }
+       }
+      ],
+      "usage": {
+       "inputTokens": 1,
+       "outputTokens": "x"
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "failover"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "failover expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1beta/models/g:generateContent",
+   "body": {
+    "contents": [
+     {
+      "role": "user",
+      "parts": [
+       {
+        "text": "hi"
+       }
+      ]
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "failover call 0"
+  },
+  {
+   "method": "POST",
+   "path": "/v1beta/models/g:generateContent",
+   "body": {
+    "contents": [
+     {
+      "role": "user",
+      "parts": [
+       {
+        "text": "hi"
+       }
+      ]
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "failover call 1"
+  },
+  {
+   "method": "POST",
+   "path": "/v1beta/models/g:generateContent",
+   "body": {
+    "contents": [
+     {
+      "role": "user",
+      "parts": [
+       {
+        "text": "hi"
+       }
+      ]
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "failover call 2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 31,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_failover",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "failover no statuses"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 32,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_failover",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "failStatuses": []
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "failover empty statuses"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 33,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_failover",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "failStatuses": [
+       500,
+       "503"
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "failover non-integer status"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 34,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_failover",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "failStatuses": [
+       99
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "failover low status"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 35,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_failover",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "failStatuses": [
+       600
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "failover high status"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 36,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_failover",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "failStatuses": [
+       500
+      ],
+      "toolCalls": [
+       {
+        "name": ""
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "failover unnamed tool"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 37,
+    "method": "tools/call",
+    "params": {
+     "name": "mock_llm_failover",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/x",
+      "failStatuses": [
+       500
+      ],
+      "toolCalls": [
+       {
+        "name": "t",
+        "arguments": 7
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "failover bad tool args"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 38,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/v1/chat/completions",
+      "model": "gpt",
+      "isolateBy": {
+       "source": "header",
+       "name": "x-sess"
+      },
+      "ids": [
+       "id-a",
+       5
+      ],
+      "turns": [
+       {
+        "match": {
+         "turnIndex": 0,
+         "latestMessageContains": "hi",
+         "latestMessageMatches": "h.*",
+         "latestMessageRole": "user",
+         "containsToolResultFor": "t",
+         "semanticMatchAgainst": "greeting",
+         "normalization": {
+          "collapseWhitespace": false,
+          "lowercase": true,
+          "sortJsonKeys": "x",
+          "dropBuiltInVolatileFields": true,
+          "dropVolatileFields": [
+           "a",
+           1,
+           "b"
+          ]
+         }
+        },
+        "response": {
+         "text": "one",
+         "stopReason": "stop",
+         "toolCalls": [
+          {
+           "name": "f",
+           "arguments": {
+            "z": 1
+           }
+          },
+          {
+           "name": "g",
+           "arguments": 5
+          }
+         ],
+         "usage": {
+          "inputTokens": 1,
+          "outputTokens": "2"
+         },
+         "streaming": true
+        },
+        "chaos": {
+         "errorStatus": 500
+        }
+       },
+       {
+        "response": {
+         "text": "two"
+        }
+       },
+       {}
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "conversation"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "conversation expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 39,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/chat",
+      "turns": [
+       {
+        "match": {
+         "latestMessageContains": "first"
+        },
+        "response": {
+         "text": "reply one"
+        }
+       },
+       {
+        "response": {
+         "text": "reply two"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "conversation to use"
+  },
+  {
+   "method": "POST",
+   "path": "/chat",
+   "body": {
+    "model": "gpt",
+    "messages": [
+     {
+      "role": "user",
+      "content": "first"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "conversation turn 1"
+  },
+  {
+   "method": "POST",
+   "path": "/chat",
+   "body": {
+    "model": "gpt",
+    "messages": [
+     {
+      "role": "user",
+      "content": "first"
+     },
+     {
+      "role": "assistant",
+      "content": "reply one"
+     },
+     {
+      "role": "user",
+      "content": "again"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "conversation turn 2"
+  },
+  {
+   "method": "POST",
+   "path": "/chat",
+   "body": {
+    "model": "gpt",
+    "messages": [
+     {
+      "role": "user",
+      "content": "more"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "conversation done"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 40,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c",
+      "turns": []
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation no turns"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 41,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c",
+      "turns": {}
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation turns not array"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 42,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c",
+      "isolateBy": {
+       "source": "header"
+      },
+      "turns": [
+       {}
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation isolate no name"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 43,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c",
+      "isolateBy": {
+       "source": "body",
+       "name": "x"
+      },
+      "turns": [
+       {}
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation isolate bad source"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 44,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c",
+      "turns": [
+       {
+        "match": {
+         "turnIndex": "1"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation bad turn index"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 45,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c",
+      "turns": [
+       {},
+       {
+        "match": {
+         "latestMessageRole": "robot"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation bad role"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 46,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c",
+      "turns": [
+       {
+        "response": {
+         "toolCalls": [
+          {
+           "arguments": "x"
+          }
+         ]
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation unnamed tool"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 47,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c",
+      "isolateBy": {
+       "source": "queryParameter",
+       "name": "sid"
+      },
+      "turns": [
+       {
+        "response": {
+         "text": "a"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "conversation isolate by query"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 48,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/c2",
+      "isolateBy": {
+       "source": "cookie",
+       "name": "sid"
+      },
+      "ids": [
+       "",
+       "x"
+      ],
+      "turns": [
+       {
+        "response": {
+         "text": "a"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "conversation isolate by cookie"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "isolated conversations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 49,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/n",
+      "turns": [
+       {
+        "match": {
+         "normalization": {
+          "lowercase": true
+         }
+        },
+        "response": {
+         "text": "a"
+        }
+       },
+       {
+        "match": {
+         "normalization": {},
+         "turnIndex": 1
+        },
+        "response": {
+         "text": "b"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "conversation normalization only"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "normalization-only predicates dropped",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 50,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/r",
+      "turns": [
+       {
+        "match": {
+         "latestMessageMatches": "(["
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation invalid regex (["
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 51,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/r",
+      "turns": [
+       {
+        "match": {
+         "latestMessageMatches": "("
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation invalid regex ("
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 52,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/r",
+      "turns": [
+       {
+        "match": {
+         "latestMessageMatches": "[a"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation invalid regex [a"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 53,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/r",
+      "turns": [
+       {
+        "match": {
+         "latestMessageMatches": "*a"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation invalid regex *a"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 54,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/r",
+      "turns": [
+       {
+        "match": {
+         "latestMessageMatches": "a)"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation invalid regex a)"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 55,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/r",
+      "turns": [
+       {
+        "match": {
+         "latestMessageMatches": "[z-a]"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation invalid regex [z-a]"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 56,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/r",
+      "turns": [
+       {
+        "match": {
+         "latestMessageMatches": "a**"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation invalid regex a**"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 57,
+    "method": "tools/call",
+    "params": {
+     "name": "create_llm_conversation",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/r",
+      "turns": [
+       {
+        "match": {
+         "latestMessageMatches": "x[b-a]y"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "conversation invalid regex x[b-a]y"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/e"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "",
+     "completion": {
+      "text": "",
+      "stopReason": "",
+      "toolCalls": [],
+      "usage": {}
+     }
+    }
+   },
+   "note": "empty completion fields",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  }
+ ]
+}

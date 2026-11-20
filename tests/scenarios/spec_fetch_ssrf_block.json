@@ -1,0 +1,239 @@
+{
+ "properties": {
+  "forwardProxyBlockPrivateNetworks": "true"
+ },
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "note": "the spec, a schema, a redirect to the other spelling, and a redirecting /pets",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/spec.json"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}}}}}}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/schema.json"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"type\": \"array\", \"items\": {\"type\": \"string\"}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/redirect.json"
+     },
+     "httpResponse": {
+      "statusCode": 302,
+      "headers": {
+       "Location": [
+        "http://127.0.0.1:{{port}}/spec.json"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/pets"
+     },
+     "httpResponse": {
+      "statusCode": 302,
+      "headers": {
+       "Location": [
+        "http://127.0.0.1:{{port}}/pets-moved"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/pets-moved"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "[\"rex\"]"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "spec URL to a refused host",
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "http://127.0.0.1:{{port}}/spec.json"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "openapi:pets_[0-9a-f]{16}",
+     "replace": "openapi:pets_<hash of the spec URL>",
+     "reason": "the spec URL names the server's own port"
+    }
+   ],
+   "maxMillis": 30000
+  },
+  {
+   "note": "inline spec whose remote $ref names a refused host",
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"$ref\": \"http://127.0.0.1:{{port}}/schema.json#\"}}}}}}}}}"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "openapi:pets_[0-9a-f]{16}",
+     "replace": "openapi:pets_<hash of the spec URL>",
+     "reason": "the spec URL names the server's own port"
+    }
+   ],
+   "maxMillis": 30000
+  },
+  {
+   "note": "run_contract_test to a refused baseUrl",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "compare": "json",
+   "maxMillis": 30000
+  },
+  {
+   "note": "run_resiliency_test to a refused baseUrl",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "compare": "json",
+   "maxMillis": 30000
+  },
+  {
+   "note": "run_mcp_contract_test to a refused targetUrl",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "http://127.0.0.1:{{port}}/mockserver/mcp"
+     }
+    }
+   },
+   "compare": "json",
+   "maxMillis": 30000
+  },
+  {
+   "note": "the refusals are logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"content-length\" : \\[ \"\\d+\" \\]",
+     "replace": "\"content-length\" : [ <n> ]",
+     "reason": "request bodies name the server's own port"
+    },
+    "openapi:pets_[0-9a-f]{16}"
+   ]
+  }
+ ]
+}

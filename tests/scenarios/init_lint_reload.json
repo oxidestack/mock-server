@@ -1,0 +1,99 @@
+{
+ "properties": {
+  "initializationJsonPath": "{{scratch}}/init_lint_reload.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500",
+  "logLevel": "WARN"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "start from nothing"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/init_lint_reload.json",
+    "content": "[ ]"
+   },
+   "note": "a known starting content: nothing to lint"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the log from here on (at WARN, so polling the log logs nothing)"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/init_lint_reload.json",
+    "content": "[\n  {\n    \"id\": \"no-slash\",\n    \"httpRequest\": {\n      \"path\": \"users\"\n    },\n    \"httpResponse\": {\n      \"statusCode\": 200,\n      \"body\": \"first\"\n    }\n  }\n]",
+    "replace": true
+   },
+   "note": "a reload loads an expectation that can never match"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "pollUntil": "expectation lint found",
+   "note": "the reload's one lint WARN names the file and the problem (ExpectationFileWatcherTest.shouldLogLintWarningsForTheExpectationsAReloadLoads)"
+  },
+  {
+   "sleepMillis": 2000,
+   "note": "the reload's log entries land before the reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the log from here on"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/init_lint_reload.json",
+    "content": "[\n  {\n    \"id\": \"no-slash\",\n    \"httpRequest\": {\n      \"path\": \"users\"\n    },\n    \"httpResponse\": {\n      \"statusCode\": 200,\n      \"body\": \"second\"\n    }\n  }\n]",
+    "replace": true
+   },
+   "note": "the same lint problems, another body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "pollUntil": "second",
+   "note": "reloaded"
+  },
+  {
+   "sleepMillis": 2000,
+   "note": "the reload's log entries land"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "no lint WARN: the problems are the ones the last load reported"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the log from here on"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/init_lint_reload.json",
+    "content": "[\n  {\n    \"id\": \"no-slash\",\n    \"httpRequest\": {\n      \"path\": \"/users?x=1\"\n    },\n    \"httpResponse\": {\n      \"statusCode\": 200,\n      \"body\": \"third\"\n    }\n  }\n]",
+    "replace": true
+   },
+   "note": "other lint problems"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "pollUntil": "expectation lint found",
+   "note": "a new WARN"
+  },
+  {
+   "sleepMillis": 2000,
+   "note": "the reload's log entries land before the end"
+  }
+ ]
+}

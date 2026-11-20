@@ -1,0 +1,788 @@
+{
+ "callbackClasses": "integration-testing",
+ "properties": {
+  "streamingResponsesEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/up-chunk"
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "text/plain"
+      ],
+      "X-Up": [
+       "1"
+      ]
+     },
+     "body": "data: one\n\ndata: two\n\n",
+     "connectionOptions": {
+      "chunkSize": 6
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/",
+     "headers": {
+      "x-test": [
+       "chunk"
+      ]
+     }
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "text/plain"
+      ],
+      "X-Up": [
+       "1"
+      ]
+     },
+     "body": "data: one\n\ndata: two\n\n",
+     "connectionOptions": {
+      "chunkSize": 6
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/up-sse"
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "text/event-stream"
+      ]
+     },
+     "body": "data: one\n\ndata: two\n\n",
+     "connectionOptions": {
+      "chunkSize": 6
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/",
+     "headers": {
+      "x-test": [
+       "sse"
+      ]
+     }
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "text/event-stream"
+      ]
+     },
+     "body": "data: one\n\ndata: two\n\n",
+     "connectionOptions": {
+      "chunkSize": 6
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/up-bin"
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "application/octet-stream"
+      ]
+     },
+     "body": {
+      "type": "BINARY",
+      "base64Bytes": "AAECAwQFBgcICQoLDA0ODw=="
+     },
+     "connectionOptions": {
+      "chunkSize": 5
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/",
+     "headers": {
+      "x-test": [
+       "bin"
+      ]
+     }
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "application/octet-stream"
+      ]
+     },
+     "body": {
+      "type": "BINARY",
+      "base64Bytes": "AAECAwQFBgcICQoLDA0ODw=="
+     },
+     "connectionOptions": {
+      "chunkSize": 5
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/up-json"
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"a\": 1, \"b\": \"two\"}",
+     "connectionOptions": {
+      "chunkSize": 4
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/",
+     "headers": {
+      "x-test": [
+       "json"
+      ]
+     }
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"a\": 1, \"b\": \"two\"}",
+     "connectionOptions": {
+      "chunkSize": 4
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t-chunk-accept"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"path\": \"/up-chunk\", \"headers\": {\"Host\": [\"localhost:{{port}}\"], \"Accept\": [\"text/event-stream\"]}}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t-sse-none"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"path\": \"/up-sse\", \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t-sse-headers-only"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"path\": \"/up-sse\", \"headers\": {\"Host\": [\"localhost:{{port}}\"], \"Accept\": [\"text/event-stream\"]}}",
+     "responseOverride": {
+      "headers": {
+       "X-Extra": [
+        "e"
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t-sse-string"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"path\": \"/up-sse\", \"headers\": {\"Host\": [\"localhost:{{port}}\"], \"Accept\": [\"text/event-stream\"]}}",
+     "responseOverride": {
+      "body": "override text"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t-bin-accept"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"path\": \"/up-bin\", \"headers\": {\"Host\": [\"localhost:{{port}}\"], \"Accept\": [\"text/event-stream\"]}}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/cc-fwd/.*"
+    },
+    "httpForwardClassCallback": {
+     "callbackClass": "org.mockserver.testing.integration.callback.PrecannedTestExpectationForwardCallbackRequest"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/cc-fwdresp/.*"
+    },
+    "httpForwardClassCallback": {
+     "callbackClass": "org.mockserver.testing.integration.callback.PrecannedTestExpectationForwardCallbackRequestAndResponse"
+    }
+   }
+  },
+  {
+   "note": "/t-chunk-accept: bytes sent",
+   "method": "GET",
+   "path": "/t-chunk-accept",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ]
+   }
+  },
+  {
+   "note": "/t-chunk-accept: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/t-chunk-accept"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-chunk-accept: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/t-chunk-accept"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-sse-none: bytes sent",
+   "method": "GET",
+   "path": "/t-sse-none",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ]
+   }
+  },
+  {
+   "note": "/t-sse-none: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/t-sse-none"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-sse-none: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/t-sse-none"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-sse-headers-only: bytes sent",
+   "method": "GET",
+   "path": "/t-sse-headers-only",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ]
+   }
+  },
+  {
+   "note": "/t-sse-headers-only: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/t-sse-headers-only"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-sse-headers-only: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/t-sse-headers-only"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-sse-string: bytes sent",
+   "method": "GET",
+   "path": "/t-sse-string",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ]
+   }
+  },
+  {
+   "note": "/t-sse-string: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/t-sse-string"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-sse-string: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/t-sse-string"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-bin-accept: bytes sent",
+   "method": "GET",
+   "path": "/t-bin-accept",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ]
+   },
+   "binaryBody": true
+  },
+  {
+   "note": "/t-bin-accept: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/t-bin-accept"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/t-bin-accept: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/t-bin-accept"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwd/sse: bytes sent",
+   "method": "GET",
+   "path": "/cc-fwd/sse",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ],
+    "x-test": [
+     "sse"
+    ],
+    "x-echo-server-port": [
+     "{{port}}"
+    ]
+   }
+  },
+  {
+   "note": "/cc-fwd/sse: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/cc-fwd/sse"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwd/sse: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/cc-fwd/sse"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwd/chunk: bytes sent",
+   "method": "GET",
+   "path": "/cc-fwd/chunk",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ],
+    "x-test": [
+     "chunk"
+    ],
+    "x-echo-server-port": [
+     "{{port}}"
+    ]
+   }
+  },
+  {
+   "note": "/cc-fwd/chunk: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/cc-fwd/chunk"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwd/chunk: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/cc-fwd/chunk"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwd/bin: bytes sent",
+   "method": "GET",
+   "path": "/cc-fwd/bin",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ],
+    "x-test": [
+     "bin"
+    ],
+    "x-echo-server-port": [
+     "{{port}}"
+    ]
+   },
+   "binaryBody": true
+  },
+  {
+   "note": "/cc-fwd/bin: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/cc-fwd/bin"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwd/bin: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/cc-fwd/bin"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwdresp/sse: bytes sent",
+   "method": "GET",
+   "path": "/cc-fwdresp/sse",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ],
+    "x-test": [
+     "sse"
+    ],
+    "x-echo-server-port": [
+     "{{port}}"
+    ]
+   }
+  },
+  {
+   "note": "/cc-fwdresp/sse: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/cc-fwdresp/sse"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwdresp/sse: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/cc-fwdresp/sse"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwdresp/chunk: bytes sent",
+   "method": "GET",
+   "path": "/cc-fwdresp/chunk",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ],
+    "x-test": [
+     "chunk"
+    ],
+    "x-echo-server-port": [
+     "{{port}}"
+    ]
+   }
+  },
+  {
+   "note": "/cc-fwdresp/chunk: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/cc-fwdresp/chunk"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwdresp/chunk: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/cc-fwdresp/chunk"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwdresp/bin: bytes sent",
+   "method": "GET",
+   "path": "/cc-fwdresp/bin",
+   "headers": {
+    "accept": [
+     "text/event-stream"
+    ],
+    "x-test": [
+     "bin"
+    ],
+    "x-echo-server-port": [
+     "{{port}}"
+    ]
+   },
+   "binaryBody": true
+  },
+  {
+   "note": "/cc-fwdresp/bin: forward log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/cc-fwdresp/bin"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwdresp/bin: recorded expectation",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/cc-fwdresp/bin"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwdresp/sse: recorded expectation JSON",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/cc-fwdresp/sse"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  },
+  {
+   "note": "/cc-fwdresp/sse: recorded expectation JAVA",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=JAVA",
+   "body": {
+    "path": "/cc-fwdresp/sse"
+   },
+   "mask": [
+    {
+     "regex": "(x-mockserver-chunk-delays-ms\\\\?\" : \\[ \\\\?\")[0-9,]+",
+     "replace": "${1}<delays>"
+    }
+   ]
+  }
+ ]
+}

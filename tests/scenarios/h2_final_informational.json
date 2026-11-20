@@ -1,0 +1,179 @@
+{
+  "properties": {
+    "logLevel": "WARN"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "h2fi-processing",
+          "httpRequest": {
+            "path": "/processing"
+          },
+          "httpResponse": {
+            "statusCode": 102
+          }
+        },
+        {
+          "id": "h2fi-hints",
+          "httpRequest": {
+            "path": "/hints"
+          },
+          "httpResponse": {
+            "statusCode": 103,
+            "headers": {
+              "link": [
+                "</style.css>; rel=preload"
+              ]
+            }
+          }
+        },
+        {
+          "id": "h2fi-chunked",
+          "httpRequest": {
+            "path": "/chunked"
+          },
+          "httpResponse": {
+            "statusCode": 102,
+            "body": "a body no 1xx carries",
+            "connectionOptions": {
+              "chunkSize": 2,
+              "chunkDelay": {
+                "timeUnit": "MILLISECONDS",
+                "value": 10
+              }
+            }
+          }
+        },
+        {
+          "id": "h2fi-closed",
+          "httpRequest": {
+            "path": "/closed"
+          },
+          "httpResponse": {
+            "statusCode": 102,
+            "connectionOptions": {
+              "closeSocket": true
+            }
+          }
+        },
+        {
+          "id": "h2fi-delayed",
+          "httpRequest": {
+            "path": "/delayed"
+          },
+          "httpResponse": {
+            "statusCode": 102,
+            "delay": {
+              "timeUnit": "MILLISECONDS",
+              "value": 100
+            }
+          }
+        },
+        {
+          "id": "h2fi-switching",
+          "httpRequest": {
+            "path": "/switching"
+          },
+          "httpResponse": {
+            "statusCode": 101
+          }
+        },
+        {
+          "id": "h2fi-served",
+          "httpRequest": {
+            "path": "/served"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        }
+      ]
+    },
+    {
+      "note": "a mocked 102 through a SOCKS5 tunnel",
+      "h2raw": {
+        "socks5": "localhost:443",
+        "method": "GET",
+        "path": "/processing",
+        "authority": "localhost:443",
+        "decode": true,
+        "readMillis": 4000
+      }
+    },
+    {
+      "note": "a mocked 102 over HTTP/2 is an interim response, then RST_STREAM NO_ERROR",
+      "h2raw": {
+        "method": "GET",
+        "path": "/processing",
+        "authority": "localhost",
+        "decode": true
+      }
+    },
+    {
+      "note": "a second request to the same expectation is not warned about again",
+      "h2raw": {
+        "method": "GET",
+        "path": "/processing",
+        "authority": "localhost",
+        "decode": true
+      }
+    },
+    {
+      "note": "a mocked 103 with a header",
+      "h2raw": {
+        "method": "GET",
+        "path": "/hints",
+        "authority": "localhost",
+        "decode": true
+      }
+    },
+    {
+      "note": "a 1xx with a chunk size and delay and a body is written whole, its headers alone",
+      "h2raw": {
+        "method": "GET",
+        "path": "/chunked",
+        "authority": "localhost",
+        "decode": true
+      }
+    },
+    {
+      "note": "a 1xx with closeSocket is reset with NO_ERROR, not CANCEL",
+      "h2raw": {
+        "method": "GET",
+        "path": "/closed",
+        "authority": "localhost",
+        "decode": true
+      }
+    },
+    {
+      "note": "a delayed 1xx",
+      "h2raw": {
+        "method": "GET",
+        "path": "/delayed",
+        "authority": "localhost",
+        "decode": true
+      }
+    },
+    {
+      "note": "a mocked 101 over HTTP/2",
+      "h2raw": {
+        "method": "GET",
+        "path": "/switching",
+        "authority": "localhost",
+        "decode": true
+      }
+    },
+    {
+      "note": "one WARN for each expectation",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        "\"totalTimeInMillis\" : \\d+",
+        "content-length: \\d+"
+      ]
+    }
+  ]
+}

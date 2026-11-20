@@ -1,0 +1,269 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "note": "defaults of a fresh server",
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  },
+  {
+   "note": "devMode on: 1000 expectations and log entries, ring buffer 1024, until set",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "devMode": true
+   }
+  },
+  {
+   "note": "a value set with devMode on wins",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 5
+   }
+  },
+  {
+   "note": "devMode off keeps what was set",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "devMode": false
+   }
+  },
+  {
+   "note": "maxLogEntries alone sizes the ring buffer: its value up to 16384, rounded up",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxLogEntries": 55
+   }
+  },
+  {
+   "note": "maxLogEntries larger than the ring cap",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxLogEntries": 70000
+   }
+  },
+  {
+   "note": "a ring buffer size is rounded up to a power of two",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "ringBufferSize": 5
+   }
+  },
+  {
+   "note": "the next power of two above",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "ringBufferSize": 16391
+   }
+  },
+  {
+   "note": "a power of two stays",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "ringBufferSize": 1024
+   }
+  },
+  {
+   "note": "zero",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "ringBufferSize": 0
+   }
+  },
+  {
+   "note": "a large size",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "ringBufferSize": 100000
+   }
+  },
+  {
+   "note": "the ring buffer given as text",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "ringBufferSize": "300"
+   }
+  },
+  {
+   "note": "proxySetup forces a unique CA",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxySetup": true
+   }
+  },
+  {
+   "note": "proxySetup off",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxySetup": false
+   }
+  },
+  {
+   "note": "a certificate chain that names nothing is refused",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyCertificateChain": "does-not-exist.pem"
+   }
+  },
+  {
+   "note": "a path that names nothing is refused: controlPlanePrivateKeyPath",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlanePrivateKeyPath": "no/such/file.pem"
+   }
+  },
+  {
+   "note": "a path that names nothing is refused: controlPlaneX509CertificatePath",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneX509CertificatePath": "no/such/file.pem"
+   }
+  },
+  {
+   "note": "a path that names nothing is refused: controlPlaneTLSMutualAuthenticationCAChain",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationCAChain": "no/such/file.pem"
+   }
+  },
+  {
+   "note": "a path that names nothing is refused: tlsMutualAuthenticationCertificateChain",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationCertificateChain": "no/such/file.pem"
+   }
+  },
+  {
+   "note": "a path that names nothing is refused: forwardProxyTLSCustomTrustX509Certificates",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyTLSCustomTrustX509Certificates": "no/such/file.pem"
+   }
+  },
+  {
+   "note": "a path that names nothing is refused: forwardProxyPrivateKey",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyPrivateKey": "no/such/file.pem"
+   }
+  },
+  {
+   "note": "blank paths are accepted",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyCertificateChain": "",
+    "forwardProxyPrivateKey": " "
+   }
+  },
+  {
+   "note": "the properties ahead of the refused path are already applied (DTO order), the ones after are not",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 77,
+    "corsMaxAgeInSeconds": 33,
+    "forwardProxyCertificateChain": "does-not-exist.pem",
+    "xpathMatchingTimeoutMillis": 4444
+   }
+  },
+  {
+   "note": "lenient paths are accepted even if absent",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "privateKeyPath": "no/such/key.pem",
+    "x509CertificatePath": "no/such/cert.pem",
+    "certificateAuthorityPrivateKey": "no/such/ca.key",
+    "certificateAuthorityCertificate": "no/such/ca.pem"
+   }
+  },
+  {
+   "note": "control-plane switches change what GET reports",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneJWTAuthenticationRequired": true,
+    "controlPlaneAuthorizationEnabled": true,
+    "controlPlaneOidcAuthenticationRequired": true,
+    "controlPlaneTLSMutualAuthenticationRequired": true
+   }
+  },
+  {
+   "note": "and yet the control plane still answers: they take effect only at startup",
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  },
+  {
+   "note": "switch them off again",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneJWTAuthenticationRequired": false,
+    "controlPlaneAuthorizationEnabled": false,
+    "controlPlaneOidcAuthenticationRequired": false,
+    "controlPlaneTLSMutualAuthenticationRequired": false
+   }
+  },
+  {
+   "note": "log level",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "logLevel": "TRACE"
+   }
+  },
+  {
+   "note": "log level",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "logLevel": "WARN"
+   }
+  },
+  {
+   "note": "log level back",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "logLevel": "INFO"
+   }
+  },
+  {
+   "note": "an update naming an unknown property and a known one",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "unknownProperty": 1,
+    "corsMaxAgeInSeconds": 9
+   }
+  },
+  {
+   "note": "an empty update changes nothing",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {}
+  }
+ ]
+}

@@ -1,0 +1,365 @@
+{
+ "properties": {
+  "forwardProxyAllowedHosts": "localhost,*.allowed.invalid",
+  "forwardProxyDeniedHosts": "Deny.Allowed.Invalid.",
+  "socketConnectionTimeoutInMillis": "500"
+ },
+ "steps": [
+  {
+   "note": "name-only lists: no target is looked up",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/f/localhost"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/upper"
+     },
+     "httpForward": {
+      "host": "LOCALHOST.",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/sub"
+     },
+     "httpForward": {
+      "host": "api.allowed.invalid",
+      "port": 80
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/bare"
+     },
+     "httpForward": {
+      "host": "allowed.invalid",
+      "port": 80
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/denied"
+     },
+     "httpForward": {
+      "host": "deny.allowed.invalid",
+      "port": 80
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/address"
+     },
+     "httpForward": {
+      "host": "127.0.0.1",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/other"
+     },
+     "httpForward": {
+      "host": "other.invalid",
+      "port": 80
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/hook/0"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "hooked"
+     },
+     "afterActions": [
+      {
+       "httpRequest": {
+        "path": "/hooked",
+        "headers": {
+         "Host": [
+          "other.invalid:80"
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "httpForward to localhost: allowed",
+   "method": "GET",
+   "path": "/f/localhost"
+  },
+  {
+   "note": "httpForward to LOCALHOST.: names matched without case or trailing dot",
+   "method": "GET",
+   "path": "/f/upper"
+  },
+  {
+   "note": "httpForward to api.allowed.invalid: allowed by *.domain; no lookup for name-only lists",
+   "method": "GET",
+   "path": "/f/sub"
+  },
+  {
+   "note": "httpForward to allowed.invalid: *.domain also matches the domain",
+   "method": "GET",
+   "path": "/f/bare"
+  },
+  {
+   "note": "httpForward to deny.allowed.invalid: denied, deny wins",
+   "method": "GET",
+   "path": "/f/denied"
+  },
+  {
+   "note": "httpForward to 127.0.0.1: an address against a name-only allow list",
+   "method": "GET",
+   "path": "/f/address"
+  },
+  {
+   "note": "httpForward to other.invalid: not in the allow list",
+   "method": "GET",
+   "path": "/f/other"
+  },
+  {
+   "note": "the forward refusals",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/f/.*"
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ],
+   "compare": "unordered"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "an upgrade relayed to localhost: allowed",
+   "method": "GET",
+   "path": "/f/localhost",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to LOCALHOST.: names matched without case or trailing dot",
+   "method": "GET",
+   "path": "/f/upper",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to api.allowed.invalid: allowed by *.domain; no lookup for name-only lists",
+   "method": "GET",
+   "path": "/f/sub",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to allowed.invalid: *.domain also matches the domain",
+   "method": "GET",
+   "path": "/f/bare",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to deny.allowed.invalid: denied, deny wins",
+   "method": "GET",
+   "path": "/f/denied",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to 127.0.0.1: an address against a name-only allow list",
+   "method": "GET",
+   "path": "/f/address",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to other.invalid: not in the allow list",
+   "method": "GET",
+   "path": "/f/other",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "unmatched, proxied to Host {{deadhost}}",
+   "method": "GET",
+   "path": "/proxied",
+   "headers": {
+    "Host": "{{deadhost}}"
+   }
+  },
+  {
+   "note": "unmatched, proxied to Host other.invalid:80",
+   "method": "GET",
+   "path": "/proxied",
+   "headers": {
+    "Host": "other.invalid:80"
+   }
+  },
+  {
+   "note": "unmatched, proxied to Host deny.allowed.invalid",
+   "method": "GET",
+   "path": "/proxied",
+   "headers": {
+    "Host": "deny.allowed.invalid"
+   }
+  },
+  {
+   "note": "replay to Host {{deadhost}}",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/replayed",
+    "headers": {
+     "Host": [
+      "{{deadhost}}"
+     ]
+    }
+   }
+  },
+  {
+   "note": "replay to Host other.invalid",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/replayed",
+    "headers": {
+     "Host": [
+      "other.invalid"
+     ]
+    }
+   }
+  },
+  {
+   "note": "replay to Host deny.allowed.invalid:80",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/replayed",
+    "headers": {
+     "Host": [
+      "deny.allowed.invalid:80"
+     ]
+    }
+   }
+  },
+  {
+   "note": "an after-action webhook to Host other.invalid:80",
+   "method": "GET",
+   "path": "/hook/0"
+  },
+  {
+   "note": "the webhooks are sent after the response",
+   "sleepMillis": 1500
+  },
+  {
+   "note": "the relay, proxy, replay and webhook refusals",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "mask": [
+    "^content-length: \\d+$"
+   ],
+   "compare": "unordered"
+  }
+ ]
+}

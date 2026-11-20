@@ -1,0 +1,80 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19494\"; ma=86400",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/stall\"\n  },\n  \"httpResponseTemplate\" : {\n    \"template\" : \"{\\\"statusCode\\\": 200, \\\"body\\\": \\\"#foreach($i in [1..2000])aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#end\\\"}\",\n    \"templateType\" : \"VELOCITY\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/small\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"served\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 200,
+      "headers": [
+        "server: mockserver-http3"
+      ],
+      "end": "reset 258",
+      "note": "a 200 KB response on a stream whose client grants 64 KiB and then nothing for 6 s: what fits, then a reset with H3_INTERNAL_ERROR"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 200,
+      "headers": [
+        "server: mockserver-http3"
+      ],
+      "end": "fin",
+      "note": "a response that fits the stream's credit is taken whole by QUIC: nothing waits, nothing is reset"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19494\"; ma=86400",
+        "<masked>",
+        "content-type: text/plain; version=0.0.4; charset=utf-8"
+      ],
+      "body": "# HELP mock_server_response_write_stalls_total Responses cut because their client took none of what was waiting for it for responseWriteStallTimeoutMillis, by protocol (http1_1, http2, http3, tunnel, websocket, other) and scope (connection: the connection was closed; stream: one HTTP/2 or HTTP/3 stream was reset)\n# TYPE mock_server_response_write_stalls_total counter\nmock_server_response_write_stalls_total{protocol=\"http1_1\",scope=\"connection\"} 0.0\nmock_server_response_write_stalls_total{protocol=\"http2\",scope=\"connection\"} 0.0\nmock_server_response_write_stalls_total{protocol=\"http2\",scope=\"stream\"} 0.0\nmock_server_response_write_stalls_total{protocol=\"http3\",scope=\"stream\"} 1.0\nmock_server_response_write_stalls_total{protocol=\"other\",scope=\"connection\"} 0.0\nmock_server_response_write_stalls_total{protocol=\"tunnel\",scope=\"connection\"} 0.0\nmock_server_response_write_stalls_total{protocol=\"websocket\",scope=\"connection\"} 0.0\n",
+      "note": "one HTTP/3 stream reset"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19494\"; ma=86400",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - resetting all expectations and request logs\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/stall\"\n    },\n    \"httpResponseTemplate\" : {\n      \"template\" : \"{\\\"statusCode\\\": 200, \\\"body\\\": \\\"#foreach($i in [1..2000])a…#end\\\"}\",\n      \"templateType\" : \"VELOCITY\"\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/small\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"served\"\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/stall\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19494\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/stall\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19494\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/stall\"\n    },\n    \"httpResponseTemplate\" : {\n      \"template\" : \"{\\\"statusCode\\\": 200, \\\"body\\\": \\\"#foreach($i in [1..2000])a…#end\\\"}\",\n      \"templateType\" : \"VELOCITY\"\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - generated output:\n\n  {\"statusCode\":200,\"body\":\"a…\"}\n\n from template:\n\n  {\"statusCode\": 200, \"body\": \"#foreach($i in [1..2000])a…#end\"}\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/stall\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19494\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"statusCode\" : 200,\n    \"body\" : \"a…\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/stall\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19494\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n for action:\n\n  {\n    \"template\" : \"{\\\"statusCode\\\": 200, \\\"body\\\": \\\"#foreach($i in [1..2000])a…#end\\\"}\",\n    \"templateType\" : \"VELOCITY\"\n  }\n\n from expectation:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - resetting HTTP/3 stream:\n\n  [id: <channel id>, QuicStreamAddress{streamId=0}]\n\n because its client took none of the response waiting for it for:\n\n  1000\n\n ms (responseWriteStallTimeoutMillis), so the response ends incomplete\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/small\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19494\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/small\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19494\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n didn't match expectation \"<uuid>\":\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/stall\"\n    },\n    \"httpResponseTemplate\" : {\n      \"template\" : \"{\\\"statusCode\\\": 200, \\\"body\\\": \\\"#foreach($i in [1..2000])a…#end\\\"}\",\n      \"templateType\" : \"VELOCITY\"\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n because:\n\n  method matched\n  path didn't match: \n  \n    string or regex match failed expected:\n  \n      /stall\n  \n     found:\n  \n      /small\n\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/small\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19494\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/small\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"served\"\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"body\" : \"served\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/small\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19494\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n for action:\n\n  {\n    \"body\" : \"served\"\n  }\n\n from expectation:\n\n  <uuid>\n\n",
+      "note": "the WARN, among the requests' entries"
+    }
+  ]
+}

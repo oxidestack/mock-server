@@ -1,0 +1,17 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/x/.*"}, "httpResponse": {"body": "regex-first"}},
+    {"httpRequest": {"path": "/x/a"}, "httpResponse": {"body": "literal-second"}},
+    {"httpRequest": {"path": "/y/b"}, "httpResponse": {"body": "literal-first"}},
+    {"httpRequest": {"path": "/y/.*"}, "httpResponse": {"body": "regex-second"}},
+    {"httpRequest": {"path": "/z/c"}, "httpResponse": {"body": "literal-low"}, "priority": -1},
+    {"httpRequest": {"path": "/z/.*"}, "httpResponse": {"body": "regex-high"}, "priority": 5},
+    {"httpRequest": {"method": "GET"}, "httpResponse": {"body": "no-path"}, "priority": -50},
+    {"httpRequest": {"path": "/CaSe"}, "httpResponse": {"body": "case"}}
+  ]},
+  {"note": "regex created first wins", "method": "GET", "path": "/x/a"},
+  {"note": "literal created first wins", "method": "GET", "path": "/y/b"},
+  {"note": "priority beats index", "method": "GET", "path": "/z/c"},
+  {"note": "pathless expectation still reachable", "method": "GET", "path": "/nothing/else"},
+  {"note": "indexed literal is case-insensitive", "method": "GET", "path": "/case"}
+]}

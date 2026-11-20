@@ -1,0 +1,34 @@
+{
+ "steps": [
+  {"note": "a namespaced one, a POST-only one, a not() one, then two that match /a in creation order", "method": "PUT", "path": "/mockserver/expectation", "body": [
+   {"id": "ex-ns", "namespace": "team-a", "priority": 20, "httpRequest": {"path": "/a"}, "httpResponse": {"body": "team a"}},
+   {"id": "ex-post", "priority": 10, "httpRequest": {"method": "POST", "path": "/a"}, "httpResponse": {"body": "post"}},
+   {"id": "ex-not", "priority": 5, "httpRequest": {"not": true, "path": "/a"}, "httpResponse": {"body": "not a"}},
+   {"id": "ex-pct", "priority": 3, "percentage": 0, "httpRequest": {"path": "/a"}, "httpResponse": {"body": "never"}},
+   {"id": "ex-a", "httpRequest": {"path": "/a"}, "httpResponse": {"body": "a"}},
+   {"id": "ex-c", "httpRequest": {"path": "/a"}, "httpResponse": {"body": "c"}},
+   {"id": "ex-once", "httpRequest": {"path": "/once"}, "httpResponse": {"body": "once"}, "times": {"remainingTimes": 1}}
+  ], "mask": ["content-length: \\d+"]},
+  {"note": "served by ex-a, in namespace team-b", "method": "GET", "path": "/a", "headers": {"X-MockServer-Namespace": "team-b"}},
+  {"note": "its correlation id", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/a"}, "capture": {"bodyRegex": "\"RECEIVED_REQUEST\",\\s*\"correlationId\" : \"([^\"]+)\"", "as": "ca"}, "mask": [{"regex": "^[\\s\\S]*$", "replace": "<log entries>"}, "content-length: \\d+"]},
+  {"note": "matched now and at arrival: namespace, fields, not() and percentage skipped, ex-c shadowed", "method": "PUT", "path": "/mockserver/explain?correlationId={{capture:ca}}", "compare": "json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "the id in the body; narration asked for but not enabled", "method": "PUT", "path": "/mockserver/explain?narrate=true", "compare": "json", "body": {"correlationId": "{{capture:ca}}"}, "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "not() and POST-only cleared, so no later request differs on two fields (whose order the oracle's HashMap does not keep)", "method": "PUT", "path": "/mockserver/clear?type=EXPECTATIONS", "body": {"id": "ex-not"}},
+  {"method": "PUT", "path": "/mockserver/clear?type=EXPECTATIONS", "body": {"id": "ex-post"}},
+  {"note": "a request nothing matches", "method": "GET", "path": "/zzz"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/zzz"}, "capture": {"bodyRegex": "\"RECEIVED_REQUEST\",\\s*\"correlationId\" : \"([^\"]+)\"", "as": "cq"}, "mask": [{"regex": "^[\\s\\S]*$", "replace": "<log entries>"}, "content-length: \\d+"]},
+  {"note": "NO_MATCH at arrival and now, with the closest expectation", "method": "PUT", "path": "/mockserver/explain?correlationId={{capture:cq}}", "compare": "json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "uses up ex-once", "method": "GET", "path": "/once"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/once"}, "capture": {"bodyRegex": "\"RECEIVED_REQUEST\",\\s*\"correlationId\" : \"([^\"]+)\"", "as": "co"}, "mask": [{"regex": "^[\\s\\S]*$", "replace": "<log entries>"}, "content-length: \\d+"]},
+  {"note": "used up: matched at arrival, no longer stored, nothing matches now", "method": "PUT", "path": "/mockserver/explain?correlationId={{capture:co}}", "compare": "json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "ex-a cleared", "method": "PUT", "path": "/mockserver/clear?type=EXPECTATIONS", "body": {"id": "ex-a"}},
+  {"note": "changed since: ex-c would serve it now", "method": "PUT", "path": "/mockserver/explain?correlationId={{capture:ca}}", "compare": "json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "no correlation id", "method": "PUT", "path": "/mockserver/explain", "compare": "json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"note": "a body that is no JSON", "method": "PUT", "path": "/mockserver/explain", "compare": "json", "body": "not json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"note": "a blank id in the query falls back to the body", "method": "PUT", "path": "/mockserver/explain?correlationId=", "compare": "json", "body": {"correlationId": "never-recorded"}, "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"note": "an id never recorded", "method": "PUT", "path": "/mockserver/explain?correlationId=never-recorded", "compare": "json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"note": "an id after reset", "method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/explain?correlationId={{capture:ca}}", "compare": "json", "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"note": "GET is no explain route", "method": "GET", "path": "/mockserver/explain?correlationId=x"}
+ ]
+}

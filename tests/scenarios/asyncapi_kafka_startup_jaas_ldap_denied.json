@@ -1,0 +1,99 @@
+{
+ "source": "upstream #109 (8d28d6f4f) stops relocating com.sun.*, so the Kafka client's login-module deny-list (JaasContext.throwIfLoginModuleIsNotAllowed) refuses com.sun.security.auth.module.LdapLoginModule in the startup asyncKafkaSaslJaasConfig (environment variable), the only JAAS configuration since #119.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "PLAIN"
+     }
+    }
+   },
+   "note": "SASL with the startup JAAS naming LdapLoginModule: producer construction fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the log: the deny-list refusal",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\"content-length\" : \\[\\s*\"\\d+\"\\s*\\]",
+     "reason": "the logged request's length varies with the dead host's port"
+    },
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "consume": true,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_SSL",
+      "saslMechanism": "SCRAM-SHA-256"
+     }
+    }
+   },
+   "note": "SASL_SSL and SCRAM, with consume: producer construction fails first"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ],
+ "env": {
+  "MOCKSERVER_ASYNC_KAFKA_BOOTSTRAP_SERVERS": "{{deadhost}}",
+  "MOCKSERVER_ASYNC_KAFKA_SASL_JAAS_CONFIG": "com.sun.security.auth.module.LdapLoginModule required user.provider.url=\"ldap://elsewhere.invalid/\" useFirstPass=true;"
+ }
+}

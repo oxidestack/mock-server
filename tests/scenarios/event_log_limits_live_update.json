@@ -1,0 +1,89 @@
+{
+ "source": "maxLoggedBodyBytes and maxEventLogSizeInBytes changed through PUT /mockserver/configuration are echoed by GET /mockserver/configuration but have no effect on the running event log, not even after a reset (probed against the oracle 2026-10-03; maxLogEntries is the same and is covered by configuration_runtime_update). Its own server so the changed configuration does not leak into other scenarios.",
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "POST",
+   "path": "/live1",
+   "body": "0123456789abcdef",
+   "note": "logged whole: no limit in force"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxLoggedBodyBytes": 5
+   },
+   "note": "accepted and echoed"
+  },
+  {
+   "method": "POST",
+   "path": "/live2",
+   "body": "0123456789abcdef",
+   "note": "still logged whole: the new limit does not reach the event log"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxEventLogSizeInBytes": 20
+   },
+   "note": "a budget smaller than what the log already holds: nothing is evicted"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "method": "POST",
+   "path": "/live3",
+   "body": "0123456789abcdef",
+   "note": "nor on the next entry"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "POST",
+   "path": "/live4",
+   "body": "0123456789abcdef",
+   "note": "a reset does not apply them either"
+  },
+  {
+   "method": "POST",
+   "path": "/live5",
+   "body": "0123456789abcdef"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "compare": "json",
+   "note": "both values are reported as set"
+  }
+ ]
+}

@@ -1,0 +1,9 @@
+# org.mockserver.scheduler.SchedulerReplySetTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldRunEveryFrameOfASetInOrderIncludingEqualDelays  http:websocket_log_entries  # a WebSocket response's frames are sent in their configured order (equal, zero delays)
+shouldRefuseAWholeSetWhenTheBudgetIsFullAndRunNoneOfItsFrames  http:overload_websocket_reply_sets  # a refused reply set closes the WebSocket with 1013 Try Again Later and sends none of its frames
+shouldAlwaysAdmitAnUndelayedSet  http:websocket_log_entries  # undelayed frames are always sent
+shouldKeepItsOwnBudgetApartFromDelayedResponses  http:overload_websocket_reply_sets  # with the reply-frame budget full a delayed response is still admitted
+shouldDropTheRestOfAStoppedSetAndReleaseItsFrames  n/a  # frames still scheduled when the client closes: nothing reaches a closed socket, so nothing is observable
+shouldLeaveOneQueuedTaskPerCancelledReplacement  n/a  # the JVM scheduler's queue length

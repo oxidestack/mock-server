@@ -1,0 +1,23 @@
+{
+ "quic": true,
+ "source": "what Http3MockServerHandler records as localAddress and remoteAddress of an HTTP/3 request, read back from REQUESTS and echoed by Velocity and Mustache templates",
+ "properties": {
+  "http3Port": "19689"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "pollUntil": "\"enabled\" ?: ?true",
+   "note": "wait for the HTTP/3 server"
+  },
+  {"method": "PUT", "path": "/mockserver/expectation", "headers": {"content-type": "application/json"}, "body": "{\"httpRequest\":{\"path\":\"/velocity\"},\"httpResponseTemplate\":{\"templateType\":\"VELOCITY\",\"template\":\"{'statusCode':200,'body':'remote=$!request.remoteAddress local=$!request.localAddress keepAlive=$!request.keepAlive'}\"}}"},
+  {"method": "PUT", "path": "/mockserver/expectation", "headers": {"content-type": "application/json"}, "body": "{\"httpRequest\":{\"path\":\"/mustache\"},\"httpResponseTemplate\":{\"templateType\":\"MUSTACHE\",\"template\":\"{'statusCode':200,'body':'remote={{request.remoteAddress}} local={{request.localAddress}}'}\"}}"},
+  {"method": "PUT", "path": "/mockserver/expectation", "headers": {"content-type": "application/json"}, "body": "{\"httpRequest\":{\"path\":\"/plain\"},\"httpResponse\":{\"statusCode\":200,\"body\":\"plain\"}}"},
+  {"h3": true, "method": "GET", "path": "/velocity", "note": "data plane, Velocity template"},
+  {"h3": true, "method": "GET", "path": "/mustache", "note": "data plane, Mustache template"},
+  {"h3": true, "method": "GET", "path": "/plain", "note": "data plane, no template"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS&format=JSON", "note": "the recorded requests"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON", "note": "the exchanges"}
+ ]
+}

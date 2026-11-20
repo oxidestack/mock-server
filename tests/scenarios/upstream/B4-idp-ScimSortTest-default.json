@@ -1,0 +1,2303 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) idp-ScimSortTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "04eada479233",
+   "note": "comparisonIsCaseInsensitive (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {
+    "initialUsers": [
+     {
+      "userName": "charlie",
+      "name": {
+       "familyName": "Brown"
+      }
+     },
+     {
+      "userName": "alice",
+      "name": {
+       "familyName": "Anderson"
+      }
+     },
+     {
+      "userName": "bob"
+     },
+     {
+      "userName": "dave",
+      "name": {
+       "familyName": "adams"
+      }
+     }
+    ]
+   },
+   "note": "comparisonIsCaseInsensitive (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "04eada479233"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=name.familyName&sortOrder=ascending",
+   "note": "comparisonIsCaseInsensitive (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "04eada479233"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b9ac82f4905a",
+   "note": "ascendingIsTheDefaultOrder (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "ascendingIsTheDefaultOrder (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "b9ac82f4905a"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=userName",
+   "note": "ascendingIsTheDefaultOrder (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "b9ac82f4905a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c843b01200ba",
+   "note": "blankSortByReturnsNull (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "blankSortByReturnsNull (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "c843b01200ba"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortOrder=ascending",
+   "note": "blankSortByReturnsNull (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "c843b01200ba"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "blankSortByReturnsNull (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "c843b01200ba"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=%20%20%20&sortOrder=descending",
+   "note": "blankSortByReturnsNull (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "c843b01200ba"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2faa362ef5d5",
+   "note": "invalidSortOrderThrows (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "invalidSortOrderThrows (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "2faa362ef5d5"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=userName&sortOrder=sideways",
+   "note": "invalidSortOrderThrows (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "2faa362ef5d5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "invalidSortOrderThrows (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "2faa362ef5d5"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=userName&sortOrder=asc",
+   "note": "invalidSortOrderThrows (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "2faa362ef5d5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2e51ffd64e85",
+   "note": "sortIsStableForEqualKeys (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {
+    "initialUsers": [
+     {
+      "userName": "same",
+      "name": {
+       "familyName": "Z"
+      }
+     },
+     {
+      "userName": "same",
+      "name": {
+       "familyName": "Y"
+      }
+     },
+     {
+      "userName": "same",
+      "name": {
+       "familyName": "X"
+      }
+     }
+    ]
+   },
+   "note": "sortIsStableForEqualKeys (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "2e51ffd64e85"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=userName&sortOrder=ascending",
+   "note": "sortIsStableForEqualKeys (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "2e51ffd64e85"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d945e8a6dc1b",
+   "note": "descendingReversesOrder (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "descendingReversesOrder (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "d945e8a6dc1b"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=userName&sortOrder=DESCENDING",
+   "note": "descendingReversesOrder (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "d945e8a6dc1b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "3e51191a2246",
+   "note": "missingAttributeSortsLastEvenWhenDescending (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {
+    "initialUsers": [
+     {
+      "userName": "charlie",
+      "name": {
+       "familyName": "Brown"
+      }
+     },
+     {
+      "userName": "alice",
+      "name": {
+       "familyName": "Anderson"
+      }
+     },
+     {
+      "userName": "bob"
+     },
+     {
+      "userName": "dave",
+      "name": {
+       "familyName": "adams"
+      }
+     }
+    ]
+   },
+   "note": "missingAttributeSortsLastEvenWhenDescending (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "3e51191a2246"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=name.familyName&sortOrder=descending",
+   "note": "missingAttributeSortsLastEvenWhenDescending (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "3e51191a2246"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "bba97bd8a7ef",
+   "note": "nestedAttributePathResolves (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "nestedAttributePathResolves (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "bba97bd8a7ef"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=name.familyName&sortOrder=ascending",
+   "note": "nestedAttributePathResolves (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "bba97bd8a7ef"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "222b8e15bd90",
+   "note": "applyDoesNotMutateInput (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {
+    "initialUsers": [
+     {
+      "userName": "charlie",
+      "name": {
+       "familyName": "Brown"
+      }
+     },
+     {
+      "userName": "alice",
+      "name": {
+       "familyName": "Anderson"
+      }
+     },
+     {
+      "userName": "bob"
+     },
+     {
+      "userName": "dave",
+      "name": {
+       "familyName": "adams"
+      }
+     }
+    ]
+   },
+   "note": "applyDoesNotMutateInput (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "222b8e15bd90"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=userName&sortOrder=descending",
+   "note": "applyDoesNotMutateInput (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "222b8e15bd90"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "71769650f2ec",
+   "note": "invalidSortByPathThrows (idp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "invalidSortByPathThrows (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "71769650f2ec"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=name..familyName&sortOrder=ascending",
+   "note": "invalidSortByPathThrows (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "71769650f2ec"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "invalidSortByPathThrows (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "71769650f2ec"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=1name&sortOrder=ascending",
+   "note": "invalidSortByPathThrows (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "71769650f2ec"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "invalidSortByPathThrows (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "71769650f2ec"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=user%20Name&sortOrder=ascending",
+   "note": "invalidSortByPathThrows (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "71769650f2ec"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {},
+   "note": "invalidSortByPathThrows (idp): ScimSort.apply: the resources seeded",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "71769650f2ec"
+  },
+  {
+   "method": "GET",
+   "path": "/scim/v2/Users?sortBy=.userName&sortOrder=ascending",
+   "note": "invalidSortByPathThrows (idp): ScimSort.parse -> list query",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(created|lastModified)\" ?: ?\"[^\"]+\"",
+     "replace": "\"${1}\" : \"<timestamp>\""
+    },
+    {
+     "regex": "W/\\\\\"[0-9a-f-]+\\\\\"",
+     "replace": "W/\\\"<version>\\\""
+    },
+    {
+     "regex": "^etag: .*$",
+     "replace": "etag: <version>"
+    },
+    {
+     "regex": "\"user_code\" ?: ?\"[A-Z]{4}-[A-Z]{4}\"",
+     "replace": "\"user_code\" : \"<code>\""
+    },
+    {
+     "regex": "user_code=[A-Z]{4}-[A-Z]{4}",
+     "replace": "user_code=<code>"
+    },
+    {
+     "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+     "replace": "<jwt>"
+    },
+    {
+     "regex": "\"(iat|nbf|exp|auth_time)\" ?: ?\\d+",
+     "replace": "\"${1}\" : <epoch>"
+    },
+    {
+     "regex": "\"(at_hash|c_hash)\" ?: ?\"[\\w-]+\"",
+     "replace": "\"${1}\" : \"<hash>\""
+    },
+    {
+     "regex": "(\\\\?\"(n|x|y|kid|x5t#S256)\\\\?\" ?: ?\\\\?\")[\\w-]+",
+     "replace": "${1}<key>"
+    },
+    {
+     "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+     "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+    },
+    {
+     "regex": "<ds:SignatureValue>[^<]*</ds:SignatureValue>",
+     "replace": "<ds:SignatureValue><masked></ds:SignatureValue>"
+    },
+    {
+     "regex": "<ds:X509Certificate>[^<]*</ds:X509Certificate>",
+     "replace": "<ds:X509Certificate><masked></ds:X509Certificate>"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<instant>"
+    },
+    {
+     "regex": "(ID|InResponseTo|SessionIndex)=\"_[0-9a-f]+\"",
+     "replace": "${1}=\"_<id>\""
+    }
+   ],
+   "decodeJwt": true,
+   "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+   "case": "71769650f2ec"
+  }
+ ]
+}

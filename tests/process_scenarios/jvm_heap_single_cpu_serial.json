@@ -1,0 +1,36 @@
+{
+  "source": "-XX:ActiveProcessorCount=1 in _JAVA_OPTIONS makes the JVM not server class (Serial, 2 MiB alignment for the 20000001k ceiling) and availableProcessors 1.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-Xmx20000001k",
+    "_JAVA_OPTIONS": "-XX:ActiveProcessorCount=1"
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "compareBody": "configuration"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

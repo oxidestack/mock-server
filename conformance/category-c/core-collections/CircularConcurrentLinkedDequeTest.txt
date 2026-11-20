@@ -1,0 +1,28 @@
+# org.mockserver.collections.CircularConcurrentLinkedDequeTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldNotAllowAddingMoreThenMaximumNumberOfEntriesWhenUsingAdd  http:upstream/B1-MockServerEventLogEvictionTest  # the event log's deque: maxLogEntries bounds what retrieve shows
+shouldNotAllowAddingMoreThenMaximumNumberOfEntriesWhenUsingAddAll  http:upstream/B1-MockServerEventLogEvictionTest  # addAll is the same bound; the log adds one entry at a time
+shouldInvokeEvictCallbackForOldestEntriesWhenFull  http:upstream/B1-MockServerEventLogEvictionTest  # the oldest go first, and the evict callback taints verification
+shouldKeepSizeConsistentAcrossRemoveItemAndClear  n/a  # the deque's own size counter; the log never removes single entries, and a clear is checked by every reset step
+shouldReturnFalseAndNotChangeSizeWhenRemovingMissingItem  n/a  # removeItem's return value: no caller on the wire path
+shouldReportZeroSizeAndRejectAddsWhenMaxSizeIsZero  http:event_log_max_log_entries_zero  # maxLogEntries 0: nothing retained, and the refused entries are not evictions (an upper-bound verify passes)
+shouldEvictOldestEntriesUntilUnderByteBudget  http:event_log_max_size_bytes, rust:src/recorded_tests.rs::max_event_log_size_in_bytes_keeps_the_newest_entries_that_fit
+shouldStillRetainSingleElementLargerThanByteBudget  http:event_log_max_size_bytes, rust:src/recorded_tests.rs::max_event_log_size_in_bytes_keeps_the_newest_entries_that_fit
+shouldResetByteTotalOnClearSoLaterAddsAreNotSpuriouslyEvicted  http:event_log_max_size_bytes_reset  # fill the byte budget, reset, and the next request's entries are all kept
+shouldKeepByteTotalConsistentAcrossRemoveItem  n/a  # removeItem has no caller on the wire path
+shouldExposeRetainedTotalBytesThatRisesOnAddAndFallsOnEvictionAndClear  n/a  # an accessor for metrics/diagnostics; the retained total itself shows only through evictions
+shouldReportZeroRetainedTotalBytesWhenThereIsNoWeigher  n/a  # a deque built without a weigher: the event log always has one
+shouldStillMeasureRetainedBytesWhenTheByteBudgetIsDisabled  n/a  # an accessor; with the budget off nothing is evicted by bytes, which every default-configured scenario shows
+shouldExposeConfiguredMaxBytesAndMaxSizeCeilings  n/a  # getters of the two ceilings
+shouldIgnoreByteBudgetWhenDisabledViaFourArgConstructor  n/a  # a Java constructor overload
+shouldAddAtCapacityInConstantTimeRegardlessOfSize  n/a  # a complexity guard (timing), not behaviour
+shouldAddWithByteBudgetInConstantTimeRegardlessOfSize  n/a  # a complexity guard (timing), not behaviour
+shouldEvictImmediatelyWhenMaxSizeShrunk  rust:tests/upstream/shared_configuration.rs::shrinking_the_event_log_at_runtime_must_evict
+shouldEvictImmediatelyWhenMaxBytesShrunk  rust:tests/upstream/shared_configuration.rs::shrinking_the_event_log_at_runtime_must_evict
+shouldAttributeByteEvictionsToTheByteBudget  http:event_log_byte_eviction_verification  # a failed upper-bound verify reports the byte evictions as evictedAtMaxEventLogSizeInBytes
+shouldNotAttributeCountEvictionsToTheByteBudget  http:configuration_put_no_resize  # a count eviction is reported as evictedAtMaxLogEntries only
+shouldAttributeByteEvictionsOnMaxBytesShrink  http:event_log_byte_eviction_verification  # after PUT /mockserver/configuration shrinks maxEventLogSizeInBytes, the evictions are reported against the new budget
+shouldResetByteEvictedCountOnClear  http:event_log_byte_eviction_verification  # after a reset only the byte evictions since then are reported
+shouldResetByteEvictedCountOnResetEvictedCount  http:event_log_byte_eviction_verification  # resetEvictedCount runs with the reset; the byte part shows in the verify after it (the count part: B1-MockServerEventLogEvictionTest)
+shouldNotEvictWhenMaxSizeGrown  http:event_log_limits_raised_at_runtime  # raising maxLogEntries (and maxExpectations) at runtime evicts nothing, and the raised bounds hold from then on

@@ -1,0 +1,52 @@
+{
+  "quic": true,
+  "properties": {
+    "http3Port": "19628",
+    "logLevel": "WARN"
+  },
+  "steps": [
+    {
+      "method": "GET",
+      "path": "/mockserver/http3status",
+      "pollUntil": "\"enabled\" ?: ?true",
+      "note": "wait for the HTTP/3 server"
+    },
+    {
+      "h3": true,
+      "method": "GET",
+      "path": "/warm-up",
+      "note": "lets the oracle's startup logging finish"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "note": "the oracle may log its startup entries after the opening reset: reset again"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {"id": "h3fi-processing", "httpRequest": {"path": "/processing"}, "httpResponse": {"statusCode": 102}},
+        {"id": "h3fi-hints", "httpRequest": {"path": "/hints"}, "httpResponse": {"statusCode": 103, "headers": {"link": ["</style.css>; rel=preload"]}}},
+        {"id": "h3fi-body", "httpRequest": {"path": "/with-a-body"}, "httpResponse": {"statusCode": 102, "body": "a body no 1xx carries"}},
+        {"id": "h3fi-trailers", "httpRequest": {"path": "/with-trailers"}, "httpResponse": {"statusCode": 102, "trailers": {"x-checksum": ["abc123"]}}},
+        {"id": "h3fi-delayed", "httpRequest": {"path": "/delayed"}, "httpResponse": {"statusCode": 102, "delay": {"timeUnit": "MILLISECONDS", "value": 100}}},
+        {"id": "h3fi-switching", "httpRequest": {"path": "/switching"}, "httpResponse": {"statusCode": 101}}
+      ]
+    },
+    {"h3": true, "method": "GET", "path": "/processing", "note": "a mocked 102 over HTTP/3: its header section, then the stream reset with H3_NO_ERROR"},
+    {"h3": true, "method": "GET", "path": "/processing", "note": "warned about once"},
+    {"h3": true, "method": "GET", "path": "/hints", "note": "a mocked 103 with a header"},
+    {"h3": true, "method": "GET", "path": "/with-a-body", "note": "no body after a 1xx"},
+    {"h3": true, "method": "GET", "path": "/with-trailers", "note": "no trailers after a 1xx"},
+    {"h3": true, "method": "GET", "path": "/delayed", "note": "a delayed 1xx"},
+    {"h3": true, "method": "GET", "path": "/switching", "note": "HTTP/3 has no upgrade, so a 101 is reset too"},
+    {"h3": true, "method": "HEAD", "path": "/with-a-body", "note": "a 1xx answering HEAD"},
+    {
+      "note": "one WARN for each expectation",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": ["\"totalTimeInMillis\" : \\d+", "content-length: \\d+"]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+ "quic": true,
+ "properties": {
+  "http3Port": "19482",
+  "proxySetupLogging": "true"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "pollUntil": "\"enabled\" ?: ?true",
+   "note": "wait for the HTTP/3 server: the oracle serves its TCP port before it starts HTTP/3 (a status read is not logged)"
+  },
+  {
+   "h3": true,
+   "method": "GET",
+   "path": "/nothing",
+   "note": "an HTTP/3 request, which also lets the oracle's startup (started on port, the proxy setup block) finish"
+  },
+  {
+   "note": "what starting logs with an HTTP/3 port, as text: the CA loaded for HTTP/3, then the HTTP/3 server's start entry before started on port (the CA file's directory differs: the image's home against the replay server's working directory)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "(\\{\\{root\\}\\})?/[^\\s\"\\\\=]*mockserver-ca\\.pem"
+   ]
+  },
+  {
+   "note": "the start entry as an entry: SERVER_CONFIGURATION with the UDP port as its argument",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "(\\{\\{root\\}\\})?/[^\\s\"\\\\=]*mockserver-ca\\.pem"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "the HTTP/3 request's entries after what starting logged: received, no expectation",
+   "mask": [
+    "(\\{\\{root\\}\\})?/[^\\s\"\\\\=]*mockserver-ca\\.pem"
+   ]
+  }
+ ]
+}

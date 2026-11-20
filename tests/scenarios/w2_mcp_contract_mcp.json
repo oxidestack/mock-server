@@ -1,0 +1,304 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/fake-mcp"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "event: message\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\n\ndata: ignored\n\n"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/json-mcp",
+      "body": {
+       "type": "STRING",
+       "string": "initialize",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"jsonrpc\":\"1.0\",\"result\":{\"protocolVersion\":\"  \",\"serverInfo\":{\"name\":\"fake\"}}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/json-mcp",
+      "body": {
+       "type": "STRING",
+       "string": "tools/list",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "body": "{\"jsonrpc\":\"2.0\",\"result\":{\"tools\":[{\"name\":\"a\",\"inputSchema\":{\"type\":\"string\"}},{\"inputSchema\":{}},{\"name\":\"ok\",\"inputSchema\":{\"type\":\"object\"}}]}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/json-mcp",
+      "body": {
+       "type": "STRING",
+       "string": "does-not-exist",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "body": "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32000,\"message\":\"nope\"}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/json-mcp",
+      "body": {
+       "type": "STRING",
+       "string": "tools/call",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "body": "{\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"resource_link\"}],\"structuredContent\":[1],\"isError\":\"yes\"}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/json-mcp"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "{\"jsonrpc\":\"2.0\",\"error\":{\"message\":5}}"
+     }
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "http://127.0.0.1:{{port}}/fake-mcp"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "mcp contract sse body"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "http://127.0.0.1:{{port}}/json-mcp",
+      "toolName": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "mcp contract broken server"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "mcp contract root path"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "http://127.0.0.1:{{deadport}}/mcp"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    {
+     "regex": "connection error: Connection refused[^\\\\\"]*",
+     "replace": "connection error: Connection refused"
+    }
+   ],
+   "note": "mcp contract unreachable"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "mcp contract no target"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "ws://x/mcp"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "mcp contract bad scheme"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "mcp"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "mcp contract relative"
+  }
+ ]
+}

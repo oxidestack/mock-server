@@ -1,0 +1,40 @@
+{
+ "source": "with logLevel WARN a no-match 404 (NO_MATCH_RESPONSE, logged at INFO) is in no event-log reader: REQUEST_RESPONSES, and explainUnmatched see nothing; REQUESTS still lists the arrival",
+ "properties": {
+  "logLevel": "WARN"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/missing.txt"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/missing.txt"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/missing.txt"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+",
+    {
+     "regex": "\"correlationId\" : \"[^\"]*\"",
+     "replace": "\"correlationId\" : \"<id>\"",
+     "reason": "random"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,28 @@
+{
+  "note": "the image's /extensions is a plugin directory like /libs (MOCKSERVER_CALLBACK_PLUGINS=/libs:/extensions); a jar mounted there is named on stderr and ignored, and the extension it was meant to provide is refused as the oracle refuses a class not on its class path",
+  "target": "binary",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_CALLBACK_PLUGINS": "{{scratch}}/libs:{{scratch}}/extensions",
+    "MOCKSERVER_EXTENSIONS": "com.acme.AuditExtension"
+  },
+  "files": {
+    "extensions/audit-extension.jar": "PK"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stderrContains": [
+      "ignoring Java archive {{scratch}}/extensions/audit-extension.jar: mock-server does not load Java classes; callback plugins are .wasm, .so, .dylib or .dll files (docs/callback-plugins.md)"
+    ],
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}\norg.mockserver.extension.ExtensionException: extension class com.acme.AuditExtension could not be loaded, check it is on the classpath: java.lang.ClassNotFoundException: com.acme.AuditExtension"
+    ],
+    "stdoutNotContains": ["started on port"]
+  }
+}

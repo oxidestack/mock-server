@@ -1,0 +1,1022 @@
+{
+ "properties": {
+  "grpcBidiStreamingEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: echo rule",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "interleaved: one response per inbound message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNlAAAAAAUKA0JvYg=="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: eager message and two rules",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "messages": [
+      {
+       "json": "{\"greeting\": \"Welcome!\"}"
+      }
+     ],
+     "rules": [
+      {
+       "matchJson": ".*Alice.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi Alice\"}"
+        }
+       ]
+      },
+      {
+       "matchJson": ".*Bob.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi Bob\"}"
+        }
+       ]
+      }
+     ],
+     "statusName": "OK",
+     "statusMessage": "all done"
+    }
+   }
+  },
+  {
+   "note": "eager message, then each rule's response",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNlAAAAAAUKA0JvYg=="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: templated rule",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi $jsonPath.find(\"$.name\")\"}",
+         "templateType": "VELOCITY"
+        },
+        {
+         "json": "{\"greeting\": \"static reply\"}"
+        }
+       ]
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "templated response rendered against the inbound message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: rule for Alice only",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "rules": [
+      {
+       "matchJson": ".*Alice.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi Alice\"}"
+        }
+       ]
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "no rule matches: headers and trailers only",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAUKA0JvYg=="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: NOT_FOUND status",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "NOT_FOUND",
+     "statusMessage": "resource not found"
+    }
+   }
+  },
+  {
+   "note": "configured trailing status",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: two responses from one rule",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "rules": [
+      {
+       "matchJson": ".*Alice.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hello Alice\"}"
+        },
+        {
+         "json": "{\"greeting\": \"Welcome Alice\"}"
+        }
+       ]
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "multiple responses from a single rule",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: plain Alice rule",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "rules": [
+      {
+       "matchJson": "Alice",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi Alice\"}"
+        }
+       ]
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "matchJson is not a contains match",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: regex Alice rule",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "rules": [
+      {
+       "matchJson": ".*Alice.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi Alice\"}"
+        }
+       ]
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "matchJson as a regex",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: negated rule",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "rules": [
+      {
+       "matchJson": "!.*Alice.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Not Alice!\"}"
+        }
+       ]
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "negated rule does not match Alice",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "negated rule matches Bob",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAUKA0JvYg=="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: eager messages with delays",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "messages": [
+      {
+       "json": "{\"greeting\": \"First\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 0
+       }
+      },
+      {
+       "json": "{\"greeting\": \"Second\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 200
+       }
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "per-message delay on eager messages",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "minMillis": 200
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: rule responses with delays",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "rules": [
+      {
+       "matchJson": ".*Alice.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi Alice\"}",
+         "delay": {
+          "timeUnit": "MILLISECONDS",
+          "value": 0
+         }
+        },
+        {
+         "json": "{\"greeting\": \"Welcome Alice\"}",
+         "delay": {
+          "timeUnit": "MILLISECONDS",
+          "value": 200
+         }
+        }
+       ]
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "per-message delay on rule responses",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "minMillis": 200
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: top-level delay",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 200
+     }
+    }
+   }
+  },
+  {
+   "note": "top-level action delay",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "minMillis": 200
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: echo once",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "times once: the first stream is served by the bidi expectation",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "times once: the second falls back",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "times once: exhausted",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: http response once on Chat",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "fallback"
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "non-bidi action: routed to the re-aggregating chain",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "the routing probe did not consume it twice",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: unary",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "unary"
+     }
+    }
+   }
+  },
+  {
+   "note": "unary method: re-aggregating chain",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: slow eager message",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "messages": [
+      {
+       "json": "{\"greeting\": \"late\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1500
+       }
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "deadline before any response: trailers-only DEADLINE_EXCEEDED",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "grpc-timeout": "200m"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: one message then a slow one",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": \"late\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1500
+       }
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "deadline mid-stream: trailing DEADLINE_EXCEEDED",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "grpc-timeout": "300m"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: slowish eager message",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "messages": [
+      {
+       "json": "{\"greeting\": \"eventually\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 400
+       }
+      }
+     ],
+     "statusName": "OK"
+    }
+   }
+  },
+  {
+   "note": "no grpc-timeout: no deadline",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "minMillis": 400
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: two streamed messages",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "statusMessage": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"message-one\"}"
+      },
+      {
+       "json": "{\"greeting\": \"message-two\"}"
+      }
+     ]
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "server streaming: two messages and trailers",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "expectation: one streamed message",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"single-message\"}"
+      }
+     ]
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "server streaming: a single message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "expectation: error status",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "INTERNAL",
+     "statusMessage": "something went wrong",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"partial\"}"
+      }
+     ]
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "server streaming: error status in the trailers",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "expectation: custom metadata",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "headers": {
+      "x-custom-metadata": [
+       "test-value-123"
+      ],
+      "grpc-encoding": [
+       "identity"
+      ]
+     },
+     "messages": [
+      {
+       "json": "{\"greeting\": \"with metadata\"}"
+      }
+     ]
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "server streaming: custom metadata in the initial headers",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: collect",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/CollectGreetings"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "collected"
+     }
+    }
+   }
+  },
+  {
+   "note": "client streaming: three messages",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/CollectGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNlAAAAAAUKA0JvYgAAAAAJCgdDaGFybGll"
+  },
+  {
+   "note": "client streaming: one message is unary-shaped",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/CollectGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAwKClNpbmdsZVVzZXI="
+  },
+  {
+   "note": "expectation: single greeting",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "single"
+     }
+    }
+   }
+  },
+  {
+   "note": "unary: one message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAwKClNpbmdsZVVzZXI="
+  },
+  {
+   "note": "what matching saw",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "clear descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  }
+ ]
+}

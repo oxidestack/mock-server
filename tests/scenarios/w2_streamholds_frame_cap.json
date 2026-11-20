@@ -1,0 +1,94 @@
+{
+ "properties": {
+  "breakpointMaxHeld": "0"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "w2sh-sse",
+     "httpRequest": {
+      "path": "/w2sh/sse"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "one"
+       }
+      ]
+     }
+    },
+    {
+     "id": "w2sh-proxy",
+     "httpRequest": {
+      "path": "/w2sh/stream"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/w2sh/sse",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/breakpoint/matcher",
+   "body": {
+    "httpRequest": {
+     "path": "/w2sh/stream"
+    },
+    "phases": [
+     "RESPONSE_STREAM"
+    ],
+    "clientId": "w2sh-absent-client"
+   },
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "note": "past breakpointMaxHeld the frame goes out unheld",
+   "method": "GET",
+   "path": "/w2sh/stream"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "the cap line, before the client is even looked up",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "(?s)^.*?(?=[^\\n]* - stream frame WS dispatch cap)",
+    "(?s)(?<=seq=\\n\\n  0\\n).*$"
+   ]
+  },
+  {
+   "note": "the cap line as a typed entry: its format and arguments",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(?s)^.*?(?=  \\{\\n    \"logLevel\" : \"[A-Z]+\",\\n(?:    [^\\n]*\\n)*?    \"messageFormat\" : \"stream frame WS dispatch cap)",
+     "replace": "<earlier entries>"
+    },
+    {
+     "regex": "(?s)^(.*?\"messageFormat\" : \"stream frame WS dispatch cap[^\\n]*\\n(?:    [^\\n]*\\n)*?  \\}).*$",
+     "replace": "${1}<later entries>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

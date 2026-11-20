@@ -1,0 +1,36 @@
+{
+ "note": "a fixed server certificate whose DSA key matches its certificate, and a TLS 1.2-only client (offering ECDHE suites, as any client can: Netty's cipher suites have no DHE_DSS one): the JDK fails the handshake with SSLHandshakeException '(handshake_failure) no cipher suites in common' and a handshake_failure alert, before any ServerHello, and ClientTlsHandshakeFailureLog logs its WARN.",
+ "properties": {
+  "privateKeyPath": "{{files}}/tls/fixed-dsa-key.pem",
+  "x509CertificatePath": "{{files}}/tls/fixed-dsa-cert.pem"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a TLS 1.2 ClientHello (server name localhost): the answer is a fatal handshake_failure (40) alert",
+   "tcp": [
+    "FgMBAK8BAACrAwNQcfBbrU9hk9mX/OKhrqw6unw7hQZzuxFAnsa2NWXVAgAAHsAswDDAK8AvzKnMqMAkwCjAI8AnAJ8AngBrAGcA/wEAAGQAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKAAwACgAdABcAHgAZABgAIwAAABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYC"
+   ]
+  },
+  {
+   "note": "the log: the failed handshake's WARN",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^  /[0-9.]+:[0-9]+$",
+     "replace": "  <client address>",
+     "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+    },
+    {
+     "regex": "(?s)^.*?(<timestamp> - TLS handshake failed)",
+     "replace": "${1}",
+     "reason": "the CA load before it, which the TLS 1.3 scenario tls_fixed_certificate_dsa_pair compares"
+    }
+   ]
+  }
+ ]
+}

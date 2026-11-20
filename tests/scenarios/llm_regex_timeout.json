@@ -1,0 +1,131 @@
+{
+ "source": "8.0.0's LlmConversationMatcher evaluates latestMessageMatches as Pattern.compile(p).matcher(text).find() through MatchingTimeoutExecutor.matchesWithRegexTimeout with a null MockServerLogger, under the startup regexMatchingTimeoutMillis (here 300). java.util.regex backtracking on `(.*a){12}x|c` over 38 a's and a c outlives the budget at the first start position, so the predicate fails (a non-match, the fallback answers) although a linear engine finds the `c`; the timeout goes to SLF4J only, so the event log has no WARN entry. A short message settles within the budget and matches by find().",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "redos",
+     "priority": 1,
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "regex matched"
+      },
+      "conversationPredicates": {
+       "latestMessageMatches": "(.*a){12}x|c"
+      }
+     }
+    },
+    {
+     "id": "fallback",
+     "priority": 0,
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "body": "fallback"
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac"
+     }
+    ]
+   },
+   "note": "Java backtracking outlives the 300 ms budget at the first start position: the predicate fails, the fallback answers",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": "ac"
+     }
+    ]
+   },
+   "note": "a short message settles within the budget; find() reaches the c",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": "zzz"
+     }
+    ]
+   },
+   "note": "no c and no a: no match within the budget",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "chatcmpl-[0-9a-f]+",
+     "replace": "chatcmpl-<id>"
+    },
+    {
+     "regex": "created\\\\\":\\d+",
+     "replace": "created\\\\\":<time>"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,56 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "pickPort": true,
+  "propertyFile": "mockserver.disableSystemOut=true\n",
+  "readiness": {
+    "logContains": "Reading properties from property file"
+  },
+  "afterReady": [
+    {
+      "awaitAnswerMillis": 60000
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"id\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"httpRequest\": {\"path\": \"/a\"}, \"httpResponse\": {\"body\": \"x\"}}",
+        "expectStatus": 201,
+        "readTimeoutMillis": 60000
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/a",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "Reading properties from property file"
+    ],
+    "stdoutNotContains": [
+      "AsyncAPI control-plane registered",
+      "using environment variables:",
+      "[WARN] Forward proxy is configured",
+      "started on port",
+      "MockServer proxy setup",
+      "logger level is",
+      "creating expectation",
+      "received request",
+      "returning response"
+    ]
+  }
+}

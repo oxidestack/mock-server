@@ -1,0 +1,1152 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) autohalt-ChaosAutoHaltMonitorTest-b59d14d5 (conformance/harvest)",
+ "properties": {
+  "metricsEnabled": "true",
+  "chaosAutoHaltEnabled": "true",
+  "chaosAutoHaltErrorThreshold": "3",
+  "chaosAutoHaltWindowMillis": "10000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f71ed0f4b1d6",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorStatus": 503
+    }
+   },
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ServiceChaosRegistry.put",
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-error",
+    "httpRequest": {
+     "path": "/harvested/autohalt/error"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1.0
+    }
+   },
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): the expectation whose chaos injects a error fault",
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ChaosAutoHaltMonitor.getHaltCount (the mock_server_chaos_auto_halt counter)",
+   "mask": [
+    {
+     "regex": "(?m)^(?:# (?:HELP|TYPE) )?(?!mock_server_chaos_auto_halt)[a-zA-Z_][a-zA-Z0-9_]*(?:\\{[^\\n]*\\})?(?: [^\\n]*)?\\n",
+     "replace": ""
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldHaltChaosWhenThresholdExceededByErrorFaults (autohalt): ChaosAutoHaltMonitor.getHaltCount (the mock_server_chaos_auto_halt counter)",
+   "mask": [
+    {
+     "regex": "(?m)^(?:# (?:HELP|TYPE) )?(?!mock_server_chaos_auto_halt)[a-zA-Z_][a-zA-Z0-9_]*(?:\\{[^\\n]*\\})?(?: [^\\n]*)?\\n",
+     "replace": ""
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "f71ed0f4b1d6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "17ce7df39402",
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorStatus": 503
+    }
+   },
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): ServiceChaosRegistry.put",
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-error",
+    "httpRequest": {
+     "path": "/harvested/autohalt/error"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1.0
+    }
+   },
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): the expectation whose chaos injects a error fault",
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-drop",
+    "httpRequest": {
+     "path": "/harvested/autohalt/drop"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "dropConnectionProbability": 1.0
+    }
+   },
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): the expectation whose chaos injects a drop fault",
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/drop",
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"drop\")",
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-quota",
+    "httpRequest": {
+     "path": "/harvested/autohalt/quota"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "quotaName": "harvested-autohalt-quota",
+     "quotaLimit": 1,
+     "quotaWindowMillis": 600000
+    }
+   },
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): the expectation whose chaos injects a quota fault",
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/quota",
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): the request the quota allows (no fault)",
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/quota",
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"quota\")",
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldHaltChaosWhenMixedDestructiveFaultsCrossThreshold (autohalt): ChaosAutoHaltMonitor.getHaltCount (the mock_server_chaos_auto_halt counter)",
+   "mask": [
+    {
+     "regex": "(?m)^(?:# (?:HELP|TYPE) )?(?!mock_server_chaos_auto_halt)[a-zA-Z_][a-zA-Z0-9_]*(?:\\{[^\\n]*\\})?(?: [^\\n]*)?\\n",
+     "replace": ""
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "17ce7df39402"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "6bc6f1d8911f",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorStatus": 503
+    }
+   },
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ServiceChaosRegistry.put",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-error",
+    "httpRequest": {
+     "path": "/harvested/autohalt/error"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1.0
+    }
+   },
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): the expectation whose chaos injects a error fault",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-drop",
+    "httpRequest": {
+     "path": "/harvested/autohalt/drop"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "dropConnectionProbability": 1.0
+    }
+   },
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): the expectation whose chaos injects a drop fault",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/drop",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"drop\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-latency",
+    "httpRequest": {
+     "path": "/harvested/autohalt/latency"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "latency": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1
+     }
+    }
+   },
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): the expectation whose chaos injects a latency fault",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-slow",
+    "httpRequest": {
+     "path": "/harvested/autohalt/slow"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "slowResponseChunkSize": 4,
+     "slowResponseChunkDelay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1
+     }
+    }
+   },
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): the expectation whose chaos injects a slow fault",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/latency",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"latency\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/slow",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"slow\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.getHaltCount (the mock_server_chaos_auto_halt counter)",
+   "mask": [
+    {
+     "regex": "(?m)^(?:# (?:HELP|TYPE) )?(?!mock_server_chaos_auto_halt)[a-zA-Z_][a-zA-Z0-9_]*(?:\\{[^\\n]*\\})?(?: [^\\n]*)?\\n",
+     "replace": ""
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-quota",
+    "httpRequest": {
+     "path": "/harvested/autohalt/quota"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "quotaName": "harvested-autohalt-quota",
+     "quotaLimit": 1,
+     "quotaWindowMillis": 600000
+    }
+   },
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): the expectation whose chaos injects a quota fault",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/quota",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): the request the quota allows (no fault)",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/quota",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.recordError(\"quota\")",
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldNotCountBenignFaultsTowardThreshold (autohalt): ChaosAutoHaltMonitor.getHaltCount (the mock_server_chaos_auto_halt counter)",
+   "mask": [
+    {
+     "regex": "(?m)^(?:# (?:HELP|TYPE) )?(?!mock_server_chaos_auto_halt)[a-zA-Z_][a-zA-Z0-9_]*(?:\\{[^\\n]*\\})?(?: [^\\n]*)?\\n",
+     "replace": ""
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "6bc6f1d8911f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "91d3cac229d8",
+   "note": "shouldHaltWhenEnabledOnConfigurationInstanceButDisabledStatically (autohalt): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorStatus": 503
+    }
+   },
+   "note": "shouldHaltWhenEnabledOnConfigurationInstanceButDisabledStatically (autohalt): ServiceChaosRegistry.put",
+   "case": "91d3cac229d8"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-error",
+    "httpRequest": {
+     "path": "/harvested/autohalt/error"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1.0
+    }
+   },
+   "note": "shouldHaltWhenEnabledOnConfigurationInstanceButDisabledStatically (autohalt): the expectation whose chaos injects a error fault",
+   "case": "91d3cac229d8"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldHaltWhenEnabledOnConfigurationInstanceButDisabledStatically (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "91d3cac229d8"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldHaltWhenEnabledOnConfigurationInstanceButDisabledStatically (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "91d3cac229d8"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldHaltWhenEnabledOnConfigurationInstanceButDisabledStatically (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "91d3cac229d8"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldHaltWhenEnabledOnConfigurationInstanceButDisabledStatically (autohalt): ChaosAutoHaltMonitor.getHaltCount (the mock_server_chaos_auto_halt counter)",
+   "mask": [
+    {
+     "regex": "(?m)^(?:# (?:HELP|TYPE) )?(?!mock_server_chaos_auto_halt)[a-zA-Z_][a-zA-Z0-9_]*(?:\\{[^\\n]*\\})?(?: [^\\n]*)?\\n",
+     "replace": ""
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "91d3cac229d8"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldHaltWhenEnabledOnConfigurationInstanceButDisabledStatically (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "91d3cac229d8"
+  }
+ ]
+}

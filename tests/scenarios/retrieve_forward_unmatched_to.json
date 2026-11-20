@@ -1,0 +1,110 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/remote",
+     "headers": {
+      "Host": [
+       "127.0.0.1:{{port}}"
+      ]
+     }
+    },
+    "httpResponse": {
+     "body": "answered by the remote"
+    }
+   },
+   "note": "matches only the Host an unmatched request is forwarded to the remote with"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "no remote yet: no match"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=NOPE&forwardUnmatchedTo=127.0.0.1:{{port}}",
+   "note": "an invalid type fails before forwarding is armed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=%20",
+   "note": "a blank value arms nothing"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "still no remote"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=127.0.0.1:{{port}}",
+   "note": "host:port arms record-and-forward; nothing recorded yet"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "forwarded to the remote with Host rewritten, which matches there"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "note": "the forwarded exchange is recorded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=http%3A%2F%2Flocalhost%3A{{deadport}}",
+   "note": "any retrieve type arms; a URL with its port"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "the new remote is dead"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=https://127.0.0.1:{{port}}",
+   "note": "https with an explicit port"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "the https scheme is not used for the forward itself"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=http://",
+   "note": "a URL without an authority: URISyntaxException"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=127.0.0.1:abc",
+   "note": "a port that is not a number: NumberFormatException"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=http://under_score:80/",
+   "note": "a registry-based authority has no host"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=:80",
+   "note": "an empty host"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=a%20b:1:2",
+   "note": "split on colons: the second part is the port; host a b is armed"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "the failed arms changed nothing; host a b does not resolve"
+  }
+ ]
+}

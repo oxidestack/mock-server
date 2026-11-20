@@ -1,0 +1,66 @@
+{
+ "source": "at DEBUG, 8.0.0's NettyHttpClient logs `sending bytes hex{}to{}` once the binary proxy's forward connection is up, the request's bytes as a hex dump and the remote address as arguments.",
+ "peer": true,
+ "properties": {
+  "logLevel": "DEBUG",
+  "proxyRemoteHost": "{{peerhost}}",
+  "proxyRemotePort": "{{peerport}}"
+ },
+ "steps": [
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the upstream's startup entries are not the point"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": "CQgHBgUEAwIBAA=="
+    },
+    "binaryResponse": {
+     "binaryData": "AQIDBA=="
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "note": "a binary request to the proxying server is forwarded and the upstream's answer returned"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "plain-text LOGS: the forward address is the peer container's",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  }
+ ]
+}

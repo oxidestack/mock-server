@@ -1,0 +1,100 @@
+{
+ "source": "NettyHttpClientUpstreamProxyFailureTest.shouldLogAnUnreachableProxyOnceAsAProxyConfigurationProblem (NettyHttpClient.proxyFailure). forwardHttpProxy's name does not resolve (plain forwards), forwardHttpsProxy refuses (secure forwards)",
+ "properties": {
+  "forwardHttpProxy": "upstream-proxy-for-mockserver.invalid:3128",
+  "forwardHttpsProxy": "{{deadhost}}"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/plain"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/target",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/secure"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/target",
+       "secure": true,
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/forward"
+     },
+     "httpForward": {
+      "host": "target.example",
+      "port": 8080
+     }
+    }
+   ]
+  },
+  {
+   "note": "plain forward 1: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "plain forward 2: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "plain forward 3: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "secure forward 1: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/secure"
+  },
+  {
+   "note": "secure forward 2: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/secure"
+  },
+  {
+   "note": "secure forward 3: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/secure"
+  },
+  {
+   "note": "httpForward 1 (plain): its proxy cannot be reached",
+   "method": "GET",
+   "path": "/forward"
+  },
+  {
+   "note": "httpForward 2 (plain): its proxy cannot be reached",
+   "method": "GET",
+   "path": "/forward"
+  },
+  {
+   "note": "one 'could not be reached' WARN per proxy address, however many forwards failed",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

@@ -1,0 +1,750 @@
+{
+ "source": "hand-written: PUT/GET /mockserver/clock (HttpState.handleClockPut/handleClockGet, TimeService) and the time readers it moves (template now helpers, timeToLive). isolated: reset does not clear the clock.",
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "reset"
+   },
+   "note": "start from the real clock: reset does not touch it, so an earlier scenario may have left it frozen",
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock",
+   "note": "real time, not frozen",
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00Z"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/clock/velocity"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{ \"statusCode\": 200, \"body\": \"$now|$now_epoch|$now_iso_8601|$now_rfc_1123|$dates|$dates.plusSeconds(5)|$dates.plusMinutes(5)|$dates.plusHours(5)|$dates.plusDays(1)|$dates.minusSeconds(5)|$dates.minusMinutes(5)|$dates.minusHours(5)|$dates.minusDays(1)|$dates.epochSeconds()|$dates.epochMillis()|$dates.epochSecondsPlus(60)|$dates.epochSecondsMinus(60)|$dates.format('yyyy-MM-dd HH:mm:ss.SSS')\" }"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/clock/mustache"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{ \"statusCode\": 200, \"body\": \"{{ now }}|{{ now_epoch }}|{{ now_iso_8601 }}|{{ now_rfc_1123 }}|{{ dates }}|{{ dates.epochMillis }}\" }"
+     }
+    }
+   ],
+   "note": "templates under the frozen clock"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/velocity"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/mustache"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 59999
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/clock/velocity"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/mustache"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset leaves the clock frozen; the time-to-live expectations below stand alone, so an expired one never competes for the closest-match hint (upstream removes it on another thread)"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/clock/ttl"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "alive"
+     },
+     "timeToLive": {
+      "timeUnit": "SECONDS",
+      "timeToLive": 60
+     }
+    }
+   ],
+   "note": "a 60 s time to live under the frozen clock"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/ttl"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 59999
+   },
+   "note": "one millisecond before the time to live ends"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/ttl"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 1
+   },
+   "note": "the end date is no longer after now: expired"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/ttl"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "reset"
+   },
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock",
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/clock/ttl-real"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "alive"
+     },
+     "timeToLive": {
+      "timeUnit": "HOURS",
+      "timeToLive": 1
+     }
+    }
+   ],
+   "note": "a time to live started on the real clock"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2020-01-01T00:00:00Z"
+   },
+   "note": "frozen in the past: the expectation lives"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/ttl-real"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "+10000-01-01T00:00:00Z"
+   },
+   "note": "frozen far ahead: it has expired"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/ttl-real"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2020-01-01T00:00:00Z"
+   },
+   "note": "an expired expectation stays expired once removed"
+  },
+  {
+   "method": "GET",
+   "path": "/clock/ttl-real"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "note": "no body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": "   ",
+   "note": "blank body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {},
+   "note": "no action"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": ""
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "   "
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": null
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": 5
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": [
+     "reset"
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": {
+     "a": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "jump"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": " reset"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": []
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": "\"reset\""
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": "not json"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": "{\"action\":"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "yesterday"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": 12
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": " 2024-01-01T00:00:00Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00.1234567891Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": -5
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": "abc"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": "5abc"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": "0x10"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 0.5
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": null
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": []
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": {}
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": "-3"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": false
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock",
+   "note": "none of the rejected requests moved the clock"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01t00:00:00z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00+01:00"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00+0100"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00-05"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T23:59:60Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T24:00:00Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00.5Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00.120Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00.000100Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00.123456789Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "-0001-01-01T00:00:00Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "1969-12-31T23:59:59.999Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "ADVANCE",
+    "durationMillis": true
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "ADVANCE",
+    "durationMillis": "1.9"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "ADVANCE",
+    "durationMillis": "  7"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "ADVANCE",
+    "durationMillis": "+5"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "ADVANCE",
+    "durationMillis": "1e3"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "ADVANCE",
+    "durationMillis": 1000.0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "ADVANCE",
+    "durationMillis": 1.9
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "ADVANCE",
+    "durationMillis": 15.0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": "{'action':'Freeze','instant':'2024-06-01T12:00:00Z',}",
+   "note": "the mapper's single quotes and trailing comma; the action's case is ignored and lower-cased in the answer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": "{\"action\":\"advance\",\"durationMillis\":1000} trailing",
+   "note": "readTree stops after the first value"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 99999999999999999999
+   },
+   "note": "a BigInteger's low 64 bits"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": null
+   },
+   "note": "no instant: the real time",
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock",
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 1000
+   },
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00Z"
+   },
+   "note": "bare alias"
+  },
+  {
+   "method": "GET",
+   "path": "/clock"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset clears the log, not the clock"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 250
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "jump"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "note": "the INFO events: one per accepted change"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "reset"
+   },
+   "note": "leave the clock running",
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/clock",
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  }
+ ]
+}

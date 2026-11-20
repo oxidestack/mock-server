@@ -1,0 +1,66 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) action-HttpActionHandlerDriftDetectionTest-c05bc456 (conformance/harvest)",
+ "properties": {
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "cc20c0822140",
+   "note": "recordsNoDriftWhenDriftDetectionDisabled (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 500,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "recordsNoDriftWhenDriftDetectionDisabled (action): upstream (the mocked forward handler's response)",
+   "case": "cc20c0822140"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "recordsNoDriftWhenDriftDetectionDisabled (action): the expectation HttpState returned",
+   "case": "cc20c0822140"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "recordsNoDriftWhenDriftDetectionDisabled (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "cc20c0822140"
+  }
+ ]
+}

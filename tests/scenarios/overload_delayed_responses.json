@@ -1,0 +1,273 @@
+{
+ "source": "Scheduler.rejectable / HttpActionHandler.overloadResponse: a delayed response over maxPendingDelayedResponses is answered at once with 503, Retry-After: 1; a delayed class callback likewise; an undelayed one never is; a forward's chaos latency is skipped instead (delayOptional) and a delayed after-action dropped (sheddable), each on its own budget; an SSE event's delay never takes a slot; the refusal is logged at WARN at most once per 10 s with the refused count; a changed limit applies at runtime and 0 is unbounded (SchedulerOverloadTest)",
+ "properties": {
+  "maxPendingDelayedResponses": "2"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "path": "/delayed"
+    },
+    "httpResponse": {
+     "body": "delayed",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 4000
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/now"
+    },
+    "httpResponse": {
+     "body": "now"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/fwd-chaos"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/now",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     "chaos": {
+      "latency": {
+       "timeUnit": "MILLISECONDS",
+       "value": 5000
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/side"
+     },
+     "httpResponse": {
+      "body": "side"
+     },
+     "afterActions": [
+      {
+       "httpRequest": {
+        "path": "/hook",
+        "headers": {
+         "Host": [
+          "localhost:{{port}}"
+         ]
+        }
+       },
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1000
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/sse"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "one",
+        "delay": {
+         "timeUnit": "MILLISECONDS",
+         "value": 1500
+        }
+       },
+       {
+        "data": "two",
+        "delay": {
+         "timeUnit": "MILLISECONDS",
+         "value": 1500
+        }
+       }
+      ]
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/callback"
+     },
+     "httpResponseClassCallback": {
+      "callbackClass": "com.example.NoSuchCallback",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 1000
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "an SSE stream's event delays are never counted against the budget",
+   "async": "sse",
+   "maxMillis": 15000,
+   "method": "GET",
+   "path": "/sse"
+  },
+  {
+   "sleepMillis": 200
+  },
+  {
+   "note": "the first delayed response is admitted",
+   "async": "a",
+   "maxMillis": 15000,
+   "method": "GET",
+   "path": "/delayed"
+  },
+  {
+   "note": "the second fills the budget of 2",
+   "async": "b",
+   "maxMillis": 15000,
+   "method": "GET",
+   "path": "/delayed"
+  },
+  {
+   "sleepMillis": 700,
+   "awaitCounts": {"delayedResponses": 2}
+  },
+  {
+   "note": "a third is refused at once",
+   "method": "GET",
+   "path": "/delayed",
+   "maxMillis": 2000
+  },
+  {
+   "note": "an undelayed response is never refused",
+   "method": "GET",
+   "path": "/now",
+   "maxMillis": 2000
+  },
+  {
+   "note": "a fourth is refused too, without a second WARN within the interval",
+   "method": "GET",
+   "path": "/delayed",
+   "maxMillis": 2000
+  },
+  {
+   "note": "a delayed class callback is refused before its class is looked up",
+   "method": "GET",
+   "path": "/callback",
+   "maxMillis": 2000
+  },
+  {
+   "note": "a forward's chaos latency is optional: with the budget full the response is sent at once, without it",
+   "method": "GET",
+   "path": "/fwd-chaos",
+   "maxMillis": 3000
+  },
+  {
+   "note": "side actions have a budget of their own: two delayed after-actions are held",
+   "method": "GET",
+   "path": "/side",
+   "maxMillis": 2000
+  },
+  {
+   "method": "GET",
+   "path": "/side",
+   "maxMillis": 2000
+  },
+  {
+   "note": "the third is dropped; its response is still answered",
+   "method": "GET",
+   "path": "/side",
+   "maxMillis": 2000
+  },
+  {
+   "await": "a"
+  },
+  {
+   "await": "b"
+  },
+  {
+   "await": "sse"
+  },
+  {
+   "note": "the two held after-actions have fired",
+   "sleepMillis": 1500,
+   "awaitCounts": {"pendingDelayed": 0}
+  },
+  {
+   "note": "once the delays have fired a delayed response is admitted again",
+   "method": "GET",
+   "path": "/delayed",
+   "maxMillis": 15000
+  },
+  {
+   "note": "0 is unbounded, applied at runtime",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxPendingDelayedResponses": 0
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "reason": "the whole configuration echoed, with machine-dependent defaults such as actionHandlerThreadCount"
+    }
+   ]
+  },
+  {
+   "async": "c",
+   "maxMillis": 15000,
+   "method": "GET",
+   "path": "/delayed"
+  },
+  {
+   "async": "d",
+   "maxMillis": 15000,
+   "method": "GET",
+   "path": "/delayed"
+  },
+  {
+   "async": "e",
+   "maxMillis": 15000,
+   "method": "GET",
+   "path": "/delayed"
+  },
+  {
+   "await": "c"
+  },
+  {
+   "await": "d"
+  },
+  {
+   "await": "e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "mask": [
+    "(?<=\"totalTimeInMillis\" : )\\d+",
+    "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+",
+    {
+     "regex": "(\"(?:connectionEstablished|connectionTimeIn|requestStarted|responseReceived|timeToFirstByteIn)Millis\" : )\\d+",
+     "replace": "${1}0",
+     "reason": "the forward's measured connection timing"
+    }
+   ]
+  }
+ ]
+}

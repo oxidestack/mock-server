@@ -1,0 +1,486 @@
+{
+ "note": "Which reference into a namespace without a loaded grammar Xerces reports when a schema has several: the first its traversal meets (XSDHandler.traverseSchemas: global components in document order, each traversed when first referenced; local elements deferred to traverseLocalElements; keyref refers last). Reported namespaces are remembered per server (per JVM), so the scenario has a server of its own.",
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "NOTATION enumeration naming a notation of an imported namespace without a grammar"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:n7\"><xs:import namespace=\"urn:order:n7\"/><xs:simpleType name=\"t\"><xs:restriction base=\"xs:NOTATION\"><xs:enumeration value=\"a:png\"/></xs:restriction></xs:simpleType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "NOTATION enumeration naming a notation of an imported namespace without a grammar"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "NOTATION enumeration naming a notation of an imported namespace without a grammar: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a global element's type (document order) before a later complex type's base"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m1a\" xmlns:b=\"urn:order:m1b\"><xs:import namespace=\"urn:order:m1a\"/><xs:import namespace=\"urn:order:m1b\"/><xs:element name=\"e\" type=\"a:t\"/><xs:complexType name=\"c\"><xs:complexContent><xs:extension base=\"b:t\"/></xs:complexContent></xs:complexType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "a global element's type (document order) before a later complex type's base"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "a global element's type (document order) before a later complex type's base: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a local element reference is deferred: the attribute type after it is first"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m2a\" xmlns:b=\"urn:order:m2b\"><xs:import namespace=\"urn:order:m2a\"/><xs:import namespace=\"urn:order:m2b\"/><xs:complexType name=\"c\"><xs:sequence><xs:element ref=\"a:x\"/></xs:sequence><xs:attribute name=\"at\" type=\"b:t\"/></xs:complexType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "a local element reference is deferred: the attribute type after it is first"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "a local element reference is deferred: the attribute type after it is first: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a local element of a global element is deferred past a later global attribute"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m3a\" xmlns:b=\"urn:order:m3b\"><xs:import namespace=\"urn:order:m3a\"/><xs:import namespace=\"urn:order:m3b\"/><xs:element name=\"e\"><xs:complexType><xs:sequence><xs:element ref=\"a:x\"/></xs:sequence></xs:complexType></xs:element><xs:attribute name=\"g\" type=\"b:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "a local element of a global element is deferred past a later global attribute"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "a local element of a global element is deferred past a later global attribute: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "union member types in the order written"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m4a\" xmlns:b=\"urn:order:m4b\"><xs:import namespace=\"urn:order:m4a\"/><xs:import namespace=\"urn:order:m4b\"/><xs:simpleType name=\"u\"><xs:union memberTypes=\"b:t a:t\"/></xs:simpleType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "union member types in the order written"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "union member types in the order written: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "substitutionGroup before type on one element"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m5a\" xmlns:b=\"urn:order:m5b\"><xs:import namespace=\"urn:order:m5a\"/><xs:import namespace=\"urn:order:m5b\"/><xs:element name=\"e\" type=\"b:t\" substitutionGroup=\"a:h\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "substitutionGroup before type on one element"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "substitutionGroup before type on one element: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a global element traverses its named type when it refers to it, before the next global component"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m6a\" xmlns:b=\"urn:order:m6b\"><xs:import namespace=\"urn:order:m6a\"/><xs:import namespace=\"urn:order:m6b\"/><xs:element name=\"e\" type=\"c\"/><xs:attribute name=\"x\" type=\"b:t\"/><xs:complexType name=\"c\"><xs:attribute name=\"y\" type=\"a:t\"/></xs:complexType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "a global element traverses its named type when it refers to it, before the next global component"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "a global element traverses its named type when it refers to it, before the next global component: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "an anonymous complex type's attributes before its (deferred) local elements"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m7a\" xmlns:b=\"urn:order:m7b\"><xs:import namespace=\"urn:order:m7a\"/><xs:import namespace=\"urn:order:m7b\"/><xs:element name=\"e\"><xs:complexType><xs:sequence><xs:element name=\"l\" type=\"a:t\"/></xs:sequence><xs:attribute name=\"y\" type=\"b:t\"/></xs:complexType></xs:element></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "an anonymous complex type's attributes before its (deferred) local elements"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "an anonymous complex type's attributes before its (deferred) local elements: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a group's local elements are deferred past a later attribute group"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m8a\" xmlns:b=\"urn:order:m8b\"><xs:import namespace=\"urn:order:m8a\"/><xs:import namespace=\"urn:order:m8b\"/><xs:group name=\"g\"><xs:sequence><xs:element name=\"l\" type=\"a:t\"/></xs:sequence></xs:group><xs:attributeGroup name=\"ag\"><xs:attribute ref=\"b:x\"/></xs:attributeGroup></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "a group's local elements are deferred past a later attribute group"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "a group's local elements are deferred past a later attribute group: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a keyref refer is resolved after every other reference"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m9a\" xmlns:b=\"urn:order:m9b\"><xs:import namespace=\"urn:order:m9a\"/><xs:import namespace=\"urn:order:m9b\"/><xs:element name=\"e\"><xs:complexType><xs:sequence><xs:element name=\"x\"/></xs:sequence></xs:complexType><xs:keyref name=\"kr\" refer=\"a:k\"><xs:selector xpath=\".\"/><xs:field xpath=\"x\"/></xs:keyref></xs:element><xs:element name=\"f\" type=\"b:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "a keyref refer is resolved after every other reference"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "a keyref refer is resolved after every other reference: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a group reference is traversed in place"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:mAa\" xmlns:b=\"urn:order:mAb\"><xs:import namespace=\"urn:order:mAa\"/><xs:import namespace=\"urn:order:mAb\"/><xs:complexType name=\"c\"><xs:sequence><xs:group ref=\"a:g\"/></xs:sequence><xs:attributeGroup ref=\"b:ag\"/></xs:complexType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "a group reference is traversed in place"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "a group reference is traversed in place: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "NOTATION enumerations of a simple type before a later element's type"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:mBa\" xmlns:b=\"urn:order:mBb\"><xs:import namespace=\"urn:order:mBa\"/><xs:import namespace=\"urn:order:mBb\"/><xs:simpleType name=\"s\"><xs:restriction base=\"xs:NOTATION\"><xs:enumeration value=\"a:n\"/></xs:restriction></xs:simpleType><xs:element name=\"f\" type=\"b:t\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "NOTATION enumerations of a simple type before a later element's type"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "NOTATION enumerations of a simple type before a later element's type: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the same schema again: its first namespace is reported already, so the second one is"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m1a\" xmlns:b=\"urn:order:m1b\"><xs:import namespace=\"urn:order:m1a\"/><xs:import namespace=\"urn:order:m1b\"/><xs:element name=\"e\" type=\"a:t\"/><xs:complexType name=\"c\"><xs:complexContent><xs:extension base=\"b:t\"/></xs:complexContent></xs:complexType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "the same schema again: its first namespace is reported already, so the second one is"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the same schema again: its first namespace is reported already, so the second one is: the reference reported",
+   "mask": [
+    {
+     "regex": "(?s)^.*?\"messageFormat\" : \"exception parsing schema\\{\\}\".*?\"throwable\" : \\{\\n(.*?)      \"stackTrace\" : \\[( \\]|.*?\\n      \\])(.*?)\\n    \\}.*$",
+     "replace": "${1}${3}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "and once more: both are reported, the schema compiles with both references dropped"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:m1a\" xmlns:b=\"urn:order:m1b\"><xs:import namespace=\"urn:order:m1a\"/><xs:import namespace=\"urn:order:m1b\"/><xs:element name=\"e\" type=\"a:t\"/><xs:complexType name=\"c\"><xs:complexContent><xs:extension base=\"b:t\"/></xs:complexContent></xs:complexType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "and once more: both are reported, the schema compiles with both references dropped"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "the compiled expectation"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a NOTATION enumeration into the reported namespace is dropped: the restriction compiles"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:a=\"urn:order:n7\"><xs:import namespace=\"urn:order:n7\"/><xs:simpleType name=\"t\"><xs:restriction base=\"xs:NOTATION\"><xs:enumeration value=\"a:png\"/></xs:restriction></xs:simpleType></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "a NOTATION enumeration into the reported namespace is dropped: the restriction compiles"
+  }
+ ]
+}

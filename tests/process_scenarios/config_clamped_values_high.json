@@ -1,0 +1,45 @@
+{
+ "source": "the startup values mockserver-core's configuration tests set above a property's range or outside its accepted set through the static store (MaxLlmConversationBodySizeTest, DriftDetectionConfigTest, BinaryMessageFramingConfigurationTest, WatchInitializationJsonPollPeriodMillisTest): GET /mockserver/config reports the raw values and GET /mockserver/configuration what each was read as.",
+ "target": "both",
+ "args": [
+  "-serverPort",
+  "{{serverPort}}",
+  "-Dmockserver.maxLlmConversationBodySize=100000000",
+  "-Dmockserver.driftSampleRate=2.5",
+  "-Dmockserver.binaryMessageLengthPrefixBytes=3",
+  "-Dmockserver.binaryMessageLengthPrefixByteOrder=LITTLE",
+  "-Dmockserver.binaryMessageLengthPrefixOffset=x",
+  "-Dmockserver.binaryMessageFraming=MONGODB",
+  "-Dmockserver.watchInitializationJsonPollPeriodMillis=0"
+ ],
+ "readiness": {
+  "logContains": "started on port",
+  "settleMillis": 1000
+ },
+ "timeoutSecs": 150,
+ "afterReady": [
+  {
+   "http": {
+    "method": "GET",
+    "path": "/mockserver/config",
+    "compareBody": "config"
+   }
+  },
+  {
+   "http": {
+    "method": "GET",
+    "path": "/mockserver/configuration",
+    "compareBody": "configuration"
+   }
+  }
+ ],
+ "bodyMask": [
+  {
+   "regex": "^(actionHandlerThreadCount|maxEventLogSizeInBytes|maxOpenAiResponsesSizeInBytes): \\d+$",
+   "replace": "${1}: <sized by the host's processors and memory>"
+  }
+ ],
+ "expect": {
+  "running": true
+ }
+}

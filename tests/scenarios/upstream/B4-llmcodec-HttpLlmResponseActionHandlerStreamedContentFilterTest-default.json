@@ -1,0 +1,159 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmcodec-HttpLlmResponseActionHandlerStreamedContentFilterTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "43c2fb6a7be2",
+   "note": "streamedBlockKeepsTheJsonBlockForAServerThatCannotStream (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "stopReason": "refusal",
+      "streaming": true
+     }
+    }
+   },
+   "note": "streamedBlockKeepsTheJsonBlockForAServerThatCannotStream (llmcodec): encodeStreaming",
+   "case": "43c2fb6a7be2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "streamedBlockKeepsTheJsonBlockForAServerThatCannotStream (llmcodec): echo",
+   "case": "43c2fb6a7be2"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "streamedBlockKeepsTheJsonBlockForAServerThatCannotStream (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "43c2fb6a7be2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0ab2f03995d8",
+   "note": "bedrockConverseStreamEndsWithContentFilteredMessageStop (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "BEDROCK",
+     "model": "test-model",
+     "completion": {
+      "stopReason": "refusal",
+      "streaming": true
+     }
+    }
+   },
+   "note": "bedrockConverseStreamEndsWithContentFilteredMessageStop (llmcodec): encodeStreaming",
+   "case": "0ab2f03995d8"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "bedrockConverseStreamEndsWithContentFilteredMessageStop (llmcodec): echo",
+   "case": "0ab2f03995d8"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "bedrockConverseStreamEndsWithContentFilteredMessageStop (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "0ab2f03995d8"
+  }
+ ]
+}

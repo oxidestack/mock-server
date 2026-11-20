@@ -1,0 +1,42 @@
+{
+  "steps": [
+    {
+      "note": "expectations whose bodies are longer than the dashboard's 64K-character cap: a string response, a JSON response and a 50001-byte binary message (more than the 49152 bytes the cap shows as base64)",
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {"id": "big-string", "httpRequest": {"path": "/big"}, "httpResponse": {"statusCode": 200, "body": "{{repeat:7000:0123456789}}"}},
+        {"id": "big-json", "httpRequest": {"path": "/json"}, "httpResponse": {"statusCode": 200, "body": {"type": "JSON", "json": "{\"items\":[{{repeat:8000:{\"id\":1},}}{\"id\":0}]}"}}},
+        {"id": "big-binary", "httpRequest": {"binaryData": "{{repeat:16667:AAAA}}"}, "binaryResponse": {"binaryData": "AQID"}}
+      ]
+    },
+    {"note": "a string request body of 70000 characters", "method": "POST", "path": "/big", "headers": {"content-type": "text/plain"}, "body": "{{repeat:7000:abcdefghij}}"},
+    {"note": "a JSON request body longer than the cap", "method": "POST", "path": "/json", "headers": {"content-type": "application/json"}, "body": "{\"rows\":[{{repeat:8000:{\"n\":22},}}{\"n\":0}]}"},
+    {"note": "an emoji across the cap: the cut leaves the whole pair out", "method": "POST", "path": "/emoji", "headers": {"content-type": "text/plain; charset=utf-8"}, "body": "{{repeat:65535:a}}😀bb"},
+    {"note": "the binary message, answered by big-binary", "tcp": [{"hex": "{{repeat:50001:00}}"}]},
+    {"sleepMillis": 500},
+    {"wsOpen": "ui", "path": "/_mockserver_ui_websocket", "note": "the dashboard socket"},
+    {"wsDrain": "ui", "note": "the first frame, which the oracle sends late or not at all"},
+    {"wsSend": "ui", "text": "{}", "note": "every entry"},
+    {
+      "wsRead": "ui",
+      "note": "rows, log messages and expectations with their bodies cut to 64K characters and marked",
+      "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"],
+      "capture": [
+        {"bodyRegex": "\"second\":\"50001 bytes[^\"]*\".*?\"key\":\"([0-9a-f-]+)_request\"", "as": "binaryId"},
+        {"bodyRegex": "\"description\":\"POST +/emoji\",.*?\"key\":\"([0-9a-f-]+)_request\"", "as": "emojiId"},
+        {"bodyRegex": "\"description\":\"POST +/json\",.*?\"key\":\"([0-9a-f-]+)_request\"", "as": "jsonId"},
+        {"bodyRegex": "\"description\":\"POST +/json\",.*?\"httpResponse\":\\{\"logEntryId\":\"([0-9a-f-]+)\"", "as": "jsonResponseId"},
+        {"bodyRegex": "\"description\":\"POST +/big\",.*?\"key\":\"([0-9a-f-]+)_request\"", "as": "bigId"},
+        {"bodyRegex": "\"description\":\"POST +/big\",.*?\"httpResponse\":\\{\"logEntryId\":\"([0-9a-f-]+)\"", "as": "bigResponseId"}
+      ]
+    },
+    {"wsClose": "ui"},
+    {"note": "the cut string request, whole", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:bigId}}&part=request", "maxMillis": 60000},
+    {"note": "the cut string response, whole, from the entry the row's marker names", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:bigResponseId}}&part=response", "maxMillis": 60000},
+    {"note": "the cut JSON request, whole", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:jsonId}}&part=request", "maxMillis": 60000},
+    {"note": "the cut JSON response, whole", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:jsonResponseId}}&part=response", "maxMillis": 60000},
+    {"note": "the request cut before its emoji, whole", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:emojiId}}&part=request", "maxMillis": 60000},
+    {"note": "the cut binary message, whole", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:binaryId}}&part=request", "maxMillis": 60000}
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "source": "a 256 MiB container's 45% (115 MiB) is below HotSpot's default MaxHeapSize (96M*13/10, 124.8 MiB), which is the floor of the ergonomic ceiling: 126 MiB once aligned to 2 MiB (ZGC), not 45%.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {},
+  "containerMemoryBytes": 268435456,
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "compareBody": "configuration"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

@@ -1,0 +1,78 @@
+{
+ "peer": true,
+ "properties": {
+  "proxyRemoteHost": "{{peerhost}}",
+  "proxyRemotePort": "{{peerport}}"
+ },
+ "steps": [
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the upstream's startup entries are not the point"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": "CQgHBgUEAwIBAA=="
+    },
+    "binaryResponse": {
+     "binaryData": "AQIDBA=="
+    }
+   },
+   "note": "the upstream: a binary expectation on the second node",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "note": "a binary request to the proxying server is forwarded and the upstream's answer returned"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the proxy's entries: RECEIVED_REQUEST then FORWARDED_REQUEST",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the upstream's entries about that request: matched, answered",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ],
+   "body": {
+    "binaryData": "CQgHBgUEAwIBAA=="
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "what the proxy recorded as requests"
+  }
+ ]
+}

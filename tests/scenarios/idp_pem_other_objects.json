@@ -1,0 +1,2352 @@
+{
+  "note": "A CRL, a certification request, an attribute certificate and a PKCS#7 ContentInfo given as an OIDC private key: each valid, which PEMToFile then refuses as no private key, and with each structure's failures (sizes, element types, tags, optional fields) as BouncyCastle's getInstance and constructors throw them. Record it on a freshly started oracle: once the JIT has compiled ASN1Sequence.getObjectAt, the oracle throws its ArrayIndexOutOfBoundsException without a message (OmitStackTraceInFastThrow).",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL valid",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMH8waAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWhcNMjYwMTAxMDAwMDAwWjAUMBICAQUXDTI2MDEwMTAwMDAwMFqgDjAM\nMAoGA1UdFAQDAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL valid without version, nextUpdate and revoked certificates",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMDANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAxMDAw\nMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL valid with GeneralizedTimes and an empty revoked list",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF8wSAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRgPMjAyNjAx\nMDEwMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFowADANBgkqhkiG9w0BAQsFAAMEAAEC\nAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL valid with trailing data",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMDANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAxMDAw\nMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAwUA\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\n\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList one integer",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMBowAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL TBSCertList eight elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMIGCMGsCAQEwDQYJKoZIhvcNAQELBQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFoXDTI2MDEwMTAwMDAwMFowFDASAgEFFw0yNjAxMDEwMDAwMDBaoA4w\nDDAKBgNVHRQEAwIBAQIBAjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMBgCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMD4wJwIBAQIBBTAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAxMDAwMDAwWjANBgkq\nhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature without an OID",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMD8wKAIBATACBQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEwMTAwMDAwMFowDQYJ\nKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMDswJAIBATANBgkqhkiG9w0BAQsFAAIBARcNMjYwMTAxMDAwMDAwWjANBgkqhkiG\n9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMDowIwIBATANBgkqhkiG9w0BAQsFADAAFw0yNjAxMDEwMDAwMDBaMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEQwLQIBATANBgkqhkiG9w0BAQsFADAKMAgGA1UEAwwBcBcNMjYwMTAxMDAwMDAw\nWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL thisUpdate an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMD4wJwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZQIBBzANBgkq\nhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWgIBBzANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked certificates after nextUpdate an OID",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWhcNMjYwMTAxMDAwMDAwWgYCKgMwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions implicitly tagged",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWoABATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME8wOAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqADAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions under tag 1",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFowQwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqEOMAwwCgYDVR0UBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions under an application tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFowQwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWmAOMAwwCgYDVR0UBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding two objects",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGQwTQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAYMAoGA1UdFAQDAgEBMAoGA1UdIwQDAgEBMA0GCSqGSIb3DQEBCwUA\nAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extension one element",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFUwPgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAJMAcwBQYDVR0UMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension four elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGIwSwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAWMBQwEgYDVR0UAQH/BAMCAQEEAwIBATANBgkqhkiG9w0BAQsFAAME\nAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFEwOgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAFMAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extension id an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFgwQQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAMMAowCAIBAQQDAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension critical an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wDQYDVR0UAgEBBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension value an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFgwQQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAMMAowCAYDVR0UAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extension value a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFcwQAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqALMAkwBwYDVR0UMAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension critical",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wDQYDVR0UAQH/BAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension repeated",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGYwTwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAaMBgwCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEwDQYJKoZIhvcNAQEL\nBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuing distribution point empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFkwQgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqANMAswCQYDVR0cBAIwADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFowQwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0cBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point truncated",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFkwQgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqANMAswCQYDVR0cBAIwBTANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuing distribution point indirect",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wDAYDVR0cBAUwA4QB/zANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point value empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFcwQAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqALMAkwBwYDVR0cBAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point full name",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGAwSQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAUMBIwEAYDVR0cBAkwB6AFoAOGAXUwDQYJKoZIhvcNAQELBQADBAAB\nAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuing distribution point name relative to the issuer",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGcwUAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAbMBkwFwYDVR0cBBAwDqAMoQowCAYDVQQDDAFwMA0GCSqGSIb3DQEB\nCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point name implicitly tagged",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wDAYDVR0cBAUwA4ABATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point name untagged",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGAwSQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAUMBIwEAYDVR0cBAkwB6AFMAOGAXUwDQYJKoZIhvcNAQELBQADBAAB\nAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuing distribution point name tag 2",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGAwSQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAUMBIwEAYDVR0cBAkwB6AFogOGAXUwDQYJKoZIhvcNAQELBQADBAAB\nAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point full name primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBAwDgYDVR0cBAcwBaADgAEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point full name tag 9",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGAwSQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAUMBIwEAYDVR0cBAkwB6AFoAOJAXgwDQYJKoZIhvcNAQELBQADBAAB\nAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuing distribution point reasons",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wDQYDVR0cBAYwBIMCB4AwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point reasons with bad pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wDQYDVR0cBAYwBIMCCIAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point reasons empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFswRAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAPMA0wCwYDVR0cBAQwAoMAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuing distribution point flag of two octets",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wDQYDVR0cBAYwBIEC//8wDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point flag constructed",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBAwDgYDVR0cBAcwBaIDAQH/MA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point tag 6",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wDAYDVR0cBAUwA4YB/zANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuing distribution point application tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wDAYDVR0cBAUwA0EB/zANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuing distribution point element an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wDAYDVR0cBAUwAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL outer signature algorithm an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMD4wMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWgIBAQMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAIBAQ==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST valid",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEswNAIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST valid without attributes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEkwMgIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "NEW CERTIFICATE REQUEST valid with a challenge password",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN NEW CERTIFICATE REQUEST-----\nMF4wRwIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoBMwEQYJKoZIhvcNAQkHMQQMAnB3MA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END NEW CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST valid with two attributes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMF8wSAIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoBQwBgYCKgMxADAKBgIqBDEEBQAFADANBgkqhkiG9w0BAQsFAAMEAAEC\nAw==\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\n\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST one element",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMDQwMgIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAEC\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST two elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEMwMgIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECMA0GCSqGSIb3DQEBCwUA\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST signature algorithm an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMD0wMgIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECAgEBAwQAAQID\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        {
+          "regex": "\\{\\s*\"localizedMessage\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"message\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"stackTrace\" : <frames>\\s*\\}",
+          "replace": "{ }",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "ArrayIndexOutOfBoundsException(: Index \\d+ out of bounds for length \\d+)?",
+          "replace": "ArrayIndexOutOfBoundsException<aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "(malformed data|encoded key spec not recognized): (null|Index \\d+ out of bounds for length \\d+)",
+          "replace": "$1: <aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST signature an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEYwMgIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECMA0GCSqGSIb3DQEBCwUAAgEB\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST signature with unused bits set",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEgwMgIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECMA0GCSqGSIb3DQEBCwUAAwMBAQM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST info empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMBcwADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        {
+          "regex": "\\{\\s*\"localizedMessage\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"message\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"stackTrace\" : <frames>\\s*\\}",
+          "replace": "{ }",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "ArrayIndexOutOfBoundsException(: Index \\d+ out of bounds for length \\d+)?",
+          "replace": "ArrayIndexOutOfBoundsException<aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "(malformed data|encoded key spec not recognized): (null|Index \\d+ out of bounds for length \\d+)",
+          "replace": "$1: <aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST info two elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMBwwBQIBADAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST info an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMBgCAQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST version an OID",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEowMwYCKgMwEDEOMAwGA1UEAwwFcHJvYmUwGzATBgcqhkjOPQIBBggqhkjOPQMB\nBwMEAAQBAjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        {
+          "regex": "\\{\\s*\"localizedMessage\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"message\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"stackTrace\" : <frames>\\s*\\}",
+          "replace": "{ }",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "ArrayIndexOutOfBoundsException(: Index \\d+ out of bounds for length \\d+)?",
+          "replace": "ArrayIndexOutOfBoundsException<aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "(malformed data|encoded key spec not recognized): (null|Index \\d+ out of bounds for length \\d+)",
+          "replace": "$1: <aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST subject an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMDowIwIBAAIBATAbMBMGByqGSM49AgEGCCqGSM49AwEHAwQABAECMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST subject RDN an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMDwwJQIBADADAgEBMBswEwYHKoZIzj0CAQYIKoZIzj0DAQcDBAAEAQIwDQYJKoZI\nhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST public key info an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMC8wGAIBADAQMQ4wDAYDVQQDDAVwcm9iZQIBATANBgkqhkiG9w0BAQsFAAMEAAEC\nAw==\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST public key info one element",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMD0wJgIBADAQMQ4wDAYDVQQDDAVwcm9iZTAPMA0GCSqGSIb3DQEBCwUAMA0GCSqG\nSIb3DQEBCwUAAwQAAQID\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST public key an OCTET STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEIwKwIBADAQMQ4wDAYDVQQDDAVwcm9iZTAUMA0GCSqGSIb3DQEBCwUABAMCAQEw\nDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST attributes untagged",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEswNAIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECMQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST attributes primitive tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMEwwNQIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECgAEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST attributes application tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMFMwPAIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECYAgwBgYCKgMxADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST attribute an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nME4wNwIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST attribute type an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMFIwOwIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoAcwBQIBATEAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST attribute values a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMFMwPAIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoAgwBgYCKgMwADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST attribute one element",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMFEwOgIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoAYwBAYCKgMwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        {
+          "regex": "\\{\\s*\"localizedMessage\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"message\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"stackTrace\" : <frames>\\s*\\}",
+          "replace": "{ }",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "ArrayIndexOutOfBoundsException(: Index \\d+ out of bounds for length \\d+)?",
+          "replace": "ArrayIndexOutOfBoundsException<aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "(malformed data|encoded key spec not recognized): (null|Index \\d+ out of bounds for length \\d+)",
+          "replace": "$1: <aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST challenge password two values",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMGAwSQIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoBUwEwYJKoZIhvcNAQkHMQYMAWEMAWIwDQYJKoZIhvcNAQELBQADBAAB\nAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST alternative signature algorithm alone",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMGMwTAIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoBgwFgYDVR1JMQ8wDQYJKoZIhvcNAQELBQAwDQYJKoZIhvcNAQELBQAD\nBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST alternative signature algorithm two values",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMHIwWwIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoCcwJQYDVR1JMR4wDQYJKoZIhvcNAQELBQAwDQYJKoZIhvcNAQELBQAw\nDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "CERTIFICATE REQUEST alternative public key an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMFcwQAIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoAwwCgYDVR1IMQMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST alternative signature a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMFYwPwIBADAQMQ4wDAYDVQQDDAVwcm9iZTAbMBMGByqGSM49AgEGCCqGSM49AwEH\nAwQABAECoAswCQYDVR1KMQIwADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "CERTIFICATE REQUEST alternative signature complete",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CERTIFICATE REQUEST-----\nMIGZMIGBAgEAMBAxDjAMBgNVBAMMBXByb2JlMBswEwYHKoZIzj0CAQYIKoZIzj0D\nAQcDBAAEAQKgTTAWBgNVHUkxDzANBgkqhkiG9w0BAQsFADAkBgNVHUgxHTAbMBMG\nByqGSM49AgEGCCqGSM49AwEHAwQABAECMA0GA1UdSjEGAwQAAQIDMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END CERTIFICATE REQUEST-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE valid",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGYMIGAAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcN\nAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE valid version 1 form",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGNMHahFjAUpBIwEDEOMAwGA1UEAwwFcHJvYmUwFKQSMBAxDjAMBgNVBAMMBXBy\nb2JlMA0GCSqGSIb3DQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAx\nMDEwMDAwMDBaMBAwDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE valid with an issuer unique id and extensions",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGsMIGUAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAADBAABAgMwDDAK\nBgNVHRQEAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE valid with an INTEGER and an OID as optional fields",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGfMIGHAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAACAQEGAioDMA0G\nCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE valid with trailing data",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGYMIGAAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcN\nAQELBQADBAABAgMFAA==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\n\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE valid holder of every kind",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIHdMIHFAgEBMGCgHzAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQMDBAABAgOhH4ED\nYUBiggFihgF1hwR/AAABiAIqA6AIBgIqA6ACBQCiHAoBAgYCKgMwDQYJKoZIhvcN\nAQELBQADBAABAgOgFjAUpBIwEDEOMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQEL\nBQACAQkwIhgPMjAyNjAxMDEwMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggr\nBgEFBQcKBDECMAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE valid issuer V2Form with base certificate and digest",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIHNMIG1AgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgSzAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmWgGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOhGAoBADAN\nBgkqhkiG9w0BAQsFAAMEAAECAzANBgkqhkiG9w0BAQsFAAIBCTAiGA8yMDI2MDEw\nMTAwMDAwMFoYDzIwMjcwMTAxMDAwMDAwWjAQMA4GCCsGAQUFBwoEMQIwADANBgkq\nhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE valid issuer V2Form with only a base certificate",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGdMIGFAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgG6AZMBSkEjAQ\nMQ4wDAYDVQQDDAVwcm9iZQIBAzANBgkqhkiG9w0BAQsFAAIBCTAiGA8yMDI2MDEw\nMTAwMDAwMFoYDzIwMjcwMTAxMDAwMDAwWjAQMA4GCCsGAQUFBwoEMQIwADANBgkq\nhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE info one integer",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMBowAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE info an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMBgCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE info ten elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGqMIGSAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAADBAABAgMDBAAB\nAgMDBAABAgMwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE two elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGSMIGAAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcN\nAQELBQA=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE signature algorithm an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGMMIGAAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAACAQEDBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE signature an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGVMIGAAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcN\nAQELBQACAQE=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMH0wZgIBAQIBAaAWMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZTANBgkqhkiG9w0BAQsF\nAAIBCTAiGA8yMDI2MDEwMTAwMDAwMFoYDzIwMjcwMTAxMDAwMDAwWjAQMA4GCCsG\nAQUFBwoEMQIwADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder four elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIG8MIGkAgEBMD+gGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOhA4IBYqIYCgEA\nMA0GCSqGSIb3DQEBCwUAAwQAAQIDoQOCAWOgFjAUpBIwEDEOMAwGA1UEAwwFcHJv\nYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAwMDBaGA8yMDI3MDEw\nMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder element untagged",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMH8waAIBATADAgEBoBYwFKQSMBAxDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3DQEB\nCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAwDgYI\nKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder tag 3",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGUMH0CAQEwGKMWMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZaAWMBSkEjAQMQ4wDAYD\nVQQDDAVwcm9iZTANBgkqhkiG9w0BAQsFAAIBCTAiGA8yMDI2MDEwMTAwMDAwMFoY\nDzIwMjcwMTAxMDAwMDAwWjAQMA4GCCsGAQUFBwoEMQIwADANBgkqhkiG9w0BAQsF\nAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder tagged 3",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGSMHsCAQGjFjAUpBIwEDEOMAwGA1UEAwwFcHJvYmWgFjAUpBIwEDEOMAwGA1UE\nAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAwMDBaGA8y\nMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcNAQELBQAD\nBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder tagged 0 implicitly",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGVMH4CAQGgGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEOMAwG\nA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAwMDBa\nGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcNAQEL\nBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder base certificate primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMH8waAIBATADgAEBoBYwFKQSMBAxDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3DQEB\nCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAwDgYI\nKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder base certificate one element",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGUMH0CAQEwGKAWMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZaAWMBSkEjAQMQ4wDAYD\nVQQDDAVwcm9iZTANBgkqhkiG9w0BAQsFAAIBCTAiGA8yMDI2MDEwMTAwMDAwMFoY\nDzIwMjcwMTAxMDAwMDAwWjAQMA4GCCsGAQUFBwoEMQIwADANBgkqhkiG9w0BAQsF\nAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder base certificate serial an OID",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGZMIGBAgEBMBygGjAUpBIwEDEOMAwGA1UEAwwFcHJvYmUGAioDoBYwFKQSMBAx\nDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3DQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAw\nMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAwDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder base certificate unique id an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGbMIGDAgEBMB6gHDAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQMCAQSgFjAUpBIw\nEDEOMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEw\nMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZI\nhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE general name untagged",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGQMHkCAQEwFKESMBAxDjAMBgNVBAMMBXByb2JloBYwFKQSMBAxDjAMBgNVBAMM\nBXByb2JlMA0GCSqGSIb3DQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAy\nNzAxMDEwMDAwMDBaMBAwDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQA\nAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE general name tag 9",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGBMGoCAQEwBaEDiQF4oBYwFKQSMBAxDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3\nDQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAw\nDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE general name application tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGBMGoCAQEwBaEDQQF4oBYwFKQSMBAxDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3\nDQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAw\nDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE general name directory name primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGBMGoCAQEwBaEDhAF4oBYwFKQSMBAxDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3\nDQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAw\nDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE general name directory name an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGDMGwCAQEwB6EFpAMCAQGgFjAUpBIwEDEOMAwGA1UEAwwFcHJvYmUwDQYJKoZI\nhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFow\nEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE general name other name primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGBMGoCAQEwBaEDgAF4oBYwFKQSMBAxDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3\nDQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAw\nDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE general name dns name constructed",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGDMGwCAQEwB6EFogMWAWGgFjAUpBIwEDEOMAwGA1UEAwwFcHJvYmUwDQYJKoZI\nhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFow\nEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE general name registered id invalid",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGBMGoCAQEwBaEDiAGAoBYwFKQSMBAxDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3\nDQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAw\nDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder entity name explicit tag 1 an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMH8waAIBAaEDAgEBoBYwFKQSMBAxDjAMBgNVBAMMBXByb2JlMA0GCSqGSIb3DQEB\nCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAwDgYI\nKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder digest info two elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGQMHkCAQEwFKISCgEAMA0GCSqGSIb3DQEBCwUAoBYwFKQSMBAxDjAMBgNVBAMM\nBXByb2JlMA0GCSqGSIb3DQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAy\nNzAxMDEwMDAwMDBaMBAwDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQA\nAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder digest info type an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGWMH8CAQEwGqIYAgEAMA0GCSqGSIb3DQEBCwUAAwQAAQIDoBYwFKQSMBAxDjAM\nBgNVBAMMBXByb2JlMA0GCSqGSIb3DQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAw\nWhgPMjAyNzAxMDEwMDAwMDBaMBAwDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEB\nCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder digest info other type an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGaMIGCAgEBMB2iGwoBAgIBATANBgkqhkiG9w0BAQsFAAMEAAECA6AWMBSkEjAQ\nMQ4wDAYDVQQDDAVwcm9iZTANBgkqhkiG9w0BAQsFAAIBCTAiGA8yMDI2MDEwMTAw\nMDAwMFoYDzIwMjcwMTAxMDAwMDAwWjAQMA4GCCsGAQUFBwoEMQIwADANBgkqhkiG\n9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE holder digest info digest an OCTET STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGVMH4CAQEwGaIXCgEAMA0GCSqGSIb3DQEBCwUABAMCAQGgFjAUpBIwEDEOMAwG\nA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAwMDBa\nGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcNAQEL\nBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGCMGsCAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBAwIBATANBgkqhkiG\n9w0BAQsFAAIBCTAiGA8yMDI2MDEwMTAwMDAwMFoYDzIwMjcwMTAxMDAwMDAwWjAQ\nMA4GCCsGAQUFBwoEMQIwADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer empty names",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGBMGoCAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBAzAAMA0GCSqGSIb3\nDQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAw\nDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer V2Form empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGBMGoCAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBA6AAMA0GCSqGSIb3\nDQEBCwUAAgEJMCIYDzIwMjYwMTAxMDAwMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAw\nDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer V2Form with empty names",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGDMGwCAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBA6ACMAAwDQYJKoZI\nhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFow\nEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer V2Form tag 2",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGbMIGDAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgGTAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmWCAXgwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEw\nMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZI\nhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer V2Form four elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGhMIGJAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgHzAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUCAQECAQECAQEwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAy\nNjAxMDEwMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAw\nDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer V2Form element an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGbMIGDAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgGTAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUCAQEwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEw\nMDAwMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZI\nhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer V2Form primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGCMGsCAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBA4ABATANBgkqhkiG\n9w0BAQsFAAIBCTAiGA8yMDI2MDEwMTAwMDAwMFoYDzIwMjcwMTAxMDAwMDAwWjAQ\nMA4GCCsGAQUFBwoEMQIwADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE serial an OID",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGZMIGBAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQAGAioDMCIYDzIwMjYwMTAxMDAw\nMDAwWhgPMjAyNzAxMDEwMDAwMDBaMBAwDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE signature algorithm in info an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGLMHQCAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBA6AWMBSkEjAQMQ4w\nDAYDVQQDDAVwcm9iZQIBAQIBCTAiGA8yMDI2MDEwMTAwMDAwMFoYDzIwMjcwMTAx\nMDAwMDAwWjAQMA4GCCsGAQUFBwoEMQIwADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE validity one element",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGGMG8CAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBA6AWMBSkEjAQMQ4w\nDAYDVQQDDAVwcm9iZTANBgkqhkiG9w0BAQsFAAIBCTARGA8yMDI2MDEwMTAwMDAw\nMFowEDAOBggrBgEFBQcKBDECMAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE validity UTCTimes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGTMHwCAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBA6AWMBSkEjAQMQ4w\nDAYDVQQDDAVwcm9iZTANBgkqhkiG9w0BAQsFAAIBCTAeFw0yNjAxMDEwMDAwMDBa\nFw0yNjAxMDEwMDAwMDBaMBAwDgYIKwYBBQUHCgQxAjAAMA0GCSqGSIb3DQEBCwUA\nAwQAAQID\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE attributes an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGIMHECAQEwG6AZMBSkEjAQMQ4wDAYDVQQDDAVwcm9iZQIBA6AWMBSkEjAQMQ4w\nDAYDVQQDDAVwcm9iZTANBgkqhkiG9w0BAQsFAAIBCTAiGA8yMDI2MDEwMTAwMDAw\nMFoYDzIwMjcwMTAxMDAwMDAwWgIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE extensions repeated",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGyMIGaAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwGDAKBgNVHRQE\nAwIBATAKBgNVHRQEAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE extension one element",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGhMIGJAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAAwBzAFBgNVHRQw\nDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "ATTRIBUTE CERTIFICATE issuer unique id with unused bits set",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN ATTRIBUTE CERTIFICATE-----\nMIGdMIGFAgEBMBugGTAUpBIwEDEOMAwGA1UEAwwFcHJvYmUCAQOgFjAUpBIwEDEO\nMAwGA1UEAwwFcHJvYmUwDQYJKoZIhvcNAQELBQACAQkwIhgPMjAyNjAxMDEwMDAw\nMDBaGA8yMDI3MDEwMTAwMDAwMFowEDAOBggrBgEFBQcKBDECMAADAwEBAzANBgkq\nhkiG9w0BAQsFAAMEAAECAw==\n-----END ATTRIBUTE CERTIFICATE-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "PKCS7 valid",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMCcGCSqGSIb3DQEHAqAaMBgCAQExADALBgkqhkiG9w0BBwGgAjAAMQA=\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "PKCS7 unknown content type",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMAoGAyoDBKADAgEB\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "CMS valid without content",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN CMS-----\nMAsGCSqGSIb3DQEHAg==\n-----END CMS-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "PKCS7 valid indefinite length",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMIAGCSqGSIb3DQEHAqCAAgEBAAAAAA==\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "PKCS7 content untagged",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMA4GCSqGSIb3DQEHAgIBAQ==\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "PKCS7 content tag 1",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMBAGCSqGSIb3DQEHAqEDAgEB\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "PKCS7 content tag 0 primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMA4GCSqGSIb3DQEHAoABAQ==\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "PKCS7 content tag 0 holding two objects",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMBMGCSqGSIb3DQEHAqAGAgEBAgEC\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "PKCS7 content tag 0 empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMA0GCSqGSIb3DQEHAqAA\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "PKCS7 content application tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMBAGCSqGSIb3DQEHAmADAgEB\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "PKCS7 content private tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMBAGCSqGSIb3DQEHAuADAgEB\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "PKCS7 content type an INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMAgCAQGgAwIBAQ==\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "PKCS7 three elements",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMBMGCSqGSIb3DQEHAqADAgEBAgEB\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "PKCS7 empty",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PKCS7-----\nMAA=\n-----END PKCS7-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    }
+  ]
+}

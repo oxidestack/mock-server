@@ -1,0 +1,57 @@
+tests/files/migrate/repo/config/expectations.json
+    7  blocker  template.javascript      httpResponseTemplate templateType JAVASCRIPT: no JavaScript engine: rewrite the template in Velocity or Mustache. The MockServer 9.2.0 image fails it the same way, so it only ran on the graaljs variant
+   16  action   classpath.callback       httpResponseClassCallback.callbackClass com.acme.Greeter: Java classes are not loaded: rebuild com.acme.Greeter as a callback plugin (docs/callback-plugins.md); the name stays the same here
+tests/files/migrate/repo/config/logging.properties
+    1  warn     logging.file             handlers: handlers and formats have no counterpart: the console layout is fixed
+    3  warn     logging.file             java.util.logging.SimpleFormatter.format: handlers and formats have no counterpart: the console layout is fixed
+    5  warn     logging.file             org.mockserver level FINE -> MOCKSERVER_LOG_LEVEL=DEBUG: the file has no effect: set the level in the environment instead
+tests/files/migrate/repo/config/mockserver.properties
+    2  warn     config.key               mockserver.actionHandlerThreadCount=8: sizes only the template-render pool: other actions run on the tokio workers
+    3  warn     memory.csv               mockserver.outputMemoryUsageCsv=true: the CSV keeps its first five columns; the heap columns are replaced
+    4  action   classpath.initializer    mockserver.initializationClass=com.acme.Seed: Java classes are not loaded: an initializer class comes from a callback plugin: build com.acme.Seed as a callback plugin initializer (docs/callback-plugins.md), or move its expectations to initializationJsonPath
+    5  warn     config.key               mockserver.typoThing=1: unrecognised MockServer configuration properties-file key [mockserver.typoThing] - it is not a known configuration property and will be ignored (check for a typo)
+tests/files/migrate/repo/docker-compose.yml
+    4  rewrite  image.reference          mockserver/mockserver:mockserver-8.0.0: maps to the mock-server image (same port, environment, arguments and /config layout); the reference is rewritten once the image has a published name, until then use the locally built mock-server; mock-server behaves as MockServer 9.2.0, not 8.0.0
+    8  rewrite  jvm.options.property     JAVA_TOOL_OPTIONS -Dmockserver.logLevel=INFO -> MOCKSERVER_LOG_LEVEL=INFO
+    8  rewrite  logging.file             JAVA_TOOL_OPTIONS -Djava.util.logging.config.file=/config/logging.properties: logging.properties sets org.mockserver to DEBUG; the console layout is fixed; dropped, MOCKSERVER_LOG_LEVEL is set by another token
+   13  action   classpath.libs           ./target/callbacks.jar mounted on /libs/callbacks.jar: /libs takes callback plugins now (a .wasm in the image, MOCKSERVER_CALLBACK_PLUGINS=/libs): build the classes as a plugin (docs/callback-plugins.md); a jar there is ignored with a warning; the sources implement com.acme.Greeter
+tests/files/migrate/repo/grafana/mockserver-load-injection.json
+   46  rewrite  metrics.dashboard        dashboard uid mockserver-load-injection: upstream's example dashboard: mock-server ships grafana/mock-server-load-injection.json in its place (the mock_server_* panels stay; process and tokio rows take the JVM row's place); --write --replace-dashboards replaces this file with it, overwriting local edits
+  198  action   metrics.jvm-series       jvm_memory_used_bytes{area="heap", job="mockserver"} -> process_resident_memory_bytes{job="mockserver"}: RSS: the whole process, not a heap; review the thresholds; never rewritten, the meaning changes
+  199  action   metrics.jvm-series       jvm_memory_committed_bytes{area="heap", job="mockserver"} -> process_resident_memory_bytes{job="mockserver"}: RSS, not committed memory; process_virtual_memory_bytes{job="mockserver"} for reserved address space; never rewritten, the meaning changes
+  208  action   metrics.jvm-series       jvm_gc_collection_seconds_sum{job="mockserver"} -> sum(rate(tokio_worker_busy_seconds_total{job="mockserver"}[5m])) / sum(tokio_workers_count{job="mockserver"}): no garbage collector; the tokio workers' busy share shows runtime saturation instead; never rewritten, the meaning changes
+  217  action   metrics.jvm-series       jvm_threads_current{job="mockserver"} -> process_threads{job="mockserver"}: OS threads, not Java threads; tokio_live_tasks_count{job="mockserver"} for concurrency; never rewritten, the meaning changes
+  218  action   metrics.jvm-series       jvm_threads_daemon{job="mockserver"}: no counterpart in mock-server: drop the panel or the rule; never rewritten, the meaning changes
+tests/files/migrate/repo/grafana/mockserver-server.json
+   28  rewrite  metrics.dashboard        dashboard uid mockserver-server: upstream's example dashboard: mock-server ships grafana/mock-server-server.json in its place (the mock_server_* panels stay; process and tokio rows take the JVM row's place); --write --replace-dashboards replaces this file with it, overwriting local edits
+  178  action   metrics.jvm-series       jvm_memory_used_bytes{area="heap"} -> process_resident_memory_bytes: RSS: the whole process, not a heap; review the thresholds; never rewritten, the meaning changes
+  179  action   metrics.jvm-series       jvm_memory_committed_bytes{area="heap"} -> process_resident_memory_bytes: RSS, not committed memory; process_virtual_memory_bytes for reserved address space; never rewritten, the meaning changes
+  180  action   metrics.jvm-series       jvm_memory_max_bytes{area="heap"} -> container_spec_memory_limit_bytes: the container's memory limit (cAdvisor) bounds the process; process_virtual_memory_max_bytes only when an address-space rlimit is set; never rewritten, the meaning changes
+  190  action   metrics.jvm-series       jvm_gc_collection_count -> sum(rate(tokio_worker_busy_seconds_total[5m])) / sum(tokio_workers_count): no garbage collector; the tokio workers' busy share shows runtime saturation instead; never rewritten, the meaning changes
+  191  action   metrics.jvm-series       jvm_gc_collection_seconds_sum -> sum(rate(tokio_worker_busy_seconds_total[5m])) / sum(tokio_workers_count): no garbage collector; the tokio workers' busy share shows runtime saturation instead; never rewritten, the meaning changes
+  201  action   metrics.jvm-series       jvm_threads_current -> process_threads: OS threads, not Java threads; tokio_live_tasks_count for concurrency; never rewritten, the meaning changes
+  202  action   metrics.jvm-series       jvm_threads_daemon: no counterpart in mock-server: drop the panel or the rule; never rewritten, the meaning changes
+tests/files/migrate/repo/helm/values.yaml
+    4  rewrite  image.reference          mockserver/mockserver:graaljs-8.0.0: maps to the mock-server image (same port, environment, arguments and /config layout); the reference is rewritten once the image has a published name, until then use the locally built mock-server
+    4  warn     image.reference          mockserver/mockserver:graaljs-8.0.0: the graaljs variant has no counterpart: the plain image is the target
+    8  rewrite  jvm.options.cpu          JAVA_TOOL_OPTIONS -XX:ActiveProcessorCount=2 -> MOCKSERVER_NIO_EVENT_LOOP_THREAD_COUNT=2
+    8  rewrite  jvm.options.property     JAVA_TOOL_OPTIONS -Dmockserver.maxLogEntries=5000 -> MOCKSERVER_MAX_LOG_ENTRIES=5000
+   14  warn     config.key               mockserver.javascriptDisallowedText=eval: JavaScript templates fail as in the GraalJS-less MockServer image, so their settings have nothing to configure
+tests/files/migrate/repo/pom.xml
+    9  action   packaging.maven          org.mock-server:mockserver-netty-no-dependencies: starts an in-JVM MockServer: use Testcontainers' MockServerContainer with the mock-server image, or the Java launcher (java-launcher/, a mockserver-netty drop-in that runs the binary); the client artifacts stay
+tests/files/migrate/repo/prometheus/rules.yml
+    5  action   metrics.jvm-series       jvm_memory_used_bytes{area="heap", job="mockserver"} -> process_resident_memory_bytes{job="mockserver"}: RSS: the whole process, not a heap; review the thresholds; never rewritten, the meaning changes
+    8  action   metrics.jvm-series       jvm_memory_used_bytes{area="heap", job="mockserver"} -> process_resident_memory_bytes{job="mockserver"}: RSS: the whole process, not a heap; review the thresholds; never rewritten, the meaning changes
+    9  action   metrics.jvm-series       jvm_memory_max_bytes{area="heap", job="mockserver"} -> container_spec_memory_limit_bytes: the container's memory limit (cAdvisor) bounds the process; process_virtual_memory_max_bytes only when an address-space rlimit is set; never rewritten, the meaning changes
+tests/files/migrate/repo/src/test/java/com/acme/ApiTest.java
+   18  action   packaging.maven          mockServer = startClientAndServer(1080): starts an in-JVM MockServer: use Testcontainers' MockServerContainer with the mock-server image, or the Java launcher (java-launcher/, a mockserver-netty drop-in that runs the binary); the client artifacts stay
+tests/files/migrate/repo/src/test/java/com/acme/Greeter.java
+    9  action   classpath.callback       class com.acme.Greeter: Java classes are not loaded: rebuild com.acme.Greeter as a callback plugin (docs/callback-plugins.md); the class name stays the same in the expectation
+summary: 8 rewrite, 8 warn, 21 action, 1 blocker  (run with --write to apply the rewrites)
+next steps:
+  - rewrite each JAVASCRIPT template in Velocity or Mustache
+  - replace in-JVM servers with Testcontainers' MockServerContainer on the mock-server image, or the Java launcher (java-launcher/)
+  - build the classes on /libs as callback plugins (docs/callback-plugins.md)
+  - build each callback class as a callback plugin (docs/callback-plugins.md); expectations keep the class names
+  - build the initializer as a plugin initializer, or move its expectations to initializationJsonPath
+  - move dashboards and alerts off the jvm_* series to the replacement queries shown; check their thresholds, the meaning changes

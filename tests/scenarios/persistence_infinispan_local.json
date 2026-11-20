@@ -1,0 +1,38 @@
+{
+ "image": "clustered",
+ "properties": {
+  "proxySetupLogging": "false",
+  "stateBackend": "infinispan",
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/persistence_infinispan_local.json"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "note": "stateBackend=infinispan without clustering: the persisted document goes to the in-memory blob cache, not to the file",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "local-infinispan-1",
+    "httpRequest": {
+     "path": "/local-infinispan"
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   }
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "the file stays as created at startup (empty)",
+   "readFile": "{{scratch}}/persistence_infinispan_local.json"
+  },
+  {
+   "note": "startup entries: the restore from the blob cache found nothing",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

@@ -1,0 +1,126 @@
+{
+ "source": "InboundConnectionLimiter (b765b8271). A connection accepted while maxInboundConnections are open is closed at once (reset), counted in mock_server_inbound_connections_rejected and logged at WARN at most every 10 s; a CONNECT tunnel's loopback leg to the server itself is a second connection, so with one slot a CONNECT is answered 502 (InboundConnectionLimitIntegrationTest). After the loopback refusal the limiter's WARN is suppressed (within 10 s of the first) and the relay's 'tunnel connection to:{}closed before the tunnel was established' WARN (RelayConnectHandler.channelInactive) is logged or not, racing the reset (1 of 6 recordings): the log reads after the CONNECT and after a SOCKS4a CONNECT (same relay) mask that one entry away; mock-server serves the tunnel in-process, never logs it, and is the oracle's other outcome. Each step's connection is given time to close before the next, as one slot is all there is. Without metricsEnabled: the recorder polls a metricsEnabled oracle's metrics until it is up, and a poll refused then would be the logged refusal",
+ "properties": {
+  "maxInboundConnections": "1",
+  "startupWarmup": "false"
+ },
+ "steps": [
+  {
+   "note": "the recorder's readiness probes close first",
+   "sleepMillis": 1000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/slow"
+    },
+    "httpResponse": {
+     "body": "slow",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1500
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "holds the only slot for 1.5 s",
+   "async": "slow",
+   "method": "GET",
+   "path": "/slow"
+  },
+  {
+   "note": "replay waits until the slow request's delay holds its permit, so its connection holds the slot",
+   "sleepMillis": 500,
+   "awaitCounts": {"delayedResponses": 1}
+  },
+  {
+   "note": "beyond the limit: closed at once, unanswered",
+   "tcp": [
+    {
+     "text": "GET /slow HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "await": "slow"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "the refusal, logged once",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "\"totalTimeInMillis\" : \\d+"
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "the tunnel's loopback leg would be the second connection: 502",
+   "tcp": [
+    {
+     "text": "CONNECT localhost:{{port}} HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"
+    }
+   ],
+   "text": true
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "after the tunnel's refusal: no limiter WARN (suppressed), the relay WARN masked",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "\"totalTimeInMillis\" : \\d+",
+    {
+     "regex": "------------------------------------\\n<timestamp> - tunnel connection to:\\n\\n[^\\n]*\\n\\n closed before the tunnel was established, failing the proxy client request\\n\\n?",
+     "replace": "",
+     "reason": "RelayConnectHandler.channelInactive's WARN races the limiter's reset in the oracle (logged in 1 of 6 recordings); ours has no relay leg to close, which is the oracle's other outcome"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "a SOCKS4a CONNECT (a hostname, so the failure echoes 0.0.0.0:0, not the run's dead port): its loopback leg is refused too, answered 0x5b (REJECTED_OR_FAILED)",
+   "tcp": [
+    {
+     "hex": "0401{{deadporthex}}00000001006c6f63616c686f737400"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "after the SOCKS tunnel's refusal: no limiter WARN (suppressed), the relay WARN masked",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "\"totalTimeInMillis\" : \\d+",
+    {
+     "regex": "------------------------------------\\n<timestamp> - tunnel connection to:\\n\\n[^\\n]*\\n\\n closed before the tunnel was established, failing the proxy client request\\n\\n?",
+     "replace": "",
+     "reason": "RelayConnectHandler.channelInactive's WARN races the limiter's reset in the oracle (logged in 1 of 6 recordings); ours has no relay leg to close, which is the oracle's other outcome"
+    }
+   ]
+  }
+ ]
+}

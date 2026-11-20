@@ -1,0 +1,59 @@
+{
+  "note": "JSONObjectUtils.getString refuses a kty that is not a string",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "jwks.json": "{\"keys\": [{\"kty\": 5}]}"
+  },
+  "propertyFile": "mockserver.controlPlaneJWTAuthenticationRequired=true\nmockserver.controlPlaneJWTAuthenticationJWKSource={{scratch}}/jwks.json\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "exception building JWT validator for:\n\n  {{scratch}}/jwks.json\n\njava.text.ParseException: Invalid JWK at position 0: Unexpected type of JSON object member kty",
+      "control plane authentication is enabled but the authentication handler could not be created - denying all control plane requests until the configuration is corrected\njava.lang.NullPointerException: Cannot invoke \"org.mockserver.authentication.jwt.JWTValidator.withExpectedAudience(String)\" because \"this.jwtValidator\" is null"
+    ],
+    "stdoutOccurrences": {
+      "exception building JWT validator for:": 1,
+      "authentication handler could not be created": 1
+    }
+  }
+}

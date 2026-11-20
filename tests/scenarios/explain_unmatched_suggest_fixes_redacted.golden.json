@@ -1,0 +1,75 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 661",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/secure\",\n    \"headers\" : {\n      \"Authorization\" : [ \"Bearer old-token-1234\" ]\n    },\n    \"body\" : {\n      \"user\" : \"a\",\n      \"password\" : \"old-password\"\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"s\"\n  },\n  \"id\" : \"r-auth\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/big\",\n    \"body\" : \"short\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"b\"\n  },\n  \"id\" : \"r-big\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation r-auth: body did not match (  json match failed expected:     {       \"user\" : \"a\",       \"password\" : \"old-password\"     }    found:     {\"user\":\"b\",\"password\":\"new-password-xyz\"}    failed because:     wrong value at \"password\", expected: ..."
+      ],
+      "body": "",
+      "note": "a near miss on a credential header and a redacted body field"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"correlationId\" : \"<uuid>\",\n  \"timestamp\" : \"<masked>\",\n  \"unmatchedRequestCount\" : 1,\n  \"truncated\" : false,\n  \"unmatchedRequests\" : [ {\n    \"timestamp\" : \"<timestamp>\",\n    \"method\" : \"POST\",\n    \"path\" : \"/secure\",\n    \"closestExpectations\" : [ {\n      \"expectationId\" : \"r-auth\",\n      \"expectationPath\" : \"/secure\",\n      \"expectationMethod\" : \"POST\",\n      \"matches\" : false,\n      \"matchedFieldCount\" : 17,\n      \"totalFieldCount\" : 19,\n      \"differingFieldCount\" : 2,\n      \"differences\" : {\n        \"headers\" : [ \"  string or regex match failed expected:\\n\\n    Bearer old-token-1234\\n\\n   found:\\n\\n    ***REDACTED***\\n\", \"  string or regex match failed expected:\\n\\n    Authorization\\n\\n   found:\\n\\n    content-type\\n\", \"  string or regex match failed expected:\\n\\n    Bearer old-token-1234\\n\\n   found:\\n\\n    application/json\\n\", \"  string or regex match failed expected:\\n\\n    Authorization\\n\\n   found:\\n\\n    host\\n\", \"  string or regex match failed expected:\\n\\n    Bearer old-token-1234\\n\\n   found:\\n\\n    localhost:<port>\\n\", \"  string or regex match failed expected:\\n\\n    Authorization\\n\\n   found:\\n\\n    content-length\\n\", \"  string or regex match failed expected:\\n\\n    Bearer old-token-1234\\n\\n   found:\\n\\n    42\\n\", \"  multimap subset match failed subset:\\n\\n    [(Authorization: Bearer old-token-1234)]\\n\\n   was not a subset of:\\n\\n    [(authorization: ***REDACTED***), (content-type: application/json), (host: localhost:<port>), (<masked>)]\\n\", \"  multimap match failed expected:\\n\\n    {\\n      \\\"Authorization\\\" : [ \\\"Bearer old-token-1234\\\" ]\\n    }\\n\\n   found:\\n\\n    {\\n      \\\"host\\\" : [ \\\"localhost:<port>\\\" ],\\n      \\\"content-type\\\" : [ \\\"application/json\\\" ],\\n      \\\"content-length\\\" : [ \\\"42\\\" ],\\n      \\\"authorization\\\" : [ \\\"***REDACTED***\\\" ]\\n    }\\n\\n   failed because:\\n\\n    multimap is not a subset\\n\" ],\n        \"body\" : [ \"  json match failed expected:\\n\\n    {\\n      \\\"user\\\" : \\\"a\\\",\\n      \\\"password\\\" : \\\"old-password\\\"\\n    }\\n\\n   found:\\n\\n    {\\\"user\\\":\\\"b\\\",\\\"password\\\":\\\"***REDACTED***\\\"}\\n\\n   failed because:\\n\\n    wrong value at \\\"password\\\", expected: \\\"old-password\\\" but was: \\\"***REDACTED***\\\",\\n    wrong value at \\\"user\\\", expected: \\\"a\\\" but was: \\\"b\\\"\\n\" ]\n      },\n      \"remediation\" : {\n        \"headers\" : \"check the Content-Type header value\",\n        \"body\" : \"check the request body content\"\n      },\n      \"suggestedFix\" : {\n        \"patch\" : [ ],\n        \"patchedFields\" : [ ],\n        \"unpatchedFields\" : [ {\n          \"field\" : \"headers\",\n          \"reason\" : \"the fix would copy a value that the event log redacts, so it is not shown; edit it by hand\"\n        }, {\n          \"field\" : \"body\",\n          \"reason\" : \"the fix would copy a value that the event log redacts, so it is not shown; edit it by hand\"\n        } ],\n        \"matchesAfterPatch\" : false\n      }\n    }, {\n      \"expectationId\" : \"r-big\",\n      \"expectationPath\" : \"/big\",\n      \"expectationMethod\" : \"POST\",\n      \"matches\" : false,\n      \"matchedFieldCount\" : 17,\n      \"totalFieldCount\" : 19,\n      \"differingFieldCount\" : 2,\n      \"differences\" : {\n        \"path\" : [ \"  string or regex match failed expected:\\n\\n    /big\\n\\n   found:\\n\\n    /secure\\n\" ],\n        \"body\" : [ \"  exact string match failed expected:\\n\\n    short\\n\\n   found:\\n\\n    {\\\"user\\\":\\\"b\\\",\\\"password\\\":\\\"***REDACTED***\\\"}\\n\" ]\n      },\n      \"remediation\" : {\n        \"path\" : \"check the request path\",\n        \"body\" : \"check the request body content\"\n      },\n      \"suggestedFix\" : {\n        \"patch\" : [ {\n          \"op\" : \"test\",\n          \"path\" : \"/httpRequest/path\",\n          \"value\" : \"/big\"\n        }, {\n          \"op\" : \"replace\",\n          \"path\" : \"/httpRequest/path\",\n          \"value\" : \"/secure\"\n        } ],\n        \"patchedFields\" : [ \"path\" ],\n        \"unpatchedFields\" : [ {\n          \"field\" : \"body\",\n          \"reason\" : \"the fix would copy a value that the event log redacts, so it is not shown; edit it by hand\"\n        } ],\n        \"matchesAfterPatch\" : false\n      }\n    } ],\n    \"totalExpectationsEvaluated\" : 2\n  } ]\n}",
+      "note": "the credential and the redacted field are not copied"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation r-auth: path did not match (  string or regex match failed expected:     /secure    found:     /big )"
+      ],
+      "body": "",
+      "note": "a body longer than maxLoggedBodyBytes"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"correlationId\" : \"<uuid>\",\n  \"timestamp\" : \"<masked>\",\n  \"unmatchedRequestCount\" : 1,\n  \"truncated\" : false,\n  \"unmatchedRequests\" : [ {\n    \"timestamp\" : \"<timestamp>\",\n    \"method\" : \"POST\",\n    \"path\" : \"/big\",\n    \"closestExpectations\" : [ {\n      \"expectationId\" : \"r-big\",\n      \"expectationPath\" : \"/big\",\n      \"expectationMethod\" : \"POST\",\n      \"matches\" : false,\n      \"matchedFieldCount\" : 18,\n      \"totalFieldCount\" : 19,\n      \"differingFieldCount\" : 1,\n      \"differences\" : {\n        \"body\" : [ \"  exact string match failed expected:\\n\\n    short\\n\\n   found:\\n\\n    eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eQ==\\n\" ]\n      },\n      \"remediation\" : {\n        \"body\" : \"check the request body content\"\n      },\n      \"suggestedFix\" : {\n        \"patch\" : [ ],\n        \"patchedFields\" : [ ],\n        \"unpatchedFields\" : [ {\n          \"field\" : \"body\",\n          \"reason\" : \"the event log kept only part of this request's body (maxLoggedBodyBytes), so it cannot be copied into the expectation\"\n        } ],\n        \"matchesAfterPatch\" : false\n      }\n    }, {\n      \"expectationId\" : \"r-auth\",\n      \"expectationPath\" : \"/secure\",\n      \"expectationMethod\" : \"POST\",\n      \"matches\" : false,\n      \"matchedFieldCount\" : 16,\n      \"totalFieldCount\" : 19,\n      \"differingFieldCount\" : 3,\n      \"differences\" : {\n        \"headers\" : [ \"  string or regex match failed expected:\\n\\n    Authorization\\n\\n   found:\\n\\n    content-type\\n\", \"  string or regex match failed expected:\\n\\n    Bearer old-token-1234\\n\\n   found:\\n\\n    text/plain\\n\", \"  string or regex match failed expected:\\n\\n    Authorization\\n\\n   found:\\n\\n    host\\n\", \"  string or regex match failed expected:\\n\\n    Bearer old-token-1234\\n\\n   found:\\n\\n    localhost:<port>\\n\", \"  string or regex match failed expected:\\n\\n    Authorization\\n\\n   found:\\n\\n    content-length\\n\", \"  string or regex match failed expected:\\n\\n    Bearer old-token-1234\\n\\n   found:\\n\\n    150\\n\", \"  string or regex match failed expected:\\n\\n    Authorization\\n\\n   found:\\n\\n    x-mockserver-body-truncated\\n\", \"  string or regex match failed expected:\\n\\n    Bearer old-token-1234\\n\\n   found:\\n\\n    150\\n\", \"  multimap subset match failed subset:\\n\\n    [(Authorization: Bearer old-token-1234)]\\n\\n   was not a subset of:\\n\\n    [(content-type: text/plain), (host: localhost:<port>), (<masked>), (x-mockserver-body-truncated: 150)]\\n\", \"  multimap match failed expected:\\n\\n    {\\n      \\\"Authorization\\\" : [ \\\"Bearer old-token-1234\\\" ]\\n    }\\n\\n   found:\\n\\n    {\\n      \\\"x-mockserver-body-truncated\\\" : [ \\\"150\\\" ],\\n      \\\"host\\\" : [ \\\"localhost:<port>\\\" ],\\n      \\\"content-type\\\" : [ \\\"text/plain\\\" ],\\n      \\\"content-length\\\" : [ \\\"150\\\" ]\\n    }\\n\\n   failed because:\\n\\n    multimap is not a subset\\n\" ],\n        \"path\" : [ \"  string or regex match failed expected:\\n\\n    /secure\\n\\n   found:\\n\\n    /big\\n\" ],\n        \"body\" : [ \"  exception while perform json match failed expected:\\n\\n    {\\n      \\\"user\\\" : \\\"a\\\",\\n      \\\"password\\\" : \\\"old-password\\\"\\n    }\\n\\n   found:\\n\\n    eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eQ==\\n\\n   failed because:\\n\\n    shaded_package.com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eQ': was expecting (JSON String, Number (or 'NaN'/'+INF'/'-INF'), Array, Object or token 'null', 'true' or 'false')\\n     at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 1]\\n\", \"  json match failed expected:\\n\\n    {\\n      \\\"user\\\" : \\\"a\\\",\\n      \\\"password\\\" : \\\"old-password\\\"\\n    }\\n\\n   found:\\n\\n    eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eQ==\\n\" ]\n      },\n      \"remediation\" : {\n        \"headers\" : \"check the Content-Type header value\",\n        \"path\" : \"check the request path\",\n        \"body\" : \"check the request body content\"\n      },\n      \"suggestedFix\" : {\n        \"patch\" : [ {\n          \"op\" : \"test\",\n          \"path\" : \"/httpRequest/path\",\n          \"value\" : \"/secure\"\n        }, {\n          \"op\" : \"replace\",\n          \"path\" : \"/httpRequest/path\",\n          \"value\" : \"/big\"\n        }, {\n          \"op\" : \"test\",\n          \"path\" : \"/httpRequest/headers\",\n          \"value\" : {\n            \"Authorization\" : [ \"Bearer old-token-1234\" ]\n          }\n        }, {\n          \"op\" : \"remove\",\n          \"path\" : \"/httpRequest/headers\"\n        } ],\n        \"patchedFields\" : [ \"path\", \"headers\" ],\n        \"unpatchedFields\" : [ {\n          \"field\" : \"body\",\n          \"reason\" : \"the event log kept only part of this request's body (maxLoggedBodyBytes), so it cannot be copied into the expectation\"\n        } ],\n        \"matchesAfterPatch\" : false\n      }\n    } ],\n    \"totalExpectationsEvaluated\" : 2\n  } ]\n}",
+      "note": "the truncated body is not copied"
+    }
+  ]
+}

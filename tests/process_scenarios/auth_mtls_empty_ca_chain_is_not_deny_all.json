@@ -1,0 +1,54 @@
+{
+  "note": "an empty CA chain file is no certificates, not an error (no deny-all handler); the oracle at b765b8271 trusts only a configured chain's certificates, none here, so MTLSAuthenticationHandler answers no control plane CA specified",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "ca.pem": ""
+  },
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{scratch}}/ca.pem\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no control plane CA specified"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no control plane CA specified"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no control plane CA specified"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "authentication handler could not be created": 0
+    }
+  }
+}

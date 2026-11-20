@@ -1,0 +1,164 @@
+{
+ "source": "at DEBUG, 8.0.0's data-plane RegexStringMatcher logs `matcher{}would match{}if matcher was used for control plane` when a request value that is not a plain ASCII literal, read as a regex, matches the expectation's value: once per comparison of the fail-fast scan, and again in the closest-match re-evaluation (countMatchedApplicableFields).",
+ "properties": {
+  "logLevel": "DEBUG"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "path-and-header",
+    "httpRequest": {
+     "path": "/abc",
+     "headers": {
+      "x-key": [
+       "abcdef"
+      ]
+     }
+    },
+    "httpResponse": {
+     "body": "path-and-header"
+    }
+   }
+  },
+  {
+   "note": "the path, read as a regex, would match: the scan stops at the path, the closest-match pass evaluates every field",
+   "method": "GET",
+   "path": "/a.c",
+   "headers": {
+    "x-key": "abcdef"
+   }
+  },
+  {
+   "note": "the header value, read as a regex, would match: in the scan and again in the closest-match pass",
+   "method": "GET",
+   "path": "/abc",
+   "headers": {
+    "x-key": "ab.*"
+   }
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "regex-body",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/body",
+      "body": {
+       "type": "REGEX",
+       "regex": "abc"
+      }
+     },
+     "httpResponse": {
+      "body": "regex-body"
+     }
+    },
+    {
+     "id": "query",
+     "httpRequest": {
+      "path": "/query",
+      "queryStringParameters": {
+       "q": [
+        "abcdef"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "query"
+     }
+    },
+    {
+     "id": "notted",
+     "httpRequest": {
+      "path": "/notted",
+      "headers": {
+       "x-not": [
+        "!abcdef"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "notted"
+     }
+    },
+    {
+     "id": "catch-all",
+     "priority": -10,
+     "httpRequest": {},
+     "httpResponse": {
+      "body": "catch-all"
+     }
+    }
+   ]
+  },
+  {
+   "note": "a regex body",
+   "method": "POST",
+   "path": "/body",
+   "body": "a.c"
+  },
+  {
+   "note": "a query parameter, then the catch-all",
+   "method": "GET",
+   "path": "/query?q=ab.*"
+  },
+  {
+   "note": "a negated header value",
+   "method": "GET",
+   "path": "/notted",
+   "headers": {
+    "x-not": "ab.*"
+   }
+  },
+  {
+   "note": "a path that is a regex, against every expectation",
+   "method": "GET",
+   "path": "/.*"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "the entries' shape: DEBUG, no correlation id, the two values as arguments",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  }
+ ]
+}

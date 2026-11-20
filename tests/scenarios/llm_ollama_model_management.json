@@ -1,0 +1,184 @@
+{
+  "source": "hand-written: an Ollama model load or unload (generate without a prompt, chat without messages) is answered but not traced, counted, usage-inferred or checked against the outputSchema (upstream #2, 82d4c8581)",
+  "properties": {
+    "metricsEnabled": "true",
+    "llmMetricsEnabled": "true",
+    "llmInferUsageEnabled": "true"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "ollama-gen",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/api/generate"
+          },
+          "httpLlmResponse": {
+            "provider": "OLLAMA",
+            "model": "llama3",
+            "completion": {
+              "text": "not json",
+              "outputSchema": "{\"type\":\"object\"}",
+              "enforceOutputSchema": true
+            }
+          }
+        },
+        {
+          "id": "ollama-chat",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/api/chat"
+          },
+          "httpLlmResponse": {
+            "provider": "OLLAMA",
+            "model": "llama3",
+            "completion": {
+              "text": "hello there"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "a load (no prompt) is answered, not checked against the strict outputSchema",
+      "method": "POST",
+      "path": "/api/generate",
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"model\":\"llama3\"}",
+      "mask": [
+        {
+          "regex": "\"created_at\":\"[^\"]+\"",
+          "replace": "\"created_at\":\"<ts>\""
+        },
+        {
+          "regex": "\"created_at\" : \"[^\"]+\"",
+          "replace": "\"created_at\" : \"<ts>\""
+        },
+        "\"(total|load|prompt_eval|eval)_duration\" ?: ?\\d+",
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "an unload",
+      "method": "POST",
+      "path": "/api/generate",
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"model\":\"llama3\",\"prompt\":\"\",\"keep_alive\":0}",
+      "mask": [
+        {
+          "regex": "\"created_at\":\"[^\"]+\"",
+          "replace": "\"created_at\":\"<ts>\""
+        },
+        {
+          "regex": "\"created_at\" : \"[^\"]+\"",
+          "replace": "\"created_at\" : \"<ts>\""
+        },
+        "\"(total|load|prompt_eval|eval)_duration\" ?: ?\\d+",
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "a chat load (empty messages)",
+      "method": "POST",
+      "path": "/api/chat",
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"model\":\"llama3\",\"messages\":[]}",
+      "mask": [
+        {
+          "regex": "\"created_at\":\"[^\"]+\"",
+          "replace": "\"created_at\":\"<ts>\""
+        },
+        {
+          "regex": "\"created_at\" : \"[^\"]+\"",
+          "replace": "\"created_at\" : \"<ts>\""
+        },
+        "\"(total|load|prompt_eval|eval)_duration\" ?: ?\\d+",
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "no tokens counted for the loads",
+      "method": "GET",
+      "path": "/mockserver/metrics",
+      "mask": [
+        {
+          "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_(cost_usd|input|output))[^\\n]*\\n",
+          "replace": ""
+        },
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "a real generate is checked: 502",
+      "method": "POST",
+      "path": "/api/generate",
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"model\":\"llama3\",\"prompt\":\"hi\"}",
+      "mask": [
+        {
+          "regex": "\"created_at\":\"[^\"]+\"",
+          "replace": "\"created_at\":\"<ts>\""
+        },
+        {
+          "regex": "\"created_at\" : \"[^\"]+\"",
+          "replace": "\"created_at\" : \"<ts>\""
+        },
+        "\"(total|load|prompt_eval|eval)_duration\" ?: ?\\d+",
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "a real chat, its usage inferred and counted",
+      "method": "POST",
+      "path": "/api/chat",
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": "{\"model\":\"llama3\",\"messages\":[{\"role\":\"user\",\"content\":\"say hello\"}]}",
+      "mask": [
+        {
+          "regex": "\"created_at\":\"[^\"]+\"",
+          "replace": "\"created_at\":\"<ts>\""
+        },
+        {
+          "regex": "\"created_at\" : \"[^\"]+\"",
+          "replace": "\"created_at\" : \"<ts>\""
+        },
+        "\"(total|load|prompt_eval|eval)_duration\" ?: ?\\d+",
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/mockserver/metrics",
+      "mask": [
+        {
+          "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_(cost_usd|input|output))[^\\n]*\\n",
+          "replace": ""
+        },
+        "content-length: \\d+"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+ "source": "ForwardRetryPolicy.isTransientFailure and ForwardCircuitBreaker.isNeutral (ClientConfigurationException): a secure forward whose client TLS context cannot be built (a DER chain) is neither retried nor counted against its target's breaker",
+ "properties": {
+  "forwardProxyRetryCount": "2",
+  "forwardProxyCircuitBreakerEnabled": "true",
+  "forwardProxyCircuitBreakerFailureThreshold": "2",
+  "forwardProxyCircuitBreakerWindowMillis": "60000",
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/x509/mtls/ca.pem",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/x509/mtls/client.der;{{files}}/x509/mtls/client-key.pem",
+  "forwardProxyRetryBackoffMillis": "6000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\", \"secure\": true}, \"httpResponse\": {\"statusCode\": 200, \"body\": \"reached\"}}, {\"httpRequest\": {\"path\": \"/cfg\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target\", \"secure\": true, \"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTPS\"}}}}]"
+  },
+  {
+   "note": "forward whose connection cannot be set up 1: one attempt (a retry would wait the 6 s back-off and more), a 502, never the breaker's 503",
+   "method": "GET",
+   "path": "/cfg"
+  },
+  {
+   "note": "forward whose connection cannot be set up 2: one attempt (a retry would wait the 6 s back-off and more), a 502, never the breaker's 503",
+   "method": "GET",
+   "path": "/cfg"
+  },
+  {
+   "note": "forward whose connection cannot be set up 3: one attempt (a retry would wait the 6 s back-off and more), a 502, never the breaker's 503",
+   "method": "GET",
+   "path": "/cfg"
+  },
+  {
+   "note": "no 'forward circuit breaker opened' WARN",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

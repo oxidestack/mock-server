@@ -1,0 +1,71 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 2470",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/clol/200\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"abc\",\n    \"connectionOptions\" : {\n      \"contentLengthHeaderOverride\" : 10\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clol/500\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 500,\n    \"body\" : \"abc\",\n    \"connectionOptions\" : {\n      \"contentLengthHeaderOverride\" : 7\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clol/empty\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"connectionOptions\" : {\n      \"contentLengthHeaderOverride\" : 5\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clol/close\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"abc\",\n    \"connectionOptions\" : {\n      \"closeSocket\" : true,\n      \"contentLengthHeaderOverride\" : 10\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clol/chunked\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"abcdef\",\n    \"connectionOptions\" : {\n      \"chunkSize\" : 2,\n      \"contentLengthHeaderOverride\" : 10\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clol/json\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 201,\n    \"body\" : {\n      \"a\" : 1\n    },\n    \"connectionOptions\" : {\n      \"contentLengthHeaderOverride\" : 40\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clol/next\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"next\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 10\r\n\r\nabc",
+      "closed": false,
+      "note": "an override larger than the body is written; the body is short and the connection stays open (the client waits)"
+    },
+    {
+      "tcpText": "HTTP/1.1 500 Internal Server Error\r\nconnection: keep-alive\r\ncontent-length: 7\r\n\r\nabc",
+      "closed": false,
+      "note": "the same on a 500"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 5\r\n\r\n",
+      "closed": false,
+      "note": "an override on an empty body"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: close\r\ncontent-length: 10\r\n\r\nabc",
+      "closed": true,
+      "note": "an override with closeSocket"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ntransfer-encoding: chunked\r\n\r\n2\r\nab\r\n2\r\ncd\r\n2\r\nef\r\n0\r\n\r\n",
+      "closed": false,
+      "note": "an override with chunkSize"
+    },
+    {
+      "tcpText": "HTTP/1.1 201 Created\r\nconnection: keep-alive\r\ncontent-type: application/json; charset=utf-8\r\ncontent-length: 40\r\n\r\n{\n  \"a\" : 1\n}",
+      "closed": false,
+      "note": "an override on a JSON body"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 10\r\n\r\nabcHTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 4\r\n\r\nnext",
+      "closed": false,
+      "note": "a second request on the connection: its answer follows the short body, so a length-reading client takes it as the rest"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=262144",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4 :status: 200, content-length: 10",
+        "DATA stream=1 flags=0x1 \"abc\""
+      ],
+      "closed": false,
+      "note": "over HTTP/2 the override is a content-length field beside a shorter DATA frame"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: close\r\ncontent-length: 10\r\n\r\nabc",
+      "closed": true,
+      "note": "the same request with Connection: close"
+    }
+  ]
+}

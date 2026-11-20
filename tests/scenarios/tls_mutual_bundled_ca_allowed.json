@@ -1,0 +1,140 @@
+{
+ "properties": {
+  "logLevel": "INFO",
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/fwd-ca.pem",
+  "tlsMutualAuthenticationAllowBundledCa": "true",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/tls/private-ca/attack/bundled-signed-cert.pem;{{files}}/tls/private-ca/attack/bundled-signed-key.pem,0.0.0.0={{files}}/tls/private-ca/attack/attacker-cert.pem;{{files}}/tls/private-ca/attack/attacker-key.pem"
+ },
+ "steps": [
+  {
+   "note": "the self-forward that presents a client certificate per host, and the secure expectation that echoes it",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/whoami",
+      "secure": true
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{ \"statusCode\": 200, \"body\": \"{{request.clientCertificateChain}}\" }"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/via-tls/whoami"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/whoami",
+       "secure": true
+      }
+     }
+    }
+   ],
+   "maxMillis": 60000
+  },
+  {
+   "note": "upstream #230: with tlsMutualAuthenticationAllowBundledCa a chain holding the bundled CA starts (with a WARN); a client certificate signed with the bundled CA's key is accepted",
+   "method": "GET",
+   "path": "/via-tls/whoami",
+   "headers": {
+    "Host": "localhost:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "one from another CA is not presented: the certificate request names only the trusted issuers (SunX509KeyManager withholds it), so the request carries no client certificate",
+   "method": "GET",
+   "path": "/via-tls/whoami",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "an update cannot turn the opt-in off either",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationAllowBundledCa": false
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "note": "mTLS off: the bundled CA is no longer trusted",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationCertificateChain": ""
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "note": "mTLS required on the bundled CA: the update makes mTLS trust it again, which is warned about",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": true
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "note": "already trusted: no new warning",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/fwd-ca.pem"
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "restore",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": false
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  }
+ ]
+}

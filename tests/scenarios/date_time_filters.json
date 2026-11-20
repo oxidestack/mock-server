@@ -1,0 +1,1421 @@
+{
+  "source": "hand-written: date-time values in clear, retrieve, verify and verifySequence filters; isolated: the clock is frozen.",
+  "isolated": true,
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clock",
+      "body": {
+        "action": "freeze",
+        "instant": "2026-06-15T12:30:45Z"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "path": "/a"
+        },
+        "httpResponse": {
+          "body": "a"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/a",
+      "headers": {
+        "X-Issued-At": "2026-06-15T12:00:00Z"
+      },
+      "note": "a request to filter on"
+    },
+    {
+      "method": "GET",
+      "path": "/b",
+      "headers": {
+        "X-Issued-At": "2026-06-14T12:00:00Z"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/c?q=2026-06-01",
+      "headers": {
+        "Cookie": "c=2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now -1 hours"
+            }
+          ]
+        }
+      },
+      "note": "retrieve valid"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now -1 hours"
+            }
+          ]
+        }
+      },
+      "note": "retrieve rr valid"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now -1 hours"
+            }
+          ]
+        }
+      },
+      "note": "retrieve recexp valid"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now -1 hours"
+            }
+          ]
+        }
+      },
+      "note": "retrieve active valid"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/a",
+          "headers": {
+            "X-Issued-At": [
+              {
+                "after": "now -1 hours"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify valid"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "path": "/a",
+            "headers": {
+              "X-Issued-At": [
+                {
+                  "after": "now -1 hours"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "note": "sequence valid"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now -1 hours"
+            }
+          ]
+        }
+      },
+      "note": "clear log valid"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "before": "2026-07-01",
+              "zone": "Europe/London"
+            }
+          ]
+        },
+        "cookies": {
+          "c": {
+            "not": true,
+            "equalToDateTime": "now"
+          }
+        }
+      },
+      "note": "retrieve validq"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "before": "2026-07-01",
+              "zone": "Europe/London"
+            }
+          ]
+        },
+        "cookies": {
+          "c": {
+            "not": true,
+            "equalToDateTime": "now"
+          }
+        }
+      },
+      "note": "retrieve rr validq"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "before": "2026-07-01",
+              "zone": "Europe/London"
+            }
+          ]
+        },
+        "cookies": {
+          "c": {
+            "not": true,
+            "equalToDateTime": "now"
+          }
+        }
+      },
+      "note": "retrieve recexp validq"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "before": "2026-07-01",
+              "zone": "Europe/London"
+            }
+          ]
+        },
+        "cookies": {
+          "c": {
+            "not": true,
+            "equalToDateTime": "now"
+          }
+        }
+      },
+      "note": "retrieve active validq"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "queryStringParameters": {
+            "q": [
+              {
+                "before": "2026-07-01",
+                "zone": "Europe/London"
+              }
+            ]
+          },
+          "cookies": {
+            "c": {
+              "not": true,
+              "equalToDateTime": "now"
+            }
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify validq"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "queryStringParameters": {
+              "q": [
+                {
+                  "before": "2026-07-01",
+                  "zone": "Europe/London"
+                }
+              ]
+            },
+            "cookies": {
+              "c": {
+                "not": true,
+                "equalToDateTime": "now"
+              }
+            }
+          }
+        ]
+      },
+      "note": "sequence validq"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "before": "2026-07-01",
+              "zone": "Europe/London"
+            }
+          ]
+        },
+        "cookies": {
+          "c": {
+            "not": true,
+            "equalToDateTime": "now"
+          }
+        }
+      },
+      "note": "clear log validq"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "retrieve unparsable"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "retrieve rr unparsable"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "retrieve recexp unparsable"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "retrieve active unparsable"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/a",
+          "headers": {
+            "X-Issued-At": [
+              {
+                "after": "nonsense"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify unparsable"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "path": "/a",
+            "headers": {
+              "X-Issued-At": [
+                {
+                  "after": "nonsense"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "note": "sequence unparsable"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "clear log unparsable"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "actualFormat": "nope"
+            }
+          ]
+        }
+      },
+      "note": "retrieve badformat"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "actualFormat": "nope"
+            }
+          ]
+        }
+      },
+      "note": "retrieve rr badformat"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "actualFormat": "nope"
+            }
+          ]
+        }
+      },
+      "note": "retrieve recexp badformat"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "actualFormat": "nope"
+            }
+          ]
+        }
+      },
+      "note": "retrieve active badformat"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/a",
+          "headers": {
+            "X-Issued-At": [
+              {
+                "after": "now",
+                "actualFormat": "nope"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify badformat"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "path": "/a",
+            "headers": {
+              "X-Issued-At": [
+                {
+                  "after": "now",
+                  "actualFormat": "nope"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "note": "sequence badformat"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "actualFormat": "nope"
+            }
+          ]
+        }
+      },
+      "note": "clear log badformat"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "zone": "Mars/Base"
+            }
+          ]
+        }
+      },
+      "note": "retrieve badzone"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "zone": "Mars/Base"
+            }
+          ]
+        }
+      },
+      "note": "retrieve rr badzone"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "zone": "Mars/Base"
+            }
+          ]
+        }
+      },
+      "note": "retrieve recexp badzone"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "zone": "Mars/Base"
+            }
+          ]
+        }
+      },
+      "note": "retrieve active badzone"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/a",
+          "headers": {
+            "X-Issued-At": [
+              {
+                "after": "now",
+                "zone": "Mars/Base"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify badzone"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "path": "/a",
+            "headers": {
+              "X-Issued-At": [
+                {
+                  "after": "now",
+                  "zone": "Mars/Base"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "note": "sequence badzone"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "zone": "Mars/Base"
+            }
+          ]
+        }
+      },
+      "note": "clear log badzone"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "truncateActual": "fortnight"
+            }
+          ]
+        }
+      },
+      "note": "retrieve badtrunc"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "truncateActual": "fortnight"
+            }
+          ]
+        }
+      },
+      "note": "retrieve rr badtrunc"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "truncateActual": "fortnight"
+            }
+          ]
+        }
+      },
+      "note": "retrieve recexp badtrunc"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "truncateActual": "fortnight"
+            }
+          ]
+        }
+      },
+      "note": "retrieve active badtrunc"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/a",
+          "headers": {
+            "X-Issued-At": [
+              {
+                "after": "now",
+                "truncateActual": "fortnight"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify badtrunc"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "path": "/a",
+            "headers": {
+              "X-Issued-At": [
+                {
+                  "after": "now",
+                  "truncateActual": "fortnight"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "note": "sequence badtrunc"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "truncateActual": "fortnight"
+            }
+          ]
+        }
+      },
+      "note": "clear log badtrunc"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "before": "now"
+            }
+          ]
+        }
+      },
+      "note": "retrieve twoops"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "before": "now"
+            }
+          ]
+        }
+      },
+      "note": "retrieve rr twoops"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "before": "now"
+            }
+          ]
+        }
+      },
+      "note": "retrieve recexp twoops"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "before": "now"
+            }
+          ]
+        }
+      },
+      "note": "retrieve active twoops"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/a",
+          "headers": {
+            "X-Issued-At": [
+              {
+                "after": "now",
+                "before": "now"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify twoops"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "path": "/a",
+            "headers": {
+              "X-Issued-At": [
+                {
+                  "after": "now",
+                  "before": "now"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "note": "sequence twoops"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now",
+              "before": "now"
+            }
+          ]
+        }
+      },
+      "note": "clear log twoops"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": 5
+            }
+          ]
+        }
+      },
+      "note": "retrieve nonstring"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": 5
+            }
+          ]
+        }
+      },
+      "note": "retrieve rr nonstring"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": 5
+            }
+          ]
+        }
+      },
+      "note": "retrieve recexp nonstring"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": 5
+            }
+          ]
+        }
+      },
+      "note": "retrieve active nonstring"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/a",
+          "headers": {
+            "X-Issued-At": [
+              {
+                "after": 5
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify nonstring"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "path": "/a",
+            "headers": {
+              "X-Issued-At": [
+                {
+                  "after": 5
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "note": "sequence nonstring"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": 5
+            }
+          ]
+        }
+      },
+      "note": "clear log nonstring"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "retrieve query"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "retrieve rr query"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "retrieve recexp query"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "retrieve active query"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "queryStringParameters": {
+            "q": [
+              {
+                "after": "nonsense"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify query"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "queryStringParameters": {
+              "q": [
+                {
+                  "after": "nonsense"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "note": "sequence query"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "queryStringParameters": {
+          "q": [
+            {
+              "after": "nonsense"
+            }
+          ]
+        }
+      },
+      "note": "clear log query"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "cookies": {
+          "c": {
+            "equalToDateTime": "nonsense"
+          }
+        }
+      },
+      "note": "retrieve cookie"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "cookies": {
+          "c": {
+            "equalToDateTime": "nonsense"
+          }
+        }
+      },
+      "note": "retrieve rr cookie"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "cookies": {
+          "c": {
+            "equalToDateTime": "nonsense"
+          }
+        }
+      },
+      "note": "retrieve recexp cookie"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "cookies": {
+          "c": {
+            "equalToDateTime": "nonsense"
+          }
+        }
+      },
+      "note": "retrieve active cookie"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "cookies": {
+            "c": {
+              "equalToDateTime": "nonsense"
+            }
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify cookie"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "cookies": {
+              "c": {
+                "equalToDateTime": "nonsense"
+              }
+            }
+          }
+        ]
+      },
+      "note": "sequence cookie"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "cookies": {
+          "c": {
+            "equalToDateTime": "nonsense"
+          }
+        }
+      },
+      "note": "clear log cookie"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "method": {
+          "before": "nonsense"
+        }
+      },
+      "note": "retrieve method"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "method": {
+          "before": "nonsense"
+        }
+      },
+      "note": "retrieve rr method"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "method": {
+          "before": "nonsense"
+        }
+      },
+      "note": "retrieve recexp method"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "method": {
+          "before": "nonsense"
+        }
+      },
+      "note": "retrieve active method"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "method": {
+            "before": "nonsense"
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify method"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "method": {
+              "before": "nonsense"
+            }
+          }
+        ]
+      },
+      "note": "sequence method"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "method": {
+          "before": "nonsense"
+        }
+      },
+      "note": "clear log method"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=json",
+      "body": {
+        "path": {
+          "after": "nonsense"
+        }
+      },
+      "note": "retrieve path"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=json",
+      "body": {
+        "path": {
+          "after": "nonsense"
+        }
+      },
+      "note": "retrieve rr path"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=json",
+      "body": {
+        "path": {
+          "after": "nonsense"
+        }
+      },
+      "note": "retrieve recexp path"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=json",
+      "body": {
+        "path": {
+          "after": "nonsense"
+        }
+      },
+      "note": "retrieve active path"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": {
+            "after": "nonsense"
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "verify path"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "path": {
+              "after": "nonsense"
+            }
+          }
+        ]
+      },
+      "note": "sequence path"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG",
+      "body": {
+        "path": {
+          "after": "nonsense"
+        }
+      },
+      "note": "clear log path"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=EXPECTATIONS",
+      "body": {
+        "path": "/a",
+        "headers": {
+          "X-Issued-At": [
+            {
+              "after": "now -1 hours"
+            }
+          ]
+        }
+      },
+      "note": "clear expectations valid"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS",
+      "note": "all requests: nothing was cleared by an invalid filter"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "note": "the logged parse failures and their reference chains"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    }
+  ]
+}

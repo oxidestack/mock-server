@@ -1,0 +1,14 @@
+{"source": "ProxyConfigurationTest / NoProxyHostsUtilsTest. forwardHttpProxy is a refusing address; since 9.1.0 (upstream NettyHttpClient.upstreamProxiesFor) a target on noProxyHosts is connected to directly, whichever proxy is set",
+ "properties": {"forwardHttpProxy": "{{deadhost}}", "forwardProxyAuthenticationUsername": "userName", "forwardProxyAuthenticationPassword": "password", "noProxyHosts": "localhost,*.localhost"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "from target"}},
+    {"httpRequest": {"path": "/override"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/forward"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "secure": true, "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ]},
+  {"note": "plain forward to a target on noProxyHosts: connected to directly", "method": "GET", "path": "/override"},
+  {"note": "the target was reached", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "body": {"path": "/target"}},
+  {"note": "https forward: only forwardHttpsProxy applies, so it connects directly", "method": "GET", "path": "/forward"},
+  {"note": "unmatched request on the noProxyHosts: not proxied", "method": "GET", "path": "/unmatched", "headers": {"Host": "localhost:{{deadport}}"}},
+  {"note": "unmatched request, host not listed: attempted", "method": "GET", "path": "/unmatched", "headers": {"Host": "127.0.0.1:{{deadport}}"}}
+]}

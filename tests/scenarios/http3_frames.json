@@ -1,0 +1,24 @@
+{
+ "quic": true,
+ "properties": {
+  "http3Port": "19473"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/mocked"}, "httpResponse": {"body": "served", "headers": {"x-a": ["1"]}}},
+    {"httpRequest": {"path": "/trailers"}, "httpResponse": {"body": "hello", "trailers": {"x-checksum": ["abc123"]}}},
+    {"httpRequest": {"method": "POST", "path": "/echo"}, "httpResponse": {"statusCode": 201, "body": "created"}}
+   ]
+  },
+  {"h3": true, "method": "GET", "path": "/mocked", "note": "a mocked response over HTTP/3: HEADERS, DATA, FIN"},
+  {"h3": true, "method": "GET", "path": "/trailers", "note": "trailers as a second HEADERS frame"},
+  {"h3": true, "method": "POST", "path": "/echo", "headers": {"content-type": "text/plain"}, "body": "payload", "note": "a request with a body"},
+  {"h3": true, "method": "GET", "path": "/not-matched", "note": "a 404 over HTTP/3"},
+  {"h3": true, "method": "HEAD", "path": "/mocked", "note": "HEAD: 8.0.0 sends the body as for GET"},
+  {"h3": true, "method": "HEAD", "path": "/trailers", "note": "HEAD with trailers: 8.0.0 sends the body and the trailers"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS&format=JSON", "body": {"path": "/echo"}, "note": "the request as logged"}
+ ]
+}

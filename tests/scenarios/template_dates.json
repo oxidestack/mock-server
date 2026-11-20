@@ -1,0 +1,1691 @@
+{
+ "source": "hand-written: the 9.2.0 dates helper on any date and zone (DST gaps and overlaps, short zone ids, fractions, RFC-1123 leniency, epochs, patterns, offsets, truncations, TemplateDate chains) in Velocity, and Mustache's dates.render section options and errors; values from the oracle.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/v0"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-03-29T01:30:00', 'iso', 'Europe/London'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-25T01:30:00', 'iso', 'Europe/London'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v2"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-25T00:30:00Z').withZone('Europe/London').plusHours(1))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v3"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-25T00:30:00+01:00[Europe/London]').plusDays(1))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v4"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-03-28T01:30:00Z').withZone('Europe/London').plusDays(1))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v5"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-03-29T12:00:00Z').withZone('America/Santiago').startOfDay())\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v6"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-09-06T12:00:00Z').withZone('America/Santiago').startOfDay())\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v7"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').withZone('EST'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v8"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').withZone('PST'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v9"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').withZone('Etc/UTC'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v10"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').withZone('GMT+2'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v11"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').withZone('UTC+05:30'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v12"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').withZone('Asia/Kathmandu').startOfHour())\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v13"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').withZone(''))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v14"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').withZone('+19:00'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v15"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05.1Z'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v16"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05.123400Z').withZone('+01:00'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v17"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05.000000007Z'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v18"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21t15:04Z'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v19"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('+12026-10-21T15:04:05Z'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v20"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('0099-01-01'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v21"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05+0100'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v22"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05[Europe/London]'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v23"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05+05:00[Europe/London]'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v24"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T23:59:60Z'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v25"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('wed, 21 oct 2026 15:04:05 gmt'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v26"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('21 Oct 2026 15:04 +0530'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v27"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('Wed, 21 Oct 26 15:04:05 GMT'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v28"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('Wed, 21 Oct 2026 15:04:05 UTC'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v29"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.rfc1123('2026-01-05T01:02:03Z'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v30"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse(-1))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v31"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('-99999999999'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v32"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('100000000000'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v33"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse(1.0E15))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v34"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('31556889864403200'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v35"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('1792595045', 'epochMillis'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v36"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse(1792595045, 'epochMillis'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v37"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse(20261021, 'yyyyMMdd'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v38"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.epochMillis('2026-10-21T15:04:05.678Z'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v39"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('21 October 2026', 'dd MMMM yyyy'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v40"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('21 october 2026', 'dd MMMM yyyy'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v41"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21 15:04:05 Europe/Paris', 'yyyy-MM-dd HH:mm:ss VV'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v42"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21 15:04 -03', 'yyyy-MM-dd HH:mm X'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v43"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21 15', 'yyyy-MM-dd HH'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v44"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('15:04:05', 'HH:mm:ss'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v45"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026', 'yyyy'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v46"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21', 'yyyy-MM-dd', 'America/New_York'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v47"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21', 'yyyy-MM-dd', ''))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v48"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21', 'yyyy-bb'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v49"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21', 'yyyy-MM-dd'''))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v50"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05Z', 'EEE d MMM yyyy h:mm a z', 'Europe/London'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v51"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05Z', 'zzzz VV O xxx', 'America/New_York'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v52"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05.123456Z', 'HH:mm:ss.SSS n'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v53"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05Z', 'YYYY-ww-e Q'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v54"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05Z', ' ISO '))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v55"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05Z', 'RFC1123'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v56"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05Z', $nothing))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v57"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05Z', '{x}'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v58"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.format('2026-10-21T15:04:05Z', 'HH:mm', 'Mars/Phobos'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v59"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', ' 1day 2 hours, 3 minutes '))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v60"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', 'p1y2m3w4d'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v61"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', 'P1DT2H3M4.5S'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v62"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', '-PT-1.5S'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v63"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', 'P1X'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v64"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', 'PT'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v65"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', 'P'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v66"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', '99999999999999999999 days'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v67"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', '9999999999 years'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v68"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-10-21T15:04:05Z', $nothing))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v69"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2024-02-29T10:00:00Z', '1 year'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v70"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.offset('2026-03-28T12:00:00Z', '1 day').withZone('Europe/Paris'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v71"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-03-28T12:00:00+01:00[Europe/Paris]').offset('1 day'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v72"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-03-28T12:00:00+01:00[Europe/Paris]').offset('24 hours'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v73"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-03-28T12:00:00+01:00[Europe/Paris]').offset('P1D'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v74"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-03-28T12:00:00+01:00[Europe/Paris]').offset('PT24H'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v75"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.truncate('2026-10-21T15:04:05Z', 'Start_Of-Next Year'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v76"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.truncate('2026-10-21T15:04:05Z', $nothing))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v77"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-12-15T10:00:00Z').firstDayOfNextMonth())\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v78"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2028-02-10T10:00:00Z').lastDayOfMonth().minusYears(1))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v79"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').plusWeeks(2).minusMonths(13).plusYears(1).minusWeeks(1).plusMinutes(90).minusSeconds(5))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v80"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').toInstant())\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v81"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').epochSeconds())\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v82"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').isAfter('Wed, 21 Oct 2026 15:04:04 GMT'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v83"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').isBefore($nothing))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v84"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').equals($dates.parse('2026-10-21T15:04:05Z')))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v85"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse('2026-10-21T15:04:05Z').iso())\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v86"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.withZone('2026-10-21T15:04:05Z', 'Australia/Lord_Howe'))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v87"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse($dates.parse('2026-10-21T16:04:05+01:00')))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v88"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.parse(true))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v89"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($dates.now('  '))\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m0"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}2026-10-21T15:04:05Z|timezone=Asia/Tokyo|format=HH:mm{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m1"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}21/10/2026 01:30|pattern=dd/MM/yyyy HH:mm|zone=UTC|zone=Europe/London{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m2"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}2026-10-21T15:04:05Z|offset=1 days|format=iso|zone=UTC{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m3"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}2026-10-21T15:04:05Z|offset{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m4"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}2026-10-21T15:04:05Z| Format = yyyy {{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m5"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}  {{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m6"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}2026-10-21T15:04:05Z|truncate=startOfWeek{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m7"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}2026-10-21T15:04:05Z|zone=Nowhere/City{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m8"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}2026-10-21T15:04:05Z|format=bb{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m9"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}{{request.headers.Date.0}}|format=epochMillis{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m10"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{#dates.render}}{{request.path}}{{/dates.render}}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m11"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{ dates.now.startOfDay.epochSeconds }}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m12"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{ dates.parse }}\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m13"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"{{ dates.class }}\"}"
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v0",
+   "note": "$dates.parse('2026-03-29T01:30:00', 'iso', 'Europe/London')"
+  },
+  {
+   "method": "GET",
+   "path": "/v1",
+   "note": "$dates.parse('2026-10-25T01:30:00', 'iso', 'Europe/London')"
+  },
+  {
+   "method": "GET",
+   "path": "/v2",
+   "note": "$dates.parse('2026-10-25T00:30:00Z').withZone('Europe/London').plusHours(1)"
+  },
+  {
+   "method": "GET",
+   "path": "/v3",
+   "note": "$dates.parse('2026-10-25T00:30:00+01:00[Europe/London]').plusDays(1)"
+  },
+  {
+   "method": "GET",
+   "path": "/v4",
+   "note": "$dates.parse('2026-03-28T01:30:00Z').withZone('Europe/London').plusDays(1)"
+  },
+  {
+   "method": "GET",
+   "path": "/v5",
+   "note": "$dates.parse('2026-03-29T12:00:00Z').withZone('America/Santiago').startOfDay()"
+  },
+  {
+   "method": "GET",
+   "path": "/v6",
+   "note": "$dates.parse('2026-09-06T12:00:00Z').withZone('America/Santiago').startOfDay()"
+  },
+  {
+   "method": "GET",
+   "path": "/v7",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').withZone('EST')"
+  },
+  {
+   "method": "GET",
+   "path": "/v8",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').withZone('PST')"
+  },
+  {
+   "method": "GET",
+   "path": "/v9",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').withZone('Etc/UTC')"
+  },
+  {
+   "method": "GET",
+   "path": "/v10",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').withZone('GMT+2')"
+  },
+  {
+   "method": "GET",
+   "path": "/v11",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').withZone('UTC+05:30')"
+  },
+  {
+   "method": "GET",
+   "path": "/v12",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').withZone('Asia/Kathmandu').startOfHour()"
+  },
+  {
+   "method": "GET",
+   "path": "/v13",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').withZone('')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v14",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').withZone('+19:00')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v15",
+   "note": "$dates.parse('2026-10-21T15:04:05.1Z')"
+  },
+  {
+   "method": "GET",
+   "path": "/v16",
+   "note": "$dates.parse('2026-10-21T15:04:05.123400Z').withZone('+01:00')"
+  },
+  {
+   "method": "GET",
+   "path": "/v17",
+   "note": "$dates.parse('2026-10-21T15:04:05.000000007Z')"
+  },
+  {
+   "method": "GET",
+   "path": "/v18",
+   "note": "$dates.parse('2026-10-21t15:04Z')"
+  },
+  {
+   "method": "GET",
+   "path": "/v19",
+   "note": "$dates.parse('+12026-10-21T15:04:05Z')"
+  },
+  {
+   "method": "GET",
+   "path": "/v20",
+   "note": "$dates.parse('0099-01-01')"
+  },
+  {
+   "method": "GET",
+   "path": "/v21",
+   "note": "$dates.parse('2026-10-21T15:04:05+0100')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v22",
+   "note": "$dates.parse('2026-10-21T15:04:05[Europe/London]')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v23",
+   "note": "$dates.parse('2026-10-21T15:04:05+05:00[Europe/London]')"
+  },
+  {
+   "method": "GET",
+   "path": "/v24",
+   "note": "$dates.parse('2026-10-21T23:59:60Z')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v25",
+   "note": "$dates.parse('wed, 21 oct 2026 15:04:05 gmt')"
+  },
+  {
+   "method": "GET",
+   "path": "/v26",
+   "note": "$dates.parse('21 Oct 2026 15:04 +0530')"
+  },
+  {
+   "method": "GET",
+   "path": "/v27",
+   "note": "$dates.parse('Wed, 21 Oct 26 15:04:05 GMT')"
+  },
+  {
+   "method": "GET",
+   "path": "/v28",
+   "note": "$dates.parse('Wed, 21 Oct 2026 15:04:05 UTC')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v29",
+   "note": "$dates.rfc1123('2026-01-05T01:02:03Z')"
+  },
+  {
+   "method": "GET",
+   "path": "/v30",
+   "note": "$dates.parse(-1)"
+  },
+  {
+   "method": "GET",
+   "path": "/v31",
+   "note": "$dates.parse('-99999999999')"
+  },
+  {
+   "method": "GET",
+   "path": "/v32",
+   "note": "$dates.parse('100000000000')"
+  },
+  {
+   "method": "GET",
+   "path": "/v33",
+   "note": "$dates.parse(1.0E15)"
+  },
+  {
+   "method": "GET",
+   "path": "/v34",
+   "note": "$dates.parse('31556889864403200')"
+  },
+  {
+   "method": "GET",
+   "path": "/v35",
+   "note": "$dates.parse('1792595045', 'epochMillis')"
+  },
+  {
+   "method": "GET",
+   "path": "/v36",
+   "note": "$dates.parse(1792595045, 'epochMillis')"
+  },
+  {
+   "method": "GET",
+   "path": "/v37",
+   "note": "$dates.parse(20261021, 'yyyyMMdd')"
+  },
+  {
+   "method": "GET",
+   "path": "/v38",
+   "note": "$dates.epochMillis('2026-10-21T15:04:05.678Z')"
+  },
+  {
+   "method": "GET",
+   "path": "/v39",
+   "note": "$dates.parse('21 October 2026', 'dd MMMM yyyy')"
+  },
+  {
+   "method": "GET",
+   "path": "/v40",
+   "note": "$dates.parse('21 october 2026', 'dd MMMM yyyy')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v41",
+   "note": "$dates.parse('2026-10-21 15:04:05 Europe/Paris', 'yyyy-MM-dd HH:mm:ss VV')"
+  },
+  {
+   "method": "GET",
+   "path": "/v42",
+   "note": "$dates.parse('2026-10-21 15:04 -03', 'yyyy-MM-dd HH:mm X')"
+  },
+  {
+   "method": "GET",
+   "path": "/v43",
+   "note": "$dates.parse('2026-10-21 15', 'yyyy-MM-dd HH')"
+  },
+  {
+   "method": "GET",
+   "path": "/v44",
+   "note": "$dates.parse('15:04:05', 'HH:mm:ss')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v45",
+   "note": "$dates.parse('2026', 'yyyy')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v46",
+   "note": "$dates.parse('2026-10-21', 'yyyy-MM-dd', 'America/New_York')"
+  },
+  {
+   "method": "GET",
+   "path": "/v47",
+   "note": "$dates.parse('2026-10-21', 'yyyy-MM-dd', '')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v48",
+   "note": "$dates.parse('2026-10-21', 'yyyy-bb')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v49",
+   "note": "$dates.parse('2026-10-21', 'yyyy-MM-dd''')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v50",
+   "note": "$dates.format('2026-10-21T15:04:05Z', 'EEE d MMM yyyy h:mm a z', 'Europe/London')"
+  },
+  {
+   "method": "GET",
+   "path": "/v51",
+   "note": "$dates.format('2026-10-21T15:04:05Z', 'zzzz VV O xxx', 'America/New_York')"
+  },
+  {
+   "method": "GET",
+   "path": "/v52",
+   "note": "$dates.format('2026-10-21T15:04:05.123456Z', 'HH:mm:ss.SSS n')"
+  },
+  {
+   "method": "GET",
+   "path": "/v53",
+   "note": "$dates.format('2026-10-21T15:04:05Z', 'YYYY-ww-e Q')"
+  },
+  {
+   "method": "GET",
+   "path": "/v54",
+   "note": "$dates.format('2026-10-21T15:04:05Z', ' ISO ')"
+  },
+  {
+   "method": "GET",
+   "path": "/v55",
+   "note": "$dates.format('2026-10-21T15:04:05Z', 'RFC1123')"
+  },
+  {
+   "method": "GET",
+   "path": "/v56",
+   "note": "$dates.format('2026-10-21T15:04:05Z', $nothing)",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v57",
+   "note": "$dates.format('2026-10-21T15:04:05Z', '{x}')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v58",
+   "note": "$dates.format('2026-10-21T15:04:05Z', 'HH:mm', 'Mars/Phobos')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v59",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', ' 1day 2 hours, 3 minutes ')"
+  },
+  {
+   "method": "GET",
+   "path": "/v60",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', 'p1y2m3w4d')"
+  },
+  {
+   "method": "GET",
+   "path": "/v61",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', 'P1DT2H3M4.5S')"
+  },
+  {
+   "method": "GET",
+   "path": "/v62",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', '-PT-1.5S')"
+  },
+  {
+   "method": "GET",
+   "path": "/v63",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', 'P1X')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v64",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', 'PT')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v65",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', 'P')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v66",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', '99999999999999999999 days')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v67",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', '9999999999 years')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v68",
+   "note": "$dates.offset('2026-10-21T15:04:05Z', $nothing)",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v69",
+   "note": "$dates.offset('2024-02-29T10:00:00Z', '1 year')"
+  },
+  {
+   "method": "GET",
+   "path": "/v70",
+   "note": "$dates.offset('2026-03-28T12:00:00Z', '1 day').withZone('Europe/Paris')"
+  },
+  {
+   "method": "GET",
+   "path": "/v71",
+   "note": "$dates.parse('2026-03-28T12:00:00+01:00[Europe/Paris]').offset('1 day')"
+  },
+  {
+   "method": "GET",
+   "path": "/v72",
+   "note": "$dates.parse('2026-03-28T12:00:00+01:00[Europe/Paris]').offset('24 hours')"
+  },
+  {
+   "method": "GET",
+   "path": "/v73",
+   "note": "$dates.parse('2026-03-28T12:00:00+01:00[Europe/Paris]').offset('P1D')"
+  },
+  {
+   "method": "GET",
+   "path": "/v74",
+   "note": "$dates.parse('2026-03-28T12:00:00+01:00[Europe/Paris]').offset('PT24H')"
+  },
+  {
+   "method": "GET",
+   "path": "/v75",
+   "note": "$dates.truncate('2026-10-21T15:04:05Z', 'Start_Of-Next Year')"
+  },
+  {
+   "method": "GET",
+   "path": "/v76",
+   "note": "$dates.truncate('2026-10-21T15:04:05Z', $nothing)",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v77",
+   "note": "$dates.parse('2026-12-15T10:00:00Z').firstDayOfNextMonth()"
+  },
+  {
+   "method": "GET",
+   "path": "/v78",
+   "note": "$dates.parse('2028-02-10T10:00:00Z').lastDayOfMonth().minusYears(1)"
+  },
+  {
+   "method": "GET",
+   "path": "/v79",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').plusWeeks(2).minusMonths(13).plusYears(1).minusWeeks(1).plusMinutes(90).minusSeconds(5)"
+  },
+  {
+   "method": "GET",
+   "path": "/v80",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').toInstant()"
+  },
+  {
+   "method": "GET",
+   "path": "/v81",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').epochSeconds()"
+  },
+  {
+   "method": "GET",
+   "path": "/v82",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').isAfter('Wed, 21 Oct 2026 15:04:04 GMT')"
+  },
+  {
+   "method": "GET",
+   "path": "/v83",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').isBefore($nothing)",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v84",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').equals($dates.parse('2026-10-21T15:04:05Z'))"
+  },
+  {
+   "method": "GET",
+   "path": "/v85",
+   "note": "$dates.parse('2026-10-21T15:04:05Z').iso()"
+  },
+  {
+   "method": "GET",
+   "path": "/v86",
+   "note": "$dates.withZone('2026-10-21T15:04:05Z', 'Australia/Lord_Howe')"
+  },
+  {
+   "method": "GET",
+   "path": "/v87",
+   "note": "$dates.parse($dates.parse('2026-10-21T16:04:05+01:00'))"
+  },
+  {
+   "method": "GET",
+   "path": "/v88",
+   "note": "$dates.parse(true)",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v89",
+   "note": "$dates.now('  ')",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/m0",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}2026-10-21T15:04:05Z|timezone=Asia/Tokyo|format=HH:mm{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m1",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}21/10/2026 01:30|pattern=dd/MM/yyyy HH:mm|zone=UTC|zone=Europe/London{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m2",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}2026-10-21T15:04:05Z|offset=1 days|format=iso|zone=UTC{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m3",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}2026-10-21T15:04:05Z|offset{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m4",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}2026-10-21T15:04:05Z| Format = yyyy {{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m5",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}  {{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m6",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}2026-10-21T15:04:05Z|truncate=startOfWeek{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m7",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}2026-10-21T15:04:05Z|zone=Nowhere/City{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m8",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}2026-10-21T15:04:05Z|format=bb{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m9",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}{{request.headers.Date.0}}|format=epochMillis{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m10",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{#dates.render}}{{request.path}}{{/dates.render}}"
+  },
+  {
+   "method": "GET",
+   "path": "/m11",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{ dates.now.startOfDay.epochSeconds }}",
+   "mask": [
+    {
+     "regex": "\\b\\d{10}\\b",
+     "replace": "<epoch seconds>",
+     "reason": "now at day grain"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/m12",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{ dates.parse }}"
+  },
+  {
+   "method": "GET",
+   "path": "/m13",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "{{ dates.class }}"
+  }
+ ]
+}

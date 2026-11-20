@@ -1,0 +1,56 @@
+{
+ "note": "A failing PUT to the SCIM, OIDC or SAML provider endpoint logs `exception handling request for <scim|oidc|saml> provider:{}error:{}` as an ERROR entry of the event log, which retrieve?type=LOGS shows (HttpState).",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "ScimProviderGenerator.normalizeBasePath: IllegalArgumentException",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": {
+    "basePath": "nope"
+   }
+  },
+  {
+   "note": "OidcProviderGenerator: a public-only JWK cannot sign",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": {
+    "jwkJson": "{\"kty\":\"RSA\",\"n\":\"AQAB\",\"e\":\"AQAB\"}"
+   }
+  },
+  {
+   "note": "a null configuration: SamlProviderGenerator's IllegalArgumentException",
+   "method": "PUT",
+   "path": "/mockserver/saml",
+   "body": "null"
+  },
+  {
+   "note": "a Jackson binding failure, caught by the generic `catch (Exception e)` with the same message format",
+   "method": "PUT",
+   "path": "/mockserver/saml",
+   "body": "{\"sessionDurationSeconds\":\"abc\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "the same entries as JSON: ERROR, no httpRequest or correlationId, the request and the message as arguments; the throwable is removed (docs/divergences.md, LOG_ENTRIES throwable)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {"regex": ",\\n    \"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""},
+    {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"},
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  }
+ ]
+}

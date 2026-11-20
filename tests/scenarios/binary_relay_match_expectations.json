@@ -1,0 +1,127 @@
+{
+ "peer": true,
+ "properties": {
+  "proxyRemoteHost": "{{peerhost}}",
+  "proxyRemotePort": "{{peerport}}",
+  "forwardBinaryRequestsMatchExpectations": "true"
+ },
+ "steps": [
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the upstream's startup entries are not the point"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "the upstream answers real and insert",
+   "body": [
+    {
+     "httpRequest": {
+      "binaryData": "cmVhbAo="
+     },
+     "binaryResponse": {
+      "binaryData": "Ugo="
+     }
+    },
+    {
+     "httpRequest": {
+      "binaryData": "aW5zZXJ0Cg=="
+     },
+     "binaryResponse": {
+      "binaryData": "SQo="
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "BinaryExpectationsOnProxiedConnectionIntegrationTest: a canned answer, one used once, one with no reply",
+   "body": [
+    {
+     "httpRequest": {
+      "binaryData": "bW9ja2VkCg=="
+     },
+     "binaryResponse": {
+      "binaryData": "Y2FubmVkCg=="
+     }
+    },
+    {
+     "httpRequest": {
+      "binaryData": "aW5zZXJ0Cg=="
+     },
+     "binaryResponse": {
+      "binaryData": "ZXJyb3IK"
+     },
+     "times": {
+      "remainingTimes": 1,
+      "unlimited": false
+     }
+    },
+    {
+     "httpRequest": {
+      "binaryData": "ZHJvcAo="
+     },
+     "binaryResponse": {
+      "binaryData": ""
+     }
+    }
+   ]
+  },
+  {
+   "tcp": [
+    "cmVhbAo=",
+    "bW9ja2VkCg==",
+    "cmVhbAo=",
+    "aW5zZXJ0Cg==",
+    "aW5zZXJ0Cg==",
+    "ZHJvcAo=",
+    "cmVhbAo="
+   ],
+   "note": "matched messages are answered here and not forwarded, the rest relayed; a used-up expectation lets the retry through"
+  },
+  {
+   "tcp": [
+    "bW9ja2VkCg==",
+    "bW9ja2VkCg=="
+   ],
+   "note": "every message answered here"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "the used-up expectation is removed"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "what reached the upstream",
+   "mask": [
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

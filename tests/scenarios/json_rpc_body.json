@@ -1,0 +1,165 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/rpc",
+      "body": {
+       "type": "JSON_RPC",
+       "method": "tools/list"
+      }
+     },
+     "httpResponse": {
+      "body": "literal"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rpc",
+      "body": {
+       "type": "JSON_RPC",
+       "method": "resources/.*"
+      }
+     },
+     "httpResponse": {
+      "body": "regex"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rpc",
+      "body": {
+       "type": "JSON_RPC",
+       "method": "sum",
+       "paramsSchema": "{\"type\":\"array\",\"items\":{\"type\":\"integer\"}}"
+      }
+     },
+     "httpResponse": {
+      "body": "schema"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rpc2",
+      "body": {
+       "type": "JSON_RPC",
+       "method": "x",
+       "not": true
+      }
+     },
+     "httpResponse": {
+      "body": "not x"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/list"
+   },
+   "note": "literal"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "resources/read"
+   },
+   "note": "regex"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "body": [
+    {
+     "jsonrpc": "2.0",
+     "method": "other"
+    },
+    {
+     "jsonrpc": "2.0",
+     "id": 2,
+     "method": "tools/list"
+    }
+   ],
+   "note": "batch"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "sum",
+    "params": [
+     1,
+     2
+    ]
+   },
+   "note": "schema ok"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "sum",
+    "params": [
+     "a"
+    ]
+   },
+   "note": "schema fails"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "body": {
+    "jsonrpc": "1.0",
+    "id": 1,
+    "method": "tools/list"
+   },
+   "note": "wrong version"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc2",
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "y"
+   },
+   "note": "not"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc2",
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "x"
+   },
+   "note": "not, matching"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/rpc2"
+   },
+   "note": "echo",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  }
+ ]
+}

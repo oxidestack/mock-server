@@ -1,0 +1,80 @@
+{
+ "note": "a fixed server certificate CertificateConfigurationValidator refuses, an RSA key for a certificate with a DSA public key: SHA256withRSA's Signature.initVerify with the DSA key throws InvalidKeyException 'Supplied key (sun.security.provider.DSAPublicKeyImpl) is not a RSAPublicKey instance'. The TLS handshake is closed and PortUnificationHandler.exceptionCaught logs a WARN 'SSL or decoder fault' whose throwable is ExceptionHandling.boundedFault's copy of the DecoderException chain (each message after its class name, cut at 256 characters); no CA load is logged, as the validator runs before the factory reads the CA. Netty's close race logs the fault one to three times per handshake: the repeats are folded into one before comparing. Five plain requests first put an HTTP request on each of the five event loops, so the entry carries the port whichever loop the handshake lands on.",
+ "properties": {
+  "privateKeyPath": "{{files}}/tls/fixed-ok-key.pem",
+  "x509CertificatePath": "{{files}}/tls/fixed-dsa-cert.pem"
+ },
+ "steps": [
+  {
+   "note": "an HTTP request on each event loop",
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "note": "a TLS request with server name localhost: the handshake is refused",
+   "tcp": [
+    {
+     "text": "GET /target HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true
+  },
+  {
+   "note": "the log, the handshake's repeats folded into one entry",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(<timestamp> - SSL or decoder fault caught by port unification handler -> closing pipeline \\[[^\\]]*\\] \\(SNI: localhost\\)\\n)(?:------------------------------------\\n<timestamp> - SSL or decoder fault caught by port unification handler -> closing pipeline \\[[^\\]]*\\] \\(SNI: localhost\\)\\n){0,2}",
+     "replace": "${1}",
+     "reason": "Netty's close race logs the fault one to three times per handshake"
+    },
+    "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]"
+   ]
+  },
+  {
+   "note": "the entries as JSON, the handshake's repeats folded into one; the JVM frames masked (docs/divergences.md, LOG_ENTRIES throwable), and the messages boundedFault cuts short, whose cut falls at a place that depends on the checkout's path",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\\n  \\{\\n    \"logLevel\" : \"WARN\",(?:\\n    [^\\n]*)*\\n  \\})(?:,\\n  \\{\\n    \"logLevel\" : \"WARN\",(?:\\n    [^\\n]*)*\\n  \\}){1,2}",
+     "replace": "${1}",
+     "reason": "Netty's close race logs the fault one to three times per handshake"
+    },
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(\" : \"[^\\n]*?\\{\\{root\\}\\})[^\\n]*\\.\\.\\.\",",
+     "replace": "${1}<cut>...\",",
+     "reason": "where the 256-character cut falls depends on the length of the checkout's path (each message's first 253 characters and '...')"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]"
+   ]
+  }
+ ]
+}

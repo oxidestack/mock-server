@@ -1,0 +1,151 @@
+{
+ "note": "after an untrusted-certificate TLS load (amqps:// or MQTT ssl://) fails, the oracle's LOG_ENTRIES retrieval fails: Jackson cannot write the throwable's JSSE PKIX cause chain (ValidatorException, SunCertPathBuilderException). The answer is the generic 500 text and the log gets a LogEntrySerializer failure entry (the number of entries, the index of the one that failed, its type and correlation id). A TLS failure that is no PKIX one does not fail (see the plain-text broker steps).",
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "settleMillis": 3000,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "AMQP over TLS to this server's own port by IP: the client does not trust MockServer's CA; the load fails",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Trust",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqps://127.0.0.1:{{port}}"
+    }
+   },
+   "maxMillis": 120000
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "LOG_ENTRIES: the oracle cannot write the log, Jackson failing on the throwable's JSSE PKIX cause chain: 500 text, the generic message",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES"
+  },
+  {
+   "note": "the text log after the amqps load: the serialization failure of LogEntry (its count, index, type and correlation id) and the retrieval's own unexpected exception",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^  /127\\.0\\.0\\.1:[0-9]+$",
+     "replace": "  /127.0.0.1:<client port>",
+     "reason": "the client's ephemeral port"
+    },
+    {
+     "regex": "\"content-length\" : \\[ \"[0-9]+\" \\]",
+     "replace": "\"content-length\" : [ \"<length>\" ]",
+     "reason": "the load's body names the server's port, whose digit count differs between the oracle and replay"
+    },
+    {
+     "regex": "failed at index [0-9]+ ",
+     "replace": "failed at index <i> ",
+     "reason": "the failing entry's index: the server's TLS handshake entry (the client's alert) and the load's unexpected exception race for the last two places in the log"
+    }
+   ],
+   "compare": "unordered"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "MQTT over TLS the same way (Paho, the JVM default SSL context): the load fails the same way",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Trust",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://127.0.0.1:{{port}}"
+    }
+   },
+   "maxMillis": 120000
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "LOG_ENTRIES: the oracle cannot write the log, Jackson failing on the throwable's JSSE PKIX cause chain: 500 text, the generic message",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES"
+  },
+  {
+   "note": "the text log after the MQTT load",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^  /127\\.0\\.0\\.1:[0-9]+$",
+     "replace": "  /127.0.0.1:<client port>",
+     "reason": "the client's ephemeral port"
+    },
+    {
+     "regex": "\"content-length\" : \\[ \"[0-9]+\" \\]",
+     "replace": "\"content-length\" : [ \"<length>\" ]",
+     "reason": "the load's body names the server's port, whose digit count differs between the oracle and replay"
+    },
+    {
+     "regex": "failed at index [0-9]+ ",
+     "replace": "failed at index <i> ",
+     "reason": "the failing entry's index: the server's TLS handshake entry (the client's alert) and the load's unexpected exception race for the last two places in the log"
+    }
+   ],
+   "compare": "unordered"
+  }
+ ]
+}

@@ -1,0 +1,98 @@
+{
+ "properties": {
+  "otelPropagateTraceContext": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/first"
+     },
+     "httpResponse": {
+      "body": "first"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/second"
+     },
+     "httpResponse": {
+      "body": "second"
+     }
+    }
+   ]
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /first HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\ntraceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\r\ntracestate: rojo=00f067aa0ba902b7\r\n\r\n"
+    },
+    {
+     "text": "GET /second HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 500,
+   "text": true,
+   "mask": [
+    {
+     "regex": "(?i)\r\ndate: [^\r\n]*",
+     "replace": ""
+    },
+    {
+     "regex": "(?s)(?<=first)(HTTP/1\\.1 .*?)traceparent: ",
+     "replace": "${1}second-traceparent: "
+    },
+    {
+     "regex": "(?s)(?<=first)(HTTP/1\\.1 .*?)tracestate: ",
+     "replace": "${1}second-tracestate: "
+    }
+   ],
+   "note": "TraceContextHandler: the second request on one keep-alive connection sends no traceparent; the 8.0.0 oracle answers it with the first request's context (second-traceparent), upstream a48d37181 with none"
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /first HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\ntraceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\r\n\r\n"
+    },
+    {
+     "text": "GET /second HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\ntraceparent: 00-short-00f067aa0ba902b7-01\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 500,
+   "text": true,
+   "mask": [
+    {
+     "regex": "(?i)\r\ndate: [^\r\n]*",
+     "replace": ""
+    },
+    {
+     "regex": "(?s)(?<=first)(HTTP/1\\.1 .*?)traceparent: ",
+     "replace": "${1}second-traceparent: "
+    }
+   ],
+   "note": "an invalid traceparent on the second request clears the context too (TraceContextHandlerTest.shouldNotCarryTraceContextOverToLaterRequestWithInvalidTraceparent)"
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /first HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\ntraceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01\r\n\r\n"
+    },
+    {
+     "text": "GET /second HTTP/1.1\r\nHost: localhost\r\nConnection: keep-alive\r\ntraceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 500,
+   "text": true,
+   "mask": [
+    {
+     "regex": "(?i)\r\ndate: [^\r\n]*",
+     "replace": ""
+    }
+   ],
+   "note": "control, unchanged by the fix: a second valid traceparent replaces the first"
+  }
+ ]
+}

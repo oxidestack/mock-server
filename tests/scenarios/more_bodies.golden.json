@@ -1,0 +1,105 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/fuzzy\",\n    \"body\" : {\n      \"type\" : \"FUZZY\",\n      \"fuzzy\" : \"hello world\",\n      \"threshold\" : 0.9\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"fuzzy\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/fuzzy-ci\",\n    \"body\" : {\n      \"type\" : \"FUZZY\",\n      \"fuzzy\" : \"Hello World\",\n      \"threshold\" : 0.8,\n      \"ignoreCase\" : true\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"fuzzy ci\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/file\",\n    \"body\" : {\n      \"contentType\" : \"text/plain\",\n      \"filePath\" : \"{{root}}/tests/files/plain.txt\",\n      \"type\" : \"FILE\"\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"file\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/allof\",\n    \"body\" : {\n      \"type\" : \"ALL_OF\",\n      \"bodyAllOf\" : [ {\n        \"type\" : \"JSON_PATH\",\n        \"jsonPath\" : \"$.a\"\n      }, {\n        \"type\" : \"REGEX\",\n        \"regex\" : \".*b.*\"\n      } ]\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"all of\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/allof-not\",\n    \"body\" : {\n      \"not\" : true,\n      \"type\" : \"ALL_OF\",\n      \"bodyAllOf\" : [ \"x\" ]\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"not all of\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 5"
+      ],
+      "body": "fuzzy",
+      "note": "fuzzy close"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: body did not match (  fuzzy string match failed similarity:     0.41125541125541126    below threshold:     0.9    expected:     hello world    found:     goodbye )"
+      ],
+      "body": "",
+      "note": "fuzzy far"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 8"
+      ],
+      "body": "fuzzy ci",
+      "note": "fuzzy ignore case"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 4"
+      ],
+      "body": "file",
+      "note": "file exact"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: path did not match (  string or regex match failed expected:     /fuzzy    found:     /file )"
+      ],
+      "body": "",
+      "note": "file differs"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 6"
+      ],
+      "body": "all of",
+      "note": "all match"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: path did not match (  string or regex match failed expected:     /fuzzy    found:     /allof )"
+      ],
+      "body": "",
+      "note": "one fails"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 10"
+      ],
+      "body": "not all of",
+      "note": "not all of"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0"
+      ],
+      "body": "",
+      "note": "not all of, matching"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+Usage: mockserver run [-hV] [--dev] [--proxy-setup] [--validate-enforce]
+                      [--watch] [-extensions=<extensions>] [--init=<init>]
+                      [-l=<logLevel>] [--openapi=<openapi>] [-p=<port>]
+                      [--persist=<persist>] [--proxy-to=<proxyTo>]
+                      [--validate-openapi=<validateOpenapi>] [-D=<key=value>]...
+Start MockServer (default subcommand).
+  -D=<key=value>             Set a JVM system property before startup, e.g.
+                               -Dmockserver.metricsEnabled=true (repeatable).
+                               Equivalent to a JVM -D but accepted after the
+                               launcher/jar. Any system property is accepted;
+                               use mockserver.* keys for MockServer
+                               configuration.
+      --dev                  Enable developer-friendly defaults: reduced memory
+                               caps (maxLogEntries=1000, maxExpectations=1000)
+                               for laptop/test-suite use. Explicit config
+                               (system property, env var, or properties file)
+                               overrides dev-mode defaults.
+      -extensions, --extensions=<extensions>
+                             Comma-separated extension class names (each
+                               implementing org.mockserver.extension.Extension)
+                               to load and start at startup; their JARs must be
+                               on the classpath. Equivalent to
+                               MOCKSERVER_EXTENSIONS or -Dmockserver.extensions.
+  -h, --help                 Show this help message and exit.
+      --init=<init>          Initialize expectations from a JSON file path or
+                               glob pattern.
+  -l, --log-level=<logLevel> Log level: TRACE, DEBUG, INFO, WARN, ERROR, OFF
+                               (or Java Logger equivalents).
+      --openapi=<openapi>    Initialize expectations from an OpenAPI spec URL
+                               or file path.
+  -p, --port=<port>          Port(s) to listen on (comma-separated list, e.g.
+                               1080,1081). Required unless set via the
+                               MOCKSERVER_SERVER_PORT environment variable, the
+                               mockserver.serverPort system property, or a
+                               properties file.
+      --persist=<persist>    Enable expectation persistence and set the file
+                               path.
+      --proxy-setup          Set MockServer up as a TLS-intercepting proxy:
+                               generate a unique private Certificate Authority
+                               (instead of the public CA published in the
+                               MockServer repository) and print an OS-specific
+                               copy-paste setup block (CA path plus HTTPS_PROXY
+                               / NODE_EXTRA_CA_CERTS / SSL_CERT_FILE /
+                               REQUESTS_CA_BUNDLE exports). Equivalent to
+                               MOCKSERVER_PROXY_SETUP=true or -Dmockserver.
+                               proxySetup=true.
+      --proxy-to=<proxyTo>   Forward unmatched requests to host[:port] (enables
+                               port-forwarding mode).
+  -V, --version              Print version information and exit.
+      --validate-enforce     When combined with --validate-openapi, reject
+                               requests that violate the spec (400) and replace
+                               non-conformant upstream responses (502). Without
+                               this flag, violations are report-only.
+      --validate-openapi=<validateOpenapi>
+                             Validate forwarded/proxied requests and responses
+                               against the given OpenAPI spec (URL, file path,
+                               or inline payload). Violations are logged;
+                               combine with --validate-enforce to block
+                               non-conformant traffic.
+      --watch                Watch the initializer/expectations file(s) (from
+                               --init / --openapi) and live-reload expectations
+                               when they change, without a restart (~5s poll).
+                               Equivalent to
+                               MOCKSERVER_WATCH_INITIALIZATION_JSON=true or
+                               -Dmockserver.watchInitializationJson=true.

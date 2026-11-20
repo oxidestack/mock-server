@@ -1,0 +1,78 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) metricshandler-MetricsHandlerTest-3e9d5e4e (conformance/harvest)",
+ "properties": {
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b5270bf55b8a",
+   "note": "shouldSendMetricsDownTheRequestHttp2Stream (metricshandler): reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldSendMetricsDownTheRequestHttp2Stream (metricshandler): MetricsHandler.renderMetrics (HTTP/2 stream 9 in the test)",
+   "h2": true,
+   "mask": [
+    {
+     "regex": "(?s)\\A# .*\\z",
+     "replace": "<the exposition>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "b5270bf55b8a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0de33632579c",
+   "note": "shouldReflectOriginWhenMetricsEnabled (metricshandler): reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldReflectOriginWhenMetricsEnabled (metricshandler): MetricsHandler.renderMetrics",
+   "headers": {
+    "origin": "http://localhost:3000"
+   },
+   "mask": [
+    {
+     "regex": "(?s)\\A# .*\\z",
+     "replace": "<the exposition>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "0de33632579c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "76f1a08806f1",
+   "note": "shouldNotSetStreamIdOnHttp1 (metricshandler): reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldNotSetStreamIdOnHttp1 (metricshandler): MetricsHandler.renderMetrics",
+   "mask": [
+    {
+     "regex": "(?s)\\A# .*\\z",
+     "replace": "<the exposition>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "76f1a08806f1"
+  }
+ ]
+}

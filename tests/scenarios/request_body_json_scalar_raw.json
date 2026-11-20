@@ -1,0 +1,136 @@
+{
+ "properties": {
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/request_body_json_scalar_raw.json"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a request JSON body whose value is a scalar echoes as the text it was given (writeRawValue)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/number",
+     "body": {
+      "type": "JSON",
+      "json": "\n  42\n"
+     }
+    },
+    "httpResponse": {
+     "body": "number"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/string",
+     "body": {
+      "type": "JSON",
+      "json": " \"a\rb\" \t"
+     }
+    },
+    "httpResponse": {
+     "body": "string"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/strict",
+     "body": {
+      "type": "JSON",
+      "json": "42 ",
+      "matchType": "STRICT"
+     }
+    },
+    "httpResponse": {
+     "body": "strict"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/untyped",
+     "body": {
+      "json": "  true\r"
+     }
+    },
+    "httpResponse": {
+     "body": "untyped"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/decimal",
+     "body": {
+      "type": "JSON",
+      "json": "\t1.50 "
+     }
+    },
+    "httpResponse": {
+     "body": "decimal"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "readFile": "{{scratch}}/request_body_json_scalar_raw.json",
+   "pollUntil": "decimal"
+  },
+  {
+   "method": "POST",
+   "path": "/number",
+   "body": "42",
+   "note": "matching is unchanged: the raw text is read as the number"
+  },
+  {
+   "method": "POST",
+   "path": "/number",
+   "body": "43"
+  },
+  {
+   "method": "POST",
+   "path": "/string",
+   "body": "\"a\rb\""
+  },
+  {
+   "method": "POST",
+   "path": "/strict",
+   "body": "42"
+  },
+  {
+   "method": "POST",
+   "path": "/untyped",
+   "body": "true"
+  },
+  {
+   "method": "POST",
+   "path": "/decimal",
+   "body": "1.50"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  }
+ ]
+}

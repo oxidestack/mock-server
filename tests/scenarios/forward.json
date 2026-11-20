@@ -1,0 +1,11 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": "[{\"httpRequest\": {\"path\": \"/target.*\"}, \"httpResponse\": {\"statusCode\": 203, \"headers\": {\"X-Target\": [\"yes\"]}, \"body\": \"from target\"}}, {\"httpRequest\": {\"path\": \"/target/fwd\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}}, {\"httpRequest\": {\"path\": \"/fwd-override\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target/overridden\", \"headers\": {\"Host\": [\"localhost:{{port}}\"], \"X-Added\": [\"1\"]}}}}, {\"httpRequest\": {\"path\": \"/fwd-modify\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"headers\": {\"Host\": [\"localhost:{{port}}\"]}}, \"requestModifier\": {\"path\": {\"regex\": \"^/fwd-modify$\", \"substitution\": \"/target/modified\"}, \"headers\": {\"add\": {\"X-Mod\": [\"m\"]}, \"remove\": [\"X-Remove\"]}}, \"responseModifier\": {\"headers\": {\"add\": {\"X-Resp\": [\"r\"]}}}}}, {\"httpRequest\": {\"path\": \"/fwd-legacy\"}, \"httpOverrideForwardedRequest\": {\"httpRequest\": {\"path\": \"/target/legacy\", \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}}}, {\"httpRequest\": {\"path\": \"/fwd-dead\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{deadport}}}}]"},
+  {"note": "forward", "method": "POST", "path": "/target/fwd?q=1", "headers": {"X-In": "in"}, "body": "payload"},
+  {"note": "override", "method": "GET", "path": "/fwd-override"},
+  {"note": "modifier", "method": "GET", "path": "/fwd-modify", "headers": {"X-Remove": "gone"}},
+  {"note": "legacy override", "method": "GET", "path": "/fwd-legacy"},
+  {"note": "forward target down", "method": "GET", "path": "/fwd-dead"},
+  {"note": "requests the target saw", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "body": {"path": "/target.*"}},
+  {"note": "exchanges", "method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES", "body": {"path": "/(fwd|target/fwd).*"}},
+  {"note": "recorded expectations", "method": "PUT", "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS"}
+]}

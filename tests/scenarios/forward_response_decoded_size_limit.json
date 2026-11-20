@@ -1,0 +1,255 @@
+{
+  "properties": {
+    "maxResponseBodySize": "500"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dsl/up/gzip_cl_large"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IGd6aXANCkNvbm5lY3Rpb246IGNsb3NlDQpDb250ZW50LUxlbmd0aDogMjkNCg0KH4sIAAAAAAACE6uoGAWjYBQMdwAA5slBO+gDAAA="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dsl/fwd/gzip_cl_large"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dsl/up/gzip_cl_large",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "a gzip body of 1000 bytes decoded, sent in far fewer: over the limit, which counts decoded bytes, 502",
+      "tcp": [
+        {
+          "text": "GET /dsl/fwd/gzip_cl_large HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "gzip_cl_large: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dsl/up/gzip_chunked_large"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IGd6aXANClRyYW5zZmVyLUVuY29kaW5nOiBjaHVua2VkDQpDb25uZWN0aW9uOiBjbG9zZQ0KDQoxZA0KH4sIAAAAAAACE6uoGAWjYBQMdwAA5slBO+gDAAANCjANCg0K"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dsl/fwd/gzip_chunked_large"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dsl/up/gzip_chunked_large",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "the same in one chunk: 502",
+      "tcp": [
+        {
+          "text": "GET /dsl/fwd/gzip_chunked_large HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "gzip_chunked_large: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dsl/up/gzip_two_chunks"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IGd6aXANClRyYW5zZmVyLUVuY29kaW5nOiBjaHVua2VkDQpDb25uZWN0aW9uOiBjbG9zZQ0KDQoxNg0KH4sIAAAAAAAAE6qsHAXEAgAAAAD//w0KZQ0KqxoFRAMAjXKvvFgCAAANCjANCg0K"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dsl/fwd/gzip_two_chunks"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dsl/up/gzip_two_chunks",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "two chunks of 300 decoded bytes each: the second goes over, 502",
+      "tcp": [
+        {
+          "text": "GET /dsl/fwd/gzip_two_chunks HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "gzip_two_chunks: what it logged",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dsl/up/gzip_encoded_over"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL29jdGV0LXN0cmVhbQ0KQ29udGVudC1FbmNvZGluZzogZ3ppcA0KQ29ubmVjdGlvbjogY2xvc2UNCkNvbnRlbnQtTGVuZ3RoOiA1MTMNCg0KH4sIAAAAAAACEwHqARX+jchAv+KufejZ2OhyB4DdEMb6Yyxxa73dryiA4rlgyHonv2DujzixtvOUNUcdTvrYJ76dXQ8shuvx9qigsNR8k+IDUp/wkTl1dF5CtR+YYzOKoaKmCGrYP6Gz5ZQKUkxpOZ26+9moz4V0VimTSZhQMTNNmw9C82FhkX1WwLuTjADQQImLAKVFXWCbzwC+77NwrrRAe2Q1QBOltnOw/lStYQfFBmJR9e8sYLTYLtZdBI79gXrjtgmVp/4WdWVo4ulfRGXoKzkATqO24LR4+z10ZSCVMEbSeYbrwV6FpZM/ZRyaLkoyNbFy5yVrtEwr14bU/EpLXZZYn0Rz23BatogD3AxsBVhXg68BF/WnTWloqqaW7UrrH63EzVlvFTG18ZEH0jIkZDZX/VDgVXesf0Qe4lljjV5nfCRF8PvbsXrXmE4JQTyO3r6qRU9R7eGbRmVc6W4VyfJ1+CC4oTyVJHyvYEupql7YFqLzPVuQcVmp09NKTnzIhRFysN14lpS2W1socYQ6vtlgQ1kHpqkkGymi40G6r5JFXsTpLqWyTV79KlgArkgfU6909daFofjdG0vhYGCEJ1gHBCxsuFZXjlGoUNP3I/Wj9ZiDqWsdkf3oXZN2PD64xDXZv8RBthnYkD4MBrlcS7bOLG3YrnZTOZ7qAQAA"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dsl/fwd/gzip_encoded_over"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dsl/up/gzip_encoded_over",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "513 encoded bytes that decode to 490: within the limit, 200",
+      "tcp": [
+        {
+          "text": "GET /dsl/fwd/gzip_encoded_over HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dsl/up/gzip_small"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IGd6aXANCkNvbm5lY3Rpb246IGNsb3NlDQpDb250ZW50LUxlbmd0aDogMjQNCg0KH4sIAAAAAAACEysvJxUAACiXyGwyAAAA"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dsl/fwd/gzip_small"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dsl/up/gzip_small",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "50 decoded bytes: 200",
+      "tcp": [
+        {
+          "text": "GET /dsl/fwd/gzip_small HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    }
+  ]
+}

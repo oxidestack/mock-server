@@ -1,0 +1,92 @@
+{
+ "note": "An expectation whose XML_SCHEMA body matcher cannot be built: XmlSchemaValidator logs `exception parsing schema{}` with the SAXParseException, and HttpRequestHandler then logs `exception processing <request>` with the RuntimeException (the 400 text) caused by it.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "an unresolvable reference into the XS namespace: src-resolve.4.2, refused every time",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xsd",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:element name=\"a\" type=\"xs:nope\"/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "note": "both ERROR entries, the second with the request and the RuntimeException wrapping the SAXParseException; JVM frames masked",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {"regex": "\"stackTrace\" : \\[( \\]|[\\s\\S]*?\\n\\s*\\])", "replace": "\"stackTrace\" : <frames>"},
+    {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"},
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "an array whose second expectation has the unbuildable schema (multi-line, so the throwable has a line)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ok"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/xsd",
+      "body": {
+       "type": "XML_SCHEMA",
+       "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"b\" type=\"xs:alsoNope\"/>\n</xs:schema>"
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    }
+   ]
+  },
+  {
+   "note": "HttpState.add builds each matcher in turn: the expectation before the bad one is created and logged first",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {"regex": "\"stackTrace\" : \\[( \\]|[\\s\\S]*?\\n\\s*\\])", "replace": "\"stackTrace\" : <frames>"},
+    {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"},
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "note": "the one before the bad expectation stays",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  }
+ ]
+}

@@ -1,0 +1,60 @@
+{
+ "source": "hand-authored for JsonArraySerializationTest: JsonArraySerializer.splitJSONArray has no Recorder\n  boundary of its own (a pure string-splitting helper, called internally before each array element is validated) —\n  the array-wrapping round trip it enables is exercised directly against PUT /mockserver/expectation.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "arr-two-valid",
+   "note": "two distinct valid elements: reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[ {\"httpRequest\":{\"path\":\"/one\"},\"httpResponse\":{\"statusCode\":200}}, {\"httpRequest\":{\"path\":\"/two\"},\"httpResponse\":{\"statusCode\":201}} ]",
+   "note": "two distinct valid elements: input",
+   "case": "arr-two-valid"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "two distinct valid elements: echo",
+   "case": "arr-two-valid"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "arr-one-malformed",
+   "note": "one valid element, one malformed element: reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[ {\"httpRequest\":{\"path\":\"/ok\"},\"httpResponse\":{\"statusCode\":200}}, {\"httpRequest\":{\"path\":123}} ]",
+   "note": "one valid element, one malformed element (bad path type): input, whichever way the server reports it",
+   "case": "arr-one-malformed",
+   "compare": "status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "one valid element, one malformed element: whatever was actually stored",
+   "case": "arr-one-malformed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "arr-empty-objects",
+   "note": "two empty-object elements (JsonArraySerializerTest.shouldReturnArrayItems: splitJSONArray(\"[{},{}]\")): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[ {}, {} ]",
+   "note": "two empty-object elements: input, whichever way the server reports it",
+   "case": "arr-empty-objects",
+   "compare": "status"
+  }
+ ]
+}

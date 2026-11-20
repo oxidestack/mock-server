@@ -1,0 +1,27 @@
+{
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "proxySetupLogging": "false",
+  "proxyRemoteHost": "localhost",
+  "proxyRemotePort": "{{deadport}}"
+ },
+ "steps": [
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "tls": true,
+   "note": "a binary request over TLS, proxied over TLS to an upstream that refuses: the server context loads the CA on the ClientHello, the forwarding client's when its channel is built"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [{"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+", "replace": "/<client>", "reason": "the binary client's address: the Docker gateway's when recorded, loopback on replay"}],
+   "compare": "unordered",
+   "note": "both contexts' CA loads, the received entry and the failed-send WARNs (the event loop's and the scheduler's, in either order)"
+  }
+ ]
+}

@@ -1,0 +1,24 @@
+{
+ "properties": {
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false",
+  "initializationJsonPath": "{{files}}/init/expectations.json",
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/log_entry_init_trace.json",
+  "watchInitializationJson": "true"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "note": "TRACE at startup: the initialisation file's expectations as loaded, then persisted, then the file watched",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)(created expectation file watcher for\\n\\n  \\[[^\\n]*\\]\\n\\n-+)\\n.*",
+     "replace": "${1}\n(the rest: the listener's start and the requests of this test and the container's health check)"
+    }
+   ]
+  }
+ ]
+}

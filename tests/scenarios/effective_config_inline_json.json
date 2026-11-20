@@ -1,0 +1,30 @@
+{
+ "source": "an inline JSON llmBackendsConfig (secret fields masked at any depth, other fields intact, an apostrophe in a value) and a header-list prometheusRemoteWriteHeaders reach GET /mockserver/config and /mockserver/configuration redacted, from the system-property tier (quoting that survives JSON), the environment tier and the properties-file tier. The same document through each tier answers the same value with its own source.",
+ "properties": {
+  "llmBackendsConfig": "[{\"name\":\"openai\",\"apiKey\":\"REAL-KEY-1\",\"model\":\"it's-gpt\",\"nested\":{\"token\":[\"t1\",\"t2\"]}},{\"name\":\"azure\",\"apiKey\":\"REAL-KEY-2\"}]"
+ },
+ "env": {
+  "MOCKSERVER_PROMETHEUS_REMOTE_WRITE_HEADERS": "Authorization=Bearer REAL-ENV-TOKEN,X-Scope-OrgID=tenant-a"
+ },
+ "propertiesFile": [
+  "mockserver.prometheusRemoteWriteHeaders=X-Api-Key=REAL-FILE-KEY,Accept=application/json"
+ ],
+ "steps": [
+  {
+   "note": "the effective configuration: the inline JSON document is redacted field by field (system-property tier); the header list likewise (file tier wins over the environment)",
+   "method": "GET",
+   "path": "/mockserver/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "note": "the sibling /mockserver/configuration redacts the same values",
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  }
+ ]
+}

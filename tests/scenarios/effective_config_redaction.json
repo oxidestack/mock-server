@@ -1,0 +1,51 @@
+{
+ "source": "which property names the effective-configuration diagnostic masks (ConfigurationPropertiesRedactionTest's classification, seen through GET /mockserver/config) and which stay readable, against the sibling GET /mockserver/configuration.",
+ "properties": {
+  "forwardProxyAuthenticationPassword": "pw-forward-1",
+  "proxyAuthenticationPassword": "pw-proxy-2",
+  "blobStoreSecretAccessKey": "secret-key-3",
+  "blobStoreAccessKeyId": "access-key-id-4",
+  "blobStoreConnectionString": "conn-string-5",
+  "forwardProxyPrivateKey": "private-key-6",
+  "certificateAuthorityPrivateKey": "ca-private-key-7",
+  "privateKeyPath": "/nonexistent/key-8.pem",
+  "controlPlanePrivateKeyPath": "/nonexistent/cp-key-9.pem",
+  "dashboardAnalyticsKey": "analytics-key-10",
+  "dataPlaneBearerAuthenticationToken": "bearer-token-11",
+  "clusterFanInPeerAuthToken": "peer-token-12",
+  "prometheusRemoteWriteBearerToken": "prom-token-13",
+  "prometheusRemoteWriteBasicAuthPassword": "prom-password-14",
+  "forwardProxyAuthenticationUsername": "forward-user",
+  "proxyAuthenticationUsername": "proxy-user",
+  "proxyAuthenticationRealm": "realm-15",
+  "blobStoreBucket": "bucket-16",
+  "blobStoreRegion": "eu-west-1",
+  "forwardConnectionPoolMaxIdlePerKey": "7",
+  "forwardConnectionPoolMaxTotalPerKey": "9",
+  "dataPlaneApiKeyAuthenticationHeader": "X-Api-Key",
+  "dataPlaneBasicAuthenticationRealm": "RealmName",
+  "tlsMutualAuthenticationRequired": "false",
+  "controlPlaneJWTAuthenticationRequired": "false",
+  "controlPlaneJWTAuthenticationJWKSource": "https://issuer.example/.well-known/jwks.json",
+  "redactSecretsInLog": "false",
+  "corsAllowCredentials": "false"
+ },
+ "steps": [
+  {
+   "note": "credential-shaped names are masked, everything else is shown, every source is system-property",
+   "method": "GET",
+   "path": "/mockserver/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "note": "the sibling surface applies its own rule to the same properties",
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  }
+ ]
+}

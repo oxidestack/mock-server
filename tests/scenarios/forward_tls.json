@@ -1,0 +1,30 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\", \"secure\": true}, \"httpResponse\": {\"body\": \"reached over TLS\"}}, {\"httpRequest\": {\"path\": \"/target\", \"secure\": false}, \"httpResponse\": {\"body\": \"reached in plain text\"}}, {\"httpRequest\": {\"path\": \"/override-secure\"}, \"httpOverrideForwardedRequest\": {\"httpRequest\": {\"path\": \"/target\", \"secure\": true, \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}}}, {\"httpRequest\": {\"path\": \"/override-socket\"}, \"httpOverrideForwardedRequest\": {\"httpRequest\": {\"path\": \"/target\", \"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTPS\"}}}}]"
+  },
+  {
+   "method": "GET",
+   "path": "/override-secure",
+   "note": "override with secure: true forwards over TLS"
+  },
+  {
+   "method": "GET",
+   "path": "/override-socket",
+   "note": "an HTTPS socketAddress forwards over TLS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/target"
+   },
+   "note": "what the target received",
+   "mask": [
+    "\"(local|remote)Address\" : \"[^\"]*\""
+   ]
+  }
+ ]
+}

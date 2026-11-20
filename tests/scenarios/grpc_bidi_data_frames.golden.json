@@ -1,0 +1,138 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 19",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\"status\":\"loaded\"}",
+      "note": "upload greeting descriptor"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 491",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"grpcBidiResponse\" : {\n    \"rules\" : [ {\n      \"matchJson\" : \".*\",\n      \"responses\" : [ {\n        \"json\" : \"{\\\"greeting\\\": \\\"Hello $jsonPath.find(\\\"$.name\\\")\\\"}\",\n        \"templateType\" : \"VELOCITY\"\n      } ]\n    } ],\n    \"statusName\" : \"OK\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/com.example.grpc.GreetingService/Chat\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "expectation: one greeting per inbound message, naming it"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA0KC0hlbGxvIEFsaWNlAAAAAAsKCUhlbGxvIEJvYg==",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "two messages in one DATA frame"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA0KC0hlbGxvIEFsaWNl",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "prefix split after 3 bytes"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA0KC0hlbGxvIEFsaWNl",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "payload split after 2 bytes"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA0KC0hlbGxvIEFsaWNlAAAAAAsKCUhlbGxvIEJvYgAAAAANCgtIZWxsbyBDYXJvbA==",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "two messages and a partial prefix, then the rest"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA0KC0hlbGxvIEFsaWNl",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "empty DATA frames around a split"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA0KC0hlbGxvIEFsaWNl",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "one byte per DATA frame"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA0KC0hlbGxvIEFsaWNl",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "a partial message left when the stream ends"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA4KDEhlbGxvIFppcHBlZA==",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "a gzip-flagged message split inside its prefix, no grpc-encoding"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-type: application/grpc"
+      ],
+      "body": "AAAAAA0KC0hlbGxvIEFsaWNlAAAAAAsKCUhlbGxvIEJvYgAAAAANCgtIZWxsbyBDYXJvbA==",
+      "trailers": [
+        "grpc-status: 0"
+      ],
+      "note": "a message per DATA frame"
+    }
+  ]
+}

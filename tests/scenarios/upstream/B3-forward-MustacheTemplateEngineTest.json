@@ -1,0 +1,84 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) forward-MustacheTemplateEngineTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "4f83891f9c8e",
+   "note": "shouldHandleHttpRequestsWithMustacheForwardTemplateWithPathBodyParametersAndCookies (forward): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/somePath"
+    },
+    "httpForwardTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    'headers': {'host': ['{{deadhost}}']},\n    'path': '{{ request.path }}',\n    'body': \"{'queryStringParameters': '{{ request.queryStringParameters.nameOne.0 }},{{ request.queryStringParameters.nameTwo.0 }},{{ request.queryStringParameters.nameTwo.1 }}', 'pathParameters': '{{ request.pathParameters.nameOne.0 }},{{ request.pathParameters.nameTwo.0 }},{{ request.pathParameters.nameTwo.1 }}', 'cookies': '{{ request.cookies.session }}', 'body': '{{ request.body }}'}\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldHandleHttpRequestsWithMustacheForwardTemplateWithPathBodyParametersAndCookies (forward): forward template",
+   "case": "4f83891f9c8e"
+  },
+  {
+   "method": "POST",
+   "path": "/somePath?nameTwo=queryValueTwoOne&nameTwo=queryValueTwoTwo&nameOne=queryValueOne",
+   "headers": {
+    "Cookie": "session=some_session_id"
+   },
+   "body": "some_body",
+   "note": "shouldHandleHttpRequestsWithMustacheForwardTemplateWithPathBodyParametersAndCookies (forward): request",
+   "case": "4f83891f9c8e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": "",
+   "note": "shouldHandleHttpRequestsWithMustacheForwardTemplateWithPathBodyParametersAndCookies (forward): received",
+   "case": "4f83891f9c8e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2639977ff03c",
+   "note": "shouldHandleInvalidMustacheTemplate (forward): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/someOtherPath"
+    },
+    "httpForwardTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{{ {{ }} }}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldHandleInvalidMustacheTemplate (forward): forward template",
+   "case": "2639977ff03c"
+  },
+  {
+   "method": "GET",
+   "path": "/someOtherPath?queryParameter=someValue",
+   "body": "some_body",
+   "note": "shouldHandleInvalidMustacheTemplate (forward): request",
+   "case": "2639977ff03c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": "",
+   "note": "shouldHandleInvalidMustacheTemplate (forward): received",
+   "case": "2639977ff03c"
+  }
+ ]
+}

@@ -1,0 +1,510 @@
+{
+ "note": "A generator endpoint (wsdl, graphql, scim, oidc, saml) that fails logs `exception handling request for …:{}error:{}` with the exception as the entry's throwable: the generator's IllegalArgumentException (with the parser's exception as its cause where it wraps one) or the exception ObjectMapper throws binding the configuration (HttpState).",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "malformed JSON: Jackson's JsonEOFException (location, originalMessage)",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "{bad"
+  },
+  {
+   "note": "MismatchedInputException: currentToken, location, path, pathReference, targetType",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "{\"basePath\": {}}"
+  },
+  {
+   "note": "a root array: no path",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "[1]"
+  },
+  {
+   "note": "the entries as JSON, each with its throwable: Jackson's bean of the exception and its causes (the JVM frames masked, docs/divergences.md, LOG_ENTRIES throwable); the server is reset after each few, which keeps the bodies small",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a root number: the bean's creator refuses it",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "5"
+  },
+  {
+   "note": "the generator's own IllegalArgumentException, no cause",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "{\"basePath\":\"/mockserver/x\"}"
+  },
+  {
+   "note": "a primitive boolean from a string: InvalidFormatException with its value",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "{\"enforceFilter\":\"abc\"}"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a primitive boolean from a float",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "{\"enforceFilter\":1.5}"
+  },
+  {
+   "note": "List<ObjectNode>: a lone value is a list of one, its failure at ObjectNode[0]",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "{\"initialUsers\": \"x\"}"
+  },
+  {
+   "note": "List<ObjectNode>: the element at ArrayList[1]",
+   "method": "PUT",
+   "path": "/mockserver/scim",
+   "body": "{\"initialUsers\": [{}, 2]}"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a primitive int from a boolean",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\"tokenExpirySeconds\": true}"
+  },
+  {
+   "note": "a primitive int from a string, on the second line",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\n  \"tokenExpirySeconds\": \"abc\"\n}"
+  },
+  {
+   "note": "out of range: JsonMappingException wrapping InputCoercionException, located after the number",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\"tokenExpirySeconds\": 99999999999}"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "List<String>: the element",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\"scopes\": [{}]}"
+  },
+  {
+   "note": "List<String>: a lone value is accepted; the algorithm is not",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\"scopes\": \"x\", \"signingAlgorithm\": \"XX1\"}"
+  },
+  {
+   "note": "Map<String, Serializable> from a string",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\"additionalClaims\": \"x\"}"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "Map<String, Serializable> from a boolean",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\"additionalClaims\": true}"
+  },
+  {
+   "note": "nimbus' ParseException as the cause",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\"jwkJson\": \"nope\"}"
+  },
+  {
+   "note": "malformed JSON",
+   "method": "PUT",
+   "path": "/mockserver/oidc",
+   "body": "{\"x\": 1,"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a map value: the reference chain goes on into the map",
+   "method": "PUT",
+   "path": "/mockserver/saml",
+   "body": "{\"attributes\": {\"a\": {}}}"
+  },
+  {
+   "note": "a primitive boolean from a float",
+   "method": "PUT",
+   "path": "/mockserver/saml",
+   "body": "{\"expiredAssertion\": 2.5}"
+  },
+  {
+   "note": "a primitive long from a boolean",
+   "method": "PUT",
+   "path": "/mockserver/saml",
+   "body": "{\"sessionDurationSeconds\": true}"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a root string: the bean's creator refuses it",
+   "method": "PUT",
+   "path": "/mockserver/saml",
+   "body": "\"str\""
+  },
+  {
+   "note": "blank: no cause",
+   "method": "PUT",
+   "path": "/mockserver/wsdl"
+  },
+  {
+   "note": "SAXParseException as the cause: content in the prolog",
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "   abc"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "after the DOCTYPE keyword",
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "<?xml version=\"1.0\"?>  <!DOCTYPE definitions><definitions/>"
+  },
+  {
+   "note": "a mismatched end tag, on the second line",
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "<definitions>\n  <aaaa>text</aaab>\n</definitions>"
+  },
+  {
+   "note": "the end of the input",
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "<definitions>"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "markup after the root element",
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "<definitions/><x/>"
+  },
+  {
+   "note": "content after the root element",
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "<definitions/>abc"
+  },
+  {
+   "note": "not a WSDL document: no cause",
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "<x/>"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "blank: no cause",
+   "method": "PUT",
+   "path": "/mockserver/graphql"
+  },
+  {
+   "note": "SchemaProblem with an InvalidSyntaxError as the cause",
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "body": "type Query {"
+  },
+  {
+   "note": "extra tokens",
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "body": "type Query { a: Int } }"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a non-SDL definition: a ValidationError (a GraphQLException of its own)",
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "body": "query { a }"
+  },
+  {
+   "note": "two missing types",
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "body": "type Query { a: Foo b: Bar }"
+  },
+  {
+   "note": "no query type: the error has no location",
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "body": "type Foo { a: Int }"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "introspection without __schema: no cause",
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "body": "{\"data\": {}}"
+  },
+  {
+   "note": "introspection without a query type: graphql-java's AssertException",
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "body": "{\"__schema\": {}}"
+  },
+  {
+   "note": "malformed introspection JSON: JsonParseException",
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "body": "{bad json"
+  },
+  {
+   "note": "the next few",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+     "replace": "\"stackTrace\" : <frames>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  }
+ ]
+}

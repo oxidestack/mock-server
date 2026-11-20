@@ -1,0 +1,82 @@
+{
+ "steps": [
+  {
+   "wsOpen": "cb",
+   "headers": {
+    "X-CLIENT-REGISTRATION-ID": "file-body-failure-client"
+   }
+  },
+  {
+   "wsRead": "cb"
+  },
+  {
+   "note": "an object callback whose response has an unreadable FILE body",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/callback-bad-template"
+    },
+    "httpResponseObjectCallback": {
+     "clientId": "file-body-failure-client"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/callback-bad-template",
+   "async": "callback"
+  },
+  {
+   "wsRead": "cb",
+   "capture": {
+    "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+    "as": "correlation"
+   },
+   "mask": [
+    "(?<=\"WebSocketCorrelationId\" : \\[ \")[^\"]+",
+    "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+   ]
+  },
+  {
+   "wsSend": "cb",
+   "envelope": {
+    "type": "org.mockserver.model.HttpResponse",
+    "value": {
+     "statusCode": 200,
+     "headers": {
+      "WebSocketCorrelationId": [
+       "{{capture:correlation}}"
+      ]
+     },
+     "body": {
+      "type": "FILE",
+      "filePath": "{{files}}/templated_file_path/mocks/no-such-file.json",
+      "contentType": "application/json"
+     }
+    }
+   }
+  },
+  {
+   "await": "callback"
+  },
+  {
+   "note": "an unreadable file is the 500 answer, logged as the callback action's response",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/callback-bad-template"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "(?<=\"WebSocketCorrelationId\" : \\[ \")[^\"]+"
+   ]
+  },
+  {
+   "wsClose": "cb"
+  }
+ ]
+}

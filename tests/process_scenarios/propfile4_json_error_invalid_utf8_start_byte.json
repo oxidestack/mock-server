@@ -1,0 +1,26 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "0"
+  ],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_PROPERTY_FILE": "{{files}}/properties/json/syntax_invalid_utf8_start_byte.json"
+  },
+  "readiness": {
+    "logContains": "exception loading JSON property file",
+    "settleMillis": 3000
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "[ERROR] exception loading JSON property file [{{files}}/properties/json/syntax_invalid_utf8_start_byte.json]",
+      "shaded_package.com.fasterxml.jackson.core.JsonParseException: Invalid UTF-8 start byte 0xff\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 9]"
+    ],
+    "stdoutNotContains": [
+      "Reading properties from property file"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{"properties": {"wasmEnabled": "true"}, "steps": [
+  {"method": "PUT", "path": "/mockserver/wasm/modules?name=garbage", "body": "not wasm"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/garbage", "body": {"type": "WASM", "moduleName": "garbage"}}, "httpResponse": {"body": "never"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/missing", "body": {"type": "WASM", "moduleName": "nope"}}, "httpResponse": {"body": "never"}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"note": "garbage module fails closed", "method": "POST", "path": "/garbage", "body": "x"},
+  {"note": "missing module fails closed", "method": "POST", "path": "/missing", "body": "x"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS"},
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}]}
+]}

@@ -1,0 +1,82 @@
+{
+ "properties": {
+  "forwardProxyBlockPrivateNetworks": "true",
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "note": "an override forward checks forwardProxyBlockPrivateNetworks as every forward action does (HttpForwardAction.sendRequest); NoProxyHostsBypassesUpstreamProxyIntegrationTest.shouldStillBlockPrivateNetworkForHostOnTheList",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "override-clear",
+     "httpRequest": {
+      "path": "/ssrf/clear"
+     },
+     "httpOverrideForwardedRequest": {
+      "httpRequest": {
+       "path": "/target",
+       "secure": false,
+       "headers": {
+        "Host": [
+         "localhost:{{deadport}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "override-secure",
+     "httpRequest": {
+      "path": "/ssrf/secure"
+     },
+     "httpOverrideForwardedRequest": {
+      "httpRequest": {
+       "path": "/target",
+       "secure": true,
+       "headers": {
+        "Host": [
+         "localhost:{{deadport}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "override forward to a loopback Host blocked: 502",
+   "method": "GET",
+   "path": "/ssrf/clear"
+  },
+  {
+   "note": "and over TLS",
+   "method": "GET",
+   "path": "/ssrf/secure"
+  },
+  {
+   "note": "exchanges",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/ssrf/.*"
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  }
+ ]
+}

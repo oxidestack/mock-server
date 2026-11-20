@@ -1,0 +1,2420 @@
+{
+  "note": "PEM private keys that PUT /mockserver/oidc accepts but JWTGenerator.signJWT cannot sign with: an RSA modulus under 2048 bits (nimbus), inconsistent CRT values (the JDK), an EC key on a curve SunEC does not sign on; /token answers 404 and the callback's ERROR entry carries the chain. Keys the JDK does sign with (a wrong d with good CRT values, a non-CRT key, 8192 bits, explicit P-256 parameters) issue tokens.",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 512-bit RSA key (PKCS#1) is accepted",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIBPAIBAAJBANjLIjNnNVLvWpW9gMueg7/kSE0S+rXfyPeHRSqDyzLiYeq+h75A\nN4LcWllRzz8NJH6jNq9JIZzFiXWymUFeWJ8CAwEAAQJBAJABVwWIIB6oCab/yyb2\nc5OqwvAXlFvte+QYgbQ8+WQhTPE/w1UZWRGRSj/xPaW9qZyqi/tDyRm1qk4z01hK\nnlkCIQD42gxfZM5BUgKFodJYsgwnDiFDFSI+Xw7r0oLPjoTeTQIhAN8FV5xTy7jc\n0inoWdvtL2FEPNDCvz1wzKl7U8Sd+sCbAiEAv6P8P0J8bGVht9OlD9Ud8r2489ZE\nps/Bx+43+uuAe0kCIQDPdYS+IyULXj8SRNXyQ30jmfqIp+CGIvv/XH3cFKlBqQIg\nLmDUASEbnKJ3rICYx88ZNvKdLrTFey4vut5KwRsXezI=\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "RSASSASigner refuses a key under 2048 bits: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 1024-bit RSA key (PKCS#8) under RS512",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALiIgvKlIsaa9xvl\nhUi8N5lKh5ldpqmOwD8d1pF8MVsIRRuNobuMvcsUJ4MYoXSbHBKE+W02BWNDmtQO\nZXaQMoAMVZjIiuzM8qkaE2pvGtQiqeJ0292KlRrHG0wiTtBo+4Mamyefx8ZgCL1x\nXKYslxXWnmTXzrABy44mKWvuO8GfAgMBAAECgYA6qZsHTBvsCyN3SNXAM6VxI9JL\nnQv4ZxsSdYfapCKEj/J4OeQqXSmQv414DYJ2MUERWhh48W1xCvLTaugyctC6fR6P\n4Hk+XqjrRF2r3V+P/waldmZ62Ka/beWgKkB3t1KlOf4f36pBSpL2pmpa2zu4MbIx\n9Pu4iHeQ5CYTd9t4UQJBAPNVnh8aNT8h2c8dIA0OJvKMWkzf+BUDzVcmdX7N+/7d\noxYCvrZRdvbdFuRNGR+G49N4abc7pvS7HzQrfLl+MGMCQQDCI2E54S/5RGmVtVXf\nEhc/UcweTVLBgo5uTAGGIMpKx2NdWCv+Go8mE7lPPeJbTb0dfPtCnW/F6vCCYk3l\nJ4iVAkEAiEDj1nSdZil1RfUAEm9fPad7lNpAlrvXSjp9xjBfL5o5jMSit4IsRBUO\nkW3eaHnmrm4ZfAGJ/jWdRmAnadKQEwJAWacvCiSlG+7s95bzXf2jwLkMk13P/s9E\n6UiuV3ujD99+UqgaQNGRE9t980s30kRXNlv2SLAd4v95LC0rncyg9QJAMlc51rmu\noKVCXBd/dxYLSoyD/lNfsVkUyaXJuvl7KL1dActK4A5doAwlXMkHU89d9zTMpYnx\nK+6Nj0TXCWlXOw==\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS512"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "RSASSASigner refuses a key under 2048 bits: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 2047-bit RSA key",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIEoQIBAAKCAQBsmq/xBTp9cNpcVGY/FbBfqtjwyWyPac3hiAteS8NJpPM60PtW\n82vd1eXCXtXMbUNAukPcCMHBe+/lvxKULWK02GscH9LNPSt9Qm9bE1zWQlrkkhKu\nxHaylFBVxxAH+4h0qFN4cNmZfWh5yihlvYooeLsiBf5ilWA4z4qbLn8Ztiz6D1Fp\nYBtVnOjnuBI9OXFy6aIpU3vfXqdjB0vORoiKcyOeUZ67bFczlzVHZy7Ev6fukoMx\nNUzHv3Px61SaOXMVwLfeoRRL55oVkjPIDV+RukJe3t8ViSUJI9cDeaZh7uEq+sfX\nQVeISp+vU5EeHOBn++NLzZjhn4pCGG7h/WhbAgMBAAECggEAC7WZ5qijp8a1JGNN\nKtwRyh7HiR6Of9/ufLSIVUBh69zHBL5nevZ/2MkpHo3PC110dNQgYObozQ2pzeGO\nBT/ndowm8D9WIR7JQ5YYH3+08Lzyw9YkAYfZLGPlTXpK9jFegwVrCn9QVsY4r3jm\nZiHLdZWex4pR5Rsp5rYpwZV/yqu809meFiRFpvVi6+N3ZyNLmnopzp5+JFLJJueS\nG+72NqQPqmDIYhSvoc3Hi6KJBOMsEL3U9fyqSABrwCzK9vBnXC7srnYC2tvr5hgO\nfSn648SET+5XB5Ilh6dhkZJPbXqFcuul2FtUH3kGPz4bUFuMnmWtxLvhaXBF8VDj\nL8Q2EQKBgQD4JxIyf03bUbk7UPf0Fo7B5th7ZqPKSIkCbx5ft4ceu72jB21NiPlC\nnPpVXgrm+LVU8WY6o6o+mpj/fZQy+MxSy2dBuQXDFuFul9qVsk8NA3xmBJ9KfXuy\nykymPdRbse7Ain/JjaLZvEqS4rFocCcsxGP62d4gmTVweWEBmXYZ/QKBgHAJ5aVo\ngBs7ymTdmhok1HfVeiKaGRhOtB1RypjsUevjD2nkxQ86PIdYwOkimcZnrUBetRkZ\nL78ZRVTptJAkKpjqHNqZJ5+4zNOrXlN6zsTVayUohHRs0u5y1Wg93FMsRUr2qu8S\nJRqknO9xie/tQhx9eAUNOq1+MOFHx9tl+A83AoGAdb9MUiu3zL59bxjfXrGpcXZQ\n+FTemShL4pzJQ8+4zKt2sznd8nFxHNuRqRojgC85E6IryN1J9cSznl9/B6Sohwy+\n5R+fDU/5Ddn+PRPLkLg7ucitsNHT9SUqs6MY9Z17VV8ifYe4YyqGFCZ+2biFzict\n7aSdUsh/4+ukTPb9ZB0CgYAanh9TBtq4naHeCM/dujZIKg2UPuwLXFdqR85MOojT\n8+PrkpBGp91NgoaCXNgPzP3aNyXrSpKPYh+YptVhEVaVcbldLdm+FpeDCkmkp56M\nIPANqeyeBGSwhdOxqlC36eKkhqnhlnv+MnGeaWkN+V4liqGDAbuZEEvombcfpsAi\nTQKBgQDkfFClU3DyJMvSMjeD11iWBMf+RMQsRXl3p74+VddV+nctBRJhNIMiSgBD\n3aePeHqpm7HXmmORCMe13TR0mZ1rYsYoE2K81kG01y1x58sKMQFz/k0GnFyP6f5l\nb25jA/fO3TnN6Iip3wHacr6/oJJt1mRL5/TqZt1Z/Iol4dzQag==\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "RSASSASigner refuses a key under 2048 bits: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 384-bit RSA key: no key factory minimum before nimbus'",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIHyAgEAAjEAtax1a+CUQ/p226X07oqcFHUYzSvRsAG6y8ypICZrA5+WeeFdej8o\n0DJG8kz8cr0DAgMBAAECMBAlA0pS6tofp/BdDycjqjsnLM0O19OMU6bm430kwEEP\nCJHDDmRcevthFE2LIZTsAQIZAMyoppfg7c9wdW21WPRaRV9NoyRHnRkHaQIZAOM/\nr122IYUYM0xdPd4IFQeSXj0qr4YfiwIYen3in/qfO04q6ovk/vNcnAsCvv8h1s4p\nAhgoa6Z8q62wp8pQFfGwMY3UB/PdO193ItsCGQCG1N+7Sv8RQp/G8gqyXQvM3/6D\nFMXUUoQ=\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS384"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "RSASSASigner refuses a key under 2048 bits: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 2048-bit RSA key whose dp is not d mod (p - 1)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEA4F3X4OBtjqT7gJueeAgrQxKz0PLVINp+3dwHqKCnhkfZT0g1\niK6bxvXRqKrWbtLCKUxNeJYK6FbDht79k26wbvuDcVrYVKBjSzL+6pjLyiBJC1FU\nmyjiSXKbFdwhCeLSRB+bRiszr+nsfOXu7wjszKLbi+rRheo1P2wYkjni8pLJ48F5\nByEqm342geMwoGX2CXvJd8KZQTo9frr5oRagt5D06N49P4ZEiEb01AArgGTnUOZZ\nU5yb5pqXiUHae439YD0XXmqPhQgaYiQZf26U8xgyuBW1GbYx2NGKE0zWPK6JjbFw\n0x2Rc93qaYPvzdfI1BGQemsQtp+IHejvwPxsqQIDAQABAoIBAB3yeKuT2Ru2irlG\nTDcSRA/+UZD8sJTjhRaA1WbdFq82LNvHtBmL0NAUJIliUB/XssHHZPnI8SjE1/FL\nF0aT+im+GXPKX+CfzdEOO/c9MMpIV+eSUfwpz1ZlXSzkRmam51DfdR6/CnWbAA1F\ntYgjRVQlEq/Qxmmc8sGF4Ju37UJaNE5uL8512SA03lPowRhBwitlu5+eNN6xhGFd\nDcHsKtu6U11TU2idWckdZAinp4RDtM0djtXXvOzg+nu/l5I3De+g4t9iQHpvHLo3\nyl0IHgugZloevTxaMpWfZougq1qGDItr4Fu5l2RPzqyFddXRvpgT0J+ToWaGO4Iu\n+5h1BxkCgYEA/rsijXsghDB6czt4/OFYumiffzcr7Q1yUNtpzhhxWRbXowFq58Ic\ngoK/YU5kksVGybs3bPzOZkJEfBrVb2ZMKCoxzR80mt71uWcuDJUdkJJL+8a8SHqy\nX3iVxh1kM4iJ9Sni/L8zJOpvjxm7kSXgkvMNu/UI37ZPZgTyrrhIBtUCgYEA4Xv7\n2IUe4PoJDxCI30zkKTN/iEyuIRszhE9XdWaNsr4dn++nZ7HdK1lifhVl+ih9rh4b\nytU+toJY5/JZplYxkkpJUXe0RQVfTGlhHazNCsP3KZFe0/g319MWHEh13xZgGos2\n+0vMt1AjVcGXodstjx1c888cTlmZIpF2gH99YIUCgYAr3uDhiv4bphnAtNJugwT7\n/b7ScxcOmY1BnbhINW94D3YN7dWSmpy8YXZCdPTfTjiVz7eI/rUxaWJQGXL+35ho\nJnQzRpeRwKqDRuDoa9oOpxONBjoxJWiJBsSMvU0fjvlrjs44B1nwlqul8qGaKvLV\nfCS2ZUok9UoRYPLG4pgNDwKBgGehO9X/GHn9cDxkNQOrqxDkgjB6TW0Zu0uLy35B\na85CYgsncaDOtf8+TW31F7Eo+toTLGLELtZigcnYMCuqYY4CZj/y6/7swSe1JtUk\nnffcqLOKBDMXWVLvyLGm+8VT20dXxCUqaSO2yQaYur/Ao+eqbxX+kdvQgfjJMdVM\nwqqhAoGABhpUePcvSsUEkO77kTXUNdcwO0iUkl4/O9LlOjmYKgIVS40UOPilcmCv\nk+vDPzXzTp/O8yZ0Quplsu1m57FffhxFCwhWl/rbdHaJIrkaXsK6Gy7aX0YtDBwh\nrlJ3oWzo8tgruj8K/NAOwO1ksYbVw25Qqi/yHYD1ARSD6l5bxgU=\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "RSACore's CRT check fails: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 2048-bit RSA key with a wrong d but consistent CRT values: signed by CRT",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEA4F3X4OBtjqT7gJueeAgrQxKz0PLVINp+3dwHqKCnhkfZT0g1\niK6bxvXRqKrWbtLCKUxNeJYK6FbDht79k26wbvuDcVrYVKBjSzL+6pjLyiBJC1FU\nmyjiSXKbFdwhCeLSRB+bRiszr+nsfOXu7wjszKLbi+rRheo1P2wYkjni8pLJ48F5\nByEqm342geMwoGX2CXvJd8KZQTo9frr5oRagt5D06N49P4ZEiEb01AArgGTnUOZZ\nU5yb5pqXiUHae439YD0XXmqPhQgaYiQZf26U8xgyuBW1GbYx2NGKE0zWPK6JjbFw\n0x2Rc93qaYPvzdfI1BGQemsQtp+IHejvwPxsqQIDAQABAoIBAB3yeKuT2Ru2irlG\nTDcSRA/+UZD8sJTjhRaA1WbdFq82LNvHtBmL0NAUJIliUB/XssHHZPnI8SjE1/FL\nF0aT+im+GXPKX+CfzdEOO/c9MMpIV+eSUfwpz1ZlXSzkRmam51DfdR6/CnWbAA1F\ntYgjRVQlEq/Qxmmc8sGF4Ju37UJaNE5uL8512SA03lPowRhBwitlu5+eNN6xhGFd\nDcHsKtu6U11TU2idWckdZAinp4RDtM0djtXXvOzg+nu/l5I3De+g4t9iQHpvHLo3\nyl0IHgugZloevTxaMpWfZougq1qGDItr4Fu5l2RPzqyFddXRvpgT0J+ToWaGO4Iu\n+5h1BxsCgYEA/rsijXsghDB6czt4/OFYumiffzcr7Q1yUNtpzhhxWRbXowFq58Ic\ngoK/YU5kksVGybs3bPzOZkJEfBrVb2ZMKCoxzR80mt71uWcuDJUdkJJL+8a8SHqy\nX3iVxh1kM4iJ9Sni/L8zJOpvjxm7kSXgkvMNu/UI37ZPZgTyrrhIBtUCgYEA4Xv7\n2IUe4PoJDxCI30zkKTN/iEyuIRszhE9XdWaNsr4dn++nZ7HdK1lifhVl+ih9rh4b\nytU+toJY5/JZplYxkkpJUXe0RQVfTGlhHazNCsP3KZFe0/g319MWHEh13xZgGos2\n+0vMt1AjVcGXodstjx1c888cTlmZIpF2gH99YIUCgYAr3uDhiv4bphnAtNJugwT7\n/b7ScxcOmY1BnbhINW94D3YN7dWSmpy8YXZCdPTfTjiVz7eI/rUxaWJQGXL+35ho\nJnQzRpeRwKqDRuDoa9oOpxONBjoxJWiJBsSMvU0fjvlrjs44B1nwlqul8qGaKvLV\nfCS2ZUok9UoRYPLG4pgNDQKBgGehO9X/GHn9cDxkNQOrqxDkgjB6TW0Zu0uLy35B\na85CYgsncaDOtf8+TW31F7Eo+toTLGLELtZigcnYMCuqYY4CZj/y6/7swSe1JtUk\nnffcqLOKBDMXWVLvyLGm+8VT20dXxCUqaSO2yQaYur/Ao+eqbxX+kdvQgfjJMdVM\nwqqhAoGABhpUePcvSsUEkO77kTXUNdcwO0iUkl4/O9LlOjmYKgIVS40UOPilcmCv\nk+vDPzXzTp/O8yZ0Quplsu1m57FffhxFCwhWl/rbdHaJIrkaXsK6Gy7aX0YtDBwh\nrlJ3oWzo8tgruj8K/NAOwO1ksYbVw25Qqi/yHYD1ARSD6l5bxgU=\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "a token is signed",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "token1"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "it verifies against the published key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:token1}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a non-CRT RSA key (CRT members 0) with its certificate: signed with d",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIICOgIBADANBgkqhkiG9w0BAQEFAASCAiQwggIgAgEAAoIBAQDgXdfg4G2OpPuA\nm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIpTE14lgroVsOG\n3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJEH5tGKzOv6ex8\n5e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJe8l3wplBOj1+\nuvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1gPRdeao+FCBpi\nJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jUEZB6axC2n4gd\n6O/A/GypAgMBAAECggEAHfJ4q5PZG7aKuUZMNxJED/5RkPywlOOFFoDVZt0WrzYs\n28e0GYvQ0BQkiWJQH9eywcdk+cjxKMTX8UsXRpP6Kb4Zc8pf4J/N0Q479z0wykhX\n55JR/CnPVmVdLORGZqbnUN91Hr8KdZsADUW1iCNFVCUSr9DGaZzywYXgm7ftQlo0\nTm4vznXZIDTeU+jBGEHCK2W7n5403rGEYV0Nwewq27pTXVNTaJ1ZyR1kCKenhEO0\nzR2O1de87OD6e7+XkjcN76Di32JAem8cujfKXQgeC6BmWh69PFoylZ9mi6CrWoYM\ni2vgW7mXZE/OrIV11dG+mBPQn5OhZoY7gi77mHUHGQIBAAIBAAIBAAIBAAIBAA==\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "a token is signed",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "token2"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "it verifies against the published key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:token2}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a non-CRT RSA key without a certificate: its public key cannot be derived",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIICOgIBADANBgkqhkiG9w0BAQEFAASCAiQwggIgAgEAAoIBAQDgXdfg4G2OpPuA\nm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIpTE14lgroVsOG\n3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJEH5tGKzOv6ex8\n5e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJe8l3wplBOj1+\nuvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1gPRdeao+FCBpi\nJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jUEZB6axC2n4gd\n6O/A/GypAgMBAAECggEAHfJ4q5PZG7aKuUZMNxJED/5RkPywlOOFFoDVZt0WrzYs\n28e0GYvQ0BQkiWJQH9eywcdk+cjxKMTX8UsXRpP6Kb4Zc8pf4J/N0Q479z0wykhX\n55JR/CnPVmVdLORGZqbnUN91Hr8KdZsADUW1iCNFVCUSr9DGaZzywYXgm7ftQlo0\nTm4vznXZIDTeU+jBGEHCK2W7n5403rGEYV0Nwewq27pTXVNTaJ1ZyR1kCKenhEO0\nzR2O1de87OD6e7+XkjcN76Di32JAem8cujfKXQgeC6BmWh69PFoylZ9mi6CrWoYM\ni2vgW7mXZE/OrIV11dG+mBPQn5OhZoY7gi77mHUHGQIBAAIBAAIBAAIBAAIBAA==\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an 8192-bit RSA key under RS512",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\n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\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS512"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "a token is signed",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "token3"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "it verifies against the published key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:token3}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a secp256k1 key (SEC1) with a P-256 certificate",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEIEwaxFj7gW5PHkHS7gjYtfxUa4tWWKySZxucBe91mlpkoAcGBSuBBAAK\noUQDQgAE2PRC3VXDRaRVMMn/TniB6AaG8+7+aR1TBqFsuBISrD85HBUtfOQZ2bM/\ntwItt4G0W5q1GnSaLa4wBGFzH7w5fw==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a secp256k1 key with its own certificate: generateJWK refuses the certificate's key",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEIEwaxFj7gW5PHkHS7gjYtfxUa4tWWKySZxucBe91mlpkoAcGBSuBBAAK\noUQDQgAE2PRC3VXDRaRVMMn/TniB6AaG8+7+aR1TBqFsuBISrD85HBUtfOQZ2bM/\ntwItt4G0W5q1GnSaLa4wBGFzH7w5fw==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB1TCBvqADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBWMBAGByqGSM49AgEGBSuBBAAKA0IABNj0Qt1Vw0WkVTDJ\n/054gegGhvPu/mkdUwahbLgSEqw/ORwVLXzkGdmzP7cCLbeBtFuatRp0mi2uMARh\ncx+8OX8wDQYJKoZIhvcNAQELBQADggEBACIyjHCuXJsKPz2i+IQb+ByvKK6ruWfM\n9Q+JY4YNzGP76ufjwPPkPcFEO1NXnsg2XWpLFgYmIVJ4QeM0LfkZFb7Dwen6XehI\nFD3zPgMC3MK801tGlHgUfzUkb8cQbPdPmEg8FaVN3SYmoA+sGr3Vuklbu8/98Bdr\nDubFxMXw8tk9iQZVVWq5s65bMYMTNBpShVxKnQFH/6+fL+0UIXEWRpyEGZ3k5I59\naIL1h2x2xDtMbAJOeo+gPA7VRzu4gcqWfrgZGQWmXhPDfS5nwtpiDW7+oV5IeITK\nSpr8GFCLv6/DHTkpewU/lTZhe52tDsxmN0Eq81VJsONY6t1fM0cI8GU=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a secp224r1 key (PKCS#8): the curve's aliases in the message",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMHgCAQAwEAYHKoZIzj0CAQYFK4EEACEEYTBfAgEBBBxlr6GYp211teQ0kIXkkwrG\nDOe1aBmZAn9xO1ttoTwDOgAEIhz++7uhGedld1Y76kpZj5B3ggeHoendRn8xDtYF\nYltZavckzmuiUwuJnyCjNEKgRtcJo6dGbrs=\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an X9.62 prime192v1 key",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMF8CAQEEGOP1RO7OucCy7DI15t9SfemvUbAeQbOLz6AKBggqhkjOPQMBAaE0AzIA\nBBfDBkB0Kk9A/tLxZ6souoBZiMn4YhsTBU9gKwa70BkR9YRsXF/GCt5g4yEN78Ly\new==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES384",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB9TCB3qADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDB2MBAGByqGSM49AgEGBSuBBAAiA2IABFL7J+1Tt2AKIq/a\ngXhEcSyeMb+lK95nWUAaBZRtbyZbP02mEk0GThvhsjnME2zSRmKYWiaNoy4/K4hZ\nH+r+c/QROdkUh2fGTy8NKkLBq518k7+zfiVhFtqRkEH5lE7J0jANBgkqhkiG9w0B\nAQsFAAOCAQEAjjfawPYVOI3eJ3aP0Y+vLCRa/4X+L/EYS6zwn6mtKylVDkGFzjWM\nxJEZBUkNT3vBpZSJbdsp2uwaB7IjmNTnRNSc35fLJrNQqr1jvBhMPRAgxo5zj7Tq\nUxOQ95CmjzFzym25IFEv9oB2Ei2JciKAMcR0nuHjJrzyLDhEcxHE4vjurALg++A/\nRYwLDV+towuHWvwM8SDJamUdk8BUgbdGvFvBKOQxj1Njsktf6fd+vbq4fYLFHi9f\nFXn3jCdm1mJb4ChZPgqjtBNZ6+0mePGstTZ3B20/bdotHPZCJx2RwCvU04P2oboD\ni9ivbeu+MZSFU41gs9KuHNQBxWoXc0U2Qg==\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a binary-field sect283k1 key",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMIGAAgEBBCQBTZZqBeTzNh5IMS/bOhR3POcx8LIZ2KujuQRuOt5xJrglzg+gBwYF\nK4EEABChTANKAAQG66iVTEV7V2yIv7PHCpD31cFf4MoElu5N1k4T4AIFxJlIMpEG\nauv4Q8m/F4VjyuCsY0QXqccMPORWKAkiiqNzAYW7mgTfuV0=\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a brainpoolP256r1 key (PKCS#8)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGIAgEAMBQGByqGSM49AgEGCSskAwMCCAEBBwRtMGsCAQEEIFET4mVz6LnU/B8X\na1A5xGo9DofoFySHtxgInNGwsHEBoUQDQgAEP1fEH8kZdsvtCkqc099Vug3rSjiU\nUdh9TVUd9qTcmIeVt9MZIBmFuqGtpRyweanbG1PyMqhvBdSv5d1TOwglaQ==\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a brainpoolP256t1 key: a curve only BouncyCastle names (ECNamedCurveSpec)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMHgCAQEEIKT2KoYn/m8Z3TRuov+nwvKNNQCNvu58f5z8Oc3lrw8RoAsGCSskAwMC\nCAEBCKFEA0IABEmSWNB/Q+5M7rCLF3gR7DPqa4yQuruLAIKia5ChBQQ9HDrqVbZv\nHvJPxfyton4AeuObKLUFX1cCnqRoSI4J8oI=\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an SM2 key (PKCS#8, parameters only in the algorithm identifier)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBG0wawIBAQQgsdUXqrPK1LeRrZnT\nD9N51ib3f7viB8XTa+F0TyjX1mmhRANCAASwJ3tab0Pv0k/vMeSwv/RUCMIrjJvW\nwvleB480pfByp5WGmh9jGemNEfBAndgak2io/iNRlZAe2PjXh7rQoajX\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a c2pnb163v1 key",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMFYCAQEEFQH+EcIOrTxyw0c9fBWZ4RYh3ykl+qAKBggqhkjOPQMAAaEuAywABAQ7\nw1sNVJV1rXkY5SBbUT6WiV7/tAR4ZEg+a1lFGhh0nQ8HtkKet3WYKQ==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a WTLS curve key: refused at PUT time",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMFECAQEEFQCra0+8aKlut9zBRyVE5uDGi1hA46AHBgVnKwEEB6EsAyoABCVg/6Tt\nwmileNTS89AgF4pkIBwQjJ3TlkQ4CWZOASsp+w9YTe+7MMQ=\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a P-256 key with explicit curve parameters (SEC1)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMIIBaAIBAQQgu8x2YMt7/x4kDafBWfKUvq3TDK146KDPwgZghbogHOSggfowgfcC\nAQEwLAYHKoZIzj0BAQIhAP////8AAAABAAAAAAAAAAAAAAAA////////////////\nMFsEIP////8AAAABAAAAAAAAAAAAAAAA///////////////8BCBaxjXYqjqT57Pr\nvVV2mIa8ZR0GsMxTsPY7zjw+J9JgSwMVAMSdNgiG5wSTamZ44ROdJreBn36QBEEE\naxfR8uEsQkf4vOblY6RA8ncDfYEt6zOg9KE5RdiYwpZP40Li/hp/m47n60p8D54W\nK84zV2sxXs7LtkBoN79R9QIhAP////8AAAAA//////////+85vqtpxeehPO5ysL8\nYyVRAgEBoUQDQgAEm56SD3g1bPvWhUIIEIn7o1veNhIrDtrLY7TVcRdBIPi/ew2v\n6vLRRgwV/9LDKBp9Nl+jw5G5B/+tQmH1Fatj/w==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBFjCBvqADAgECAgIBEjAKBggqhkjOPQQDAjAVMRMwEQYDVQQDDAp0aWNrZXQt\nMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UEAwwK\ndGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJuekg94NWz71oVC\nCBCJ+6Nb3jYSKw7ay2O01XEXQSD4v3sNr+ry0UYMFf/SwygafTZfo8ORuQf/rUJh\n9RWrY/8wCgYIKoZIzj0EAwIDRwAwRAIgXqB5ag4L2+mmu6PkMxcwsC62iuOdQgZe\nTK3PWKjMAi8CIA3+0Wlti9Vu2jZNv01oxGVaIL/fDbzNTMWDYdOSupzt\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "a token is signed",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "token4"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "it verifies against the published key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:token4}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a P-256 key with explicit curve parameters (PKCS#8)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIBeQIBADCCAQMGByqGSM49AgEwgfcCAQEwLAYHKoZIzj0BAQIhAP////8AAAAB\nAAAAAAAAAAAAAAAA////////////////MFsEIP////8AAAABAAAAAAAAAAAAAAAA\n///////////////8BCBaxjXYqjqT57PrvVV2mIa8ZR0GsMxTsPY7zjw+J9JgSwMV\nAMSdNgiG5wSTamZ44ROdJreBn36QBEEEaxfR8uEsQkf4vOblY6RA8ncDfYEt6zOg\n9KE5RdiYwpZP40Li/hp/m47n60p8D54WK84zV2sxXs7LtkBoN79R9QIhAP////8A\nAAAA//////////+85vqtpxeehPO5ysL8YyVRAgEBBG0wawIBAQQgu8x2YMt7/x4k\nDafBWfKUvq3TDK146KDPwgZghbogHOShRANCAASbnpIPeDVs+9aFQggQifujW942\nEisO2stjtNVxF0Eg+L97Da/q8tFGDBX/0sMoGn02X6PDkbkH/61CYfUVq2P/\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBFjCBvqADAgECAgIBEjAKBggqhkjOPQQDAjAVMRMwEQYDVQQDDAp0aWNrZXQt\nMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UEAwwK\ndGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJuekg94NWz71oVC\nCBCJ+6Nb3jYSKw7ay2O01XEXQSD4v3sNr+ry0UYMFf/SwygafTZfo8ORuQf/rUJh\n9RWrY/8wCgYIKoZIzj0EAwIDRwAwRAIgXqB5ag4L2+mmu6PkMxcwsC62iuOdQgZe\nTK3PWKjMAi8CIA3+0Wlti9Vu2jZNv01oxGVaIL/fDbzNTMWDYdOSupzt\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "a token is signed",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "token5"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "it verifies against the published key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:token5}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a secp256k1 key with explicit parameters: an unnamed ECParameterSpec",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIBYQIBADCB7AYHKoZIzj0CATCB4AIBATAsBgcqhkjOPQEBAiEA////////////\n/////////////////////////v///C8wRAQgAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHBEEE\neb5mfvncu6xVoGKVzocLBwKb/NstzijZWfKBWxb4F5hIOtp3JqPEZV2k+/wOEQio\n/Re0SKaFVBmcR9CP+xDUuAIhAP////////////////////66rtzmr0igO7/SXozQ\nNkFBAgEBBG0wawIBAQQgtrOZe3o1j8bAPcWoS6nA/oXqlIZplFySlhL030fSj7Sh\nRANCAATrkU5+YzIccUQripwEQrXuQ5bpn+ikn9tQ1a5li6H/XmT0t8AqbT2Ynsye\nua0ahCB4YnimUENumsfJ2VcGoZoW\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's ECDSASignature cannot sign on this curve: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        },
+        {
+          "regex": "\"n\" : \"[\\w-]+\"",
+          "replace": "\"n\" : <modulus>"
+        },
+        {
+          "regex": "\"(x|y)\" : \"[\\w-]+\"",
+          "replace": "\"${1}\" : <coordinate>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        {
+          "regex": "(ECNamedCurveSpec|ECParameterSpec)@[0-9a-f]+",
+          "replace": "${1}@<identity>"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    }
+  ]
+}

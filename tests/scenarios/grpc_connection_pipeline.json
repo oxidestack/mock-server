@@ -1,0 +1,92 @@
+{
+ "steps": [
+  {
+   "note": "no descriptors to start with",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  },
+  {
+   "note": "expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "body": {
+      "greeting": "hi"
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "upload on a connection opened without descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc",
+   "pipelinePut": true
+  },
+  {
+   "note": "same connection after the upload: no gRPC handler, plain HTTP",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "a fresh connection after the upload: gRPC-Web",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear on a connection opened with descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear",
+   "pipelinePut": true
+  },
+  {
+   "note": "same connection after the clear: the handler sees no descriptors",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "a fresh connection after the clear: plain HTTP",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "upload again",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "what was matched",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "clear descriptors at the end",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  }
+ ]
+}

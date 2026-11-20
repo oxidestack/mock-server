@@ -1,0 +1,35 @@
+{
+  "source": "the image documents -Xmx in JAVA_TOOL_OPTIONS as the way to change its heap cap; the heap-derived defaults (maxEventLogSizeInBytes, maxOpenAiResponsesSizeInBytes, maxLogEntries, maxPendingDelayedResponses, maxQueuedTemplateActions; maxExpectations stays at its cap), in GET /mockserver/config and GET /mockserver/configuration alike follow a 512 MiB ceiling less 20 MiB instead of 45% of the container memory.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-Xmx512m"
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "compareBody": "configuration"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

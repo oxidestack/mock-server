@@ -1,0 +1,286 @@
+{
+ "properties": {
+  "metricsEnabled": "true",
+  "llmCostBudgetUsd": "0.02",
+  "llmProvider": "OPENAI"
+ },
+ "steps": [
+  {
+   "note": "llmCostBudgetUsd 0.02, gpt-4o at 1000+1000 tokens costs 0.0125 per completion",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_(cost|input|output))[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "llm",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "hi",
+       "usage": {
+        "inputTokens": 1000,
+        "outputTokens": 1000
+       }
+      }
+     }
+    },
+    {
+     "id": "proxy-llm",
+     "httpRequest": {
+      "path": "/v1/proxy-llm"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "plain",
+     "httpRequest": {
+      "path": "/plain"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/respond",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "respond",
+     "httpRequest": {
+      "path": "/respond"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    }
+   ]
+  },
+  {
+   "note": "forward to an LLM path under budget: proceeds (cost recorded by the mock and by the forward?)",
+   "method": "POST",
+   "path": "/v1/proxy-llm",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "second forward",
+   "method": "POST",
+   "path": "/v1/proxy-llm",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "a served mock completion is never blocked",
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "clear the log so the entries below are the blocked forward's alone",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": {}
+  },
+  {
+   "note": "forward once over budget: 429",
+   "method": "POST",
+   "path": "/v1/proxy-llm",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "a non-LLM forward is not blocked over budget",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "unmatched request proxied to an LLM host: blocked before any connection",
+   "method": "POST",
+   "path": "/v1/embeddings",
+   "headers": {
+    "Host": "api.openai.com",
+    "Content-Type": "application/json"
+   },
+   "body": "{}"
+  },
+  {
+   "note": "trip counter",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_(cost|input|output))[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "what the blocked forward logged: its receipt and match only",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "body": {
+    "path": "/v1/proxy-llm"
+   }
+  },
+  {
+   "note": "request-responses of the blocked forward: none, it was answered without an exchange",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/v1/proxy-llm"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "llm",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "hi",
+       "usage": {
+        "inputTokens": 1000,
+        "outputTokens": 1000
+       }
+      }
+     }
+    },
+    {
+     "id": "proxy-llm",
+     "httpRequest": {
+      "path": "/v1/proxy-llm"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "plain",
+     "httpRequest": {
+      "path": "/plain"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/respond",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "respond",
+     "httpRequest": {
+      "path": "/respond"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    }
+   ]
+  },
+  {
+   "note": "after reset the budget is fresh: the forward proceeds",
+   "method": "POST",
+   "path": "/v1/proxy-llm",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\":\\d+",
+    "\"created\" : \\d+"
+   ]
+  },
+  {
+   "note": "the Prometheus trip counter survives a reset",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_(cost|input|output))[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

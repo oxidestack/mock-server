@@ -1,0 +1,22 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_BLOB_STORE_TYPE": "azure"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 120,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}\njava.lang.IllegalStateException: blobStoreType=azure configured but org.mockserver.blob.azure.AzureBlobStoreRegistrar is not on the classpath; add the mockserver-blob-azure dependency\n",
+      "Caused by: java.lang.ClassNotFoundException: org.mockserver.blob.azure.AzureBlobStoreRegistrar"
+    ],
+    "stdoutNotContains": ["started on port", "valid options are:"],
+    "stderrNotContains": ["exception while starting"]
+  }
+}

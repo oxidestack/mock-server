@@ -1,0 +1,413 @@
+{
+ "steps": [
+  {
+   "note": "reset",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "create if/then/else",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "if": {
+      "method": "GET",
+      "headers": {
+       "X-Tenant": [
+        "a"
+       ]
+      }
+     },
+     "then": {
+      "path": "/a/.*"
+     },
+     "else": {
+      "path": "/b",
+      "queryStringParameters": {
+       "q": [
+        "1"
+       ]
+      }
+     },
+     "not": false
+    },
+    "httpResponse": {
+     "body": "hit"
+    }
+   }
+  },
+  {
+   "note": "then branch matches",
+   "method": "GET",
+   "path": "/a/x",
+   "headers": {
+    "X-Tenant": "a"
+   }
+  },
+  {
+   "note": "then branch fails (hint field order is Java identity-hash order upstream)",
+   "method": "GET",
+   "path": "/b?q=1",
+   "headers": {
+    "X-Tenant": "a"
+   },
+   "mask": [
+    "[a-zA-Z]+ did not match \\(.*\\)(?=; \\+)"
+   ]
+  },
+  {
+   "note": "else branch matches",
+   "method": "GET",
+   "path": "/b?q=1"
+  },
+  {
+   "note": "else branch fails (hint field order is Java identity-hash order upstream)",
+   "method": "GET",
+   "path": "/a/x",
+   "mask": [
+    "[a-zA-Z]+ did not match \\(.*\\)(?=; \\+)"
+   ]
+  },
+  {
+   "note": "guard fails on method, else matches",
+   "method": "POST",
+   "path": "/b?q=1",
+   "headers": {
+    "X-Tenant": "a"
+   }
+  },
+  {
+   "note": "logs after branches",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "retrieve active",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "retrieve requests by conditional",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "if": {
+     "method": "POST"
+    },
+    "then": {
+     "path": "/b"
+    }
+   }
+  },
+  {
+   "note": "retrieve requests by conditional else",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "if": {
+     "method": "POST"
+    },
+    "then": {
+     "path": "/nothing"
+    },
+    "else": {
+     "path": "/a/x"
+    }
+   }
+  },
+  {
+   "note": "verify by conditional",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "if": {
+      "method": "POST"
+     },
+     "then": {
+      "path": "/b"
+     }
+    },
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   }
+  },
+  {
+   "note": "verify by conditional fails",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "if": {
+      "method": "POST"
+     },
+     "then": {
+      "path": "/c"
+     }
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "java",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVA"
+  },
+  {
+   "note": "javascript",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVASCRIPT"
+  },
+  {
+   "note": "reset 2",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "create no else, not, nested",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "if": {
+       "path": "/n"
+      },
+      "then": {
+       "not": true,
+       "if": {
+        "method": "DELETE"
+       },
+       "then": {
+        "headers": {
+         "x": [
+          "1"
+         ]
+        }
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "nested"
+     }
+    },
+    {
+     "httpRequest": {
+      "not": true,
+      "if": {
+       "path": "/n.*"
+      },
+      "then": {
+       "method": "PUT"
+      }
+     },
+     "httpResponse": {
+      "body": "negated"
+     }
+    },
+    {
+     "httpRequest": {
+      "if": {
+       "path": "/guard"
+      }
+     },
+     "httpResponse": {
+      "body": "no then"
+     }
+    }
+   ]
+  },
+  {
+   "note": "retrieve active 2",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "nested: not(DELETE without x)",
+   "method": "GET",
+   "path": "/n"
+  },
+  {
+   "note": "nested: DELETE with x",
+   "method": "DELETE",
+   "path": "/n",
+   "headers": {
+    "x": "1"
+   }
+  },
+  {
+   "note": "nested: DELETE without x -> negated",
+   "method": "DELETE",
+   "path": "/n"
+  },
+  {
+   "note": "negated: /nx PUT",
+   "method": "PUT",
+   "path": "/nx"
+  },
+  {
+   "note": "no then: guard",
+   "method": "GET",
+   "path": "/guard"
+  },
+  {
+   "note": "no else: guard false",
+   "method": "GET",
+   "path": "/elsewhere"
+  },
+  {
+   "note": "logs after nested",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "java 2",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVA"
+  },
+  {
+   "note": "retrieve by plain filter lists conditionals",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/nothing"
+   }
+  },
+  {
+   "note": "retrieve by conditional filter",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "if": {
+     "path": "/guard"
+    }
+   }
+  },
+  {
+   "note": "clear by plain filter keeps conditionals",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {}
+  },
+  {
+   "note": "retrieve after plain clear",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "clear by conditional",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "if": {
+     "path": "/guard"
+    }
+   }
+  },
+  {
+   "note": "retrieve after clear",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "reset 3",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "invalid: then without if",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "then": {
+      "path": "/x"
+     }
+    },
+    "httpResponse": {}
+   }
+  },
+  {
+   "note": "invalid: bad branch",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "if": {
+      "path": "/x"
+     },
+     "then": {
+      "bogus": 1
+     }
+    },
+    "httpResponse": {}
+   }
+  },
+  {
+   "note": "invalid: if not object",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "if": "x"
+    },
+    "httpResponse": {}
+   }
+  },
+  {
+   "note": "openapi branch",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "if": {
+      "method": "GET"
+     },
+     "then": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+      "operationId": "listPets"
+     }
+    },
+    "httpResponse": {
+     "body": "oa"
+    }
+   }
+  },
+  {
+   "note": "openapi branch matches",
+   "method": "GET",
+   "path": "/pets"
+  },
+  {
+   "note": "openapi branch fails",
+   "method": "GET",
+   "path": "/nope"
+  },
+  {
+   "note": "openapi branch with servers prefix",
+   "method": "GET",
+   "path": "/v1/pets"
+  },
+  {
+   "note": "openapi guard false, no else",
+   "method": "POST",
+   "path": "/anything"
+  },
+  {
+   "note": "logs after openapi",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "retrieve active 3",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}]}
+]
+}

@@ -1,0 +1,334 @@
+{
+  "note": "a key store whose first chain violates the JDK's algorithm constraints (jdk.certpath.disabledAlgorithms: an MD5-signed leaf, a 512-bit RSA key) next to a good key: the key manager skips it and the good key connects. The stores are made by tests/files/asyncapi/mqtt-ssl/key-choice/make-constraints.sh",
+  "properties": {
+    "tlsMutualAuthenticationRequired": "true",
+    "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/private-ca/ca-cert.pem"
+  },
+  "steps": [
+    {
+      "note": "the broker: every binary message this server receives (after its TLS, which requires a client certificate issued by its tlsMutualAuthenticationCertificateChain, a private CA, and names that CA in its CertificateRequest) but a lone zero byte is answered with an MQTT CONNACK, so a load connects exactly when the client presents a certificate the server accepts",
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "binaryData": "AA==",
+          "not": true
+        },
+        "binaryResponse": {
+          "binaryData": "IAMAAAA="
+        }
+      },
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "probe md5-good SunX509",
+      "method": "PUT",
+      "path": "/mockserver/asyncapi",
+      "body": {
+        "spec": {
+          "asyncapi": "2.6.0",
+          "info": {
+            "title": "Ssl",
+            "version": "1"
+          },
+          "channels": {
+            "orders": {
+              "publish": {
+                "message": {
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "brokerConfig": {
+          "mqttBrokerUrl": "ssl://localhost:{{port}}",
+          "publishOnLoad": false,
+          "mqttSecurity": {
+            "sslProperties": {
+              "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/md5-good.p12",
+              "com.ibm.ssl.keyStorePassword": "changeit",
+              "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+              "com.ibm.ssl.trustStorePassword": "changeit"
+            }
+          }
+        }
+      },
+      "maxMillis": 60000
+    },
+    {
+      "note": "probe md5-good NewSunX509",
+      "method": "PUT",
+      "path": "/mockserver/asyncapi",
+      "body": {
+        "spec": {
+          "asyncapi": "2.6.0",
+          "info": {
+            "title": "Ssl",
+            "version": "1"
+          },
+          "channels": {
+            "orders": {
+              "publish": {
+                "message": {
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "brokerConfig": {
+          "mqttBrokerUrl": "ssl://localhost:{{port}}",
+          "publishOnLoad": false,
+          "mqttSecurity": {
+            "sslProperties": {
+              "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/md5-good.p12",
+              "com.ibm.ssl.keyStorePassword": "changeit",
+              "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+              "com.ibm.ssl.trustStorePassword": "changeit",
+              "com.ibm.ssl.keyManager": "NewSunX509"
+            }
+          }
+        }
+      },
+      "maxMillis": 60000
+    },
+    {
+      "note": "probe good-md5 SunX509",
+      "method": "PUT",
+      "path": "/mockserver/asyncapi",
+      "body": {
+        "spec": {
+          "asyncapi": "2.6.0",
+          "info": {
+            "title": "Ssl",
+            "version": "1"
+          },
+          "channels": {
+            "orders": {
+              "publish": {
+                "message": {
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "brokerConfig": {
+          "mqttBrokerUrl": "ssl://localhost:{{port}}",
+          "publishOnLoad": false,
+          "mqttSecurity": {
+            "sslProperties": {
+              "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-md5.p12",
+              "com.ibm.ssl.keyStorePassword": "changeit",
+              "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+              "com.ibm.ssl.trustStorePassword": "changeit"
+            }
+          }
+        }
+      },
+      "maxMillis": 60000
+    },
+    {
+      "note": "probe good-md5 NewSunX509",
+      "method": "PUT",
+      "path": "/mockserver/asyncapi",
+      "body": {
+        "spec": {
+          "asyncapi": "2.6.0",
+          "info": {
+            "title": "Ssl",
+            "version": "1"
+          },
+          "channels": {
+            "orders": {
+              "publish": {
+                "message": {
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "brokerConfig": {
+          "mqttBrokerUrl": "ssl://localhost:{{port}}",
+          "publishOnLoad": false,
+          "mqttSecurity": {
+            "sslProperties": {
+              "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-md5.p12",
+              "com.ibm.ssl.keyStorePassword": "changeit",
+              "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+              "com.ibm.ssl.trustStorePassword": "changeit",
+              "com.ibm.ssl.keyManager": "NewSunX509"
+            }
+          }
+        }
+      },
+      "maxMillis": 60000
+    },
+    {
+      "note": "probe rsa512-good SunX509",
+      "method": "PUT",
+      "path": "/mockserver/asyncapi",
+      "body": {
+        "spec": {
+          "asyncapi": "2.6.0",
+          "info": {
+            "title": "Ssl",
+            "version": "1"
+          },
+          "channels": {
+            "orders": {
+              "publish": {
+                "message": {
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "brokerConfig": {
+          "mqttBrokerUrl": "ssl://localhost:{{port}}",
+          "publishOnLoad": false,
+          "mqttSecurity": {
+            "sslProperties": {
+              "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/rsa512-good.p12",
+              "com.ibm.ssl.keyStorePassword": "changeit",
+              "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+              "com.ibm.ssl.trustStorePassword": "changeit"
+            }
+          }
+        }
+      },
+      "maxMillis": 60000
+    },
+    {
+      "note": "probe rsa512-good NewSunX509",
+      "method": "PUT",
+      "path": "/mockserver/asyncapi",
+      "body": {
+        "spec": {
+          "asyncapi": "2.6.0",
+          "info": {
+            "title": "Ssl",
+            "version": "1"
+          },
+          "channels": {
+            "orders": {
+              "publish": {
+                "message": {
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "brokerConfig": {
+          "mqttBrokerUrl": "ssl://localhost:{{port}}",
+          "publishOnLoad": false,
+          "mqttSecurity": {
+            "sslProperties": {
+              "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/rsa512-good.p12",
+              "com.ibm.ssl.keyStorePassword": "changeit",
+              "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+              "com.ibm.ssl.trustStorePassword": "changeit",
+              "com.ibm.ssl.keyManager": "NewSunX509"
+            }
+          }
+        }
+      },
+      "maxMillis": 60000
+    },
+    {
+      "note": "probe good-rsa512 SunX509",
+      "method": "PUT",
+      "path": "/mockserver/asyncapi",
+      "body": {
+        "spec": {
+          "asyncapi": "2.6.0",
+          "info": {
+            "title": "Ssl",
+            "version": "1"
+          },
+          "channels": {
+            "orders": {
+              "publish": {
+                "message": {
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "brokerConfig": {
+          "mqttBrokerUrl": "ssl://localhost:{{port}}",
+          "publishOnLoad": false,
+          "mqttSecurity": {
+            "sslProperties": {
+              "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-rsa512.p12",
+              "com.ibm.ssl.keyStorePassword": "changeit",
+              "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+              "com.ibm.ssl.trustStorePassword": "changeit"
+            }
+          }
+        }
+      },
+      "maxMillis": 60000
+    },
+    {
+      "note": "probe good-rsa512 NewSunX509",
+      "method": "PUT",
+      "path": "/mockserver/asyncapi",
+      "body": {
+        "spec": {
+          "asyncapi": "2.6.0",
+          "info": {
+            "title": "Ssl",
+            "version": "1"
+          },
+          "channels": {
+            "orders": {
+              "publish": {
+                "message": {
+                  "payload": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "brokerConfig": {
+          "mqttBrokerUrl": "ssl://localhost:{{port}}",
+          "publishOnLoad": false,
+          "mqttSecurity": {
+            "sslProperties": {
+              "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-rsa512.p12",
+              "com.ibm.ssl.keyStorePassword": "changeit",
+              "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+              "com.ibm.ssl.trustStorePassword": "changeit",
+              "com.ibm.ssl.keyManager": "NewSunX509"
+            }
+          }
+        }
+      },
+      "maxMillis": 60000
+    }
+  ]
+}

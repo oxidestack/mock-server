@@ -1,0 +1,56 @@
+{
+  "properties": {
+    "maxHeaderSize": "32768",
+    "logLevel": "WARN"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {"httpRequest": {"path": "/upload"}, "httpResponse": {"body": "served"}}
+      ],
+      "mask": ["\"id\" : \"[^\"]+\""]
+    },
+    {
+      "note": "an HTTP/2 request expecting 100-continue whose HEADERS frame leaves the stream open is sent an interim 100 (HttpObjectAggregator.newContinueResponse on the stream's pipeline)",
+      "h2raw": {"method": "POST", "path": "/upload", "authority": "localhost", "decode": true, "open": true, "readMillis": 1000,
+                "headers": [["expect", "100-continue"]]}
+    },
+    {
+      "note": "then its body is read and the request answered; the Expect header is gone from what is recorded",
+      "h2raw": {"method": "POST", "path": "/upload", "authority": "localhost", "decode": true, "body": "request body",
+                "headers": [["expect", "100-continue"]]}
+    },
+    {
+      "note": "a request expecting 100-continue that ends with its HEADERS frame",
+      "h2raw": {"method": "GET", "path": "/upload", "authority": "localhost", "decode": true,
+                "headers": [["expect", "100-continue"]]}
+    },
+    {
+      "note": "an expectation other than 100-continue",
+      "h2raw": {"method": "POST", "path": "/upload", "authority": "localhost", "decode": true, "body": "request body",
+                "headers": [["expect", "something-else"]]}
+    },
+    {
+      "note": "trailers over maxHeaderSize after the interim 100 reset the stream on a direct connection",
+      "h2raw": {"method": "POST", "path": "/upload", "authority": "localhost", "decode": true, "body": "request body",
+                "headers": [["expect", "100-continue"]],
+                "trailers": [["x-trailer", "{{repeat:32728:a}}"]],
+                "streams": [{"method": "GET", "path": "/upload"}]}
+    },
+    {
+      "note": "in a SOCKS5 tunnel, trailers over maxHeaderSize after the interim 100 are answered 431 (a 1xx is no response head), then reset",
+      "h2raw": {"socks5": "localhost:443", "method": "POST", "path": "/upload", "authority": "localhost:443", "decode": true, "body": "request body",
+                "headers": [["expect", "100-continue"]],
+                "trailers": [["x-trailer", "{{repeat:32728:a}}"]],
+                "streams": [{"method": "GET", "path": "/upload"}]}
+    },
+    {
+      "note": "what was recorded",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+      "body": {}
+    }
+  ]
+}

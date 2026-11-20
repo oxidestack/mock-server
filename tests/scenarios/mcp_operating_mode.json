@@ -1,0 +1,131 @@
+{
+ "isolated": true,
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize"
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "set_operating_mode",
+     "arguments": {
+      "mode": "capture"
+     }
+    }
+   },
+   "note": "capture"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/mode",
+   "note": "the mode endpoint agrees"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "set_operating_mode",
+     "arguments": {
+      "mode": "bogus"
+     }
+    }
+   },
+   "note": "unknown mode"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "set_operating_mode",
+     "arguments": {}
+    }
+   },
+   "note": "no mode"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "set_operating_mode",
+     "arguments": {
+      "mode": 7
+     }
+    }
+   },
+   "note": "not text"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:s}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "set_operating_mode",
+     "arguments": {
+      "mode": "SPY"
+     }
+    }
+   },
+   "note": "back to spy"
+  }
+ ]
+}

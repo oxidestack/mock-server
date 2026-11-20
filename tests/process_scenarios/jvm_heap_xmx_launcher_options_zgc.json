@@ -1,0 +1,29 @@
+{
+  "source": "JDK_JAVA_OPTIONS (read by the java launcher, after JAVA_TOOL_OPTIONS) overrides a JAVA_TOOL_OPTIONS -Xmx; with -XX:+UseZGC kept, the 20000001k ceiling aligns up to ZGC's 2 MiB granule.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-XX:+UseZGC -Xmx1g",
+    "JDK_JAVA_OPTIONS": "-Xmx20000001k"
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

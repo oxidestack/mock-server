@@ -1,0 +1,223 @@
+{
+ "source": "hand-written: PUT /mockserver/generateExpectation without an LLM backend (HttpState.handleGenerateExpectation, generateSimpleStub, generateExpectationError)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/context"
+    },
+    "httpResponse": {
+     "statusCode": 418
+    }
+   },
+   "note": "an active expectation: context for the LLM path only, the fallback ignores it"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "note": "no body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {},
+   "note": "no request field"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": null
+   },
+   "note": "null request"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": [
+    1
+   ],
+   "note": "an array body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": "notjson",
+   "note": "unparseable body: the generic error, a WARN in the log"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": "abc"
+   },
+   "note": "request is no object"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "method": 5
+    }
+   },
+   "note": "request fails the schema"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "type": "GRPC"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "method": "POST",
+     "path": "/created"
+    }
+   },
+   "note": "POST: 201"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "method": "DELETE",
+     "path": {
+      "not": true,
+      "value": "/gone"
+     },
+     "headers": {
+      "a": [
+       "b"
+      ]
+     }
+    }
+   },
+   "note": "DELETE: 204; only method and path are kept, the not flag dropped"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "method": "post",
+     "path": "/lower"
+    },
+    "limit": 0
+   },
+   "note": "method compared ignoring case; limit is clamped and unused without a backend"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {},
+    "limit": 99,
+    "preview": "false"
+   },
+   "note": "no method or path: both left out; text 'false' reads as false, so the empty matcher is added"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "specUrlOrPayload": "x"
+    }
+   },
+   "note": "an OpenAPI definition: path /"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/a"
+    },
+    "preview": 0
+   },
+   "note": "preview 0 reads as false"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/b"
+    },
+    "preview": "False"
+   },
+   "note": "only a trimmed 'false' text is false"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/b"
+    },
+    "preview": null,
+    "limit": "x"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "method": "GET",
+     "path": "/added",
+     "queryStringParameters": {
+      "q": [
+       "1"
+      ]
+     }
+    },
+    "preview": false
+   },
+   "note": "preview false adds the suggestion"
+  },
+  {
+   "method": "PUT",
+   "path": "/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/added"
+    }
+   },
+   "note": "the bare alias"
+  },
+  {
+   "method": "GET",
+   "path": "/added",
+   "note": "the added expectation answers"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/generateExpectation",
+   "note": "only PUT is routed",
+   "body": {
+    "request": {
+     "path": "/x"
+    }
+   }
+  }
+ ]
+}

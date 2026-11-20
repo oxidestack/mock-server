@@ -1,0 +1,93 @@
+{
+ "source": "the dry run's Velocity time limit and its two slots. Each sleep waits (replay) until the run before it holds its slot, and the limit is 3 s rather than 400 ms, so on a loaded host runs a and b still hold both slots when the third arrives; the sleep after them waits until their threads gave the slots back (the answer is sent just before)",
+ "properties": {
+  "velocityTemplateExecutionTimeout": "3000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "#foreach($i in [1..2147483647])#foreach($j in [1..2147483647])#end#end"
+   },
+   "note": "first run, stopped at 3000 ms",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ],
+   "async": "a"
+  },
+  {
+   "sleepMillis": 100,
+   "awaitCounts": {"templateDryRuns": 1}
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "#foreach($i in [1..2147483647])#foreach($j in [1..2147483647])#end#end"
+   },
+   "note": "second run",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ],
+   "async": "b"
+  },
+  {
+   "sleepMillis": 100,
+   "awaitCounts": {"templateDryRuns": 2}
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "#foreach($i in [1..2147483647])#foreach($j in [1..2147483647])#end#end"
+   },
+   "note": "a third concurrent run is refused",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "await": "a"
+  },
+  {
+   "await": "b"
+  },
+  {
+   "sleepMillis": 100,
+   "awaitCounts": {"templateDryRuns": 0}
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "#foreach($i in [1..2147483647])#foreach($j in [1..2147483647])#end#end"
+   },
+   "note": "a slot is free again",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "MUSTACHE",
+    "template": "{\"statusCode\": 200}"
+   },
+   "note": "mustache after",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  }
+ ]
+}

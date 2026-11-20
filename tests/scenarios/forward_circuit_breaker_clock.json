@@ -1,0 +1,165 @@
+{
+ "source": "hand-written: ForwardCircuitBreaker reads TimeService::currentTimeMillis, so its window passes when PUT /mockserver/clock advances it, never while the clock is frozen; the forward SLO sample is stamped with TimeService.currentTimeMillis (HttpActionHandler.recordForwardMetrics). isolated: reset does not clear the clock.",
+ "isolated": true,
+ "properties": {
+  "forwardProxyCircuitBreakerEnabled": "true",
+  "forwardProxyCircuitBreakerFailureThreshold": "1",
+  "forwardProxyCircuitBreakerWindowMillis": "60000",
+  "sloTrackingEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "freeze",
+    "instant": "2024-01-01T00:00:00Z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/up503"
+     },
+     "httpResponse": {
+      "statusCode": 503,
+      "body": "down"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ok"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "fine"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovr"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up503",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovrok"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/ok",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "one upstream 503 opens the breaker (threshold 1)",
+   "method": "GET",
+   "path": "/ovr"
+  },
+  {
+   "note": "the forward SLO sample carries the frozen instant: an explicit window of exactly that millisecond holds it",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "name": "frozen",
+    "window": {
+     "type": "EXPLICIT",
+     "fromEpochMillis": 1704067200000,
+     "toEpochMillis": 1704067200000
+    },
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.5,
+      "scope": "FORWARD"
+     }
+    ]
+   }
+  },
+  {
+   "note": "open: fails fast",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 59999
+   }
+  },
+  {
+   "note": "still inside the window on the virtual clock",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 1
+   }
+  },
+  {
+   "note": "the window has elapsed on the virtual clock: one half-open trial goes through, fails, and re-opens",
+   "method": "GET",
+   "path": "/ovr"
+  },
+  {
+   "note": "re-opened for another window",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "advance",
+    "durationMillis": 60000
+   }
+  },
+  {
+   "note": "a successful trial closes the breaker",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "note": "closed: forwarded again",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clock",
+   "body": {
+    "action": "reset"
+   },
+   "mask": [
+    "\"currentInstant\" : \"[^\"]+\"",
+    "\"currentEpochMillis\" : -?[0-9]+"
+   ]
+  }
+ ]
+}

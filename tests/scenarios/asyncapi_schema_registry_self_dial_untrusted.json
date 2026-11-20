@@ -1,0 +1,73 @@
+{
+ "note": "the Schema Registry client (java.net.http.HttpClient) dials this server over https by IP and refuses its certificate (MockServer's CA is not in the JVM's default trust). The client closes the connection without sending the fatal alert its SSLEngine produced (a throwaway TLS listener read an EOF, no certificate_unknown alert), so the server sees the handshake end with the connection and logs no handshake-failure WARN, unlike an amqps client (an SSLSocket, which sends certificate_unknown: asyncapi_amqps_default_trust). Its own server (\"properties\"): the CA loads and the first-failure WARN are logged once per server.",
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "the load: the registry is this server, untrusted; the publish on load fails at the schema registration, before the (dead) broker is dialed",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "RegistrySelfDial",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "{{deadhost}}",
+     "kafkaValueFormat": "avro",
+     "avroSchema": {
+      "type": "record",
+      "name": "R",
+      "fields": [
+       {
+        "name": "id",
+        "type": "int"
+       }
+      ]
+     },
+     "kafkaSchemaRegistryUrl": "https://127.0.0.1:{{port}}"
+    }
+   },
+   "maxMillis": 120000
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "no TLS handshake failure entry: only the reset and the CA loaded for the inbound handshake",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\"timestamp\" : \"[^\"]*\"",
+    "\"correlationId\" : \"[^\"]*\""
+   ]
+  }
+ ]
+}

@@ -1,0 +1,79 @@
+{
+ "source": "HttpState's drift and diff endpoints (GET /mockserver/drift, PUT /mockserver/drift/clear, PUT /mockserver/diff, PUT /mockserver/baseline/compare) and the drift a forward records",
+ "steps": [
+  {"method": "GET", "path": "/mockserver/drift", "note": "an empty drift store"},
+  {"method": "PUT", "path": "/mockserver/drift/clear"},
+  {"method": "PUT", "path": "/mockserver/diff", "note": "no body"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": "  ", "note": "a blank body"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": {"expected": {"path": "/a"}}, "note": "no actual"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": {"expected": {"path": "/a"}, "actual": null}, "note": "a null actual"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": "[1, 2]", "note": "not an object"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": "{\"expected\":", "note": "not JSON: the parser's message"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": {"expected": {"path": 1, "foo": 2}, "actual": {}}, "note": "an invalid request definition: its schema report, spliced unescaped into the JSON"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": {"expected": {"specUrlOrPayload": "x", "operationId": "y"}, "actual": {"path": "/a"}}, "note": "an OpenAPI definition is not an HttpRequest"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": {"expected": {"path": "/a"}, "actual": {"path": "/a"}}, "note": "identical"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": {
+    "expected": {"method": "GET", "path": "/a", "headers": {"X-One": ["1", "2"], "X-Same": ["s"], "x-changed": ["old"]}, "queryStringParameters": {"q": ["1"], "gone": ["x"]}, "cookies": {"session": "abc", "Old": "o"}, "body": "text"},
+    "actual": {"method": "POST", "path": "/b", "headers": [{"name": "x-same", "values": ["s"]}, {"name": "X-Changed", "values": ["new"]}, {"name": "X-New", "values": ["n"]}], "queryStringParameters": {"q": ["2"]}, "cookies": [{"name": "SESSION", "value": "abd"}, {"name": "fresh", "value": "f"}], "body": {"type": "JSON", "json": {"a": 1}}}
+  }, "note": "every field: method, path, body, headers (names lower-cased, values joined), query parameters, cookies"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": {"expected": {"path": "/a", "body": "x"}, "actual": {"path": "/a"}}, "note": "a body removed"},
+  {"method": "PUT", "path": "/mockserver/diff", "body": {"expected": {}, "actual": {"method": "PUT"}}, "note": "a method added"},
+  {"method": "PUT", "path": "/diff", "body": {"expected": {"path": "/a"}, "actual": {"path": "/b"}}, "note": "the bare alias"},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "note": "no body"},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "body": {}, "note": "no baseline"},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "body": {"baseline": null}, "note": "a null baseline"},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "body": "{\"baseline\":", "note": "not JSON"},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "body": {"baseline": [{"foo": 1}]}, "note": "an invalid expectation"},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "body": {"baseline": [{"httpRequest": {"path": "/a"}, "httpResponse": {}}], "current": [{"foo": 1}, {"bar": 2}]}, "note": "two invalid expectations"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/mockserver/baseline/compare"}, "note": "the failures are logged"},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "body": {"baseline": [], "current": []}, "note": "nothing on either side"},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "body": {
+    "baseline": [
+     {"httpRequest": {"path": "/same"}, "httpResponse": {"statusCode": 200, "body": {"a": 1}}},
+     {"httpRequest": {"method": "get", "path": "/users/"}, "httpResponse": {"statusCode": 200, "headers": {"X-A": ["1"], "X-Gone": ["g"]}, "body": {"type": "JSON", "json": {"id": 1, "name": "n", "tags": ["a"], "nested": {"x": true}}}}},
+     {"httpRequest": {"path": "/removed"}, "httpResponse": {"statusCode": 204}},
+     {"httpRequest": {"method": "POST", "path": "/text"}, "httpResponse": {"body": "plain"}},
+     {"httpRequest": {"path": "/noresponse"}, "httpForward": {"host": "localhost", "port": 1081}},
+     {"httpRequest": {"path": "/arrays"}, "httpResponse": {"body": [1, {"a": 1}]}},
+     {"httpRequest": {"path": "/same"}, "httpResponse": {"statusCode": 500}},
+     {"httpRequest": {"specUrlOrPayload": "x", "operationId": "y"}, "httpResponse": {}}
+    ],
+    "current": [
+     {"httpRequest": {"path": "/same"}, "httpResponse": {"statusCode": 200, "body": {"a": 2}}},
+     {"httpRequest": {"method": "GET", "path": "/users", "headers": {"Accept": ["json"]}}, "httpResponse": {"statusCode": 201, "headers": {"x-a": ["2"], "X-New": ["n"]}, "body": {"id": "1", "tags": ["a", "b"], "nested": [], "extra": null}}},
+     {"httpRequest": {"method": "POST", "path": "/text"}, "httpResponse": {"body": "other"}},
+     {"httpRequest": {"path": "/noresponse"}, "httpResponse": {}},
+     {"httpRequest": {"path": "/arrays"}, "httpResponse": {"body": [2]}},
+     {"httpRequest": {"path": "/added"}, "httpResponse": {}}
+    ]
+  }, "note": "added, removed and changed interactions: keys by method and path without a trailing slash, response status, headers and JSON shape"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"id": "live-1", "httpRequest": {"path": "/live"}, "httpResponse": {"statusCode": 200, "body": {"k": "v"}}},
+    {"id": "live-2", "priority": 5, "httpRequest": {"method": "DELETE", "path": "/live/"}, "httpResponse": {"statusCode": 202}}
+  ]},
+  {"method": "PUT", "path": "/mockserver/baseline/compare", "body": {"baseline": {"httpRequest": {"path": "/live"}, "httpResponse": {"statusCode": 200, "body": {"k": 1}}}}, "note": "a single baseline expectation, compared with the active expectations"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"id": "upstream", "priority": 1000, "httpRequest": {"headers": {"Host": ["localhost:[0-9]+"]}}, "httpResponse": {"statusCode": 500, "headers": {"X-Up": ["1"], "Content-Type": ["application/json"], "X-Same": ["a", "b"]}, "body": "{\"a\": 1, \"c\": {\"d\": true}, \"e\": [1]}"}},
+    {"id": "stub", "httpRequest": {"path": "/some_path"}, "httpResponse": {"statusCode": 200, "headers": {"X-Stub": ["s"], "x-same": ["a,b"], "date": ["d"]}, "body": {"a": "x", "b": 2, "e": []}}},
+    {"id": "stub-no-status", "httpRequest": {"path": "/some_path", "method": "GET"}, "httpResponse": {"headers": {"X-Up": ["2"]}, "body": "not json"}},
+    {"id": "not-matching", "httpRequest": {"path": "/other"}, "httpResponse": {"statusCode": 201}}
+  ]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": "{\"id\": \"forward\", \"priority\": 10, \"httpRequest\": {\"path\": \"/some_path\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}"},
+  {"method": "GET", "path": "/some_path", "headers": {"Host": "harvest.client"}, "note": "forwarded to the server itself, answered by the upstream stub"},
+  {"sleepMillis": 500},
+  {"method": "GET", "path": "/mockserver/drift", "note": "the drift of both response stubs matching the request, newest first", "mask": [{"regex": "\"epochTimeMs\" : \\d+", "replace": "\"epochTimeMs\" : <millis>"}]},
+  {"method": "GET", "path": "/mockserver/drift?expectationId=stub", "note": "one expectation's, oldest first", "mask": [{"regex": "\"epochTimeMs\" : \\d+", "replace": "\"epochTimeMs\" : <millis>"}]},
+  {"method": "GET", "path": "/mockserver/drift?expectationId=&limit=2", "note": "a blank id is no filter", "mask": [{"regex": "\"epochTimeMs\" : \\d+", "replace": "\"epochTimeMs\" : <millis>"}]},
+  {"method": "GET", "path": "/mockserver/drift?limit=abc", "note": "an unparsable limit is the default", "mask": [{"regex": "\"epochTimeMs\" : \\d+", "replace": "\"epochTimeMs\" : <millis>"}]},
+  {"method": "GET", "path": "/mockserver/drift?limit=0"},
+  {"method": "GET", "path": "/mockserver/drift?limit=-3"},
+  {"method": "GET", "path": "/drift?expectationId=stub-no-status", "note": "the bare alias", "mask": [{"regex": "\"epochTimeMs\" : \\d+", "replace": "\"epochTimeMs\" : <millis>"}]},
+  {"method": "PUT", "path": "/mockserver/drift/clear"},
+  {"method": "GET", "path": "/mockserver/drift"},
+  {"method": "GET", "path": "/some_path", "headers": {"Host": "harvest.client"}},
+  {"sleepMillis": 500},
+  {"method": "PUT", "path": "/mockserver/reset", "note": "a reset clears the drift store"},
+  {"method": "GET", "path": "/mockserver/drift"}
+ ]
+}

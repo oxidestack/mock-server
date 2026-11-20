@@ -1,0 +1,85 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/up\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"Content-Type\" : [ \"application/json\" ]\n    },\n    \"body\" : \"{\\\"upstream\\\":true}\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"chaos\" : {\n    \"errorProbability\" : 1.0,\n    \"errorStatus\" : 503,\n    \"retryAfter\" : \"7\"\n  },\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/up\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fe/err\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"chaos\" : {\n    \"dropConnectionProbability\" : 1.0\n  },\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/up\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fe/drop\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"chaos\" : {\n    \"latency\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 600\n    }\n  },\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/up\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fe/slow\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 503,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 73",
+        "content-type: application/json",
+        "retry-after: 7"
+      ],
+      "body": "{\"error\":{\"type\":\"chaos_injected\",\"message\":\"injected HTTP chaos error\"}}",
+      "note": "streamed forward: an injected error replaces the stream"
+    },
+    {
+      "status": 503,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 73",
+        "content-type: application/json",
+        "retry-after: 7"
+      ],
+      "body": "{\"error\":{\"type\":\"chaos_injected\",\"message\":\"injected HTTP chaos error\"}}",
+      "note": "buffered forward: the same error"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-type: application/json",
+        "transfer-encoding: chunked"
+      ],
+      "body": "{\"upstream\":true}",
+      "note": "streamed forward: chaos latency before the head"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 17",
+        "content-type: application/json"
+      ],
+      "body": "{\"upstream\":true}",
+      "note": "buffered forward: the same latency"
+    },
+    {
+      "tcpText": "",
+      "closed": true,
+      "note": "streamed forward: the connection is dropped"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fe/err\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ],\n      \"accept\" : [ \"text/event-stream\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"content-type\" : [ \"application/json\" ],\n      \"Retry-After\" : [ \"7\" ]\n    },\n    \"body\" : \"{\\\"error\\\":{\\\"type\\\":\\\"chaos_injected\\\",\\\"message\\\":\\\"injected HTTP chaos error\\\"}}\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fe/err\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"content-type\" : [ \"application/json\" ],\n      \"Retry-After\" : [ \"7\" ]\n    },\n    \"body\" : \"{\\\"error\\\":{\\\"type\\\":\\\"chaos_injected\\\",\\\"message\\\":\\\"injected HTTP chaos error\\\"}}\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n} ]",
+      "note": "the replaced streamed exchange is logged as the error"
+    }
+  ]
+}

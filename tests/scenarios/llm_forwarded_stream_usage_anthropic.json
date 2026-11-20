@@ -1,0 +1,142 @@
+{
+ "source": "hand-written (generated from upstream's ProviderStreamFixtures): forwarded ANTHROPIC responses relayed or aggregated as streams counted by LlmStreamUsageScanner (HttpActionHandler.observeForwardedLlmStream, emitStreamedForwardGenAiSpan, logStreamedUsageUnavailable), forwarded to this server's own mocks; Bedrock's amazon-bedrock-invocationMetrics and include_usage hint are upstream #29 (ab126cc20)",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "ANTHROPIC"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-anthropic",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/messages",
+      "headers": {
+       "x-case": [
+        "anthropic"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_1nZdL29xx5MUA1yADyHTEsnR8uuvGzszyY\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[],\"model\":\"claude-sonnet-4-5-20250929\",\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":25,\"cache_creation_input_tokens\":3,\"cache_read_input_tokens\":7,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\nevent: ping\ndata: {\"type\": \"ping\"}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hello\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":15}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+     }
+    },
+    {
+     "id": "forward-anthropic",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/anthropic"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/messages",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "anthropic"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-anthropic-ping",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/messages",
+      "headers": {
+       "x-case": [
+        "anthropic-ping"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "event: ping\ndata: {\"type\": \"ping\"}\n\n"
+     }
+    },
+    {
+     "id": "forward-anthropic-ping",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/anthropic-ping"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/messages",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "anthropic-ping"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "Anthropic Messages: message_start and message_delta: 25 in, 15 out, 7 cache read, 3 cache creation",
+   "method": "POST",
+   "path": "/client/anthropic",
+   "body": "{\"model\":\"claude-sonnet-4-5\",\"stream\":true,\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a stream with no usage: logged without the include_usage hint",
+   "method": "POST",
+   "path": "/client/anthropic-ping",
+   "body": "{\"model\":\"claude-haiku-4-5\",\"stream\":true}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "the streamed-usage lines of the event log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+     "replace": "",
+     "reason": "every entry but the streamed-usage lines"
+    }
+   ]
+  }
+ ]
+}

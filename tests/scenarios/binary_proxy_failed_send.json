@@ -1,0 +1,40 @@
+{
+ "properties": {
+  "proxyRemoteHost": "localhost",
+  "proxyRemotePort": "{{deadport}}"
+ },
+ "steps": [
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "note": "a binary request forwarded to an upstream that refuses the connection: no answer, the connection is closed"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the received entry and the failed-send WARNs (the event loop's and the scheduler's, in either order)",
+   "compare": "unordered",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [{"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+", "replace": "/<client>", "reason": "the binary client's address: the Docker gateway's when recorded, loopback on replay"}],
+   "compare": "unordered",
+   "note": "the same entries as text"
+  }
+ ]
+}

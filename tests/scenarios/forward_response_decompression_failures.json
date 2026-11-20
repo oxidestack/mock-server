@@ -1,0 +1,129 @@
+{
+  "properties": {},
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/dec/up/gzip_invalid"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IGd6aXANCkNvbnRlbnQtTGVuZ3RoOiAxNQ0KDQpub3QgZ3ppcCBhdCBhbGw="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dec/fwd/gzip_invalid"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dec/up/gzip_invalid",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dec/up/zstd"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHpzdGQNCkNvbnRlbnQtTGVuZ3RoOiA0Mw0KDQootS/9JC71AADAaGVsbG8gY29tcHJlc3NlZCB3b3JsZCwgAQCsMsdevhDE"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dec/fwd/zstd"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dec/up/zstd",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dec/up/zstd_invalid"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NCkNvbnRlbnQtRW5jb2Rpbmc6IHpzdGQNCkNvbnRlbnQtTGVuZ3RoOiAxNQ0KDQpub3QgenN0ZCBhdCBhbGw="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/dec/fwd/zstd_invalid"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/dec/up/zstd_invalid",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ]
+    },
+    {
+      "note": "invalid gzip bytes: DecompressionException, 502",
+      "tcp": [
+        {
+          "text": "GET /dec/fwd/gzip_invalid HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "zstd: decoded, 200",
+      "tcp": [
+        {
+          "text": "GET /dec/fwd/zstd HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "invalid zstd bytes: DecompressionException (zstd-jni's ZstdIOException), 502",
+      "tcp": [
+        {
+          "text": "GET /dec/fwd/zstd_invalid HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "what the failed decodes log; the channel-closed warning races the failure entries (either order in the oracle)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "body": {
+        "path": "/dec/fwd/.*"
+      },
+      "compare": "unordered",
+      "mask": [
+        {
+          "regex": "(Millis\" : )\\d+",
+          "replace": "${1}0",
+          "reason": "measured forward timing"
+        }
+      ]
+    }
+  ]
+}

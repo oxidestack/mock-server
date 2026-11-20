@@ -1,0 +1,81 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/target\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"some\" : [ \"header\" ],\n      \"cookie\" : [ \"some=parameter\" ]\n    },\n    \"body\" : \"some_body_one\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/target\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fwd\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/direct-set\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"set-cookie\" : [ \"a=b\" ]\n    },\n    \"body\" : \"x\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/direct-cookies\"\n  },\n  \"httpResponse\" : {\n    \"cookies\" : {\n      \"c\" : \"d\"\n    },\n    \"body\" : \"x\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 13",
+        "cookie: some=parameter",
+        "some: header"
+      ],
+      "body": "some_body_one",
+      "note": "a response with a cookie header, served directly"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 13",
+        "cookie: some=parameter",
+        "set-cookie: some=parameter",
+        "some: header"
+      ],
+      "body": "some_body_one",
+      "note": "the same response forwarded: upstream decodes its cookie header as a cookie and re-encodes it"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 1",
+        "set-cookie: a=b"
+      ],
+      "body": "x",
+      "note": "a set-cookie header"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 1",
+        "set-cookie: c=d"
+      ],
+      "body": "x",
+      "note": "response cookies"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"reasonPhrase\" : \"OK\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"some\" : [ \"header\" ],\n      \"cookie\" : [ \"some=parameter\" ]\n    },\n    \"cookies\" : {\n      \"some\" : \"parameter\"\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"some_body_one\",\n      \"rawBytes\" : \"c29tZV9ib2R5X29uZQ==\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n} ]",
+      "note": "the recorded expectation of the forward"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "note": "MainTest.shouldExitNonZeroWhenTheHttp3PortIsNotAPort and shouldPrintTheStackTraceOfAnyOtherHttp3StartFailure: an http3Port out of range stops the start, logs the Http3StartupException that names the fix, with its stack trace, and exits 1. The oracle is its HTTP/3 image: the default image has no QUIC native, where upstream's test is skipped",
+  "target": "both",
+  "oracleImage": "http3",
+  "args": [
+    "-serverPort",
+    "0",
+    "-Dmockserver.http3Port=70000"
+  ],
+  "env": {
+    "SERVER_PORT": "",
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 90,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}",
+      "HTTP/3 is enabled (http3Port=70000) but its server could not start on UDP port 70000, so MockServer cannot start: fix the underlying error or remove http3Port to run without HTTP/3 (underlying error: IllegalArgumentException: port out of range:70000)"
+    ],
+    "stdoutNotContains": [
+      "[INFO] started on port",
+      "AsyncAPI control-plane registered"
+    ]
+  }
+}

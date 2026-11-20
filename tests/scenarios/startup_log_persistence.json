@@ -1,0 +1,47 @@
+{
+ "properties": {
+  "proxySetupLogging": "false",
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "/nonexistent/dir/persisted.json"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "note": "an expectation the persisted file cannot take",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "persisted-1",
+    "httpRequest": {
+     "path": "/persisted"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "the persisted file could not be created at startup nor written on the change, as entries (a Java throwable is left out: docs/divergences.md)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "note": "as text",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

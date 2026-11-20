@@ -1,0 +1,163 @@
+{
+ "quic": true,
+ "properties": {
+  "http3Port": "19481"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ka",
+      "keepAlive": false
+     },
+     "httpResponse": {
+      "body": "keep-alive false"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ka",
+      "keepAlive": true
+     },
+     "httpResponse": {
+      "body": "keep-alive true"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ka"
+     },
+     "httpResponse": {
+      "body": "keep-alive any"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/only-false",
+      "keepAlive": false
+     },
+     "httpResponse": {
+      "body": "only false"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/velocity"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"keepAlive=$request.keepAlive silent=$!request.keepAlive #if($request.keepAlive)yes#{else}no#end\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/mustache"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"keepAlive={{request.keepAlive}} {{#request.keepAlive}}yes{{/request.keepAlive}}{{^request.keepAlive}}no{{/request.keepAlive}}\"}"
+     }
+    }
+   ]
+  },
+  {
+   "h3": true,
+   "method": "GET",
+   "path": "/ka",
+   "note": "keepAlive is null over HTTP/3: neither keepAlive matcher matches, the unconstrained one does"
+  },
+  {
+   "h3": true,
+   "method": "GET",
+   "path": "/velocity",
+   "note": "Velocity sees a null keepAlive"
+  },
+  {
+   "h3": true,
+   "method": "GET",
+   "path": "/mustache",
+   "note": "Mustache sees a null keepAlive"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the oracle may log its startup entries after the opening reset (they survive any clear): reset again once it has served HTTP/3"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ka",
+      "keepAlive": false
+     },
+     "httpResponse": {
+      "body": "keep-alive false"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ka",
+      "keepAlive": true
+     },
+     "httpResponse": {
+      "body": "keep-alive true"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ka"
+     },
+     "httpResponse": {
+      "body": "keep-alive any"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/only-false",
+      "keepAlive": false
+     },
+     "httpResponse": {
+      "body": "only false"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/velocity"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"keepAlive=$request.keepAlive silent=$!request.keepAlive #if($request.keepAlive)yes#{else}no#end\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/mustache"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"keepAlive={{request.keepAlive}} {{#request.keepAlive}}yes{{/request.keepAlive}}{{^request.keepAlive}}no{{/request.keepAlive}}\"}"
+     }
+    }
+   ]
+  },
+  {
+   "h3": true,
+   "method": "GET",
+   "path": "/only-false",
+   "note": "keepAlive: false does not match a null keep-alive"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/only-false"
+   },
+   "note": "the mismatch logged as expected:false found:null"
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {"binaryData": "EBESExQVFhcYGQ=="},
+     "binaryResponse": {"binaryData": "AQ=="},
+     "times": {"remainingTimes": 1, "unlimited": false}
+    },
+    {
+     "httpRequest": {"binaryData": "ICEiIyQlJicoKQ=="},
+     "binaryResponse": {"binaryData": "Cg=="},
+     "scenarioName": "binaryScenario",
+     "scenarioState": "Started",
+     "newScenarioState": "Second"
+    },
+    {
+     "httpRequest": {"binaryData": "ICEiIyQlJicoKQ=="},
+     "binaryResponse": {"binaryData": "Cw=="},
+     "scenarioName": "binaryScenario",
+     "scenarioState": "Second"
+    }
+   ],
+   "note": "a once-only binary expectation and two scenario-gated ones",
+   "mask": ["\"id\" : \"[0-9a-f-]+\""]
+  },
+  {
+   "tcp": ["EBESExQVFhcYGQ=="],
+   "note": "the once-only expectation answers"
+  },
+  {
+   "tcp": ["ICEiIyQlJicoKQ=="],
+   "note": "Started: the first scenario step answers and moves the scenario on"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario/binaryScenario",
+   "note": "a binary match transitions the scenario"
+  },
+  {
+   "tcp": ["ICEiIyQlJicoKQ=="],
+   "note": "Second: the second scenario step answers"
+  },
+  {
+   "tcp": ["EBESExQVFhcYGQ=="],
+   "note": "the once-only expectation is used up"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "is a used-up binary expectation still listed",
+   "mask": ["\"id\" : \"[0-9a-f-]+\""]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

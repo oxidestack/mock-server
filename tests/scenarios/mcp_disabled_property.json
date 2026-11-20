@@ -1,0 +1,31 @@
+{
+ "properties": {
+  "mcpEnabled": "false"
+ },
+ "steps": [
+  {
+   "note": "mcpEnabled=false: no MCP handler, so the request reaches the ordinary pipeline",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26", "clientInfo": {"name": "test"}}}
+  },
+  {"method": "GET", "path": "/mockserver/mcp"},
+  {"method": "DELETE", "path": "/mockserver/mcp"},
+  {
+   "note": "over HTTP/2 too",
+   "h2": true,
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {"content-type": "application/json"},
+   "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}"
+  },
+  {
+   "note": "an expectation can now match the path",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/mockserver/mcp"}, "httpResponse": {"statusCode": 202, "body": "mocked mcp"}}
+  },
+  {"method": "POST", "path": "/mockserver/mcp", "body": "{}"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"}
+ ]
+}

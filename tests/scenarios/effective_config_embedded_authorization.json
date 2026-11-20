@@ -1,0 +1,23 @@
+{
+ "source": "ConfigurationPropertiesEffectiveConfigGlobalStateTest.redactsACredentialEmbeddedInsideAStructuredValueOnEverySurface: GET /mockserver/config must mask a credential inside a header-list value exactly as GET /mockserver/configuration does. llmBackendsConfig is given as a path, the documented shape, which stays readable. (The inline JSON document is covered by effective_config_inline_json and effective_config_inline_json_env.)",
+ "properties": {
+  "prometheusRemoteWriteHeaders": "Authorization=Bearer REAL-TOKEN-XYZ,X-Scope-OrgID=tenant-a",
+  "llmBackendsConfig": "/etc/mockserver/backends.json"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  }
+ ]
+}

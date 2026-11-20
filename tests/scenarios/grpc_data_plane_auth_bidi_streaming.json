@@ -1,0 +1,221 @@
+{
+ "source": "upstream 456a9dee3 and 6dcc66b58 (GrpcReflectionDataPlaneAuthenticationIntegrationTest, GrpcBidiDataPlaneAuthenticationIntegrationTest). With dataPlaneAuthenticationRequired, GrpcToHttpRequestHandler refuses a gRPC request without credentials with UNAUTHENTICATED before reflection, chaos and the unknown-method and decode-error answers; health stays open. With grpcBidiStreamingEnabled, GrpcBidiRouterHandler routes reflection to the streaming handler only with credentials, and checks them before the bidi match.",
+ "properties": {
+  "dataPlaneAuthenticationRequired": "true",
+  "dataPlaneBearerAuthenticationToken": "reflection-token",
+  "grpcBidiStreamingEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "a unary expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "body": "{\"greeting\":\"hi\"}"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "note": "reflection without credentials is refused (bidi streaming on)",
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAI6AA==",
+   "binaryBody": true
+  },
+  {
+   "note": "reflection with credentials (bidi streaming on)",
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "authorization": "Bearer reflection-token"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAI6AA==",
+   "binaryBody": true
+  },
+  {
+   "note": "an unknown method without credentials is refused, not UNIMPLEMENTED (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/NoSuchMethod",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "note": "an unknown method with credentials is UNIMPLEMENTED (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/NoSuchMethod",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "authorization": "Bearer reflection-token"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "note": "health stays open (bidi streaming on)",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "note": "a mocked unary call without credentials (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "a mocked unary call with credentials (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "authorization": "Bearer reflection-token"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "an undecodable message without credentials (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAP///8="
+  },
+  {
+   "note": "an undecodable message with credentials (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "authorization": "Bearer reflection-token"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAP///8="
+  },
+  {
+   "note": "gRPC-Web reflection without credentials (bidi streaming on)",
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc-web",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAI6AA==",
+   "binaryBody": true
+  },
+  {
+   "note": "gRPC-Web unary call without credentials (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "binaryBody": true
+  },
+  {
+   "note": "gRPC chaos on the service",
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatusCode": "unavailable",
+     "errorMessage": "down"
+    }
+   }
+  },
+  {
+   "note": "a chaos fault without credentials is refused (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "a chaos fault with credentials (bidi streaming on)",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "authorization": "Bearer reflection-token"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "chaos counted only the authenticated call",
+   "method": "GET",
+   "path": "/mockserver/grpcChaos"
+  },
+  {
+   "note": "refusals are logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+   ]
+  }
+ ]
+}

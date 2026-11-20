@@ -1,0 +1,39 @@
+{
+ "properties": {
+  "jsonSchemaAllowRemoteRefs": "true"
+ },
+ "steps": [
+  {
+   "note": "a schema document served by this same server",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/ext/pet.json"}, "httpResponse": {"headers": {"content-type": ["application/json"]}, "body": {"json": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}}}}}
+  },
+  {
+   "note": "a JSON Schema body matcher whose remote $ref points back at this server (allowed by jsonSchemaAllowRemoteRefs)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/pets", "body": {"type": "JSON_SCHEMA", "jsonSchema": {"$ref": "http://localhost:{{port}}/ext/pet.json"}}}, "httpResponse": {"body": "matched"}}
+  },
+  {
+   "note": "a body valid against the fetched schema",
+   "method": "POST",
+   "path": "/pets",
+   "headers": {"content-type": ["application/json"]},
+   "body": {"name": "rex"}
+  },
+  {
+   "note": "a body the fetched schema rejects",
+   "method": "POST",
+   "path": "/pets",
+   "headers": {"content-type": ["application/json"]},
+   "body": {"nome": "rex"}
+  },
+  {
+   "note": "a verification whose filter has the same remote $ref",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {"httpRequest": {"path": "/pets", "body": {"type": "JSON_SCHEMA", "jsonSchema": {"$ref": "http://localhost:{{port}}/ext/pet.json"}}}, "times": {"atLeast": 1, "atMost": 1}}
+  }
+ ]
+}

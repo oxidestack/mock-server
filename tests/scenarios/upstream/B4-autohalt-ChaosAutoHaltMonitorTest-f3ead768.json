@@ -1,0 +1,101 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) autohalt-ChaosAutoHaltMonitorTest-f3ead768 (conformance/harvest)",
+ "properties": {
+  "metricsEnabled": "true",
+  "chaosAutoHaltEnabled": "false",
+  "chaosAutoHaltErrorThreshold": "3",
+  "chaosAutoHaltWindowMillis": "10000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "859a2fd533a3",
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorStatus": 503
+    }
+   },
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): ServiceChaosRegistry.put",
+   "case": "859a2fd533a3"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-error",
+    "httpRequest": {
+     "path": "/harvested/autohalt/error"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1.0
+    }
+   },
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): the expectation whose chaos injects a error fault",
+   "case": "859a2fd533a3"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "859a2fd533a3"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "859a2fd533a3"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "859a2fd533a3"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "859a2fd533a3"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): ChaosAutoHaltMonitor.getHaltCount (the mock_server_chaos_auto_halt counter)",
+   "mask": [
+    {
+     "regex": "(?m)^(?:# (?:HELP|TYPE) )?(?!mock_server_chaos_auto_halt)[a-zA-Z_][a-zA-Z0-9_]*(?:\\{[^\\n]*\\})?(?: [^\\n]*)?\\n",
+     "replace": ""
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "859a2fd533a3"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldNotHaltWhenDisabledOnConfigurationInstanceButEnabledStatically (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "859a2fd533a3"
+  }
+ ]
+}

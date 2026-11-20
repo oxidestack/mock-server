@@ -1,0 +1,96 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "ws": "anonymous",
+      "status": 401,
+      "headers": [
+        "content-length: 0"
+      ],
+      "body": "",
+      "note": "no credentials: refused at the upgrade"
+    },
+    {
+      "ws": "forged",
+      "status": 401,
+      "headers": [
+        "content-length: 0"
+      ],
+      "body": "",
+      "note": "a token for another key's caller is refused too"
+    },
+    {
+      "ws": "alice",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket",
+        "x-client-registration-id: jwt-client"
+      ]
+    },
+    {
+      "ws": "alice",
+      "type": "org.mockserver.serialization.model.WebSocketClientIdDTO",
+      "body": "{\"clientId\":\"jwt-client\"}"
+    },
+    {
+      "ws": "alice-again",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket",
+        "x-client-registration-id: jwt-client"
+      ],
+      "note": "the same caller takes the id over at once, without a ping"
+    },
+    {
+      "ws": "alice-again",
+      "type": "org.mockserver.serialization.model.WebSocketClientIdDTO",
+      "body": "{\"clientId\":\"jwt-client\"}"
+    },
+    {
+      "ws": "alice",
+      "timeout": true,
+      "note": "the connection it replaced is left open, unregistered"
+    },
+    {
+      "ws": "mallory",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket",
+        "x-client-registration-id: jwt-client"
+      ],
+      "note": "another caller: the registered connection does not answer the ping, so after 2 s it is replaced and closed"
+    },
+    {
+      "ws": "mallory",
+      "type": "org.mockserver.serialization.model.WebSocketClientIdDTO",
+      "body": "{\"clientId\":\"jwt-client\"}"
+    },
+    {
+      "ws": "alice-again",
+      "closed": true
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<masked><timestamp> - JWT control plane request failed:\n\n  no authorization header found\n\n for request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/reset\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - JWT control plane request failed:\n\n  no authorization header found\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/_mockserver_callback_websocket\",\n    \"headers\" : {\n      \"x-client-registration-id\" : [ \"jwt-client\" ],\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"socketAddress\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    },\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - \n\n  callback\n\n web socket upgrade rejected with status \n\n  401\n\n - control plane authentication required\n------------------------------------\n<timestamp> - \n\n  callback\n\n web socket upgrade rejected with status \n\n  401\n\n - control plane authentication required\n",
+      "note": "the refusals' log entries, the JWT handler's own ERROR before the first (the start-up entries masked)"
+    }
+  ]
+}

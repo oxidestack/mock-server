@@ -1,0 +1,289 @@
+{
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/asyncapi",
+   "note": "nothing loaded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "asyncapi": "2.6.0",
+    "info": {
+     "title": "Orders API",
+     "version": "1.0.0"
+    },
+    "channels": {
+     "orders/created": {
+      "publish": {
+       "message": {
+        "payload": {
+         "type": "object",
+         "properties": {
+          "orderId": {
+           "type": "integer",
+           "minimum": 5
+          },
+          "status": {
+           "type": "string",
+           "format": "uuid"
+          },
+          "tags": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           },
+           "minItems": 2
+          }
+         },
+         "required": [
+          "orderId"
+         ]
+        }
+       }
+      }
+     },
+     "orders/shipped": {
+      "subscribe": {
+       "message": {
+        "payload": {
+         "type": "string"
+        },
+        "examples": [
+         {
+          "payload": "shipped!"
+         }
+        ]
+       }
+      }
+     },
+     "orders.bad": {
+      "publish": {
+       "message": {
+        "payload": {
+         "type": "integer",
+         "example": "not a number"
+        }
+       }
+      }
+     },
+     "orders.multi": {
+      "subscribe": {
+       "message": {
+        "oneOf": [
+         {
+          "name": "A",
+          "payload": {
+           "type": "object",
+           "properties": {
+            "a": {
+             "type": "boolean"
+            }
+           }
+          }
+         },
+         {
+          "name": "B",
+          "payload": {
+           "enum": [
+            "x",
+            "y"
+           ]
+          }
+         }
+        ]
+       }
+      }
+     },
+     "empty": {}
+    }
+   },
+   "note": "load v2"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/asyncapi",
+   "note": "status v2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": {
+    "channel": "orders/shipped"
+   },
+   "note": "verify default"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": {
+    "channel": "orders/shipped",
+    "count": {
+     "atMost": 0
+    }
+   },
+   "note": "verify at most"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": {
+    "channel": "c",
+    "payloadSubstring": "x",
+    "payloadJsonPath": "a.b",
+    "expectedValue": "1",
+    "count": {
+     "exactly": 2
+    }
+   },
+   "note": "verify exactly"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": {
+    "nochannel": 1
+   },
+   "note": "verify no channel"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "",
+   "note": "verify empty"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": "asyncapi: 3.0.0\ninfo:\n  title: Lights\n  version: 1.0.0\nchannels:\n  lightMeasured:\n    messages:\n      lightMeasured:\n        $ref: '#/components/messages/lightMeasured'\ncomponents:\n  messages:\n    lightMeasured:\n      payload:\n        type: object\n        properties:\n          lumens:\n            type: integer\n            minimum: 0\n      examples:\n        - payload:\n            lumens: 7\n"
+   },
+   "note": "load v3 yaml wrapped"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": "",
+   "note": "load empty"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/http",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Orders API",
+      "version": "1.0.0"
+     },
+     "channels": {
+      "orders/created": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object",
+          "properties": {
+           "orderId": {
+            "type": "integer",
+            "minimum": 5
+           },
+           "status": {
+            "type": "string",
+            "format": "uuid"
+           },
+           "tags": {
+            "type": "array",
+            "items": {
+             "type": "string"
+            },
+            "minItems": 2
+           }
+          },
+          "required": [
+           "orderId"
+          ]
+         }
+        }
+       }
+      },
+      "orders/shipped": {
+       "subscribe": {
+        "message": {
+         "payload": {
+          "type": "string"
+         },
+         "examples": [
+          {
+           "payload": "shipped!"
+          }
+         ]
+        }
+       }
+      },
+      "orders.bad": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "integer",
+          "example": "not a number"
+         }
+        }
+       }
+      },
+      "orders.multi": {
+       "subscribe": {
+        "message": {
+         "oneOf": [
+          {
+           "name": "A",
+           "payload": {
+            "type": "object",
+            "properties": {
+             "a": {
+              "type": "boolean"
+             }
+            }
+           }
+          },
+          {
+           "name": "B",
+           "payload": {
+            "enum": [
+             "x",
+             "y"
+            ]
+           }
+          }
+         ]
+        }
+       }
+      },
+      "empty": {}
+     }
+    },
+    "channelPathPrefix": "events/"
+   },
+   "note": "http import",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/events/orders/created",
+   "note": "generated example"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/asyncapi",
+   "note": "after reset"
+  }
+ ],
+ "isolated": true
+}

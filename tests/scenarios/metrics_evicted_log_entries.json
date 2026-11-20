@@ -1,0 +1,24 @@
+{"source": "MetricsTest evictedLogEntriesCounterAdvancesByTheNumberOfEntries over the wire: MockServerEventLog.add advances mock_server_evicted_log_entries_total by the entries evicted to stay within maxLogEntries (lowered at runtime); a counter, so a reset leaves it, as it leaves the dual-published mock_server_expectations_not_matched_total while zeroing the legacy expectations_not_matched_count gauge (monotonicTotalCounterSurvivesServerResetWhileLegacyGaugeIsZeroed)",
+ "properties": {"metricsEnabled": "true"},
+ "steps": [
+  {"note": "start from an empty log, so the count does not depend on what start-up and the recorder logged", "method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/configuration", "body": {"maxLogEntries": 4}, "mask": [{"regex": "(?s)\\A\\{.*\\}\\z", "replace": "<configuration>", "reason": "the whole configuration, pinned by the configuration scenarios; actionHandlerThreadCount follows the host's cores"}, "content-length: \\d+"]},
+  {"note": "an expectation, so the requests below count as not matched", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/only"}, "httpResponse": {"body": "only"}}, "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]},
+  {"method": "GET", "path": "/nothing/1"},
+  {"method": "GET", "path": "/nothing/2"},
+  {"method": "GET", "path": "/nothing/3"},
+  {"method": "GET", "path": "/nothing/4"},
+  {"method": "GET", "path": "/nothing/5"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS"},
+  {"note": "evictions counted", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?(?:mock_server_(?:evicted_log_entries|event_log_retained_entries|event_log_max_retained_entries|expectations_not_matched_total)|expectations_not_matched_count))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "the expectation removed first: a reset logs one removal per active expectation before it empties the log ", "method": "PUT", "path": "/mockserver/clear?type=EXPECTATIONS", "body": {"path": "/only"}},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"note": "a reset keeps the counter", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?(?:mock_server_(?:evicted_log_entries|event_log_retained_entries|event_log_max_retained_entries|expectations_not_matched_total)|expectations_not_matched_count))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]}
+ ]
+}

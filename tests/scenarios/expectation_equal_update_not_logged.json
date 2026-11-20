@@ -1,0 +1,12 @@
+{
+ "source": "httpRequestMatcher.update is a no-op for an equal expectation (Expectation.equals), so re-sending one logs no 'updated expectation'",
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/reset", "note": "reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "equal-update", "httpRequest": {"path": "/equal-update"}, "httpResponse": {"statusCode": 200, "body": "a"}, "times": {"remainingTimes": 2}}, "note": "created"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "equal-update", "httpRequest": {"path": "/equal-update"}, "httpResponse": {"statusCode": 200, "body": "a"}, "times": {"remainingTimes": 2}}, "note": "sent again unchanged: not updated"},
+  {"method": "GET", "path": "/equal-update", "note": "uses one of the two"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "equal-update", "httpRequest": {"path": "/equal-update"}, "httpResponse": {"statusCode": 200, "body": "a"}, "times": {"remainingTimes": 2}}, "note": "sent again after a use: the remaining count differs, so it is updated"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "equal-update", "httpRequest": {"path": "/equal-update"}, "httpResponse": {"statusCode": 200, "body": "b"}, "times": {"remainingTimes": 2}}, "note": "a changed body: updated"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "note": "one creation, two updates"}
+ ]
+}

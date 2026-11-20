@@ -1,0 +1,20 @@
+{"source": "HopByHopHeaderFilterTest (c-inventory-core-state.md package 3), through every forward action that applies the filter",
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": "{\"httpRequest\": {\"path\": \"/target/fwd\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}}"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/target.*"}, "httpResponse": {"statusCode": 203, "body": "from target"}},
+    {"httpRequest": {"path": "/ovr/.*"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target/ovr", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/override"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target/override", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/legacy"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/target/legacy", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/template"}, "httpForwardTemplate": {"templateType": "VELOCITY", "template": "{'path': '/target/template', 'headers': {'Host': ['localhost:{{port}}'], 'X-From-Template': ['yes']}}"}}
+  ]},
+  {"note": "every request hop-by-hop header is dropped, the ordinary ones kept", "method": "GET", "path": "/target/fwd",
+   "headers": {"Some-Other-Header": "kept", "Proxy-Connection": "keep-alive", "Keep-Alive": "timeout=5", "TE": "trailers", "Trailer": "Expires", "Proxy-Authorization": "Basic dXNlcjpwYXNz", "Proxy-Authenticate": "Basic", "Upgrade": "foo/1"}},
+  {"note": "a Connection header is dropped as well", "method": "GET", "path": "/ovr/connection", "headers": {"Some-Other-Header": "kept", "Connection": "keep-alive, Some-Other-Header"}},
+  {"note": "the names are matched case-insensitively", "method": "GET", "path": "/ovr/case", "headers": {"proxy-connection": "x", "KEEP-ALIVE": "x", "tE": "x", "UPGRADE": "x", "X-Plain": "kept"}},
+  {"note": "only hop-by-hop headers: the filtered list is empty, so upstream keeps the original ones", "method": "GET", "path": "/ovr/only", "headers": {"Proxy-Connection": "keep-alive", "Keep-Alive": "timeout=5", "TE": "trailers", "Trailer": "Expires", "Proxy-Authorization": "Basic dXNlcjpwYXNz", "Proxy-Authenticate": "Basic", "Upgrade": "foo/1"}},
+  {"note": "requestOverride forward", "method": "GET", "path": "/override", "headers": {"Some-Other-Header": "kept", "Proxy-Connection": "keep-alive", "Keep-Alive": "timeout=5", "TE": "trailers", "Trailer": "Expires", "Proxy-Authorization": "Basic dXNlcjpwYXNz", "Upgrade": "foo/1"}},
+  {"note": "legacy httpRequest override forward", "method": "GET", "path": "/legacy", "headers": {"Some-Other-Header": "kept", "Proxy-Connection": "keep-alive", "Keep-Alive": "timeout=5", "TE": "trailers", "Trailer": "Expires", "Proxy-Authorization": "Basic dXNlcjpwYXNz", "Upgrade": "foo/1"}},
+  {"note": "template forward", "method": "GET", "path": "/template", "headers": {"Some-Other-Header": "kept", "Proxy-Connection": "keep-alive", "Keep-Alive": "timeout=5", "TE": "trailers", "Trailer": "Expires", "Proxy-Authorization": "Basic dXNlcjpwYXNz", "Upgrade": "foo/1"}},
+  {"note": "what the target saw", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "body": {"path": "/target.*"}}
+]}

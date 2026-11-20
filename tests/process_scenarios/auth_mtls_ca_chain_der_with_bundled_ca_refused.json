@@ -1,0 +1,30 @@
+{
+  "note": "Upstream #227, 9.1.0: a DER chain file holding the bundled CA is read as a PEM one is, and refused at startup as a PEM one is (requireUsableControlPlaneMutualTls)",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "ca-chain": {
+      "from": "x509/mtls/bundled-ca.der"
+    }
+  },
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{scratch}}/ca-chain\n",
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": false,
+    "exitCode": 0,
+    "stdoutInOrder": [
+      "[INFO] stopped for ports: []",
+      "java -jar <path to mockserver-netty-jar-with-dependencies.jar> -serverPort <port>"
+    ],
+    "stdoutNotContains": [
+      "started on port",
+      "controlPlaneTLSMutualAuthenticationCAChain contains"
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) confput-BodySizeLimitConfigurationTest-74ad0e75 (conformance/harvest)",
+ "properties": {
+  "maxRequestBodySize": "4"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c4c7033bb3a4",
+   "note": "shouldKeepAPositiveValue (confput): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxRequestBodySize": 4
+   },
+   "note": "shouldKeepAPositiveValue (confput): configuration.maxRequestBodySize(4)",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n(?:.*?\\n)?  \"maxRequestBodySize\" : (\\{\\n.*?\\n  \\}|[^\\n]*?),?\\n.*\\z",
+     "replace": "\"maxRequestBodySize\" : ${1}"
+    },
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration, which has no maxRequestBodySize member>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ],
+   "case": "c4c7033bb3a4"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "shouldKeepAPositiveValue (confput): the value as read at startup",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n(?:.*?\\n)?  \"maxRequestBodySize\" : (\\{\\n.*?\\n  \\}|[^\\n]*?),?\\n.*\\z",
+     "replace": "\"maxRequestBodySize\" : ${1}"
+    },
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration, which has no maxRequestBodySize member>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ],
+   "case": "c4c7033bb3a4"
+  }
+ ]
+}

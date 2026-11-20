@@ -1,0 +1,76 @@
+{
+ "peer": true,
+ "note": "the Confluent Schema Registry client's JSSE failure (default trust, a registry whose certificate chains to no trusted root: PKIX path building failed) does not fail LOG_ENTRIES, unlike the same chain reached by an amqps or MQTT load or a webhook: the load wraps the client's failure into a plain RuntimeException message (the validation issue), so no log entry carries the SunCertPathBuilderException chain, and the broker is never reached (the avro encode fails first). Hostname, key usage and path-validation failures need a registry the JVM trusts (a trust store handed in with -Djavax.net.ssl.trustStore), and probed the same way: no throwable in any entry.",
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "settleMillis": 3000,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "the load: the registry (a peer node, https; its certificate chains to a CA the JVM does not trust) is untrusted; the publish on load fails at the schema registration",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "RegistryTrust",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "{{deadhost}}",
+     "kafkaValueFormat": "avro",
+     "avroSchema": {
+      "type": "record",
+      "name": "R",
+      "fields": [
+       {
+        "name": "id",
+        "type": "int"
+       }
+      ]
+     },
+     "kafkaSchemaRegistryUrl": "https://{{peeraddress}}"
+    }
+   },
+   "maxMillis": 120000
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "LOG_ENTRIES is written (200), with no throwable in any entry",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\"timestamp\" : \"[^\"]*\"",
+    "\"correlationId\" : \"[^\"]*\"",
+    "(172\\.17\\.\\d+\\.\\d+|127\\.0\\.0\\.1|localhost)(:(<port>|\\d+))?"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,21 @@
+# org.mockserver.state.InMemoryExpectationKeyValueStoreTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldPutAndGet  http:max_expectations_eviction  # an expectation stored and served; versions are internal
+shouldUpdateExistingEntry  rust:src/state_backend/memory.rs::expectation_store_in_place_update_does_not_move_insertion_order, http:max_expectations_eviction
+shouldRemoveEntry  http:max_expectations_eviction  # reset removes, the retrieve is empty
+shouldCompareAndSetSuccessfully  n/a  # compare-and-set of the expectation store is an internal SPI call with no wire form; the generic store's is rust:src/state_backend/memory.rs::compare_and_set_succeeds_only_on_matching_version
+shouldFailCompareAndSetWithWrongVersion  n/a  # as shouldCompareAndSetSuccessfully
+shouldCompareAndRemoveSuccessfully  n/a  # as shouldCompareAndSetSuccessfully (compare_and_remove_succeeds_only_on_matching_version for the generic store)
+shouldMatchCircularPriorityQueueSortOrder  http:match_order_index  # priority descending, then creation order, decides which expectation answers
+shouldEvictOldestWhenCapExceeded  http:max_expectations_eviction, rust:src/state_backend/memory.rs::expectation_store_evicts_oldest_by_insertion_on_overflow
+shouldNotLeakVersionsForOverflowEvictedEntries  n/a  # reflects on the Java store's private `versions` map (a memory-leak guard)
+shouldPruneVersionsOnExplicitRemove  n/a  # same private `versions` map
+shouldClearAllEntries  http:max_expectations_eviction  # reset empties the store
+shouldStreamEntries  http:max_expectations_eviction  # retrieve lists the stored expectations
+shouldEvictLargeExpectationsToStayWithinByteBudget  http:max_expectations_size_in_bytes  # expectations weighed as Expectation.estimatedHeapSize() and evicted past maxExpectationsSizeInBytes
+shouldNotEvictWhenByteBudgetIsHugeNegativeControl  http:max_expectations_size_in_bytes  # a budget of 1000000000 evicts nothing
+shouldDisableByteBudgetWhenZero  http:max_expectations_size_in_bytes  # with 0 nothing is evicted
+shouldEvictImmediatelyWhenByteBudgetShrunk  http:max_expectations_size_in_bytes  # a PUT /mockserver/configuration lowering the budget evicts at once
+shouldReportTotalBytesEvenWhenByteBudgetDisabled  http:max_expectations_size_in_bytes  # mock_server_expectations_bytes with the budget at 0
+shouldReportConfiguredMaxBytes  http:max_expectations_size_in_bytes  # mock_server_max_expectations_bytes follows the budget in force

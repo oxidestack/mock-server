@@ -1,0 +1,85 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"id\": \"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\", \"httpRequest\": {\"path\": \"/target\"}, \"httpResponse\": {\"body\": \"t\"}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"id\": \"cccccccc-cccc-4ccc-8ccc-cccccccccccc\", \"httpRequest\": {\"path\": \"/fwd\"}, \"times\": {\"remainingTimes\": 1}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{ownPort}}}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"id\": \"dddddddd-dddd-4ddd-8ddd-dddddddddddd\", \"httpRequest\": {\"path\": \"/ovr\"}, \"httpOverrideForwardedRequest\": {\"httpRequest\": {\"path\": \"/target\", \"headers\": {\"Host\": [\"localhost:{{ownPort}}\"]}}}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/fwd",
+        "ownHost": true,
+        "expectStatus": 404
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/ovr",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd\",",
+      " matched expectation:\n\n  {\n    \"httpForward\" : {\n      \"host\" : \"localhost\",",
+      "received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd\",",
+      "no expectation for:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd\",",
+      " returning response:\n\n  {\n    \"statusCode\" : 404,\n    \"reasonPhrase\" : \"Not Found\"\n  }\n",
+      "returning response:\n\n  {\n    \"statusCode\" : 404,\n    \"reasonPhrase\" : \"Not Found\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"",
+      "    \"timing\" : {\n      \"connectionEstablishedMillis\" : ",
+      " for forwarded request\n\n in json:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd\",",
+      " in curl:\n\n  curl -v 'http://localhost:",
+      " for action:\n\n  {\n    \"host\" : \"localhost\",\n    \"port\" : ",
+      " from expectation:\n\n  cccccccc-cccc-4ccc-8ccc-cccccccccccc\n",
+      "removed expectation:\n\n  {\n    \"httpForward\" : {",
+      "    \"times\" : {\n      \"remainingTimes\" : 0\n    }\n  }\n\n with id:\n\n  cccccccc-cccc-4ccc-8ccc-cccccccccccc\n",
+      "received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ovr\",",
+      " matched expectation:\n\n  {\n    \"httpOverrideForwardedRequest\" : {",
+      "received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/target\",",
+      "returning response:\n\n  {\n    \"body\" : \"t\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/target\",",
+      " from expectation:\n\n  bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\n",
+      "returning response:\n\n  {\n    \"statusCode\" : 200,\n    \"reasonPhrase\" : \"OK\",\n    \"headers\" : {",
+      " for forwarded request\n\n in json:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/target\",",
+      " from expectation:\n\n  dddddddd-dddd-4ddd-8ddd-dddddddddddd\n"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+ "note": "T1.9: peers configured without clusterVerifyFanIn: no fan-in (the peer here is unreachable, which would be a 502 if it were queried).",
+ "properties": {
+  "clusterVerifyFanInPeers": "http://{{deadhost}}"
+ },
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "api", "httpRequest": {"path": "/api"}, "httpResponse": {"body": "x"}}},
+  {"method": "GET", "path": "/api"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "body": {"path": "/api"}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES", "body": {"path": "/api"}},
+  {"method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/api"}, "times": {"atLeast": 1, "atMost": 1}}}
+ ]
+}

@@ -1,0 +1,803 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmcodec-OpenAiChatCompletionsCodecStreamingTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "74ae22893e05",
+   "note": "shouldNotStreamUsageWhenRequestDoesNotOptIn (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "Hello world",
+      "usage": {
+       "inputTokens": 12,
+       "outputTokens": 8
+      },
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldNotStreamUsageWhenRequestDoesNotOptIn (llmcodec): encodeStreaming",
+   "case": "74ae22893e05"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldNotStreamUsageWhenRequestDoesNotOptIn (llmcodec): echo",
+   "case": "74ae22893e05"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldNotStreamUsageWhenRequestDoesNotOptIn (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "74ae22893e05"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a52e99d8b72f",
+   "note": "shouldUseConsistentIdAndCreatedAcrossChunks (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "test tokens here",
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldUseConsistentIdAndCreatedAcrossChunks (llmcodec): encodeStreaming",
+   "case": "a52e99d8b72f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldUseConsistentIdAndCreatedAcrossChunks (llmcodec): echo",
+   "case": "a52e99d8b72f"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldUseConsistentIdAndCreatedAcrossChunks (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "a52e99d8b72f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "6c7b2c8cdd1d",
+   "note": "shouldStreamUsageChunkAfterToolCallChunksWhenRequestSetsIncludeUsage (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "toolCalls": [
+       {
+        "arguments": "{\"city\":\"London\"}",
+        "name": "get_weather"
+       }
+      ],
+      "usage": {
+       "inputTokens": 25,
+       "outputTokens": 15
+      },
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldStreamUsageChunkAfterToolCallChunksWhenRequestSetsIncludeUsage (llmcodec): encodeStreaming",
+   "case": "6c7b2c8cdd1d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldStreamUsageChunkAfterToolCallChunksWhenRequestSetsIncludeUsage (llmcodec): echo",
+   "case": "6c7b2c8cdd1d"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldStreamUsageChunkAfterToolCallChunksWhenRequestSetsIncludeUsage (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "6c7b2c8cdd1d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "87599c0d40bd",
+   "note": "shouldMapFinishReasonInStreamingChunks (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "stopReason": "max_tokens",
+      "text": "test",
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldMapFinishReasonInStreamingChunks (llmcodec): encodeStreaming",
+   "case": "87599c0d40bd"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldMapFinishReasonInStreamingChunks (llmcodec): echo",
+   "case": "87599c0d40bd"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldMapFinishReasonInStreamingChunks (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "87599c0d40bd"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "dbdb1b828d0d",
+   "note": "shouldProduceSubwordContentDeltaChunksByDefault (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "Hello world",
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldProduceSubwordContentDeltaChunksByDefault (llmcodec): encodeStreaming",
+   "case": "dbdb1b828d0d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceSubwordContentDeltaChunksByDefault (llmcodec): echo",
+   "case": "dbdb1b828d0d"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceSubwordContentDeltaChunksByDefault (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "dbdb1b828d0d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2f81827290ee",
+   "note": "shouldStreamUsageChunkBeforeDoneWhenRequestSetsIncludeUsage (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "Hello world",
+      "usage": {
+       "cachedInputTokens": 4,
+       "inputTokens": 12,
+       "outputTokens": 8,
+       "reasoningTokens": 3
+      },
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldStreamUsageChunkBeforeDoneWhenRequestSetsIncludeUsage (llmcodec): encodeStreaming",
+   "case": "2f81827290ee"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldStreamUsageChunkBeforeDoneWhenRequestSetsIncludeUsage (llmcodec): echo",
+   "case": "2f81827290ee"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldStreamUsageChunkBeforeDoneWhenRequestSetsIncludeUsage (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "2f81827290ee"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9785a6d8a3db",
+   "note": "shouldProduceWholeWordContentDeltaChunksWhenSubwordStreamingDisabled (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "Hello world",
+      "streaming": true,
+      "streamingPhysics": {
+       "subwordStreaming": false
+      }
+     }
+    }
+   },
+   "note": "shouldProduceWholeWordContentDeltaChunksWhenSubwordStreamingDisabled (llmcodec): encodeStreaming",
+   "case": "9785a6d8a3db"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceWholeWordContentDeltaChunksWhenSubwordStreamingDisabled (llmcodec): echo",
+   "case": "9785a6d8a3db"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceWholeWordContentDeltaChunksWhenSubwordStreamingDisabled (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "9785a6d8a3db"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "76792c4fd83b",
+   "note": "shouldStreamZeroUsageWithoutDetailsWhenCompletionSetsNoUsage (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "hi",
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldStreamZeroUsageWithoutDetailsWhenCompletionSetsNoUsage (llmcodec): encodeStreaming",
+   "case": "76792c4fd83b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldStreamZeroUsageWithoutDetailsWhenCompletionSetsNoUsage (llmcodec): echo",
+   "case": "76792c4fd83b"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldStreamZeroUsageWithoutDetailsWhenCompletionSetsNoUsage (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "76792c4fd83b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "fbc649191904",
+   "note": "shouldProduceDoneEvent (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "test",
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldProduceDoneEvent (llmcodec): encodeStreaming",
+   "case": "fbc649191904"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceDoneEvent (llmcodec): echo",
+   "case": "fbc649191904"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceDoneEvent (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "fbc649191904"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "3809670bffff",
+   "note": "shouldProduceToolCallDelta (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "toolCalls": [
+       {
+        "arguments": "{\"city\":\"Paris\"}",
+        "name": "get_weather"
+       }
+      ],
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldProduceToolCallDelta (llmcodec): encodeStreaming",
+   "case": "3809670bffff"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceToolCallDelta (llmcodec): echo",
+   "case": "3809670bffff"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceToolCallDelta (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "3809670bffff"
+  }
+ ]
+}

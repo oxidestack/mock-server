@@ -1,0 +1,46 @@
+{
+ "properties": {
+  "controlPlaneTLSMutualAuthenticationRequired": "true",
+  "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/auth/mtls-control-plane-ca-cert.pem",
+  "initializationJsonPath": "{{files}}/auth/mtls_forwards.json",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/auth/mtls-control-plane-client-cert.pem;{{files}}/auth/mtls-control-plane-client-key.pem,0.0.0.0={{files}}/tls/fixed-ok-cert.pem;{{files}}/tls/fixed-ok-key.pem,localhost.={{files}}/tls/foreign-leaf-cert.pem;{{files}}/tls/foreign-leaf-key.pem"
+ },
+ "steps": [
+  {
+   "note": "a clientAuth leaf signed by controlPlaneTLSMutualAuthenticationCAChain authenticates",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a serverAuth-only leaf signed by MockServer's CA (still trusted next to the configured chain) does not: its extended key usage forbids clientAuth",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the presented chain, serverAuth only",
+   "method": "GET",
+   "path": "/via-tls/whoami",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a self-signed leaf no trusted CA issued does not",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost.:{{port}}"
+   },
+   "maxMillis": 60000
+  }
+ ]
+}

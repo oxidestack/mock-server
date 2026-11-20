@@ -1,0 +1,22 @@
+{
+  "note": "a class named in MOCKSERVER_EXTENSIONS that no provider exports refuses start-up as the oracle refuses a class not on its class path: exit 1, the generic start-up failure, no port bound",
+  "target": "both",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_EXTENSIONS": "com.acme.Missing"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 120,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}\norg.mockserver.extension.ExtensionException: extension class com.acme.Missing could not be loaded, check it is on the classpath: java.lang.ClassNotFoundException: com.acme.Missing"
+    ],
+    "stdoutNotContains": ["started on port"],
+    "stderrNotContains": ["exception while starting"]
+  }
+}

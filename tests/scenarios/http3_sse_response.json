@@ -1,0 +1,23 @@
+{
+ "quic": true,
+ "properties": {
+  "http3Port": "19474"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/sse"}, "httpSseResponse": {"events": [{"event": "e", "data": "one"}, {"data": "two", "delay": {"timeUnit": "MILLISECONDS", "value": 100}}]}},
+    {"httpRequest": {"path": "/sse-empty"}, "httpSseResponse": {"headers": {"x-s": ["1"]}}},
+    {"httpRequest": {"path": "/sse-delayed"}, "httpSseResponse": {"events": [{"data": "late", "delay": {"timeUnit": "MILLISECONDS", "value": 400}}]}},
+    {"httpRequest": {"path": "/sse-kept"}, "httpSseResponse": {"closeConnection": false, "events": [{"data": "kept"}]}}
+   ]
+  },
+  {"h3": true, "method": "GET", "path": "/sse", "note": "a mocked SSE response over HTTP/3"},
+  {"h3": true, "method": "GET", "path": "/sse-empty", "note": "one without events"},
+  {"h3": true, "method": "GET", "path": "/sse-delayed", "minMillis": 400, "note": "the stream ends when the first event is due"},
+  {"h3": true, "method": "GET", "path": "/sse-kept", "maxMillis": 2000, "note": "closeConnection false: the stream is left open"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/sse"}, "mask": ["(?s)^.*?(?=[^\\n]* - creating expectation)"], "note": "the head and the first event fail to be written as HTTP/1.1 objects: a WARN entry for chunk 1 (startup entries racing the reset masked)"}
+ ]
+}

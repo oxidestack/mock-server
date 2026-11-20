@@ -1,0 +1,201 @@
+{
+ "source": "hand-written: DelayTemplateResolver.fallback and HttpActionHandler.logFileBodyError as event-log entries",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/d"
+     },
+     "httpResponse": {
+      "body": "d",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 0,
+       "templateType": "MUSTACHE",
+       "template": "not a number"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f"
+     },
+     "httpResponse": {
+      "body": {
+       "type": "FILE",
+       "filePath": "/no/such/dir/missing.txt"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/df"
+     },
+     "httpResponse": {
+      "body": {
+       "type": "FILE",
+       "filePath": "/no/such/dir/missing.txt"
+      },
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "not a number"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/list"
+     },
+     "httpResponses": [
+      {
+       "body": "one",
+       "delay": {
+        "templateType": "MUSTACHE",
+        "template": "not a number"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/e"
+     },
+     "httpError": {
+      "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpjb250ZW50LWxlbmd0aDogMA0KDQo=",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "not a number"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/t"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200}",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "not a number"
+      }
+     }
+    }
+   ],
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/d",
+   "note": "a non-numeric delay template on a RESPONSE logs its fallback twice (action delay, then the write funnel)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/d"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/f",
+   "note": "an unreadable file body: a 500 and an ERROR entry with the FileBodyException"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/f"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/df",
+   "note": "both: the fallback once, then the file ERROR (the 500 written carries no delay)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/df"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/list",
+   "note": "a response list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/list"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/e",
+   "note": "an error action resolves its delay once"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/e"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/t",
+   "note": "a response template resolves its delay once"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/t"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

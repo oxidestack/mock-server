@@ -1,0 +1,63 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "fileContent": null,
+      "note": "after the start the dynamic CA is not on disk yet"
+    },
+    {
+      "fileContent": null
+    },
+    {
+      "fileContent": null,
+      "note": "nothing writes it in the background either (8.0.0 writes it shortly after the start under proxySetupLogging, the standalone default)"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 257",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/ca/lazy\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"lazy\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "plain HTTP on the control plane and the data plane uses no CA"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 4"
+      ],
+      "body": "lazy"
+    },
+    {
+      "fileContent": null
+    },
+    {
+      "tcpText": "HTTP/1.1 200",
+      "closed": true,
+      "note": "the first inbound TLS connection builds the server's context, which generates and writes the CA"
+    },
+    {
+      "fileContent": "-----BEGIN CERTIFICATE-----\n<random>\n-----END CERTIFICATE-----",
+      "note": "now both files are there (their content is random)"
+    },
+    {
+      "fileContent": "-----BEGIN RSA PRIVATE KEY-----\n<random>\n-----END RSA PRIVATE KEY-----"
+    },
+    {
+      "deleted": true,
+      "note": "remove the generated CA for the next run"
+    },
+    {
+      "deleted": true
+    }
+  ]
+}

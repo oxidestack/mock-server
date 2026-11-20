@@ -1,0 +1,102 @@
+{
+ "isolated": true,
+ "properties": {
+  "logLevel": "INFO",
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "note": "a WebSocket upgrade a forward relays back to this server counts as a forward hop: the innermost hop answers 508 and every outer hop relays it",
+   "maxMillis": 30000,
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\"httpRequest\": {\"path\": \"/ws-loop\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}"
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /ws-loop HTTP/1.1\r\nHost: localhost:{{port}}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ],
+   "text": true,
+   "awaitBytes": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": "{\"path\": \"/ws-loop\"}",
+   "mask": [
+    {
+     "regex": "[A-Za-z0-9+/]{22}==",
+     "replace": "<websocket key>",
+     "reason": "the relay's handshake key is random per upgrade"
+    }
+   ]
+  },
+  {
+   "note": "the refusal and the relayed 508s",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": "{\"path\": \"/ws-loop\"}",
+   "mask": [
+    {
+     "regex": "[A-Za-z0-9+/]{22}==",
+     "replace": "<websocket key>",
+     "reason": "the relay's handshake key is random per upgrade"
+    }
+   ]
+  },
+  {
+   "note": "a proxyPassMappings entry whose target is this server",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": "{\"proxyPassMappings\": [{\"pathPrefix\": \"/pp\", \"targetUri\": \"http://localhost:{{port}}/pp\"}], \"forwardLoopMaxHops\": 3}",
+   "compare": "status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": ""
+  },
+  {
+   "method": "GET",
+   "path": "/pp/x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": ""
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": "",
+   "mask": [
+    "\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : \\d+"
+   ]
+  },
+  {
+   "note": "an overridden forward back to this server: the guard's own 508 gets no response override (its future carries no response function); each outer hop's does",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\"httpRequest\": {\"path\": \"/ov\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}, \"responseOverride\": {\"headers\": {\"x-ov\": [\"1\"]}}}}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": ""
+  },
+  {
+   "method": "GET",
+   "path": "/ov"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": "",
+   "mask": [
+    "\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : \\d+"
+   ]
+  }
+ ]
+}

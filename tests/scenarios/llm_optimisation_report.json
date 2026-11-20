@@ -1,0 +1,213 @@
+{
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "empty json"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=markdown",
+   "note": "empty markdown"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=csv",
+   "note": "empty csv"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=xml",
+   "note": "bad format"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "Answer",
+       "usage": {
+        "inputTokens": 1200,
+        "outputTokens": 300,
+        "cachedInputTokens": 0
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/messages"
+     },
+     "httpLlmResponse": {
+      "provider": "ANTHROPIC",
+      "model": "claude-3-5-sonnet-20241022",
+      "completion": {
+       "text": "Tool time",
+       "toolCalls": [
+        {
+         "name": "search",
+         "arguments": "{\"q\":\"x\"}"
+        }
+       ],
+       "usage": {
+        "inputTokens": 5000,
+        "outputTokens": 800,
+        "cachedInputTokens": 4000
+       }
+      }
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a helpful assistant. Always be concise."
+     },
+     {
+      "role": "user",
+      "content": "What is 2+2?"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a helpful assistant. Always be concise."
+     },
+     {
+      "role": "user",
+      "content": "What is 2+2?"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/messages",
+   "body": {
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 1024,
+    "system": "Long system prompt",
+    "messages": [
+     {
+      "role": "user",
+      "content": "find x"
+     }
+    ],
+    "tools": [
+     {
+      "name": "search",
+      "input_schema": {
+       "type": "object"
+      }
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=json",
+   "note": "json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=markdown",
+   "note": "markdown",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=csv",
+   "note": "csv",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  }
+ ],
+ "isolated": true
+}

@@ -1,0 +1,60 @@
+{
+ "properties": {
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/persistence_invalid_entries_no_backup.json",
+  "initializationJsonPath": "{{scratch}}/persistence_invalid_entries_no_backup.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "deleteFile": "{{scratch}}/persistence_invalid_entries_no_backup.json.invalid-entries-*.bak",
+   "note": "no reset: the first save is the one under test"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/persistence_invalid_entries_no_backup.json",
+    "content": "[ {\n  \"id\" : \"valid\",\n  \"httpRequest\" : {\n    \"path\" : \"/valid\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"valid response\"\n  }\n} ]",
+    "replace": true
+   },
+   "note": "every expectation of the persisted (and watched) file is valid"
+  },
+  {
+   "method": "GET",
+   "path": "/valid",
+   "pollUntil": "valid response",
+   "note": "loaded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "added",
+    "httpRequest": {
+     "path": "/added"
+    },
+    "httpResponse": {
+     "body": "added response"
+    }
+   },
+   "note": "the first save"
+  },
+  {
+   "readFile": "{{scratch}}/persistence_invalid_entries_no_backup.json",
+   "pollUntil": "added"
+  },
+  {
+   "listFiles": "{{scratch}}/persistence_invalid_entries_no_backup.json*",
+   "note": "shouldNotBackUpALoadedFileWhoseExpectationsAllLoaded: no backup beside the persisted file"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/persistence_invalid_entries_no_backup.json",
+    "content": "[ ]",
+    "replace": true
+   },
+   "note": "the next run starts from a file without these expectations, so that the reload of the edit above is what loads them"
+  }
+ ]
+}

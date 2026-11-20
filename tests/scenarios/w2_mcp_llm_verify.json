@@ -1,0 +1,892 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": "{\"type\":\"object\"}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured nothing recorded"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "OPENAI",
+      "maxCostUsd": 0
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost nothing recorded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "good",
+       "subString": true
+      }
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "{\"answer\":42}",
+       "usage": {
+        "inputTokens": 1000,
+        "outputTokens": 500
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "bad",
+       "subString": true
+      }
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "mystery-model",
+      "completion": {
+       "text": "{\"answer\":\"x\"}",
+       "usage": {
+        "inputTokens": 10,
+        "outputTokens": 5
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "prose",
+       "subString": true
+      }
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "not json at all"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "tools",
+       "subString": true
+      }
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "toolCalls": [
+        {
+         "name": "f",
+         "arguments": "{}"
+        }
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/messages"
+     },
+     "httpLlmResponse": {
+      "provider": "ANTHROPIC",
+      "model": "claude-3-5-sonnet-20241022",
+      "completion": {
+       "text": "{\"answer\":7}",
+       "usage": {
+        "inputTokens": 100,
+        "outputTokens": 20
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/plain"
+     },
+     "httpResponse": {
+      "body": "plain"
+     }
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "good"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "good"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o-mini",
+    "messages": [
+     {
+      "role": "user",
+      "content": "bad"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "bad"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "prose"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "prose"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "tools"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "note": "tools"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/messages",
+   "body": {
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 10,
+    "messages": [
+     {
+      "role": "user",
+      "content": "x"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": "{\"type\": \"object\", \"required\": [\"answer\"], \"properties\": {\"answer\": {\"type\": \"integer\"}}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured all"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": "{\"type\": \"object\", \"required\": [\"answer\"], \"properties\": {\"answer\": {\"type\": \"integer\"}}}",
+      "path": "/v1/chat/completions"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured path"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "ANTHROPIC",
+      "schema": "{\"type\": \"object\", \"required\": [\"answer\"], \"properties\": {\"answer\": {\"type\": \"integer\"}}}",
+      "path": "/v1/messages"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured anthropic"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": "not json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured schema not json"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": "{bad}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured schema unparseable"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 18,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": "/nope/x.json"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured schema file missing"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 19,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": " "
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured blank schema"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 20,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": "org/mockserver/model/schema/times.json",
+      "path": "/v1/messages"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured class path schema"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 21,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "OPENAI",
+      "schema": "{\"a\" 1}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured unparseable schema logged"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "schema error logged"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 22,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "COHERE",
+      "schema": "{}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured no client"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 23,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "provider": "X",
+      "schema": "{}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured unknown provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 24,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_structured_output",
+     "arguments": {
+      "schema": "{}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "structured no provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 25,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "OPENAI",
+      "maxCostUsd": 0.01
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost all"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 26,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "OPENAI",
+      "maxCostUsd": 1,
+      "path": "/v1/chat/completions",
+      "model": "gpt-4o-mini"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost model override"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 27,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "ANTHROPIC",
+      "maxCostUsd": 0.001,
+      "path": "/v1/messages"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost anthropic"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "OLLAMA",
+      "maxCostUsd": 0
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost ollama"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 29,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "OPENAI",
+      "maxCostUsd": "1"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost string budget"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 30,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "OPENAI",
+      "maxCostUsd": -1
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost negative budget"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 31,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "OPENAI"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost no budget"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 32,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "VOYAGE",
+      "maxCostUsd": 1
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "cost no client"
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}]}
+]
+}

@@ -1,0 +1,7 @@
+# org.mockserver.state.FilesystemBlobStoreAtomicWriteTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+concurrentReaderNeverObservesTruncatedOrPartialFile  rust:tests/upstream/persistence_restore.rs::concurrent_reader_never_observes_truncated_or_partial_file  # a reader polling the persisted file while 40 large saves rewrite it; each save is a temporary file moved into place
+putThenGetReturnsCompletePayload  http:persistence_file_content  # the persisted document read back whole
+putDoesNotLeaveTemporaryFilesBehind  rust:tests/upstream/persistence_restore.rs::put_does_not_leave_temporary_files_behind, http:persistence_parent_directories  # step "the save is written through a temporary file moved into place"
+overwriteReplacesPreviousContentAtomically  rust:tests/upstream/persistence_restore.rs::concurrent_reader_never_observes_truncated_or_partial_file, http:persistence_file_content  # the reader never sees a partial overwrite; the content after it is the oracle's

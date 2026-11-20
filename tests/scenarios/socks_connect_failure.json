@@ -1,0 +1,97 @@
+{
+ "properties": {
+  "proxyRemoteHost": "localhost",
+  "proxyRemotePort": "{{deadport}}"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "HttpProxyUnificationInitializerSOCKSErrorTest, HttpConnectHandlerTest: CONNECT and SOCKS in port-forwarding mode to a refusing upstream: since b765b8271 the loopback goes to MockServer itself, so each is granted and nothing is dialled"
+  },
+  {
+   "tcp": [
+    "BQEA",
+    "BQEAAwlsb2NhbGhvc3QBuw=="
+   ],
+   "note": "warm-up: a SOCKS5 CONNECT naming localhost (see socks_handshakes)",
+   "chunkMillis": 1000
+  },
+  {
+   "sleepMillis": 5000
+  },
+  {
+   "tcp": [
+    "BQEA",
+    "BQEAAX8AAAEBuw=="
+   ],
+   "note": "warm-up: a SOCKS5 CONNECT naming 127.0.0.1",
+   "chunkMillis": 1000
+  },
+  {
+   "sleepMillis": 5000
+  },
+  {
+   "tcp": [
+    "BQIAAg==",
+    "BQEAAX8AAAEE0g=="
+   ],
+   "note": "HttpProxyUnificationInitializerSOCKSErrorTest.shouldHandleErrorsDuringSOCKSConnection: SOCKS5 CONNECT to 127.0.0.1:1234",
+   "chunkMillis": 1000
+  },
+  {
+   "tcp": [
+    "BQEA",
+    "BQEAAwlsb2NhbGhvc3QBuw=="
+   ],
+   "note": "SOCKS5 CONNECT to the domain localhost:443",
+   "chunkMillis": 1000
+  },
+  {
+   "tcp": [
+    "BAEE0n8AAAEA"
+   ],
+   "note": "SOCKS4 CONNECT to 127.0.0.1:1234"
+  },
+  {
+   "tcp": [
+    "BAEBuwAAAAYAbG9jYWxob3N0AA=="
+   ],
+   "note": "SOCKS4a CONNECT to localhost:443"
+  },
+  {
+   "tcp": [
+    "Q09OTkVDVCBsb2NhbGhvc3Q6NDQzIEhUVFAvMS4xDQpIb3N0OiBsb2NhbGhvc3Q6NDQzDQoNCg=="
+   ],
+   "note": "HttpConnectHandlerTest.shouldReturnBadGatewayOnFailure: HTTP CONNECT",
+   "text": true
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "note": "what the failed connects log",
+   "mask": [
+    "(?s)\\n\\s+at .*?(?=\\n\\n|\\n[^\\s]|$)",
+    "\\[id: 0x[0-9a-f]+[^\\]]*\\]"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "compare": "unordered",
+   "note": "the same entries in full (the event loop's entry has no port, which thread logs first varies)",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  }
+ ]
+}

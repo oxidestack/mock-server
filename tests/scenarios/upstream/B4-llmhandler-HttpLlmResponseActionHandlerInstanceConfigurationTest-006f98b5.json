@@ -1,0 +1,84 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmhandler-HttpLlmResponseActionHandlerInstanceConfigurationTest-006f98b5 (conformance/harvest)",
+ "properties": {
+  "llmInferUsageEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b6dd33ca1501",
+   "note": "shouldInferLlmUsageFromConfigurationInstance (llmhandler): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/v1/chat/completions"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI",
+     "completion": {
+      "text": "a reply"
+     }
+    }
+   },
+   "note": "shouldInferLlmUsageFromConfigurationInstance (llmhandler): withInferredUsageIfEnabled",
+   "case": "b6dd33ca1501"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldInferLlmUsageFromConfigurationInstance (llmhandler): echo",
+   "case": "b6dd33ca1501"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": "{\"messages\":[{\"role\":\"user\",\"content\":\"hello there\"}]}",
+   "note": "shouldInferLlmUsageFromConfigurationInstance (llmhandler): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "b6dd33ca1501"
+  }
+ ]
+}

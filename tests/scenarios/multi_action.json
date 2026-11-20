@@ -1,0 +1,147 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/mirror"
+     },
+     "httpResponse": {
+      "statusCode": 202,
+      "body": "mirrored"
+     }
+    },
+    {
+     "id": "multi",
+     "httpRequest": {
+      "path": "/multi"
+     },
+     "httpResponse": {
+      "body": "primary answer",
+      "primary": true
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/mirror",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "multi-forward-primary",
+     "httpRequest": {
+      "path": "/multi2"
+     },
+     "httpResponse": {
+      "body": "secondary answer"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/mirror",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      },
+      "primary": true
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/multi",
+   "note": "response primary, forward secondary"
+  },
+  {
+   "method": "GET",
+   "path": "/multi2",
+   "note": "forward primary"
+  },
+  {
+   "sleepMillis": 800
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/mirror"
+   },
+   "note": "mirrored traffic",
+   "compare": "json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"content-length\" : \\[ \"\\d+\" \\]",
+     "replace": "\"content-length\" : [ \"<n>\" ]"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "none",
+    "httpRequest": {
+     "path": "/none"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "return {'body':'b'}",
+     "templateType": "JAVASCRIPT"
+    }
+   },
+   "note": "two actions, no primary"
+  },
+  {
+   "method": "GET",
+   "path": "/none",
+   "note": "serving an expectation without a primary"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "both",
+    "httpRequest": {
+     "path": "/both"
+    },
+    "httpResponse": {
+     "body": "a",
+     "primary": true
+    },
+    "httpResponseTemplate": {
+     "template": "return {'body':'b'}",
+     "templateType": "JAVASCRIPT",
+     "primary": true
+    }
+   },
+   "note": "two primaries"
+  },
+  {
+   "method": "GET",
+   "path": "/both",
+   "note": "serving an expectation with two primaries"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/(none|both)"
+   },
+   "note": "stored"
+  }
+ ]
+}

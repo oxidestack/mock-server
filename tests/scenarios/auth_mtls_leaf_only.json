@@ -1,0 +1,33 @@
+{
+ "properties": {
+  "controlPlaneTLSMutualAuthenticationRequired": "true",
+  "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/tls/private-ca/ca-cert.pem",
+  "initializationJsonPath": "{{files}}/auth/mtls_leaf_only_forwards.json",
+  "controlPlaneAuditEnabled": "true",
+  "forwardProxyClientCertificatesByHost": "0.0.0.0={{files}}/tls/private-ca/attack/via-intermediate-chain.pem;{{files}}/tls/private-ca/attack/via-intermediate-key.pem"
+ },
+ "steps": [
+  {
+   "note": "upstream #227: a leaf signed by an intermediate the client presents, which the trusted CA signed, authenticates (the path is built from the client's own certificate; the refused chains are process scenario auth_mtls_leaf_only_presented_chains, since the oracle's forwarding client cannot present them)",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the audit log: the verified leaf's subject, verified-mtls",
+   "method": "GET",
+   "path": "/via-tls/audit",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000,
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\""
+   ]
+  }
+ ]
+}

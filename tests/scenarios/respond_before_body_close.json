@@ -1,0 +1,121 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/a",
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 403,
+     "body": "forbidden"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "tcp": [
+    "UE9TVCAvYSBIVFRQLzEuMQ0KSG9zdDogbG9jYWxob3N0DQpDb250ZW50LUxlbmd0aDogMjANCg0K",
+    "MDEyMzQ1Njc4OQ=="
+   ],
+   "note": "no closeSocket: closed anyway after an early response"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/b",
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 403,
+     "body": "forbidden",
+     "connectionOptions": {
+      "closeSocket": false
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "tcp": [
+    "UE9TVCAvYiBIVFRQLzEuMQ0KSG9zdDogbG9jYWxob3N0DQpDb250ZW50LUxlbmd0aDogMjANCg0K",
+    "MDEyMzQ1Njc4OQ=="
+   ],
+   "note": "closeSocket false is overridden: closed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/c",
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 403,
+     "body": "forbidden",
+     "connectionOptions": {
+      "closeSocket": true,
+      "closeSocketDelay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 1000
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "tcp": [
+    "UE9TVCAvYyBIVFRQLzEuMQ0KSG9zdDogbG9jYWxob3N0DQpDb250ZW50LUxlbmd0aDogMjANCg0K",
+    "MDEyMzQ1Njc4OQ=="
+   ],
+   "note": "closeSocketDelay 1 s: closed after it",
+   "minMillis": 1000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/d",
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 403,
+     "body": "forbidden",
+     "connectionOptions": {
+      "closeSocketDelay": {
+       "timeUnit": "SECONDS",
+       "value": 4
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "tcp": [
+    "UE9TVCAvZCBIVFRQLzEuMQ0KSG9zdDogbG9jYWxob3N0DQpDb250ZW50LUxlbmd0aDogMjANCg0K",
+    "MDEyMzQ1Njc4OQ=="
+   ],
+   "note": "closeSocketDelay 4 s without closeSocket: still open when the read gives up"
+  }
+ ]
+}

@@ -1,0 +1,100 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "Transfer-Encoding: gzip, chunked",
+   "tcp": [
+    {
+     "text": "POST /te-gzip-chunked HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nTransfer-Encoding: gzip, chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MjUNCh+LCAAAAAAAAhOrVspIzcnJV7JSKs8vyklRqgUA0UEJ2BEAAAANCjANCg0K"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "Transfer-Encoding: GZIP, chunked, upper case",
+   "tcp": [
+    {
+     "text": "POST /te-gzip-upper HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nTransfer-Encoding: GZIP, chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MjUNCh+LCAAAAAAAAhOrVspIzcnJV7JSKs8vyklRqgUA0UEJ2BEAAAANCjANCg0K"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "Transfer-Encoding: deflate, chunked",
+   "tcp": [
+    {
+     "text": "POST /te-deflate-chunked HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nTransfer-Encoding: deflate, chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MTkNCnicq1bKSM3JyVeyUirPL8pJUaoFADVrBfcNCjANCg0K"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "Transfer-Encoding: gzip with a Content-Length",
+   "tcp": [
+    {
+     "text": "POST /te-gzip-length HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nTransfer-Encoding: gzip\r\nContent-Length: 37\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVGqBQDRQQnYEQAAAA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "Transfer-Encoding: chunked, gzip (chunked first)",
+   "tcp": [
+    {
+     "text": "POST /te-chunked-gzip HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked, gzip\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MjUNCh+LCAAAAAAAAhOrVspIzcnJV7JSKs8vyklRqgUA0UEJ2BEAAAANCjANCg0K"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "Transfer-Encoding: gzip, chunked, not gzip bytes",
+   "tcp": [
+    {
+     "text": "POST /te-gzip-bad HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: text/plain\r\nTransfer-Encoding: gzip, chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "ZA0Kbm90IGd6aXAgYnl0ZQ0KMA0KDQo="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "note": "still serving",
+   "headers": {
+    "Connection": "close"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/te-.*"
+   },
+   "note": "recorded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/te-gzip-bad"
+   },
+   "note": "the failure's log",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "((?:closing connection|HTTP/1\\.1 request) from:\\n\\n  )/\\S+",
+     "replace": "${1}<client address>",
+     "reason": "the client's socket address: the oracle sees the Docker bridge's"
+    }
+   ]
+  }
+ ]
+}

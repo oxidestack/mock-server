@@ -1,0 +1,57 @@
+{
+  "properties": {
+    "dnsEnabled": "true",
+    "dnsPort": "18553"
+  },
+  "steps": [
+    {
+      "note": "an HTTP, a DNS and two binary expectations",
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {"id": "http-1", "httpRequest": {"path": "/rows"}, "httpResponse": {"statusCode": 202, "body": "rows answered"}},
+        {
+          "id": "dns-a",
+          "httpRequest": {"dnsName": "api.example.com", "dnsType": "A"},
+          "dnsResponse": {"answerRecords": [{"name": "api.example.com", "type": "A", "value": "10.0.0.1", "ttl": 60}]}
+        },
+        {"id": "bin-short", "httpRequest": {"binaryData": "CQgHBgUEAwIBAA=="}, "binaryResponse": {"binaryData": "AQIDBA=="}},
+        {"id": "bin-long", "httpRequest": {"binaryData": "AAECAwQFBgcICQoLDA0ODxAREhM="}, "binaryResponse": {"binaryData": "BQY="}}
+      ]
+    },
+    {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+    {"note": "answered by http-1", "method": "GET", "path": "/rows"},
+    {"note": "answered by dns-a", "udp": "AQEBAAABAAAAAAAAA2FwaQdleGFtcGxlA2NvbQAAAQAB"},
+    {"note": "answered by bin-short (10 bytes)", "tcp": ["CQgHBgUEAwIBAA=="]},
+    {"note": "answered by bin-long (20 bytes: the row shows the first 16 and ...)", "tcp": ["AAECAwQFBgcICQoLDA0ODxAREhM="]},
+    {"sleepMillis": 500},
+    {"wsOpen": "ui", "path": "/_mockserver_ui_websocket", "note": "the dashboard socket"},
+    {"wsDrain": "ui", "note": "the first frame, which the oracle sends late or not at all"},
+    {
+      "wsSend": "ui",
+      "text": "{}",
+      "note": "every entry"
+    },
+    {
+      "wsRead": "ui",
+      "note": "Received Requests: a DNS row (name and type), two BINARY rows (length and first 16 bytes in hex) and the HTTP row",
+      "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"],
+      "capture": [
+        {"bodyRegex": "\"first\":\"DNS\".*?\"key\":\"([0-9a-f-]+)_request\"", "as": "dnsId"},
+        {"bodyRegex": "\"second\":\"10 bytes[^\"]*\".*?\"key\":\"([0-9a-f-]+)_request\"", "as": "binId"},
+        {"bodyRegex": "\"description\":\"GET +/rows *\",\"value\":.*?\"key\":\"([0-9a-f-]+)_request\"", "as": "httpId"}
+      ]
+    },
+    {"wsClose": "ui"},
+    {"note": "the HTTP entry's request", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:httpId}}&part=request"},
+    {"note": "a received entry has no response", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:httpId}}&part=response"},
+    {"note": "the DNS entry's request", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:dnsId}}&part=request"},
+    {"note": "the binary entry's request", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:binId}}&part=request"},
+    {"note": "the bare alias", "method": "GET", "path": "/logEntryBody?id={{capture:binId}}&part=request"},
+    {"note": "no part", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:binId}}"},
+    {"note": "a part that is neither request nor response", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:binId}}&part=body"},
+    {"note": "no id", "method": "GET", "path": "/mockserver/logEntryBody?part=request"},
+    {"note": "an id no entry has", "method": "GET", "path": "/mockserver/logEntryBody?id=00000000-0000-0000-0000-000000000000&part=request"},
+    {"note": "PUT is not this endpoint", "method": "PUT", "path": "/mockserver/logEntryBody?id={{capture:binId}}&part=request"}
+  ]
+}

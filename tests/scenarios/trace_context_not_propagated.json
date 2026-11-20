@@ -1,0 +1,46 @@
+{
+ "properties": {
+  "otelGenerateTraceId": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/traced"
+     },
+     "httpResponse": {
+      "body": "traced",
+      "headers": {
+       "x-own": [
+        "1"
+       ]
+      }
+     }
+    }
+   ],
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/traced",
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ],
+   "headers": {
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+   },
+   "note": "not propagated"
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+# Fails on oracle-process too (confirmed with -DrunSkipped=in-jvm, 2026-10-19). A server
+# process reports ready once its HTTP port is, before its QUIC listener starts, so the launcher's MockServer
+# constructor returns where the in-JVM one throws Http3StartupException, and RefusedStart.refusedStart reports "the
+# server started, but must have been refused". Where startWithHttp3 refuses it afterwards (reading getHttp3Port), the
+# launcher's in-JVM LifeCycle leaves its MockServer-EventLog thread running. Neither a Configuration subclass's
+# overridden getter nor RefusedStart.RecordingMockServer's bindServerPorts hook reaches a process.
+shouldRefuseToStartWhenTheHttp3PortIsHeldNamingThePortAndTheCauseOnOneLine  # the constructor returns: the process was ready before its QUIC bind
+shouldRefuseToStartWhenTheBindItselfFails  # the constructor returns: the process was ready before its QUIC bind
+shouldHaveClosedItsTcpListenerAndHoldNoUdpSocketWhenTheConstructorThrows  # the constructor returns: the process was ready before its QUIC bind
+shouldHaveEndedEveryNonDaemonThreadItStartedWhenTheConstructorThrows  # Http3StartThrows overrides a Configuration getter, which a process never calls, so it starts
+shouldRefuseToStartAndStopWhenTheHttp3StartThrowsAnError  # Http3StartThrows overrides a Configuration getter, which a process never calls, so it starts
+shouldStopAndThenRestoreTheInterruptWhenTheHttp3BindIsInterrupted  # RecordingMockServer's interrupting bindServerPorts hook never runs for a process, so it starts
+shouldNotInterruptTheCallerForAnInterruptedExceptionThatWasNotItsOwn  # Http3StartThrows overrides a Configuration getter, which a process never calls, so it starts
+shouldStopAndKeepTheInterruptWhenTheHttp3StartFailsOnAnInterruptedThread  # Http3StartThrows overrides a Configuration getter, which a process never calls, so it starts
+shouldReleaseTheDnsPortItHadBoundWhenHttp3IsRefused  # refused only by startWithHttp3, leaving the launcher's MockServer-EventLog thread running
+shouldRefuseToStartWhenTheHttp3PortIsNotAPort  # the constructor returns: the process was ready before its QUIC bind
+shouldRefuseToStartWhenTheTlsContextForQuicCannotBeBuilt  # refused only by startWithHttp3, leaving the launcher's MockServer-EventLog thread running
+shouldPropagateTheRefusalFromStartClientAndServer  # the constructor returns: the process was ready before its QUIC bind

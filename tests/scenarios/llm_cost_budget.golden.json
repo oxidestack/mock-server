@@ -1,0 +1,216 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "<masked>",
+        "content-type: text/plain; version=0.0.4; charset=utf-8"
+      ],
+      "body": "# HELP mock_server_llm_cost_budget_tripped_total Total number of times the LLM cost-budget circuit-breaker tripped\n# TYPE mock_server_llm_cost_budget_tripped_total counter\nmock_server_llm_cost_budget_tripped_total 0.0\n",
+      "note": "llmCostBudgetUsd 0.02, gpt-4o at 1000+1000 tokens costs 0.0125 per completion"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpLlmResponse\" : {\n    \"provider\" : \"OPENAI\",\n    \"model\" : \"gpt-4o\",\n    \"completion\" : {\n      \"text\" : \"hi\",\n      \"usage\" : {\n        \"inputTokens\" : 1000,\n        \"outputTokens\" : 1000\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\"\n  },\n  \"id\" : \"llm\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/v1/chat/completions\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/v1/proxy-llm\"\n  },\n  \"id\" : \"proxy-llm\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/respond\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/plain\"\n  },\n  \"id\" : \"plain\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/respond\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"ok\"\n  },\n  \"id\" : \"respond\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":\"<masked>\",\"object\":\"chat.completion\",\"<masked>,\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"hi\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":1000,\"completion_tokens\":1000,\"total_tokens\":2000}}",
+      "note": "forward to an LLM path under budget: proceeds (cost recorded by the mock and by the forward?)"
+    },
+    {
+      "status": 429,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"error\":{\"type\":\"cost_budget_exceeded\",\"message\":\"LLM cost budget exceeded (cumulative $0.0250 >= budget $0.0200)\",\"cumulative_cost_usd\":0.025000,\"budget_usd\":0.020000}}",
+      "note": "second forward"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":\"<masked>\",\"object\":\"chat.completion\",\"<masked>,\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"hi\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":1000,\"completion_tokens\":1000,\"total_tokens\":2000}}",
+      "note": "a served mock completion is never blocked"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "clear the log so the entries below are the blocked forward's alone"
+    },
+    {
+      "status": 429,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"error\":{\"type\":\"cost_budget_exceeded\",\"message\":\"LLM cost budget exceeded (cumulative $0.0375 >= budget $0.0200)\",\"cumulative_cost_usd\":0.037500,\"budget_usd\":0.020000}}",
+      "note": "forward once over budget: 429"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 2"
+      ],
+      "body": "ok",
+      "note": "a non-LLM forward is not blocked over budget"
+    },
+    {
+      "status": 429,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 170",
+        "content-type: application/json"
+      ],
+      "body": "{\"error\":{\"type\":\"cost_budget_exceeded\",\"message\":\"LLM cost budget exceeded (cumulative $0.0375 >= budget $0.0200)\",\"cumulative_cost_usd\":0.037500,\"budget_usd\":0.020000}}",
+      "note": "unmatched request proxied to an LLM host: blocked before any connection"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "<masked>",
+        "content-type: text/plain; version=0.0.4; charset=utf-8"
+      ],
+      "body": "# HELP mock_server_llm_cost_budget_tripped_total Total number of times the LLM cost-budget circuit-breaker tripped\n# TYPE mock_server_llm_cost_budget_tripped_total counter\nmock_server_llm_cost_budget_tripped_total 3.0\n",
+      "note": "trip counter"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - cleared logs that match:\n\n  { }\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/proxy-llm\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-type\" : [ \"application/json\" ],\n      \"content-length\" : [ \"32\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : {\n      \"model\" : \"gpt-4o\",\n      \"messages\" : [ ]\n    }\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/proxy-llm\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-type\" : [ \"application/json\" ],\n      \"content-length\" : [ \"32\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : {\n      \"model\" : \"gpt-4o\",\n      \"messages\" : [ ]\n    }\n  }\n\n didn't match expectation \"llm\":\n\n  {\n    \"httpLlmResponse\" : {\n      \"completion\" : {\n        \"text\" : \"hi\",\n        \"usage\" : {\n          \"inputTokens\" : 1000,\n          \"outputTokens\" : 1000\n        }\n      },\n      \"model\" : \"gpt-4o\",\n      \"provider\" : \"OPENAI\"\n    },\n    \"httpRequest\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/v1/chat/completions\"\n    },\n    \"id\" : \"llm\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n because:\n\n  method matched\n  path didn't match: \n  \n    string or regex match failed expected:\n  \n      /v1/chat/completions\n  \n     found:\n  \n      /v1/proxy-llm\n\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/proxy-llm\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-type\" : [ \"application/json\" ],\n      \"content-length\" : [ \"32\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : {\n      \"model\" : \"gpt-4o\",\n      \"messages\" : [ ]\n    }\n  }\n\n matched expectation:\n\n  {\n    \"httpOverrideForwardedRequest\" : {\n      \"requestOverride\" : {\n        \"path\" : \"/v1/chat/completions\",\n        \"headers\" : {\n          \"Host\" : [ \"localhost:<port>\" ]\n        }\n      }\n    },\n    \"httpRequest\" : {\n      \"path\" : \"/v1/proxy-llm\"\n    },\n    \"id\" : \"proxy-llm\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n",
+      "note": "what the blocked forward logged: its receipt and match only"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 2",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[]",
+      "note": "request-responses of the blocked forward: none, it was answered without an exchange"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": ""
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpLlmResponse\" : {\n    \"provider\" : \"OPENAI\",\n    \"model\" : \"gpt-4o\",\n    \"completion\" : {\n      \"text\" : \"hi\",\n      \"usage\" : {\n        \"inputTokens\" : 1000,\n        \"outputTokens\" : 1000\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\"\n  },\n  \"id\" : \"llm\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/v1/chat/completions\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/v1/proxy-llm\"\n  },\n  \"id\" : \"proxy-llm\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/respond\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/plain\"\n  },\n  \"id\" : \"plain\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/respond\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"ok\"\n  },\n  \"id\" : \"respond\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":\"<masked>\",\"object\":\"chat.completion\",\"<masked>,\"model\":\"gpt-4o\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"hi\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":1000,\"completion_tokens\":1000,\"total_tokens\":2000}}",
+      "note": "after reset the budget is fresh: the forward proceeds"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "<masked>",
+        "content-type: text/plain; version=0.0.4; charset=utf-8"
+      ],
+      "body": "# HELP mock_server_llm_cost_budget_tripped_total Total number of times the LLM cost-budget circuit-breaker tripped\n# TYPE mock_server_llm_cost_budget_tripped_total counter\nmock_server_llm_cost_budget_tripped_total 3.0\n",
+      "note": "the Prometheus trip counter survives a reset"
+    }
+  ]
+}

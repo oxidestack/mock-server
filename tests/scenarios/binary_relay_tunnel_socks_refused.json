@@ -1,0 +1,21 @@
+{
+ "source": "NettyHttpClient.connectBinaryRelay through connectThroughTunnel (binaryRelayTunnel): forwardSocksProxy refuses, so the binary relay's upstream connection fails with proxyFailure(tunnel, ...), whose WARN is logged once per proxy",
+ "properties": {
+  "proxyRemoteHost": "localhost",
+  "proxyRemotePort": "{{deadport}}",
+  "forwardSocksProxy": "{{deadhost}}"
+ },
+ "steps": [
+  {"tcp": ["CQgHBgUEAwIBAA=="], "note": "binary connection 1: its tunnel proxy refuses, the connection is closed"},
+  {"sleepMillis": 500},
+  {"tcp": ["CQgHBgUEAwIBAA=="], "note": "binary connection 2: refused again"},
+  {"sleepMillis": 500},
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [{"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+", "replace": "/<client>", "reason": "the binary client's address: the Docker gateway's when recorded, loopback on replay"}],
+   "compare": "unordered",
+   "note": "two received entries and two failures, and one 'could not be reached' WARN for the proxy"
+  }
+ ]
+}

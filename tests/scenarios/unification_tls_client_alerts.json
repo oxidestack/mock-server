@@ -1,0 +1,211 @@
+{
+  "note": "A server of its own (the property is incidental): a client's failed handshake is logged at WARN only the first time its address fails on a server, and a reset keeps the addresses (ClientTlsHandshakeFailureLog); a shared server has seen the harness's address fail before (warm_tls_contexts).",
+  "properties": {
+    "logLevel": "INFO"
+  },
+  "steps": [
+    {
+      "tcp": [
+        "FgMBAK8BAACrAwNQcfBbrU9hk9mX/OKhrqw6unw7hQZzuxFAnsa2NWXVAgAAHsAswDDAK8AvzKnMqMAkwCjAI8AnAJ8AngBrAGcA/wEAAGQAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKAAwACgAdABcAHgAZABgAIwAAABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYC"
+      ],
+      "awaitBytes": 4,
+      "mask": [
+        {
+          "regex": "^(.{4}).*$",
+          "replace": "$1"
+        }
+      ],
+      "note": "PortUnificationHandler.exceptionCaught for a client that rejects the server certificate. Warm-up: the first TLS use of an oracle logs its CA loading"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "note": "reset before: certificate_unknown (46)"
+    },
+    {
+      "tcp": [
+        "FgMBAK8BAACrAwNQcfBbrU9hk9mX/OKhrqw6unw7hQZzuxFAnsa2NWXVAgAAHsAswDDAK8AvzKnMqMAkwCjAI8AnAJ8AngBrAGcA/wEAAGQAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKAAwACgAdABcAHgAZABgAIwAAABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYC",
+        "FQMDAAICLg=="
+      ],
+      "mask": [
+        {
+          "regex": "^(.{4}).*$",
+          "replace": "$1"
+        }
+      ],
+      "note": "a TLS 1.2 ClientHello, then a fatal certificate_unknown (46) alert once the server flight is out; only the first record header of the answer compares"
+    },
+    {
+      "sleepMillis": 300
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "body": {
+        "path": "/.*"
+      },
+      "mask": [
+        "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]",
+        "\"(local|remote)Address\" : \"[^\"]*\"",
+        {
+          "regex": "(?m)^  /[0-9.]+:[0-9]+$",
+          "replace": "  <client address>",
+          "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+        }
+      ],
+      "note": "logs after: certificate_unknown (46)"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "note": "reset before: unknown_ca (48)"
+    },
+    {
+      "tcp": [
+        "FgMBAK8BAACrAwNQcfBbrU9hk9mX/OKhrqw6unw7hQZzuxFAnsa2NWXVAgAAHsAswDDAK8AvzKnMqMAkwCjAI8AnAJ8AngBrAGcA/wEAAGQAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKAAwACgAdABcAHgAZABgAIwAAABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYC",
+        "FQMDAAICMA=="
+      ],
+      "mask": [
+        {
+          "regex": "^(.{4}).*$",
+          "replace": "$1"
+        }
+      ],
+      "note": "a TLS 1.2 ClientHello, then a fatal unknown_ca (48) alert once the server flight is out; only the first record header of the answer compares"
+    },
+    {
+      "sleepMillis": 300
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "body": {
+        "path": "/.*"
+      },
+      "mask": [
+        "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]",
+        "\"(local|remote)Address\" : \"[^\"]*\"",
+        {
+          "regex": "(?m)^  /[0-9.]+:[0-9]+$",
+          "replace": "  <client address>",
+          "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+        }
+      ],
+      "note": "logs after: unknown_ca (48)"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "note": "reset before: bad_certificate (42)"
+    },
+    {
+      "tcp": [
+        "FgMBAK8BAACrAwNQcfBbrU9hk9mX/OKhrqw6unw7hQZzuxFAnsa2NWXVAgAAHsAswDDAK8AvzKnMqMAkwCjAI8AnAJ8AngBrAGcA/wEAAGQAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKAAwACgAdABcAHgAZABgAIwAAABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYC",
+        "FQMDAAICKg=="
+      ],
+      "mask": [
+        {
+          "regex": "^(.{4}).*$",
+          "replace": "$1"
+        }
+      ],
+      "note": "a TLS 1.2 ClientHello, then a fatal bad_certificate (42) alert once the server flight is out; only the first record header of the answer compares"
+    },
+    {
+      "sleepMillis": 300
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "body": {
+        "path": "/.*"
+      },
+      "mask": [
+        "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]",
+        "\"(local|remote)Address\" : \"[^\"]*\"",
+        {
+          "regex": "(?m)^  /[0-9.]+:[0-9]+$",
+          "replace": "  <client address>",
+          "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+        }
+      ],
+      "note": "logs after: bad_certificate (42)"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "note": "reset before: handshake_failure (40)"
+    },
+    {
+      "tcp": [
+        "FgMBAK8BAACrAwNQcfBbrU9hk9mX/OKhrqw6unw7hQZzuxFAnsa2NWXVAgAAHsAswDDAK8AvzKnMqMAkwCjAI8AnAJ8AngBrAGcA/wEAAGQAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKAAwACgAdABcAHgAZABgAIwAAABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYC",
+        "FQMDAAICKA=="
+      ],
+      "mask": [
+        {
+          "regex": "^(.{4}).*$",
+          "replace": "$1"
+        }
+      ],
+      "note": "a TLS 1.2 ClientHello, then a fatal handshake_failure (40) alert once the server flight is out; only the first record header of the answer compares"
+    },
+    {
+      "sleepMillis": 300
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "body": {
+        "path": "/.*"
+      },
+      "mask": [
+        "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]",
+        "\"(local|remote)Address\" : \"[^\"]*\"",
+        {
+          "regex": "(?m)^  /[0-9.]+:[0-9]+$",
+          "replace": "  <client address>",
+          "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+        }
+      ],
+      "note": "logs after: handshake_failure (40)"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "note": "reset before: certificate_expired (45)"
+    },
+    {
+      "tcp": [
+        "FgMBAK8BAACrAwNQcfBbrU9hk9mX/OKhrqw6unw7hQZzuxFAnsa2NWXVAgAAHsAswDDAK8AvzKnMqMAkwCjAI8AnAJ8AngBrAGcA/wEAAGQAAAAOAAwAAAlsb2NhbGhvc3QACwAEAwABAgAKAAwACgAdABcAHgAZABgAIwAAABYAAAAXAAAADQAqACgEAwUDBgMIBwgICAkICggLCAQIBQgGBAEFAQYBAwMDAQMCBAIFAgYC",
+        "FQMDAAICLQ=="
+      ],
+      "mask": [
+        {
+          "regex": "^(.{4}).*$",
+          "replace": "$1"
+        }
+      ],
+      "note": "a TLS 1.2 ClientHello, then a fatal certificate_expired (45) alert once the server flight is out; only the first record header of the answer compares"
+    },
+    {
+      "sleepMillis": 300
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "body": {
+        "path": "/.*"
+      },
+      "mask": [
+        "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]",
+        "\"(local|remote)Address\" : \"[^\"]*\"",
+        {
+          "regex": "(?m)^  /[0-9.]+:[0-9]+$",
+          "replace": "  <client address>",
+          "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+        }
+      ],
+      "note": "logs after: certificate_expired (45)"
+    }
+  ]
+}

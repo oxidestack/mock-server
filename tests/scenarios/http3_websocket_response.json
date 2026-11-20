@@ -1,0 +1,22 @@
+{
+ "source": "upstream #82, 18b3a36e7: a httpWebSocketResponse matched over HTTP/3 is answered 501 naming RFC 9220, with a WARN entry naming the expectation (HttpActionHandler.WEBSOCKET_OVER_HTTP3_UNSUPPORTED)",
+ "quic": true,
+ "properties": {
+  "http3Port": "19761"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"id": "ws-h3", "httpRequest": {"path": "/ws"}, "httpWebSocketResponse": {"messages": [{"text": "hello"}]}},
+    {"id": "ws-h3-delayed", "httpRequest": {"path": "/ws-delayed"}, "httpWebSocketResponse": {"delay": {"timeUnit": "MILLISECONDS", "value": 600}, "messages": [{"text": "hello"}]}}
+   ]
+  },
+  {"h3": true, "method": "GET", "path": "/ws", "headers": {"upgrade": "websocket", "sec-websocket-version": "13", "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ=="}, "maxMillis": 5000, "note": "a WebSocket expectation over HTTP/3: 501"},
+  {"h3": true, "method": "GET", "path": "/ws-delayed", "maxMillis": 5000, "note": "the action's delay is not waited out before the 501"},
+  {"h3": true, "method": "HEAD", "path": "/ws", "maxMillis": 5000, "note": "HEAD: the 501's header section alone"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/ws"}, "note": "the WARN and the response entries"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES", "body": {"path": "/ws"}, "note": "the 501 as recorded"}
+ ]
+}

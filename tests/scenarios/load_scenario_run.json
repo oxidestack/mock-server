@@ -1,0 +1,186 @@
+{
+ "properties": {
+  "loadGenerationEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/load/.*"
+    },
+    "httpResponse": {
+     "body": "{\"ok\":\"yes\"}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "note": "start without body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "note": "start unknown",
+   "body": {
+    "name": "nope"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "note": "load; a SEQUENTIAL feeder ends the run only after its last response, where maxRequests could end it with that request in flight",
+   "body": {
+    "name": "self",
+    "steps": [
+     {
+      "request": {
+       "method": "GET",
+       "path": "/load/$iteration.index",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      },
+      "checks": [
+       {
+        "source": "STATUS",
+        "comparator": "EQUALS",
+        "value": "200"
+       },
+       {
+        "source": "BODY_JSONPATH",
+        "jsonPath": "$.ok",
+        "comparator": "EQUALS",
+        "value": "yes"
+       }
+      ]
+     }
+    ],
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 20000
+      }
+     ]
+    },
+    "feeder": {
+     "data": "row\n1\n2\n3",
+     "format": "CSV",
+     "strategy": "SEQUENTIAL"
+    },
+    "thresholds": [
+     {
+      "metric": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.5
+     },
+     {
+      "metric": "CHECK_FAILURE_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.5
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "note": "start",
+   "body": {
+    "names": [
+     "self"
+    ]
+   }
+  },
+  {
+   "sleepMillis": 4000,
+   "note": "a fresh oracle JVM can take seconds to send its first load request"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/self",
+   "note": "completed",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAt|endedAt|elapsedMillis|p50Millis|p95Millis|p99Millis|p999Millis|observed)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies with the masked values>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/self/report",
+   "note": "JSON report",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|observed)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies with the masked values>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/self/report?format=junit",
+   "note": "JUnit report",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "(time|p50Millis|p95Millis|p99Millis|p999Millis)(=\"|\" value=\"|=)[0-9.]+",
+     "replace": "${1}${2}<varies>"
+    },
+    {
+     "regex": "observed [0-9.E-]+",
+     "replace": "observed <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies with the masked values>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/load/.*"
+   },
+   "note": "load traffic is not logged",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/stop",
+   "note": "stop all",
+   "body": {
+    "all": true
+   }
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/loadScenario",
+   "note": "clear"
+  }
+ ]
+}

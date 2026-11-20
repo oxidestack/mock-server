@@ -1,0 +1,515 @@
+{
+ "source": "a look-around (Pos, Neg, Behind, NotBehind), an independent group (Ques(INDEPENDENT)) and a possessive quantifier end their body at Pattern.accept and do not restore the capturing groups the body set, when the body matched and the node after them fails (or, for a negative one, the body matched), so the groups keep that value into a later alternative or a later start of the same search; a Branch or Ques over a group restores them; such patterns are walked, not translated to fancy_regex",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "template 1: $regex.group('ac', '(?=(a))b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-1",
+    "httpRequest": {
+     "path": "/lac1"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?=(a))b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 1: $regex.group('ac', '(?=(a))b|c', 1)",
+   "method": "GET",
+   "path": "/lac1"
+  },
+  {
+   "note": "template 2: $regex.group('ac', '(?!(a))b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-2",
+    "httpRequest": {
+     "path": "/lac2"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?!(a))b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 2: $regex.group('ac', '(?!(a))b|c', 1)",
+   "method": "GET",
+   "path": "/lac2"
+  },
+  {
+   "note": "template 3: $regex.group('ac', '(?!(a))|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-3",
+    "httpRequest": {
+     "path": "/lac3"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?!(a))|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 3: $regex.group('ac', '(?!(a))|c', 1)",
+   "method": "GET",
+   "path": "/lac3"
+  },
+  {
+   "note": "template 4: $regex.group('ab', '(?!(a)b)a|b', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-4",
+    "httpRequest": {
+     "path": "/lac4"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ab', '(?!(a)b)a|b', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 4: $regex.group('ab', '(?!(a)b)a|b', 1)",
+   "method": "GET",
+   "path": "/lac4"
+  },
+  {
+   "note": "template 5: $regex.group('ac', '(?<=(a))b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-5",
+    "httpRequest": {
+     "path": "/lac5"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?<=(a))b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 5: $regex.group('ac', '(?<=(a))b|c', 1)",
+   "method": "GET",
+   "path": "/lac5"
+  },
+  {
+   "note": "template 6: $regex.group('ac', '(?<!(a))c|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-6",
+    "httpRequest": {
+     "path": "/lac6"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?<!(a))c|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 6: $regex.group('ac', '(?<!(a))c|c', 1)",
+   "method": "GET",
+   "path": "/lac6"
+  },
+  {
+   "note": "template 7: $regex.group('ac', 'a(?<=(a))b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-7",
+    "httpRequest": {
+     "path": "/lac7"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', 'a(?<=(a))b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 7: $regex.group('ac', 'a(?<=(a))b|c', 1)",
+   "method": "GET",
+   "path": "/lac7"
+  },
+  {
+   "note": "template 8: $regex.group('ac', 'a(?<!(a))|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-8",
+    "httpRequest": {
+     "path": "/lac8"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', 'a(?<!(a))|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 8: $regex.group('ac', 'a(?<!(a))|c', 1)",
+   "method": "GET",
+   "path": "/lac8"
+  },
+  {
+   "note": "template 9: $regex.group('ac', '(?>(a))b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-9",
+    "httpRequest": {
+     "path": "/lac9"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?>(a))b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 9: $regex.group('ac', '(?>(a))b|c', 1)",
+   "method": "GET",
+   "path": "/lac9"
+  },
+  {
+   "note": "template 10: $regex.group('ac', '(a)?+b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-10",
+    "httpRequest": {
+     "path": "/lac10"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(a)?+b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 10: $regex.group('ac', '(a)?+b|c', 1)",
+   "method": "GET",
+   "path": "/lac10"
+  },
+  {
+   "note": "template 11: $regex.group('ac', '(a)*+b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-11",
+    "httpRequest": {
+     "path": "/lac11"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(a)*+b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 11: $regex.group('ac', '(a)*+b|c', 1)",
+   "method": "GET",
+   "path": "/lac11"
+  },
+  {
+   "note": "template 12: $regex.group('ac', '(a){1}+b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-12",
+    "httpRequest": {
+     "path": "/lac12"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(a){1}+b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 12: $regex.group('ac', '(a){1}+b|c', 1)",
+   "method": "GET",
+   "path": "/lac12"
+  },
+  {
+   "note": "template 13: $regex.group('ac', '(a)?b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-13",
+    "httpRequest": {
+     "path": "/lac13"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(a)?b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 13: $regex.group('ac', '(a)?b|c', 1)",
+   "method": "GET",
+   "path": "/lac13"
+  },
+  {
+   "note": "template 14: $regex.group('ac', '(?:(a)|x)b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-14",
+    "httpRequest": {
+     "path": "/lac14"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?:(a)|x)b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 14: $regex.group('ac', '(?:(a)|x)b|c', 1)",
+   "method": "GET",
+   "path": "/lac14"
+  },
+  {
+   "note": "template 15: $regex.group('ac', '(?:(a)|x)?b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-15",
+    "httpRequest": {
+     "path": "/lac15"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?:(a)|x)?b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 15: $regex.group('ac', '(?:(a)|x)?b|c', 1)",
+   "method": "GET",
+   "path": "/lac15"
+  },
+  {
+   "note": "template 16: $regex.group('ac', '(a)??b|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-16",
+    "httpRequest": {
+     "path": "/lac16"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(a)??b|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 16: $regex.group('ac', '(a)??b|c', 1)",
+   "method": "GET",
+   "path": "/lac16"
+  },
+  {
+   "note": "template 17: $regex.group('aac', '(?=(a))a(?=(a))b|c', 2)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-17",
+    "httpRequest": {
+     "path": "/lac17"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('aac', '(?=(a))a(?=(a))b|c', 2)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 17: $regex.group('aac', '(?=(a))a(?=(a))b|c', 2)",
+   "method": "GET",
+   "path": "/lac17"
+  },
+  {
+   "note": "template 18: $regex.group('abc', '(?=(a)b)ax|c', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-18",
+    "httpRequest": {
+     "path": "/lac18"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('abc', '(?=(a)b)ax|c', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 18: $regex.group('abc', '(?=(a)b)ax|c', 1)",
+   "method": "GET",
+   "path": "/lac18"
+  },
+  {
+   "note": "template 19: $regex.replaceAll('acac', '(?=(a))b|c', '[$1]')",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-19",
+    "httpRequest": {
+     "path": "/lac19"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.replaceAll('acac', '(?=(a))b|c', '[$1]')){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 19: $regex.replaceAll('acac', '(?=(a))b|c', '[$1]')",
+   "method": "GET",
+   "path": "/lac19"
+  },
+  {
+   "note": "template 20: $regex.matches('ab', '(?=(a))ab|ab')",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-20",
+    "httpRequest": {
+     "path": "/lac20"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.matches('ab', '(?=(a))ab|ab')){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 20: $regex.matches('ab', '(?=(a))ab|ab')",
+   "method": "GET",
+   "path": "/lac20"
+  },
+  {
+   "note": "template 21: $regex.group('aab', '(?=(a))\\\\1b|.(?=(a))', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-21",
+    "httpRequest": {
+     "path": "/lac21"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('aab', '(?=(a))\\\\1b|.(?=(a))', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 21: $regex.group('aab', '(?=(a))\\\\1b|.(?=(a))', 1)",
+   "method": "GET",
+   "path": "/lac21"
+  },
+  {
+   "note": "template 22: $regex.group('ac', '(?=(a))b|c(?:\\\\1|)', 1)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "body": {
+    "id": "lac-22",
+    "httpRequest": {
+     "path": "/lac22"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#set($r = $regex.group('ac', '(?=(a))b|c(?:\\\\1|)', 1)){\"statusCode\": 200, \"body\": \"$!esc.java($r)\"}"
+    }
+   }
+  },
+  {
+   "note": "render 22: $regex.group('ac', '(?=(a))b|c(?:\\\\1|)', 1)",
+   "method": "GET",
+   "path": "/lac22"
+  }
+ ]
+}

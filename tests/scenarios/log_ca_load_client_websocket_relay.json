@@ -1,0 +1,49 @@
+{
+ "properties": {
+  "proxySetupLogging": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/calc/relay"
+    },
+    "httpForward": {
+     "host": "localhost",
+     "port": "{{deadport}}",
+     "scheme": "HTTPS"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /calc/relay HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ],
+   "note": "a WebSocket upgrade relayed over TLS (wss) to a port that refuses: the relay's TLS context is built with its channel, before it connects",
+   "text": true,
+   "mask": [
+    "content-length: \\d+",
+    "(?:localhost|127\\.0\\.0\\.1):\\d+"
+   ],
+   "awaitBytes": 12
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "the client context's CA load, then the failed relay (the length varies with the deadport's digits and the client address)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

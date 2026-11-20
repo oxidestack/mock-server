@@ -1,0 +1,3982 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) chaosexp-ChaosExperimentOrchestratorTest-8ec9bc67 (conformance/harvest)",
+ "properties": {
+  "sloTrackingEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d0db1020acf9",
+   "note": "shouldApplyMultipleHostProfilesInOneStage (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldApplyMultipleHostProfilesInOneStage (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "multi-host",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       },
+       "db.svc": {
+        "errorStatus": 500
+       }
+      }
+     }
+    ]
+   },
+   "case": "d0db1020acf9"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldApplyMultipleHostProfilesInOneStage (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "d0db1020acf9"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldApplyMultipleHostProfilesInOneStage (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "d0db1020acf9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a4a96c99e048",
+   "note": "shouldStopScheduledExperimentBeforeItStarts (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopScheduledExperimentBeforeItStarts (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "cancel-before-start",
+    "loop": false,
+    "startDelayMillis": 60000,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "a4a96c99e048"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopScheduledExperimentBeforeItStarts (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "a4a96c99e048"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopScheduledExperimentBeforeItStarts (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "a4a96c99e048"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopScheduledExperimentBeforeItStarts (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "a4a96c99e048"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldStopScheduledExperimentBeforeItStarts (chaosexp): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "a4a96c99e048"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e3a7535cb202",
+   "note": "shouldRoundTripScheduleFieldsThroughJson (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "sched-json",
+    "loop": false,
+    "startDelayMillis": 15000,
+    "cronSchedule": "*/5 * * * *",
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "note": "shouldRoundTripScheduleFieldsThroughJson (chaosexp): ExperimentDefinition.fromJson (the definition started)",
+   "case": "e3a7535cb202"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripScheduleFieldsThroughJson (chaosexp): ExperimentDefinition.fromJson (read back)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "e3a7535cb202"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripScheduleFieldsThroughJson (chaosexp): ExperimentDefinition.fromJson (stopped)",
+   "case": "e3a7535cb202"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "559cdd0fea6c",
+   "note": "shouldStopIdempotently (chaosexp): reset"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopIdempotently (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "559cdd0fea6c"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopIdempotently (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "559cdd0fea6c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "308f5c02c38f",
+   "note": "shouldRejectNegativeStartDelay (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectNegativeStartDelay (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "neg-delay",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ],
+    "startDelayMillis": -1
+   },
+   "case": "308f5c02c38f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "32fa0c15c462",
+   "note": "shouldRejectZeroDuration (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectZeroDuration (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "zero-dur",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 0,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "32fa0c15c462"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "201412cc60af",
+   "note": "shouldClearPreviousStageTcpProfilesOnAdvance (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldClearPreviousStageTcpProfilesOnAdvance (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "tcp-advance",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {},
+      "tcpProfiles": {
+       "tcp0.svc": {
+        "resetPeer": true
+       }
+      }
+     },
+     {
+      "durationMillis": 5000,
+      "profiles": {},
+      "tcpProfiles": {
+       "tcp1.svc": {
+        "down": true
+       }
+      }
+     }
+    ]
+   },
+   "case": "201412cc60af"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/tcpChaos",
+   "note": "shouldClearPreviousStageTcpProfilesOnAdvance (chaosexp): TcpChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "201412cc60af"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/tcpChaos",
+   "note": "shouldClearPreviousStageTcpProfilesOnAdvance (chaosexp): TcpChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "201412cc60af"
+  },
+  {
+   "sleepMillis": 5300,
+   "note": "shouldClearPreviousStageTcpProfilesOnAdvance (chaosexp): ChaosExperimentOrchestrator.advanceNow (the server's scheduler ends the stage)",
+   "case": "201412cc60af"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/tcpChaos",
+   "note": "shouldClearPreviousStageTcpProfilesOnAdvance (chaosexp): TcpChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "201412cc60af"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/tcpChaos",
+   "note": "shouldClearPreviousStageTcpProfilesOnAdvance (chaosexp): TcpChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "201412cc60af"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "62c6fde10d75",
+   "note": "shouldRoundTripTcpProfilesThroughJson (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "tcp-json",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      },
+      "tcpProfiles": {
+       "tcp.svc": {
+        "latencyMs": 250
+       }
+      }
+     }
+    ]
+   },
+   "note": "shouldRoundTripTcpProfilesThroughJson (chaosexp): ExperimentDefinition.fromJson (the definition started)",
+   "case": "62c6fde10d75"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripTcpProfilesThroughJson (chaosexp): ExperimentDefinition.fromJson (read back)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "62c6fde10d75"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripTcpProfilesThroughJson (chaosexp): ExperimentDefinition.fromJson (stopped)",
+   "case": "62c6fde10d75"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b432a0697286",
+   "note": "shouldClearHistoryOnReset (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldClearHistoryOnReset (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "hist-reset",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "b432a0697286"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldClearHistoryOnReset (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "b432a0697286"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment/history",
+   "note": "shouldClearHistoryOnReset (chaosexp): ChaosExperimentOrchestrator.getHistory (the endpoint lists up to 50)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "b432a0697286"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "shouldClearHistoryOnReset (chaosexp): ChaosExperimentOrchestrator.reset",
+   "case": "b432a0697286"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment/history",
+   "note": "shouldClearHistoryOnReset (chaosexp): ChaosExperimentOrchestrator.getHistory (the endpoint lists up to 50)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "b432a0697286"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "90e3eaf98f2d",
+   "note": "shouldAcceptStageWithOnlyTcpProfiles (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldAcceptStageWithOnlyTcpProfiles (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "tcp-only-valid",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {},
+      "tcpProfiles": {
+       "tcp.svc": {
+        "resetPeer": true
+       }
+      }
+     }
+    ]
+   },
+   "case": "90e3eaf98f2d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d58b7d78a1c2",
+   "note": "shouldRejectNeverMatchingCronSchedule (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectNeverMatchingCronSchedule (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "impossible-cron",
+    "loop": false,
+    "cronSchedule": "0 0 30 2 *",
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "d58b7d78a1c2"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectNeverMatchingCronSchedule (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "d58b7d78a1c2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "cfc01b0bae27",
+   "note": "shouldRejectBlankName (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectBlankName (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "   ",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "cfc01b0bae27"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8a572a9b8fab",
+   "note": "shouldRejectRecurringWithoutCronSchedule (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectRecurringWithoutCronSchedule (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "recurring-no-cron",
+    "loop": false,
+    "recurring": true,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "8a572a9b8fab"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9fcfe94b9208",
+   "note": "shouldReportShrinkingStartRemainingWhileScheduled (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReportShrinkingStartRemainingWhileScheduled (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "delayed-status",
+    "loop": false,
+    "startDelayMillis": 10000,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "9fcfe94b9208"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReportShrinkingStartRemainingWhileScheduled (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "9fcfe94b9208"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReportShrinkingStartRemainingWhileScheduled (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "9fcfe94b9208"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldReportShrinkingStartRemainingWhileScheduled (chaosexp): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "9fcfe94b9208"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "3dcf5fe690d5",
+   "note": "shouldRoundTripSloCriteriaThroughJson (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "slo-json",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ],
+    "sloCriteria": {
+     "minimumSampleCount": 1,
+     "name": "exp-slo",
+     "objectives": [
+      {
+       "comparator": "LESS_THAN",
+       "scope": "FORWARD",
+       "sli": "ERROR_RATE",
+       "threshold": 0.25
+      }
+     ],
+     "window": {
+      "lookbackMillis": 60000,
+      "type": "LOOKBACK"
+     }
+    }
+   },
+   "note": "shouldRoundTripSloCriteriaThroughJson (chaosexp): ExperimentDefinition.fromJson (the definition started)",
+   "case": "3dcf5fe690d5"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripSloCriteriaThroughJson (chaosexp): ExperimentDefinition.fromJson (read back)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "3dcf5fe690d5"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripSloCriteriaThroughJson (chaosexp): ExperimentDefinition.fromJson (stopped)",
+   "case": "3dcf5fe690d5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "3eb8f43f3c41",
+   "note": "shouldAdvanceToNextStage (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldAdvanceToNextStage (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "advance-test",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 3000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 429
+       }
+      }
+     }
+    ]
+   },
+   "case": "3eb8f43f3c41"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldAdvanceToNextStage (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "3eb8f43f3c41"
+  },
+  {
+   "sleepMillis": 5300,
+   "note": "shouldAdvanceToNextStage (chaosexp): ChaosExperimentOrchestrator.advanceNow (the server's scheduler ends the stage)",
+   "case": "3eb8f43f3c41"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldAdvanceToNextStage (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "3eb8f43f3c41"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldAdvanceToNextStage (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "3eb8f43f3c41"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b69100237f4d",
+   "note": "shouldNotAffectRegistryWhenNoExperimentRunning (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "manual.svc",
+    "chaos": {
+     "errorStatus": 503
+    }
+   },
+   "note": "shouldNotAffectRegistryWhenNoExperimentRunning (chaosexp): ServiceChaosRegistry.put",
+   "case": "b69100237f4d"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldNotAffectRegistryWhenNoExperimentRunning (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "b69100237f4d"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldNotAffectRegistryWhenNoExperimentRunning (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "b69100237f4d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "7f8d950eb6da",
+   "note": "shouldStartImmediatelyWhenNoScheduleSet (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStartImmediatelyWhenNoScheduleSet (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "immediate",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "7f8d950eb6da"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldStartImmediatelyWhenNoScheduleSet (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7f8d950eb6da"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStartImmediatelyWhenNoScheduleSet (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7f8d950eb6da"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "1c0f8893a1a2",
+   "note": "shouldApplyAndResetStagedTcpProfiles (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldApplyAndResetStagedTcpProfiles (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "tcp-exp",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {},
+      "tcpProfiles": {
+       "tcp.svc": {
+        "resetPeer": true
+       }
+      }
+     }
+    ]
+   },
+   "case": "1c0f8893a1a2"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/tcpChaos",
+   "note": "shouldApplyAndResetStagedTcpProfiles (chaosexp): TcpChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "1c0f8893a1a2"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/tcpChaos",
+   "note": "shouldApplyAndResetStagedTcpProfiles (chaosexp): TcpChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "1c0f8893a1a2"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldApplyAndResetStagedTcpProfiles (chaosexp): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "1c0f8893a1a2"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldApplyAndResetStagedTcpProfiles (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "1c0f8893a1a2"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/tcpChaos",
+   "note": "shouldApplyAndResetStagedTcpProfiles (chaosexp): TcpChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "1c0f8893a1a2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "7d23e8913927",
+   "note": "shouldClearPreviousStageProfilesOnAdvance (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldClearPreviousStageProfilesOnAdvance (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "clear-test",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "db.svc": {
+        "errorStatus": 500
+       }
+      }
+     }
+    ]
+   },
+   "case": "7d23e8913927"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldClearPreviousStageProfilesOnAdvance (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7d23e8913927"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldClearPreviousStageProfilesOnAdvance (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7d23e8913927"
+  },
+  {
+   "sleepMillis": 5300,
+   "note": "shouldClearPreviousStageProfilesOnAdvance (chaosexp): ChaosExperimentOrchestrator.advanceNow (the server's scheduler ends the stage)",
+   "case": "7d23e8913927"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldClearPreviousStageProfilesOnAdvance (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7d23e8913927"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldClearPreviousStageProfilesOnAdvance (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7d23e8913927"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "7145866369c6",
+   "note": "shouldReplaceRunningExperimentWhenNewOneStarts (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReplaceRunningExperimentWhenNewOneStarts (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "first",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "7145866369c6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReplaceRunningExperimentWhenNewOneStarts (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "second",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 30000,
+      "profiles": {
+       "db.svc": {
+        "errorStatus": 500
+       }
+      }
+     }
+    ]
+   },
+   "case": "7145866369c6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReplaceRunningExperimentWhenNewOneStarts (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7145866369c6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldReplaceRunningExperimentWhenNewOneStarts (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7145866369c6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldReplaceRunningExperimentWhenNewOneStarts (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "7145866369c6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "75719f3314bd",
+   "note": "shouldReportCorrectStatusDuringExperiment (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReportCorrectStatusDuringExperiment (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "status-test",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 10000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 429
+       }
+      }
+     }
+    ]
+   },
+   "case": "75719f3314bd"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReportCorrectStatusDuringExperiment (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "75719f3314bd"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "7b0ac0a29a47",
+   "note": "shouldRejectStartDelayExceedingMax (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectStartDelayExceedingMax (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "huge-delay",
+    "loop": false,
+    "startDelayMillis": 604800001,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "7b0ac0a29a47"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "adf627566c0b",
+   "note": "shouldRoundTripBaselineWindowThroughJson (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "baseline-json",
+    "loop": false,
+    "baselineWindowMillis": 20000,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ],
+    "sloCriteria": {
+     "minimumSampleCount": 1,
+     "name": "exp-slo",
+     "objectives": [
+      {
+       "comparator": "LESS_THAN",
+       "scope": "FORWARD",
+       "sli": "ERROR_RATE",
+       "threshold": 0.5
+      }
+     ],
+     "window": {
+      "lookbackMillis": 60000,
+      "type": "LOOKBACK"
+     }
+    }
+   },
+   "note": "shouldRoundTripBaselineWindowThroughJson (chaosexp): ExperimentDefinition.fromJson (the definition started)",
+   "case": "adf627566c0b"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripBaselineWindowThroughJson (chaosexp): ExperimentDefinition.fromJson (read back)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "adf627566c0b"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripBaselineWindowThroughJson (chaosexp): ExperimentDefinition.fromJson (stopped)",
+   "case": "adf627566c0b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f2e1c5cca280",
+   "note": "shouldCompleteAfterLastStage (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldCompleteAfterLastStage (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "complete-test",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "f2e1c5cca280"
+  },
+  {
+   "sleepMillis": 5300,
+   "note": "shouldCompleteAfterLastStage (chaosexp): ChaosExperimentOrchestrator.advanceNow (the server's scheduler ends the stage)",
+   "case": "f2e1c5cca280"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldCompleteAfterLastStage (chaosexp): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "f2e1c5cca280"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldCompleteAfterLastStage (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "f2e1c5cca280"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "1a487d14609d",
+   "note": "shouldRejectNullDefinition (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectNullDefinition (chaosexp): ChaosExperimentOrchestrator.start",
+   "case": "1a487d14609d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8e9c4cd92209",
+   "note": "shouldReplaceScheduledExperimentWithNewOne (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReplaceScheduledExperimentWithNewOne (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "scheduled-first",
+    "loop": false,
+    "startDelayMillis": 60000,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "8e9c4cd92209"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReplaceScheduledExperimentWithNewOne (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "immediate-second",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "db.svc": {
+        "errorStatus": 500
+       }
+      }
+     }
+    ]
+   },
+   "case": "8e9c4cd92209"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReplaceScheduledExperimentWithNewOne (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "8e9c4cd92209"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReplaceScheduledExperimentWithNewOne (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "8e9c4cd92209"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldReplaceScheduledExperimentWithNewOne (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "8e9c4cd92209"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldReplaceScheduledExperimentWithNewOne (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "8e9c4cd92209"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "3d490db8d707",
+   "note": "shouldRefuseToStartWhenBaselineInconclusive (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRefuseToStartWhenBaselineInconclusive (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "baseline-inconclusive",
+    "loop": false,
+    "baselineWindowMillis": 10000,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ],
+    "sloCriteria": {
+     "minimumSampleCount": 1,
+     "name": "exp-slo",
+     "objectives": [
+      {
+       "comparator": "LESS_THAN",
+       "scope": "FORWARD",
+       "sli": "ERROR_RATE",
+       "threshold": 0.5
+      }
+     ],
+     "window": {
+      "lookbackMillis": 60000,
+      "type": "LOOKBACK"
+     }
+    }
+   },
+   "case": "3d490db8d707"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRefuseToStartWhenBaselineInconclusive (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "3d490db8d707"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "17054907c046",
+   "note": "shouldLoopBackToStageZero (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldLoopBackToStageZero (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "loop-test",
+    "loop": true,
+    "stages": [
+     {
+      "durationMillis": 2000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 3000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 429
+       }
+      }
+     }
+    ]
+   },
+   "case": "17054907c046"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldLoopBackToStageZero (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "17054907c046"
+  },
+  {
+   "sleepMillis": 2300,
+   "note": "shouldLoopBackToStageZero (chaosexp): ChaosExperimentOrchestrator.advanceNow (the server's scheduler ends the stage)",
+   "case": "17054907c046"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldLoopBackToStageZero (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "17054907c046"
+  },
+  {
+   "sleepMillis": 3000,
+   "note": "shouldLoopBackToStageZero (chaosexp): ChaosExperimentOrchestrator.advanceNow (the server's scheduler ends the stage)",
+   "case": "17054907c046"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldLoopBackToStageZero (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "17054907c046"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldLoopBackToStageZero (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "17054907c046"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "79ebf16f6c2f",
+   "note": "shouldReturnNullStatusWhenNoExperiment (chaosexp): reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldReturnNullStatusWhenNoExperiment (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "79ebf16f6c2f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0e1bd1b33fe3",
+   "note": "shouldRejectNullStages (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectNullStages (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "null-stages",
+    "loop": false,
+    "stages": []
+   },
+   "case": "0e1bd1b33fe3"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "338f5d305d11",
+   "note": "shouldResetExperimentOnServerReset (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldResetExperimentOnServerReset (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "reset-test",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "338f5d305d11"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "shouldResetExperimentOnServerReset (chaosexp): ChaosExperimentOrchestrator.reset",
+   "case": "338f5d305d11"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldResetExperimentOnServerReset (chaosexp): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "338f5d305d11"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldResetExperimentOnServerReset (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "338f5d305d11"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "bf938ce099fc",
+   "note": "shouldRoundTripRecurringFlagThroughJson (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "recurring-json",
+    "loop": false,
+    "recurring": true,
+    "cronSchedule": "0 2 * * *",
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "note": "shouldRoundTripRecurringFlagThroughJson (chaosexp): ExperimentDefinition.fromJson (the definition started)",
+   "case": "bf938ce099fc"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripRecurringFlagThroughJson (chaosexp): ExperimentDefinition.fromJson (read back)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "bf938ce099fc"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripRecurringFlagThroughJson (chaosexp): ExperimentDefinition.fromJson (stopped)",
+   "case": "bf938ce099fc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "358595227f50",
+   "note": "shouldRejectTooManyStages (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectTooManyStages (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "too-many-stages",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "358595227f50"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "84446dd35c75",
+   "note": "shouldStartExperimentAndApplyStageZero (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStartExperimentAndApplyStageZero (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "test-exp",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "84446dd35c75"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldStartExperimentAndApplyStageZero (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "84446dd35c75"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldStartExperimentAndApplyStageZero (chaosexp): ServiceChaosRegistry.get",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "84446dd35c75"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStartExperimentAndApplyStageZero (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "84446dd35c75"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0079d7f9dc37",
+   "note": "shouldRejectInvalidCronSchedule (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectInvalidCronSchedule (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "bad-cron",
+    "loop": false,
+    "cronSchedule": "not a cron",
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "0079d7f9dc37"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "56314457b0b7",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-0",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-1",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-2",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-3",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-4",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-5",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-6",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-7",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-8",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-9",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-10",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-11",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-12",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-13",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-14",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-15",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-16",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-17",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-18",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-19",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-20",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-21",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-22",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-23",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-24",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-25",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-26",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-27",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-28",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-29",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-30",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-31",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-32",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-33",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-34",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-35",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-36",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-37",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-38",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-39",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-40",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-41",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-42",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-43",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-44",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-45",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-46",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-47",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-48",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-49",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-50",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-51",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-52",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-53",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "h-54",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment/history",
+   "note": "shouldRetainBoundedHistoryNewestFirst (chaosexp): ChaosExperimentOrchestrator.getHistory (the endpoint lists up to 50)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "56314457b0b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "7a5603c117b1",
+   "note": "shouldRejectDurationExceedingMax (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectDurationExceedingMax (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "too-long",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 86400001,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "7a5603c117b1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8fc3161aef55",
+   "note": "shouldRejectNegativeDuration (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectNegativeDuration (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "neg-dur",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": -1000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "8fc3161aef55"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "728889fa0892",
+   "note": "shouldSerializeStatusToJson (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldSerializeStatusToJson (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "json-test",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "728889fa0892"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldSerializeStatusToJson (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "728889fa0892"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "cf50731149d4",
+   "note": "shouldRejectEmptyProfiles (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectEmptyProfiles (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "no-profiles",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {}
+     }
+    ]
+   },
+   "case": "cf50731149d4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e282e4e4988c",
+   "note": "shouldRejectBaselineWindowWithoutSloCriteria (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectBaselineWindowWithoutSloCriteria (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "baseline-no-slo",
+    "loop": false,
+    "baselineWindowMillis": 10000,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "e282e4e4988c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2abcd5d7ac25",
+   "note": "shouldRejectEmptyStages (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectEmptyStages (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "empty-stages",
+    "loop": false,
+    "stages": []
+   },
+   "case": "2abcd5d7ac25"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "03cd2f907cce",
+   "note": "shouldRoundTripExperimentThroughJson (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "roundtrip",
+    "loop": true,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "note": "shouldRoundTripExperimentThroughJson (chaosexp): ExperimentDefinition.fromJson (the definition started)",
+   "case": "03cd2f907cce"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripExperimentThroughJson (chaosexp): ExperimentDefinition.fromJson (read back)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "03cd2f907cce"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRoundTripExperimentThroughJson (chaosexp): ExperimentDefinition.fromJson (stopped)",
+   "case": "03cd2f907cce"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "91074d030351",
+   "note": "shouldDeserializeExperimentFromJson (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "from-json",
+    "loop": true,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     },
+     {
+      "durationMillis": 3000,
+      "profiles": {
+       "db.svc": {
+        "errorStatus": 500
+       }
+      }
+     }
+    ]
+   },
+   "note": "shouldDeserializeExperimentFromJson (chaosexp): ExperimentDefinition.fromJson (the definition started)",
+   "case": "91074d030351"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldDeserializeExperimentFromJson (chaosexp): ExperimentDefinition.fromJson (read back)",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "91074d030351"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldDeserializeExperimentFromJson (chaosexp): ExperimentDefinition.fromJson (stopped)",
+   "case": "91074d030351"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0b5b0c3a6233",
+   "note": "shouldRejectMissingName (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldRejectMissingName (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 5000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "0b5b0c3a6233"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2af2cccca134",
+   "note": "shouldStopExperimentAndClearChaos (chaosexp): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopExperimentAndClearChaos (chaosexp): ChaosExperimentOrchestrator.start",
+   "body": {
+    "name": "stop-test",
+    "loop": false,
+    "stages": [
+     {
+      "durationMillis": 60000,
+      "profiles": {
+       "api.svc": {
+        "errorStatus": 503
+       }
+      }
+     }
+    ]
+   },
+   "case": "2af2cccca134"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopExperimentAndClearChaos (chaosexp): ChaosExperimentOrchestrator.stop",
+   "case": "2af2cccca134"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldStopExperimentAndClearChaos (chaosexp): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "2af2cccca134"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "note": "shouldStopExperimentAndClearChaos (chaosexp): ChaosExperimentOrchestrator.getStatus",
+   "mask": [
+    {
+     "regex": "(\"(?:stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "2af2cccca134"
+  }
+ ]
+}

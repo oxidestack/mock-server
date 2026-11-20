@@ -1,0 +1,691 @@
+{
+ "properties": {
+  "loadGenerationEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/feat/.*"
+    },
+    "httpResponse": {
+     "headers": {
+      "x-a": [
+       "a-b-c"
+      ]
+     },
+     "body": "{\"token\":\"abc\",\"n\":5}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": {
+    "name": "chain",
+    "templateType": "MUSTACHE",
+    "steps": [
+     {
+      "name": "login",
+      "request": {
+       "method": "GET",
+       "path": "/feat/login",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      },
+      "captures": [
+       {
+        "name": "token",
+        "source": "BODY_JSONPATH",
+        "expression": "$.token"
+       },
+       {
+        "name": "hdr",
+        "source": "HEADER",
+        "expression": "x-a"
+       },
+       {
+        "name": "num",
+        "source": "BODY_REGEX",
+        "expression": "\"n\":(\\d+)"
+       },
+       {
+        "name": "missing",
+        "source": "BODY_JSONPATH",
+        "expression": "$.nope",
+        "defaultValue": "dflt"
+       }
+      ],
+      "checks": [
+       {
+        "source": "HEADER",
+        "headerName": "x-a",
+        "comparator": "CONTAINS",
+        "value": "b"
+       },
+       {
+        "source": "BODY_JSONPATH",
+        "jsonPath": "$.n",
+        "comparator": "GT",
+        "value": "3"
+       },
+       {
+        "source": "STATUS",
+        "comparator": "NOT_EQUALS",
+        "value": "500"
+       },
+       {
+        "source": "BODY_JSONPATH",
+        "jsonPath": "$.token",
+        "comparator": "MATCHES",
+        "value": "a.c"
+       }
+      ]
+     },
+     {
+      "request": {
+       "method": "GET",
+       "path": "/feat/use/{{iteration.captured.token}}/{{iteration.data.user}}/{{iteration.captured.num}}/{{iteration.captured.missing}}/{{iteration.vuIteration}}",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    ],
+    "feeder": {
+     "rows": [
+      {
+       "user": "alice"
+      },
+      {
+       "user": "bob"
+      }
+     ],
+     "strategy": "SEQUENTIAL"
+    },
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 20000
+      }
+     ]
+    }
+   },
+   "note": "captures and feeder"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "body": {
+    "name": "chain"
+   }
+  },
+  {
+   "sleepMillis": 4000,
+   "note": "chain finishes before vel starts; a fresh oracle JVM can take seconds to send its first load request"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": {
+    "name": "vel",
+    "steps": [
+     {
+      "request": {
+       "method": "POST",
+       "path": "/feat/v/$iteration.index/${iteration.data.get('k')}/$iteration.count",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       },
+       "body": "#if($iteration.index == 0)first#{else}later#end"
+      }
+     }
+    ],
+    "feeder": {
+     "data": "k\nx\ny",
+     "format": "CSV",
+     "strategy": "SEQUENTIAL"
+    },
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 20000
+      }
+     ]
+    }
+   },
+   "note": "velocity templates and CSV rows; a SEQUENTIAL feeder ends the run only after its last response, where maxRequests could end it with that request in flight"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "body": {
+    "name": "vel"
+   }
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/chain",
+   "note": "feeder exhausted",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAt|endedAt|elapsedMillis|p50Millis|p95Millis|p99Millis|p999Millis|observed|currentTarget)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/vel",
+   "note": "velocity run",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAt|endedAt|elapsedMillis|p50Millis|p95Millis|p99Millis|p999Millis|observed|currentTarget)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/feat/(use|v)/.*"
+   },
+   "note": "rendered requests",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": {
+    "name": "fail",
+    "steps": [
+     {
+      "request": {
+       "method": "GET",
+       "path": "/feat/x",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    ],
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 20000
+      }
+     ]
+    },
+    "feeder": {
+     "data": "k\nx\ny",
+     "format": "CSV",
+     "strategy": "SEQUENTIAL"
+    },
+    "thresholds": [
+     {
+      "metric": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0
+     },
+     {
+      "metric": "THROUGHPUT_RPS",
+      "comparator": "GREATER_THAN",
+      "threshold": 0
+     }
+    ]
+   },
+   "note": "a failing threshold; a 2-row SEQUENTIAL feeder ends it only after the second response, where maxRequests could end it with that request in flight"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "body": {
+    "name": "fail"
+   }
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/fail/report",
+   "note": "FAIL verdict",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|observed)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/fail/report?format=JUNIT",
+   "note": "JUnit failures",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "(time|p50Millis|p95Millis|p99Millis|p999Millis)(=\"|\" value=\"|=)[0-9.]+",
+     "replace": "${1}${2}<varies>"
+    },
+    {
+     "regex": "(observed|THROUGHPUT_RPS GREATER_THAN) [0-9.E-]+",
+     "replace": "${1} <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": {
+    "name": "pending",
+    "steps": [
+     {
+      "request": {
+       "method": "GET",
+       "path": "/feat/p",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    ],
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 1000
+      }
+     ]
+    },
+    "startDelayMillis": 60000
+   },
+   "note": "start delay"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "body": {
+    "name": "pending"
+   },
+   "note": "pending"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/pending",
+   "note": "pending status",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAt|endedAt|elapsedMillis|p50Millis|p95Millis|p99Millis|p999Millis|observed|currentTarget)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/stop",
+   "body": {
+    "names": [
+     "pending",
+     "never-started"
+    ]
+   },
+   "note": "stop by names"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/pending",
+   "note": "stopped status",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAt|endedAt|elapsedMillis|p50Millis|p95Millis|p99Millis|p999Millis|observed|currentTarget)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromRecording",
+   "body": {
+    "name": "rec",
+    "requestFilter": {
+     "path": "/feat/use/.*"
+    },
+    "maxSteps": 1,
+    "target": {
+     "host": "target.example",
+     "port": 1234,
+     "scheme": "https"
+    },
+    "profile": {
+     "stages": [
+      {
+       "vus": 2,
+       "durationMillis": 500
+      }
+     ]
+    }
+   },
+   "note": "verbatim recording",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(localAddress|remoteAddress)\" : \"[^\"]*\"",
+     "replace": "\"${1}\" : <address>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromRecording",
+   "body": {
+    "name": "tpl",
+    "mode": "templatized",
+    "requestFilter": {
+     "path": "/feat/.*"
+    }
+   },
+   "note": "templatized recording",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(localAddress|remoteAddress)\" : \"[^\"]*\"",
+     "replace": "\"${1}\" : <address>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromRecording",
+   "body": {
+    "name": "none",
+    "requestFilter": {
+     "path": "/nothing"
+    }
+   },
+   "note": "no traffic"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromRecording",
+   "body": {
+    "name": "bad",
+    "mode": "sideways"
+   },
+   "note": "bad mode"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromRecording",
+   "body": {
+    "mode": "VERBATIM"
+   },
+   "note": "no name"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromOpenAPI",
+   "body": {
+    "name": "api",
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "t",
+      "version": "1"
+     },
+     "servers": [
+      {
+       "url": "http://api.example.com:8080/base"
+      }
+     ],
+     "paths": {
+      "/pets": {
+       "get": {
+        "operationId": "listPets",
+        "responses": {
+         "200": {
+          "description": "ok"
+         }
+        }
+       },
+       "post": {
+        "operationId": "createPet",
+        "requestBody": {
+         "content": {
+          "application/json": {
+           "schema": {
+            "type": "object",
+            "properties": {
+             "name": {
+              "type": "string"
+             },
+             "age": {
+              "type": "integer"
+             }
+            }
+           }
+          }
+         }
+        },
+        "responses": {
+         "201": {
+          "description": "ok"
+         }
+        }
+       }
+      },
+      "/pets/{id}": {
+       "delete": {
+        "responses": {
+         "204": {
+          "description": "ok"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "from OpenAPI"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromOpenAPI",
+   "body": {
+    "name": "api2",
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "t",
+      "version": "1"
+     },
+     "servers": [
+      {
+       "url": "http://api.example.com:8080/base"
+      }
+     ],
+     "paths": {
+      "/pets": {
+       "get": {
+        "operationId": "listPets",
+        "responses": {
+         "200": {
+          "description": "ok"
+         }
+        }
+       },
+       "post": {
+        "operationId": "createPet",
+        "requestBody": {
+         "content": {
+          "application/json": {
+           "schema": {
+            "type": "object",
+            "properties": {
+             "name": {
+              "type": "string"
+             },
+             "age": {
+              "type": "integer"
+             }
+            }
+           }
+          }
+         }
+        },
+        "responses": {
+         "201": {
+          "description": "ok"
+         }
+        }
+       }
+      },
+      "/pets/{id}": {
+       "delete": {
+        "responses": {
+         "204": {
+          "description": "ok"
+         }
+        }
+       }
+      }
+     }
+    },
+    "target": {
+     "host": "h",
+     "scheme": "https"
+    },
+    "profile": {
+     "stages": [
+      {
+       "type": "RATE",
+       "rate": 2,
+       "durationMillis": 1000
+      }
+     ]
+    }
+   },
+   "note": "from OpenAPI with a target"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromOpenAPI",
+   "body": {
+    "name": "api3"
+   },
+   "note": "no spec"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario",
+   "note": "after reset",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAt|endedAt|elapsedMillis|p50Millis|p95Millis|p99Millis|p999Millis|observed|currentTarget)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    },
+    {
+     "regex": "\"(localAddress|remoteAddress)\" : \"[^\"]*\"",
+     "replace": "\"${1}\" : <address>"
+    }
+   ]
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/loadScenario"
+  }
+ ]
+}

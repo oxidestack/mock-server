@@ -1,0 +1,1355 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) action-HttpActionHandlerForwardChaosTest-3e9d5e4e (conformance/harvest)",
+ "properties": {
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c7b071643ae6",
+   "note": "chaosErrorReplacesForwardedResponseWhenProbabilityIsOne (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "chaosErrorReplacesForwardedResponseWhenProbabilityIsOne (action): upstream (the mocked forward handler's response)",
+   "case": "c7b071643ae6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"errorProbability\": 1.0,\n  \"errorStatus\": 503,\n  \"retryAfter\": \"30\"\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "chaosErrorReplacesForwardedResponseWhenProbabilityIsOne (action): the expectation HttpState returned",
+   "case": "c7b071643ae6"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "chaosErrorReplacesForwardedResponseWhenProbabilityIsOne (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "c7b071643ae6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b393e927fafc",
+   "note": "serviceChaosAppliedToForwardWhenExpectationHasNoChaos (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatus": 503
+    }
+   },
+   "note": "serviceChaosAppliedToForwardWhenExpectationHasNoChaos (action): ServiceChaosRegistry.put",
+   "case": "b393e927fafc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "serviceChaosAppliedToForwardWhenExpectationHasNoChaos (action): upstream (the mocked forward handler's response)",
+   "case": "b393e927fafc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\",\n  \"headers\": {\n   \"host\": [\n    \"upstream.svc\"\n   ]\n  }\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "serviceChaosAppliedToForwardWhenExpectationHasNoChaos (action): the expectation HttpState returned",
+   "case": "b393e927fafc"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "host": "upstream.svc"
+   },
+   "note": "serviceChaosAppliedToForwardWhenExpectationHasNoChaos (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "b393e927fafc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "de9a59f5f594",
+   "note": "slowResponseSetsChunkedConnectionOptionsOnForwardedResponse (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "slowResponseSetsChunkedConnectionOptionsOnForwardedResponse (action): upstream (the mocked forward handler's response)",
+   "case": "de9a59f5f594"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"slowResponseChunkDelay\": {\n   \"timeUnit\": \"MILLISECONDS\",\n   \"value\": 100\n  },\n  \"slowResponseChunkSize\": 4\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "slowResponseSetsChunkedConnectionOptionsOnForwardedResponse (action): the expectation HttpState returned",
+   "case": "de9a59f5f594"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "slowResponseSetsChunkedConnectionOptionsOnForwardedResponse (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "de9a59f5f594"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f40dcf23b856",
+   "note": "chaosDropTakesPriorityOverErrorOnForwardPath (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "chaosDropTakesPriorityOverErrorOnForwardPath (action): upstream (the mocked forward handler's response)",
+   "case": "f40dcf23b856"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"dropConnectionProbability\": 1.0,\n  \"errorProbability\": 1.0,\n  \"errorStatus\": 503\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "chaosDropTakesPriorityOverErrorOnForwardPath (action): the expectation HttpState returned",
+   "case": "f40dcf23b856"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "chaosDropTakesPriorityOverErrorOnForwardPath (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "f40dcf23b856"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f8095eb7589a",
+   "note": "chaosDropConnectionOnForwardedResponseWhenProbabilityIsOne (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "chaosDropConnectionOnForwardedResponseWhenProbabilityIsOne (action): upstream (the mocked forward handler's response)",
+   "case": "f8095eb7589a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"dropConnectionProbability\": 1.0\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "chaosDropConnectionOnForwardedResponseWhenProbabilityIsOne (action): the expectation HttpState returned",
+   "case": "f8095eb7589a"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "chaosDropConnectionOnForwardedResponseWhenProbabilityIsOne (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "f8095eb7589a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9cff1f1abcd6",
+   "note": "forwardChaosSucceedFirstTwoThenFail (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "forwardChaosSucceedFirstTwoThenFail (action): upstream (the mocked forward handler's response)",
+   "case": "9cff1f1abcd6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"errorProbability\": 1.0,\n  \"errorStatus\": 503,\n  \"succeedFirst\": 2\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "forwardChaosSucceedFirstTwoThenFail (action): the expectation HttpState returned",
+   "case": "9cff1f1abcd6"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosSucceedFirstTwoThenFail (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "9cff1f1abcd6"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosSucceedFirstTwoThenFail (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "9cff1f1abcd6"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosSucceedFirstTwoThenFail (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "9cff1f1abcd6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e867baa9bca0",
+   "note": "chaosDropDoesNotFireOnForwardPathWhenProbabilityIsZero (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "chaosDropDoesNotFireOnForwardPathWhenProbabilityIsZero (action): upstream (the mocked forward handler's response)",
+   "case": "e867baa9bca0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"dropConnectionProbability\": 0.0\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "chaosDropDoesNotFireOnForwardPathWhenProbabilityIsZero (action): the expectation HttpState returned",
+   "case": "e867baa9bca0"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "chaosDropDoesNotFireOnForwardPathWhenProbabilityIsZero (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "e867baa9bca0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ed9bbec94004",
+   "note": "chaosErrorDoesNotFireForForwardedResponseWhenProbabilityIsZero (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "chaosErrorDoesNotFireForForwardedResponseWhenProbabilityIsZero (action): upstream (the mocked forward handler's response)",
+   "case": "ed9bbec94004"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"errorProbability\": 0.0,\n  \"errorStatus\": 503\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "chaosErrorDoesNotFireForForwardedResponseWhenProbabilityIsZero (action): the expectation HttpState returned",
+   "case": "ed9bbec94004"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "chaosErrorDoesNotFireForForwardedResponseWhenProbabilityIsZero (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "ed9bbec94004"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e57c51260bf4",
+   "note": "noChaosLatencyDoesNotInvokeSchedulerSchedule (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "noChaosLatencyDoesNotInvokeSchedulerSchedule (action): upstream (the mocked forward handler's response)",
+   "case": "e57c51260bf4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "noChaosLatencyDoesNotInvokeSchedulerSchedule (action): the expectation HttpState returned",
+   "case": "e57c51260bf4"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "noChaosLatencyDoesNotInvokeSchedulerSchedule (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "e57c51260bf4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2b07a4313c16",
+   "note": "chaosLatencyIsScheduledNonBlockingOnForwardedResponse (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "chaosLatencyIsScheduledNonBlockingOnForwardedResponse (action): upstream (the mocked forward handler's response)",
+   "case": "2b07a4313c16"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"latency\": {\n   \"timeUnit\": \"MILLISECONDS\",\n   \"value\": 500\n  }\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "chaosLatencyIsScheduledNonBlockingOnForwardedResponse (action): the expectation HttpState returned",
+   "case": "2b07a4313c16"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "chaosLatencyIsScheduledNonBlockingOnForwardedResponse (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "2b07a4313c16"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b8073d3a078f",
+   "note": "truncateBodyCorruptsForwardedResponse (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "truncateBodyCorruptsForwardedResponse (action): upstream (the mocked forward handler's response)",
+   "case": "b8073d3a078f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"truncateBodyAtFraction\": 0.5\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "truncateBodyCorruptsForwardedResponse (action): the expectation HttpState returned",
+   "case": "b8073d3a078f"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "truncateBodyCorruptsForwardedResponse (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "b8073d3a078f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8131d0048e74",
+   "note": "forwardMetricStatusClassReflectsUpstreamStatus (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 502,
+     "reasonPhrase": "OK",
+     "body": "bad gateway",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "forwardMetricStatusClassReflectsUpstreamStatus (action): upstream (the mocked forward handler's response)",
+   "case": "8131d0048e74"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "forwardMetricStatusClassReflectsUpstreamStatus (action): the expectation HttpState returned",
+   "case": "8131d0048e74"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardMetricStatusClassReflectsUpstreamStatus (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "8131d0048e74"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ee08dfc8add9",
+   "note": "forwardChaosFailFirstTwoThenRecover (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "forwardChaosFailFirstTwoThenRecover (action): upstream (the mocked forward handler's response)",
+   "case": "ee08dfc8add9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"errorProbability\": 1.0,\n  \"errorStatus\": 503,\n  \"failRequestCount\": 2,\n  \"succeedFirst\": 0\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "forwardChaosFailFirstTwoThenRecover (action): the expectation HttpState returned",
+   "case": "ee08dfc8add9"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosFailFirstTwoThenRecover (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "ee08dfc8add9"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosFailFirstTwoThenRecover (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "ee08dfc8add9"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosFailFirstTwoThenRecover (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "ee08dfc8add9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "4431793def2f",
+   "note": "expectationChaosTakesPriorityOverServiceChaos (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatus": 503
+    }
+   },
+   "note": "expectationChaosTakesPriorityOverServiceChaos (action): ServiceChaosRegistry.put",
+   "case": "4431793def2f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "expectationChaosTakesPriorityOverServiceChaos (action): upstream (the mocked forward handler's response)",
+   "case": "4431793def2f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"errorProbability\": 1.0,\n  \"errorStatus\": 500\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\",\n  \"headers\": {\n   \"host\": [\n    \"upstream.svc\"\n   ]\n  }\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "expectationChaosTakesPriorityOverServiceChaos (action): the expectation HttpState returned",
+   "case": "4431793def2f"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "host": "upstream.svc"
+   },
+   "note": "expectationChaosTakesPriorityOverServiceChaos (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "4431793def2f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "bc302f1310f1",
+   "note": "forwardChaosLatencyOnlyIncrementsLatencyMetric (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "forwardChaosLatencyOnlyIncrementsLatencyMetric (action): upstream (the mocked forward handler's response)",
+   "case": "bc302f1310f1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"latency\": {\n   \"timeUnit\": \"MILLISECONDS\",\n   \"value\": 100\n  }\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "forwardChaosLatencyOnlyIncrementsLatencyMetric (action): the expectation HttpState returned",
+   "case": "bc302f1310f1"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosLatencyOnlyIncrementsLatencyMetric (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "bc302f1310f1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9839853f3c61",
+   "note": "serviceChaosNotAppliedForUnregisteredHost (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatus": 503
+    }
+   },
+   "note": "serviceChaosNotAppliedForUnregisteredHost (action): ServiceChaosRegistry.put",
+   "case": "9839853f3c61"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "serviceChaosNotAppliedForUnregisteredHost (action): upstream (the mocked forward handler's response)",
+   "case": "9839853f3c61"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\",\n  \"headers\": {\n   \"host\": [\n    \"other.svc\"\n   ]\n  }\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "serviceChaosNotAppliedForUnregisteredHost (action): the expectation HttpState returned",
+   "case": "9839853f3c61"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "host": "other.svc"
+   },
+   "note": "serviceChaosNotAppliedForUnregisteredHost (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "9839853f3c61"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "7552ea67ae36",
+   "note": "forwardChaosErrorIncrementsHttpChaosMetric (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "forwardChaosErrorIncrementsHttpChaosMetric (action): upstream (the mocked forward handler's response)",
+   "case": "7552ea67ae36"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"errorProbability\": 1.0,\n  \"errorStatus\": 503\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "forwardChaosErrorIncrementsHttpChaosMetric (action): the expectation HttpState returned",
+   "case": "7552ea67ae36"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosErrorIncrementsHttpChaosMetric (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "7552ea67ae36"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8169e3069d6e",
+   "note": "forwardChaosOutsideCountWindowDoesNotIncrementMetric (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "forwardChaosOutsideCountWindowDoesNotIncrementMetric (action): upstream (the mocked forward handler's response)",
+   "case": "8169e3069d6e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"errorProbability\": 1.0,\n  \"errorStatus\": 503,\n  \"failRequestCount\": 1,\n  \"succeedFirst\": 1\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "forwardChaosOutsideCountWindowDoesNotIncrementMetric (action): the expectation HttpState returned",
+   "case": "8169e3069d6e"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosOutsideCountWindowDoesNotIncrementMetric (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "8169e3069d6e"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosOutsideCountWindowDoesNotIncrementMetric (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "8169e3069d6e"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwardChaosOutsideCountWindowDoesNotIncrementMetric (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "8169e3069d6e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "4caff50a9844",
+   "note": "malformedBodyAppendsFragmentToForwardedResponse (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "malformedBodyAppendsFragmentToForwardedResponse (action): upstream (the mocked forward handler's response)",
+   "case": "4caff50a9844"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"chaos\": {\n  \"malformedBody\": true\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "malformedBodyAppendsFragmentToForwardedResponse (action): the expectation HttpState returned",
+   "case": "4caff50a9844"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "malformedBodyAppendsFragmentToForwardedResponse (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "4caff50a9844"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9e05fd834eca",
+   "note": "serviceChaosWithTtlAutoRevertsOnForwardPath (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatus": 503
+    },
+    "ttlMillis": 5000
+   },
+   "note": "serviceChaosWithTtlAutoRevertsOnForwardPath (action): ServiceChaosRegistry.put",
+   "case": "9e05fd834eca"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "serviceChaosWithTtlAutoRevertsOnForwardPath (action): upstream (the mocked forward handler's response)",
+   "case": "9e05fd834eca"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n },\n \"httpRequest\": {\n  \"path\": \"/some_path\",\n  \"headers\": {\n   \"host\": [\n    \"upstream.svc\"\n   ]\n  }\n },\n \"id\": \"harvested-action-1\",\n \"priority\": 0,\n \"timeToLive\": {\n  \"unlimited\": true\n },\n \"times\": {\n  \"unlimited\": true\n }\n}",
+   "note": "serviceChaosWithTtlAutoRevertsOnForwardPath (action): the expectation HttpState returned",
+   "case": "9e05fd834eca"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "host": "upstream.svc"
+   },
+   "note": "serviceChaosWithTtlAutoRevertsOnForwardPath (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "9e05fd834eca"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "host": "upstream.svc"
+   },
+   "note": "serviceChaosWithTtlAutoRevertsOnForwardPath (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "sleepMillis": 5000,
+   "case": "9e05fd834eca"
+  }
+ ]
+}

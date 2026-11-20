@@ -1,0 +1,95 @@
+{
+  "source": "hand-written (generated from upstream's ProviderStreamFixtures): HttpActionHandlerStreamedLlmUsageTest's shouldCountACohereV2ChatStreamFromItsMessageEndEvent; a loopback host is no Cohere host, so the provider is llmProvider's, whose fallback admits only a path with an LLM fragment: /v2/chat is reached under /v1/cohere, forwarded to this server's own mocks",
+  "properties": {
+    "metricsEnabled": "true",
+    "llmMetricsEnabled": "true",
+    "llmProvider": "COHERE"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "upstream-cohere",
+          "priority": 10,
+          "httpRequest": {
+            "method": "POST",
+            "path": "/v1/cohere/v2/chat",
+            "headers": {
+              "x-case": [
+                "cohere"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "headers": {
+              "content-type": [
+                "text/event-stream"
+              ]
+            },
+            "body": "event: message-start\ndata: {\"id\":\"29f14a5a-11de-4cae-9800-25e4747408ea\",\"type\":\"message-start\",\"delta\":{\"message\":{\"role\":\"assistant\",\"content\":[],\"tool_plan\":\"\",\"tool_calls\":[],\"citations\":[]}}}\n\nevent: content-start\ndata: {\"type\":\"content-start\",\"index\":0,\"delta\":{\"message\":{\"content\":{\"type\":\"text\",\"text\":\"\"}}}}\n\nevent: content-delta\ndata: {\"type\":\"content-delta\",\"index\":0,\"delta\":{\"message\":{\"content\":{\"text\":\"Hello\"}}}}\n\nevent: content-end\ndata: {\"type\":\"content-end\",\"index\":0}\n\nevent: message-end\ndata: {\"type\":\"message-end\",\"delta\":{\"finish_reason\":\"COMPLETE\",\"usage\":{\"billed_units\":{\"input_tokens\":3,\"output_tokens\":9},\"tokens\":{\"input_tokens\":69,\"output_tokens\":9}}}}\n\n"
+          }
+        },
+        {
+          "id": "forward-cohere",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/client/cohere"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/v1/cohere/v2/chat",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ],
+                "x-case": [
+                  "cohere"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "Cohere v2 chat stream: message-end's billed units, 3 in, 9 out",
+      "method": "POST",
+      "path": "/client/cohere",
+      "body": "{\"model\":\"command-a-03-2025\",\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}]}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "sleepMillis": 500,
+      "note": "a relayed stream is accounted once its relay has ended, which may be after the client read it"
+    },
+    {
+      "note": "the LLM token and cost counters",
+      "method": "GET",
+      "path": "/mockserver/metrics",
+      "mask": [
+        {
+          "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+          "replace": ""
+        },
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "the streamed-usage lines of the event log",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+          "replace": "",
+          "reason": "every entry but the streamed-usage lines"
+        }
+      ]
+    }
+  ]
+}

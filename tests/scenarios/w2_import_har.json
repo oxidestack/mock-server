@@ -1,0 +1,69 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=har",
+   "bodyFile": "import/har.json",
+   "note": "har with redaction"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "active expectations"
+  },
+  {
+   "method": "GET",
+   "path": "/users?page=1&limit=10&key=***REDACTED***",
+   "headers": {
+    "X-Api-Key": "***REDACTED***",
+    "X-Tenant": "a"
+   },
+   "note": "redacted values match"
+  },
+  {
+   "method": "GET",
+   "path": "/search?q=a%20b&tag=&token=***REDACTED***"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=HAR&redactSensitiveData=false",
+   "bodyFile": "import/har.json",
+   "note": "har verbatim"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?redactSensitiveData=true&additionalRedactedHeaders=X-Custom,%20x-tenant,&additionalRedactedBodyFields=name,,id",
+   "bodyFile": "import/har.json",
+   "note": "auto-detected, extra redaction"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=har",
+   "body": {
+    "log": {
+     "entries": [
+      {
+       "request": {
+        "method": "GET",
+        "url": "/users"
+       },
+       "response": {
+        "status": 418
+       }
+      }
+     ]
+    }
+   },
+   "note": "upsert by id keeps har-N"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "active expectations"
+  }
+ ]
+}

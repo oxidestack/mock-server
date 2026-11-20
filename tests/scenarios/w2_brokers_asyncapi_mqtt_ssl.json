@@ -1,0 +1,3574 @@
+{
+ "note": "Paho's com.ibm.ssl.* properties as SSLSocketFactoryFactory.getSSLContext reads them: the store types (JDK KeyStore types and the formats each reads), the providers (only SunJSSE has SSLContext, KeyManagerFactory and TrustManagerFactory; an empty name is an IllegalArgumentException, 400), the manager algorithms and their aliases, the order of the checks, and clientAuthentication (unused by a client). Each load dials this server over TLS; a binary expectation answers its CONNECT",
+ "steps": [
+  {
+   "note": "the broker: every binary message this server receives (after its TLS) but a lone zero byte is answered with an MQTT CONNACK (accepted; MQTT 5's form, which MQTT 3.1.1 clients read too), so a load connects exactly when the client's SSL context builds and trusts this server's certificate",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": "AA==",
+     "not": true
+    },
+    "binaryResponse": {
+     "binaryData": "IAMAAAA="
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "a JKS trust store holding this server's CA: connects",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "no trust store: the JDK's default trust refuses this server's certificate",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.protocol": "TLS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType JKS on a JKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "JKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType names are case-insensitive",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "jks"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType PKCS12 reads a JKS file (dual format)",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "PKCS12"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType JCEKS reads a JKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "JCEKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType CaseExactJKS reads a JKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "caseexactjks"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType DKS loads a stream as JKS",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "DKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType BKS: no provider has it",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "BKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType PKCS11: no configured provider has it",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "PKCS11"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty trustStoreType",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a trustStoreType with a trailing space",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "JKS "
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType JKS reads a PKCS12 file (dual format)",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.p12",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "JKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType PKCS12 on a PKCS12 file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.p12",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "pkcs12"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType JCEKS does not read a PKCS12 file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.p12",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "JCEKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType CaseExactJKS does not read a PKCS12 file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.p12",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "CaseExactJKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType DKS reads a PKCS12 file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.p12",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "DKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a JCEKS file without a type: the default type (pkcs12) does not read it",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jceks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType JKS does not read a JCEKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jceks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "JKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType PKCS12 does not read a JCEKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jceks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "PKCS12"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType JCEKS on a JCEKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jceks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "JCEKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreType DKS does not read a JCEKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jceks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "dks"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreProvider SunJSSE",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreProvider": "SunJSSE"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "provider names are case-sensitive",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreProvider": "sunjsse"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreProvider SUN has no TrustManagerFactory",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreProvider": "SUN"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustStoreProvider SunJCE has no TrustManagerFactory",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreProvider": "SunJCE"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an unknown trustStoreProvider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreProvider": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty trustStoreProvider: missing provider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreProvider": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty trustStoreProvider is checked before the trustManager algorithm",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreProvider": "",
+       "com.ibm.ssl.trustManager": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the trust store type is checked before its provider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreProvider": "",
+       "com.ibm.ssl.trustStoreType": "BKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustManager PKIX",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustManager": "PKIX"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustManager SunX509",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustManager": "SunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustManager aliases, case-insensitive: x509",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustManager": "x509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustManager alias X.509",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustManager": "X.509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustManager alias SunPKIX",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustManager": "SunPKIX"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "trustManager NewSunX509 is a KeyManagerFactory algorithm only",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an unknown trustManager",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustManager": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty trustManager",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustManager": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "contextProvider SunJSSE",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.contextProvider": "SunJSSE"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "contextProvider SUN has no SSLContext",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.contextProvider": "SUN"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an unknown contextProvider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.contextProvider": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty contextProvider: missing provider, before the protocol is looked up",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.contextProvider": "",
+       "com.ibm.ssl.protocol": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty contextProvider comes before the key store",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreType": "BKS",
+       "com.ibm.ssl.contextProvider": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a JKS key store",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a PKCS12 key store, keyStoreType JKS",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreType": "JKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "keyStoreType JCEKS does not read a PKCS12 file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreType": "JCEKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a JCEKS key store, keyStoreType JCEKS",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jceks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreType": "JCEKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a JCEKS key store without a type",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jceks",
+       "com.ibm.ssl.keyStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "keyStoreType BKS",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreType": "BKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a key store without a password",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "keyStoreProvider SunJSSE",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "SunJSSE"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "keyStoreProvider SUN has no KeyManagerFactory",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "SUN"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an unknown keyStoreProvider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty keyStoreProvider: missing provider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty keyStoreProvider before the keyManager algorithm",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "",
+       "com.ibm.ssl.keyManager": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the key store type is checked before its provider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "",
+       "com.ibm.ssl.keyStoreType": "BKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a wrong key store password before an empty provider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "wrong",
+       "com.ibm.ssl.keyStoreProvider": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the key store comes before the trust store",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "",
+       "com.ibm.ssl.trustStoreType": "BKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "and a failing key manager before an empty trust store provider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "Bogus",
+       "com.ibm.ssl.trustStoreProvider": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "keyManager SunX509",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "SunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "keyManager NewSunX509",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "keyManager alias pkix",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "pkix"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "keyManager X509 is a TrustManagerFactory alias only",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "X509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an unknown keyManager",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "key store properties without a key store are not read",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreType": "BKS",
+       "com.ibm.ssl.keyStoreProvider": "Bogus",
+       "com.ibm.ssl.keyManager": "Bogus",
+       "com.ibm.ssl.keyStorePassword": "x"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an empty keyStoreProvider without a key store",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a JKS key with a password of its own: SunX509 recovers every key at init",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client-keypass.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "and NewSunX509 only the key it chooses",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client-keypass.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a JKS key store without a password, NewSunX509",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a key store without keys needs no password",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a JCEKS key store without a password: an IllegalArgumentException from SunX509",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jceks",
+       "com.ibm.ssl.keyStoreType": "JCEKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "and a failure from PKIX",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jceks",
+       "com.ibm.ssl.keyStoreType": "JCEKS",
+       "com.ibm.ssl.keyManager": "PKIX"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a JCEKS key store with a wrong password",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jceks",
+       "com.ibm.ssl.keyStorePassword": "wrong",
+       "com.ibm.ssl.keyStoreType": "JCEKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol tls (case-insensitive)",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "tls"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol SSL is TLS",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "SSL"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol TLSv1.3",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "TLSv1.3"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol TLSv1.2",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "TLSv1.2"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol TLSv1: disabled in the image",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "TLSv1"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol SSLv3 is TLSv1",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "SSLv3"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol TLSv1.1: disabled",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "TLSv1.1"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol Default cannot be initialised",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "Default"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "protocol DTLS has no SSLSocket",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "DTLS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an unknown protocol",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an unknown protocol fails before the key store",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "",
+       "com.ibm.ssl.protocol": "Bogus"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a disabled protocol fails only at the handshake, after the key store",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "",
+       "com.ibm.ssl.protocol": "TLSv1"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "and DTLS after it too",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyStoreProvider": "",
+       "com.ibm.ssl.protocol": "DTLS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "clientAuthentication true: a server-socket setting, unused by a client",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.clientAuthentication": "true"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "clientAuthentication not a boolean",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.clientAuthentication": "yes"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the trust store path is URL-decoded (MQTT 3.1.1)",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl%2Ftrust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "MQTT 5: a JKS trust store",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttProtocolVersion": 5,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "MQTT 5: trustStoreType JKS does not read a JCEKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttProtocolVersion": 5,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jceks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.trustStoreType": "JKS"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "MQTT 5: an empty contextProvider",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttProtocolVersion": 5,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.contextProvider": ""
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "MQTT 5: keyManager NewSunX509",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttProtocolVersion": 5,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/client.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "MQTT 5 does not URL-decode the trust store path",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttProtocolVersion": 5,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl%2Ftrust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a reset closes the connections",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

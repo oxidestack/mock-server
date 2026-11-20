@@ -1,0 +1,147 @@
+{
+ "source": "driftSampleRate=0.0 at startup (HttpActionHandlerDriftDetectionTest.recordsNoDriftWhenSampleRateZeroEvenIfEnabled); a negative rate at runtime stays clamped to 0.0",
+ "properties": {
+  "driftSampleRate": "0.0"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream",
+     "priority": 1000,
+     "httpRequest": {
+      "headers": {
+       "Host": [
+        "localhost:[0-9]+"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 500,
+      "body": "upstream body"
+     }
+    },
+    {
+     "id": "stub",
+     "httpRequest": {
+      "path": "/some_path"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "stub body"
+     }
+    }
+   ],
+   "note": "the upstream answer (the forward targets this server) and a response stub for the same path, which drifts from it"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\"id\": \"forward\", \"priority\": 10, \"httpRequest\": {\"path\": \"/some_path\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwarded to the server itself and answered by the upstream stub"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/drift",
+   "note": "no drift recorded",
+   "mask": [
+    {
+     "regex": "\"epochTimeMs\" : \\d+",
+     "replace": "\"epochTimeMs\" : <millis>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/drift/clear"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "driftSampleRate": -3
+   },
+   "note": "clamped to 0.0"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwarded to the server itself and answered by the upstream stub"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/drift",
+   "note": "no drift recorded",
+   "mask": [
+    {
+     "regex": "\"epochTimeMs\" : \\d+",
+     "replace": "\"epochTimeMs\" : <millis>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/drift/clear"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "driftSampleRate": "1"
+   },
+   "note": "sampled again"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "forwarded to the server itself and answered by the upstream stub"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/drift",
+   "note": "the stub drifts again",
+   "mask": [
+    {
+     "regex": "\"epochTimeMs\" : \\d+",
+     "replace": "\"epochTimeMs\" : <millis>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/drift/clear"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+{
+  "note": "MainTest.shouldExitNonZeroWhenTheHttp3PortCannotBeBound and shouldPrintTheMessageAloneWhenTheHttp3PortCannotBeBound: the DNS listener, which starts first, holds the UDP port http3Port asks for; the start stops with the message alone (no stack trace) and exits 1. The oracle is its HTTP/3 image",
+  "target": "both",
+  "oracleImage": "http3",
+  "pickPort": true,
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.dnsEnabled=true",
+    "-Dmockserver.dnsPort={{serverPort}}",
+    "-Dmockserver.http3Port={{serverPort}}"
+  ],
+  "env": {
+    "SERVER_PORT": "",
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 90,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] HTTP/3 start-up failed:",
+      "could not be bound, so MockServer cannot start: free the port if another application holds it, choose a different http3Port, or remove http3Port to run without HTTP/3 (underlying error: BindException: Address already in use)"
+    ],
+    "stdoutNotContains": [
+      "[INFO] started on port",
+      "\tat "
+    ]
+  }
+}

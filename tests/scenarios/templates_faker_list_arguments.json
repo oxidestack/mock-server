@@ -1,0 +1,342 @@
+{
+ "source": "Velocity lists, maps and Java arrays reach Datafaker's List/Set/Map/array/Object... parameters (8.0.0's options(), slug, twitter text, allSupportedLocales, templatify)",
+ "properties": {
+  "templateFakerSeed": "366"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/option-objects"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.options().option(['a','b']) | 1=$faker.options().option(['a','b']).size() | 2=$faker.options().option(5, 6, 7) | 3=$faker.options().option(5, 5).getClass().getName() | 4=$faker.options().option(['x'], ['x']).getClass().getName() | 5=$faker.options().option({'k':'v'}) | 6=$faker.options().option([], []) | 7=$faker.options().option(1, $null, 'z') | 8=$faker.options().nextElement(['q','r','s']) | 9=$faker.options().nextElement([5]).getClass().getName() | 10=$faker.options().nextElement([[1]]) | 11=$faker.options().nextElement('abc') | 12=#set($l = ['x', 'y'])$faker.options().nextElement($l.toArray()) | 13=#set($l = ['x', 'y'])$faker.options().option($l.toArray())\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "a List, a Map or mixed values bind to option(E...) (packed into an Object[]) and come back as they were passed; nextElement takes a List or an Object[]",
+   "method": "GET",
+   "path": "/option-objects"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/option-arrays"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=#set($s = 'a b c')$faker.options().option($s.split(' ')) | 1=#set($s = 'xyz')$faker.options().option($s.toCharArray()) | 2=#set($s = 'zz')$faker.options().option($s.toCharArray()).getClass().getName() | 3=#set($s = 'ab')$faker.options().option($s.getBytes()) | 4=#set($s = 'a b')$faker.options().nextElement($s.split(' ')) | 5=#set($s = 'a b')$faker.options().subset(1, $s.split(' '))\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "Java arrays from String methods: String[] to option(String...), char[]/byte[] to the primitive overloads, a char[] to nextElement(E[]) is an argument type mismatch",
+   "method": "GET",
+   "path": "/option-arrays"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/subset-objects"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.options().subset(9, 'b', 2, true, 'b', 2, [1], {'k':'v'}, 3.5, 7) | 1=$faker.options().subset(9, 1, 17, 33, 2) | 2=$faker.options().subset(2, 1, 2, 3, 4) | 3=$faker.options().subset(0, 5, 6) | 4=$faker.options().subset(1, ['a']) | 5=$faker.options().subset(3, 5, $null, 5)\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "subset(int, E...) over mixed values: distinct by equals, iterated in HashSet order",
+   "method": "GET",
+   "path": "/subset-objects"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/slug-text-locales"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=$faker.internet().slug(['a','b'], '-') | 1=$faker.internet().slug([], '-') | 2=$faker.internet().slug(['a',$null], '-') | 3=$faker.internet().slug(['A B'], $null) | 4=#set($s = 'a,b')$faker.internet().slug($s.split(','), '-') | 5=#set($s = 'kw1 kw2')$faker.twitter().text($s.split(' '), 3, 5) | 6=$faker.twitter().text(['a'], 1, 3) | 7=#set($m = {'a':'b'})$faker.locality().allSupportedLocales($m.keySet()).size()\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "slug(List, String) joins the words (null as null), twitter text(String[], int, int) inserts the keywords, allSupportedLocales(Set) ignores its set",
+   "method": "GET",
+   "path": "/slug-text-locales"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/templatify-map"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"0=#set($s = 'a')#set($t = 'x,y')#set($o = $t.split(','))#set($m = {})#set($d = $m.put($s.charAt(0), $o))$faker.templatify('abca', $m) | 1=#set($s = 'a')#set($t = '')#set($o = $t.split(','))#set($m = {})#set($d = $m.put($s.charAt(0), $o))$faker.templatify('bab', $m) | 2=#set($s = 'a')#set($m = {})#set($d = $m.put($s.charAt(0), 'zz'))$faker.templatify('', $m) | 3=$faker.templatify('abc', {'a':'x'})\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "templatify(String, Map<Character, String[]>): a Character key with a String[] value is replaced; String keys never match",
+   "method": "GET",
+   "path": "/templatify-map"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/next-element-empty"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"$faker.options().nextElement([])\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/next-element-empty",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/subset-negative"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"$faker.options().subset(-1, 5, 6)\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/subset-negative",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/slug-integer"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"$faker.internet().slug([1,2], '-')\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/slug-integer",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/slug-faker"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"$faker.internet().slug(['a', $faker], '-')\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/slug-faker",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/slug-map"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"$faker.internet().slug(['a', {'k':1}], '-')\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/slug-map",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/slug-array"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"#set($s = 'a,b')$faker.internet().slug(['a', $s.split(',')], '-')\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/slug-array",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/next-element-chars"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"#set($s = 'aa')$faker.options().nextElement($s.toCharArray())\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/next-element-chars",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/templatify-list-value"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"#set($s = 'a')#set($m = {})#set($d = $m.put($s.charAt(0), ['x']))$faker.templatify('abca', $m)\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/templatify-list-value",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/templatify-null-value"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"#set($s = 'a')#set($m = {})#set($d = $m.put($s.charAt(0), $null))$faker.templatify('abca', $m)\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "the Datafaker body throws: no response, the exception is logged",
+   "method": "GET",
+   "path": "/templatify-null-value",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "note": "the exceptions the bodies threw (logged asynchronously: an entry can land after the next expectation's)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+   ],
+   "compare": "unordered"
+  }
+ ]
+}

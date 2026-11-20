@@ -1,0 +1,199 @@
+{
+ "source": "hand-written: driftSemanticAnalysisEnabled with a reachable LLM backend (the scenario's peer): SemanticDriftExtension classifies each forward's drift records",
+ "peer": true,
+ "properties": {
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "5000",
+  "driftSemanticAnalysisEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "fail404",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "REAL RESPONSE: status=404",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 500,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"error\":\"boom\"}"
+     }
+    },
+    {
+     "id": "classify",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "DRIFT RECORDS",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"1|breaking|The status changed.\\n2|WARNING|\\n3|bogus|x\\n9|INFORMATIONAL|out of range\\nnot a line\\n x |WARNING|bad index\\n4 | informational |  added field  \"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "upstream",
+     "httpRequest": {
+      "path": "/thing"
+     },
+     "httpResponse": {
+      "statusCode": 500,
+      "headers": {
+       "x-new": [
+        "1"
+       ]
+      },
+      "body": {
+       "type": "JSON",
+       "json": {
+        "id": "1",
+        "extra": true
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream2",
+     "httpRequest": {
+      "path": "/other"
+     },
+     "httpResponse": {
+      "statusCode": 404
+     }
+    }
+   ],
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "stub",
+     "httpRequest": {
+      "path": "/thing"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": {
+       "type": "JSON",
+       "json": {
+        "id": 1
+       }
+      }
+     }
+    },
+    {
+     "id": "stub2",
+     "httpRequest": {
+      "path": "/other"
+     },
+     "httpResponse": {
+      "statusCode": 200
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"forward\", \"priority\": 10, \"httpRequest\": {\"path\": \"/thing\"}, \"httpForward\": {\"host\": \"{{peerhost}}\", \"port\": {{peerport}}}}, {\"id\": \"forward2\", \"priority\": 10, \"httpRequest\": {\"path\": \"/other\"}, \"httpForward\": {\"host\": \"{{peerhost}}\", \"port\": {{peerport}}}}]",
+   "mask": [
+    {
+     "regex": "\"host\" : \"[^\"]*\"",
+     "replace": "\"host\" : \"<peer>\""
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/drift?expectationId=stub",
+   "note": "semanticSeverity and semanticExplanation from the backend's lines; polled until the forward's semantic pass has stored them, before the second forward",
+   "mask": [
+    {
+     "regex": "\"epochTimeMs\" : \\d+",
+     "replace": "\"epochTimeMs\" : <millis>"
+    }
+   ],
+   "pollUntil": "\"count\" : 5"
+  },
+  {
+   "method": "GET",
+   "path": "/other",
+   "note": "a second drift whose prompt the backend does not match: records stay structural"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/drift?expectationId=stub2",
+   "mask": [
+    {
+     "regex": "\"epochTimeMs\" : \\d+",
+     "replace": "\"epochTimeMs\" : <millis>"
+    }
+   ],
+   "pollUntil": "\"count\" : 1",
+   "note": "polled until the second pass has stored its record, so the backend has both prompts, in forward order"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "the classification prompts",
+   "body": {
+    "path": "/v1/chat/completions"
+   },
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "\"Host\" : \\[ \"[^\"]*\" \\]",
+     "replace": "\"Host\" : [ \"<peer>\" ]"
+    },
+    {
+     "regex": "\"host\" : \"[^\"]*\"",
+     "replace": "\"host\" : \"<host>\""
+    },
+    {
+     "regex": "\"port\" : (<port>|\\d+)",
+     "replace": "\"port\" : <port>"
+    }
+   ],
+   "node": "peer"
+  }
+ ]
+}

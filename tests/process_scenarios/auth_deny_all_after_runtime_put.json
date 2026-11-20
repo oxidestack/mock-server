@@ -1,0 +1,61 @@
+{
+  "note": "Adopted upstream fix 0e8566814, then 9.2.0: control-plane JWT settings are fixed at startup, so a PUT turning JWT on with an unreadable key source is ignored with one WARN per property and the control plane stays open (confirmed on the 9.2.0 oracle: 200, 200, 200 and the two WARNs)",
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/configuration",
+        "ownHost": true,
+        "body": "{\"controlPlaneJWTAuthenticationRequired\": true, \"controlPlaneJWTAuthenticationJWKSource\": \"/no/such/mock-server-320-jwks.json\"}",
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "controlPlaneJWTAuthenticationRequired is fixed at startup and cannot be changed on a running server (it decides who may use the control plane, so a request to the control plane cannot change it) - the supplied value true has been IGNORED and controlPlaneJWTAuthenticationRequired remains false",
+      "controlPlaneJWTAuthenticationJWKSource is fixed at startup and cannot be changed on a running server (it decides who may use the control plane, so a request to the control plane cannot change it) - the supplied value \"/no/such/mock-server-320-jwks.json\" has been IGNORED and controlPlaneJWTAuthenticationJWKSource remains \"\""
+    ],
+    "stdoutOccurrences": {
+      "exception building JWT validator for:": 0,
+      "authentication handler could not be created": 0
+    }
+  }
+}

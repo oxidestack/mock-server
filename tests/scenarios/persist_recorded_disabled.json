@@ -1,0 +1,24 @@
+{
+ "properties": {
+  "persistRecordedExpectations": "false",
+  "persistedRecordedExpectationsPath": "{{scratch}}/persist_recorded_disabled.json",
+  "persistRecordedRequestsToDisk": "false",
+  "persistedRecordedRequestsPath": "{{scratch}}/persist_recorded_disabled.ndjson"
+ },
+ "steps": [
+  {"deleteFile": "{{scratch}}/persist_recorded_disabled.json", "note": "neither file is created at start; one a previous run left is removed"},
+  {"deleteFile": "{{scratch}}/persist_recorded_disabled.ndjson"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/target.*"}, "httpResponse": {"statusCode": 203, "body": "from target"}},
+    {"httpRequest": {"path": "/mocked"}, "httpResponse": {"statusCode": 201, "body": "mocked"}},
+    {"httpRequest": {"path": "/fwd"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target/fwd", "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ]},
+  {"method": "GET", "path": "/mocked", "note": "a mocked exchange"},
+  {"method": "GET", "path": "/fwd", "note": "a forwarded exchange: a recorded expectation, were it persisted"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS", "note": "recorded all the same"},
+  {"sleepMillis": 1500},
+  {"readFile": "{{scratch}}/persist_recorded_disabled.json", "note": "RecordedExpectationFileSystemPersistence disabled: no file"},
+  {"readFile": "{{scratch}}/persist_recorded_disabled.ndjson", "note": "RecordedRequestsFileSystemPersistence disabled: no archive"}
+ ]
+}

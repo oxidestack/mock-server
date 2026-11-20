@@ -1,0 +1,19 @@
+# org.mockserver.scheduler.SchedulerOverloadTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldRejectDelayedTaskOverTheLimitWithItsFallback  http:overload_delayed_responses  # a delayed response over maxPendingDelayedResponses is answered 503 "MockServer is overloaded, too many delayed or templated responses are already waiting", Retry-After: 1
+shouldAdmitAgainOnceDelayedTasksHaveFired  http:overload_delayed_responses  # once the two admitted delays have fired a delayed response is admitted again
+shouldNeverCountARefusedDelayedResponseAsPending  http:overload_delayed_responses  # the refused responses leave the budget as it was: after the two admitted delays fire the next one is admitted (a concurrent peak count is not observable over HTTP)
+shouldNeverCountARefusedWebSocketReplySetAsPending  http:overload_websocket_reply_sets  # a refused reply set sends none of its frames (a concurrent peak count is not observable over HTTP)
+shouldNotLetAnUnrefusableBacklogRefuseAnUnrelatedResponse  http:overload_delayed_responses  # an SSE stream's pending event delays do not take a slot: two delayed responses are still admitted
+shouldShedSideActionsOnTheirOwnBudgetWithoutRefusingResponses  http:overload_delayed_responses  # with the response budget full, two delayed after-actions are held and the third dropped; every response is answered
+shouldRunADelayOptionalWriteAtOnceWhenTheResponseBudgetIsFull  http:overload_delayed_responses  # a forward's chaos latency is skipped when the budget is full
+shouldRunUndelayedRejectableTaskInlineRegardlessOfTheLimit  http:overload_delayed_responses  # an undelayed response is answered with the budget full
+shouldNotBoundWhenLimitIsZero  http:overload_delayed_responses  # maxPendingDelayedResponses 0: three delayed responses over the old limit are admitted
+shouldApplyAChangedLimitAtRuntime  http:overload_delayed_responses  # PUT /mockserver/configuration changes the limit
+shouldBoundDelayedLocalCallbacks  http:overload_delayed_responses  # a delayed class callback is refused before its class is looked up
+shouldRejectTemplateActionWhenTemplateQueueIsFull  http:overload_template_queue  # actionHandlerThreadCount 1, maxQueuedTemplateActions 1: one render running, one queued, the next answered 503
+shouldNeverCountARefusedTemplateRenderAsQueued  http:overload_template_queue  # after the refusals the queue drains and a template is admitted again (a concurrent peak count is not observable over HTTP)
+shouldRejectDelayedTemplateActionWhenTemplateQueueIsFullOnceTheDelayElapses  http:overload_template_queue  # a delayed template action is refused once its delay elapses
+shouldLogOverloadAtMostOncePerIntervalWithTheRejectedCount  http:overload_delayed_responses  # one WARN per reason for the refusals within 10 s, naming the property, its limit and the count
+shouldKeepSynchronousModeUnbounded  n/a  # synchronous (WAR/servlet) mode, which mock-server has no counterpart of

@@ -1,0 +1,161 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) wasm-HttpResponseActionHandlerWasmShapeTest-7c0a1919 (conformance/harvest)",
+ "properties": {
+  "wasmEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0b19876fc4b8",
+   "note": "shouldNotShapeWhenMatchedRequestHasNoWasmBody (wasm): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/shape"
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "{\"name\":\"acme\"}"
+    }
+   },
+   "note": "shouldNotShapeWhenMatchedRequestHasNoWasmBody (wasm): expectation",
+   "case": "0b19876fc4b8"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldNotShapeWhenMatchedRequestHasNoWasmBody (wasm): echo",
+   "case": "0b19876fc4b8"
+  },
+  {
+   "method": "POST",
+   "path": "/shape",
+   "note": "shouldNotShapeWhenMatchedRequestHasNoWasmBody (wasm): request",
+   "case": "0b19876fc4b8"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "00bda394ff52",
+   "note": "shouldNotShapeWhenModuleNotLoaded (wasm): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/shape",
+     "body": {
+      "type": "WASM",
+      "moduleName": "missing"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "{\"name\":\"acme\"}"
+    }
+   },
+   "note": "shouldNotShapeWhenModuleNotLoaded (wasm): expectation",
+   "case": "00bda394ff52"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldNotShapeWhenModuleNotLoaded (wasm): echo",
+   "case": "00bda394ff52"
+  },
+  {
+   "method": "POST",
+   "path": "/shape",
+   "note": "shouldNotShapeWhenModuleNotLoaded (wasm): request",
+   "case": "00bda394ff52"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "note": "shouldNotShapeWhenModuleNotLoaded (wasm): dry run with the response",
+   "body": {
+    "moduleName": "missing",
+    "request": {
+     "method": "POST",
+     "path": "/shape"
+    },
+    "response": {
+     "statusCode": 201,
+     "body": "{\"name\":\"acme\"}"
+    }
+   },
+   "case": "00bda394ff52"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "91bcada64af0",
+   "note": "shouldShapeResponseWhenMatchedExpectationCarriesAShapingWasmModule (wasm): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=shaper",
+   "note": "shouldShapeResponseWhenMatchedExpectationCarriesAShapingWasmModule (wasm): load module",
+   "bodyFile": "wasm/shape-response.wasm",
+   "case": "91bcada64af0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/shape",
+     "body": {
+      "type": "WASM",
+      "moduleName": "shaper"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "{\"name\":\"acme\"}"
+    }
+   },
+   "note": "shouldShapeResponseWhenMatchedExpectationCarriesAShapingWasmModule (wasm): expectation",
+   "case": "91bcada64af0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldShapeResponseWhenMatchedExpectationCarriesAShapingWasmModule (wasm): echo",
+   "case": "91bcada64af0"
+  },
+  {
+   "method": "POST",
+   "path": "/shape",
+   "note": "shouldShapeResponseWhenMatchedExpectationCarriesAShapingWasmModule (wasm): request",
+   "case": "91bcada64af0"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "note": "shouldShapeResponseWhenMatchedExpectationCarriesAShapingWasmModule (wasm): dry run with the response",
+   "body": {
+    "moduleName": "shaper",
+    "request": {
+     "method": "POST",
+     "path": "/shape"
+    },
+    "response": {
+     "statusCode": 201,
+     "body": "{\"name\":\"acme\"}"
+    }
+   },
+   "case": "91bcada64af0"
+  }
+ ]
+}

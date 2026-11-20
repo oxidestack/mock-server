@@ -1,0 +1,728 @@
+{
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "spoofed, empty body",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-grpc-service": "com.example.evil.OtherService",
+    "x-grpc-method": "Evil",
+    "x-grpc-original-content-type": "application/evil",
+    "x-grpc-client-streaming": "true"
+   },
+   "trailers": true
+  },
+  {
+   "note": "spoofed, one message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-grpc-service": "com.example.evil.OtherService",
+    "x-grpc-method": "Evil",
+    "x-grpc-original-content-type": "application/evil",
+    "x-grpc-client-streaming": "true"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "spoofed, two messages to a client-streaming method",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/CollectGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-grpc-service": "com.example.evil.OtherService",
+    "x-grpc-method": "Evil",
+    "x-grpc-original-content-type": "application/evil",
+    "x-grpc-client-streaming": "true"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAUKA09uZQAAAAAFCgNUd28="
+  },
+  {
+   "note": "clean, empty body",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true
+  },
+  {
+   "note": "what matching saw",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "expectation on forged x-grpc-service",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-grpc-service": [
+       "com.example.evil.OtherService"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "forged x-grpc-service"
+     }
+    }
+   }
+  },
+  {
+   "note": "expectation on forged x-grpc-method",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-grpc-method": [
+       "Evil"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "forged x-grpc-method"
+     }
+    }
+   }
+  },
+  {
+   "note": "expectation on forged x-grpc-client-streaming",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-grpc-client-streaming": [
+       "true"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "forged x-grpc-client-streaming"
+     }
+    }
+   }
+  },
+  {
+   "note": "expectation on forged x-grpc-original-content-type",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-grpc-original-content-type": [
+       "application/evil"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "forged x-grpc-original-content-type"
+     }
+    }
+   }
+  },
+  {
+   "note": "fallback",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "derived only"
+     }
+    },
+    "priority": -1
+   }
+  },
+  {
+   "note": "spoofed request matches only on derived values",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-grpc-service": "com.example.evil.OtherService",
+    "x-grpc-method": "Evil",
+    "x-grpc-original-content-type": "application/evil",
+    "x-grpc-client-streaming": "true"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 0, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 1, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 2, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host|x-http2-scheme)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 3, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host|x-http2-scheme|content-type)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 4, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host|x-http2-scheme|content-type|te)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 5, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host|x-http2-scheme|content-type|te|x-custom)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 6, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 0, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 1, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 2, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host|x-http2-scheme)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 3, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host|x-http2-scheme|content-type)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 4, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host|x-http2-scheme|content-type|te)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 5, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-stream-id|host|x-http2-scheme|content-type|te|x-custom)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 6, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  }
+ ]
+}

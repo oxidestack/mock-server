@@ -1,0 +1,162 @@
+{
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/h2s/mock/999"
+          },
+          "httpResponse": {
+            "statusCode": 999,
+            "body": "b999"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2s/mock/1000"
+          },
+          "httpResponse": {
+            "statusCode": 1000,
+            "body": "b1000"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2s/mock/65535"
+          },
+          "httpResponse": {
+            "statusCode": 65535,
+            "body": "b65535"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2s/mock/65536"
+          },
+          "httpResponse": {
+            "statusCode": 65536,
+            "body": "b65536"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2s/mock/70000"
+          },
+          "httpResponse": {
+            "statusCode": 70000,
+            "body": "b70000"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2s/up/1000"
+          },
+          "httpError": {
+            "dropConnection": true,
+            "responseBytes": "SFRUUC8xLjEgMTAwMCBCaWcNCkNvbnRlbnQtTGVuZ3RoOiA1DQoNCmhlbGxv"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2s/fwd/1000"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/h2s/up/1000",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2s/up/70000"
+          },
+          "httpError": {
+            "dropConnection": true,
+            "responseBytes": "SFRUUC8xLjEgNzAwMDAgQmlnDQpDb250ZW50LUxlbmd0aDogNQ0KDQpoZWxsbw=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2s/fwd/70000"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/h2s/up/70000",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[^\"]+\""
+      ]
+    },
+    {
+      "note": "a mock statusCode 999 reaches an h2 client as :status 999 (Netty writes codeAsText)",
+      "h2raw": {
+        "method": "GET",
+        "path": "/h2s/mock/999",
+        "decode": true
+      }
+    },
+    {
+      "note": "a mock statusCode 1000 reaches an h2 client as :status 1000 (Netty writes codeAsText)",
+      "h2raw": {
+        "method": "GET",
+        "path": "/h2s/mock/1000",
+        "decode": true
+      }
+    },
+    {
+      "note": "a mock statusCode 65535 reaches an h2 client as :status 65535 (Netty writes codeAsText)",
+      "h2raw": {
+        "method": "GET",
+        "path": "/h2s/mock/65535",
+        "decode": true
+      }
+    },
+    {
+      "note": "a mock statusCode 65536 reaches an h2 client as :status 65536 (Netty writes codeAsText)",
+      "h2raw": {
+        "method": "GET",
+        "path": "/h2s/mock/65536",
+        "decode": true
+      }
+    },
+    {
+      "note": "a mock statusCode 70000 reaches an h2 client as :status 70000 (Netty writes codeAsText)",
+      "h2raw": {
+        "method": "GET",
+        "path": "/h2s/mock/70000",
+        "decode": true
+      }
+    },
+    {
+      "note": "a forwarded upstream status 1000 reaches an h2 client as :status 1000",
+      "h2raw": {
+        "method": "GET",
+        "path": "/h2s/fwd/1000",
+        "decode": true
+      }
+    },
+    {
+      "note": "a forwarded upstream status 70000 reaches an h2 client as :status 70000",
+      "h2raw": {
+        "method": "GET",
+        "path": "/h2s/fwd/70000",
+        "decode": true
+      }
+    }
+  ]
+}

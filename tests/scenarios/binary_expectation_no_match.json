@@ -1,0 +1,136 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": "CQgHBgUEAwIBAA=="
+    },
+    "binaryResponse": {
+     "binaryData": "AQIDBA=="
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": "AAAA"
+    },
+    "binaryResponse": {
+     "binaryData": "BQUF"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "tcp": [
+    "CQgHBgUEAwIB"
+   ],
+   "note": "bytes no binary expectation matches: the unknown-format text"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "binaryData": "CQgHBgUEAwIB"
+   },
+   "note": "a binary filter on the request: a not-matched entry per expectation, then the closest (0/1 fields)",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "an HTTP filter sees none of them",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {},
+   "note": "an empty HTTP filter still lists binary expectations",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "binaryData": "AAAA"
+   },
+   "note": "a binary filter lists the one with those bytes",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": "EBAQEBAQEBAQ"
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   },
+   "note": "a binary matcher with no binaryResponse",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "tcp": [
+    "EBAQEBAQEBAQ"
+   ],
+   "note": "it matches but has nothing to write: the unknown-format text"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "binaryData": "EBAQEBAQEBAQ"
+   },
+   "note": "matched, then no matching binary expectation",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  }
+ ]
+}

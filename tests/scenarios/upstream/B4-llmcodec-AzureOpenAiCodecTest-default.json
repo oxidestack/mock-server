@@ -1,0 +1,478 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmcodec-AzureOpenAiCodecTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "4bbdea4a8428",
+   "note": "shouldEncodeTextCompletionInOpenAiFormat (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "AZURE_OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "Hello from Azure.",
+      "usage": {
+       "inputTokens": 15,
+       "outputTokens": 3
+      }
+     }
+    }
+   },
+   "note": "shouldEncodeTextCompletionInOpenAiFormat (llmcodec): encode",
+   "case": "4bbdea4a8428"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldEncodeTextCompletionInOpenAiFormat (llmcodec): echo",
+   "case": "4bbdea4a8428"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldEncodeTextCompletionInOpenAiFormat (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "4bbdea4a8428"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "29790aee8f8f",
+   "note": "shouldProduceOpenAiStreamingChunks (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "AZURE_OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "Hello world",
+      "usage": {
+       "inputTokens": 10,
+       "outputTokens": 5
+      },
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldProduceOpenAiStreamingChunks (llmcodec): encodeStreaming",
+   "case": "29790aee8f8f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceOpenAiStreamingChunks (llmcodec): echo",
+   "case": "29790aee8f8f"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceOpenAiStreamingChunks (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "29790aee8f8f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e45f23d1b82f",
+   "note": "shouldMapFinishReasons (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "AZURE_OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "stopReason": "end_turn",
+      "text": "test"
+     }
+    }
+   },
+   "note": "shouldMapFinishReasons (llmcodec): encode",
+   "case": "e45f23d1b82f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldMapFinishReasons (llmcodec): echo",
+   "case": "e45f23d1b82f"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldMapFinishReasons (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "e45f23d1b82f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "59da3d67ba0d",
+   "note": "shouldEncodeToolCallsInOpenAiFormat (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "AZURE_OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "toolCalls": [
+       {
+        "arguments": "{\"q\":\"test\"}",
+        "name": "search"
+       }
+      ]
+     }
+    }
+   },
+   "note": "shouldEncodeToolCallsInOpenAiFormat (llmcodec): encode",
+   "case": "59da3d67ba0d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldEncodeToolCallsInOpenAiFormat (llmcodec): echo",
+   "case": "59da3d67ba0d"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldEncodeToolCallsInOpenAiFormat (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "59da3d67ba0d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2c2a40701069",
+   "note": "shouldEncodeEmbeddingInOpenAiFormat (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "AZURE_OPENAI",
+     "embedding": {
+      "deterministicFromInput": true,
+      "dimensions": 4,
+      "seed": 42
+     }
+    }
+   },
+   "note": "shouldEncodeEmbeddingInOpenAiFormat (llmcodec): encodeEmbedding",
+   "case": "2c2a40701069"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldEncodeEmbeddingInOpenAiFormat (llmcodec): echo",
+   "case": "2c2a40701069"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "body": "{\"input\": \"test input\"}",
+   "note": "shouldEncodeEmbeddingInOpenAiFormat (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "2c2a40701069"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e4ccbcf64461",
+   "note": "shouldSetContentTypeHeader (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "AZURE_OPENAI",
+     "model": "gpt-4o",
+     "completion": {
+      "text": "test"
+     }
+    }
+   },
+   "note": "shouldSetContentTypeHeader (llmcodec): encode",
+   "case": "e4ccbcf64461"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldSetContentTypeHeader (llmcodec): echo",
+   "case": "e4ccbcf64461"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldSetContentTypeHeader (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "e4ccbcf64461"
+  }
+ ]
+}

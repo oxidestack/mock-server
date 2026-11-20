@@ -1,0 +1,280 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-03-26"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "retrieve_logs",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+",
+    "epochTime\\\\*\" : \\d+",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d+",
+    "\\\\*\"port\\\\*\" : \\d+"
+   ],
+   "note": "logs empty at the start"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "retrieve_logs",
+     "arguments": {
+      "limit": 500
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+",
+    "epochTime\\\\*\" : \\d+",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d+",
+    "\\\\*\"port\\\\*\" : \\d+"
+   ],
+   "note": "logs accept limit at the maximum"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/api/test"
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ],
+   "note": "expectation to log against"
+  },
+  {
+   "method": "GET",
+   "path": "/api/test",
+   "note": "activity"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "retrieve_logs",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+",
+    "epochTime\\\\*\" : \\d+",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d+",
+    "\\\\*\"port\\\\*\" : \\d+"
+   ],
+   "note": "logs after activity"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "retrieve_logs",
+     "arguments": {
+      "correlationId": "no-such-correlation-id"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+",
+    "epochTime\\\\*\" : \\d+",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d+",
+    "\\\\*\"port\\\\*\" : \\d+"
+   ],
+   "note": "logs filtered by an unknown correlationId"
+  },
+  {
+   "method": "GET",
+   "path": "/api/item/0",
+   "note": "more activity"
+  },
+  {
+   "method": "GET",
+   "path": "/api/item/1",
+   "note": "more activity"
+  },
+  {
+   "method": "GET",
+   "path": "/api/item/2",
+   "note": "more activity"
+  },
+  {
+   "method": "GET",
+   "path": "/api/item/3",
+   "note": "more activity"
+  },
+  {
+   "method": "GET",
+   "path": "/api/item/4",
+   "note": "more activity"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "retrieve_logs",
+     "arguments": {
+      "limit": 2
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+",
+    "epochTime\\\\*\" : \\d+",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d+",
+    "\\\\*\"port\\\\*\" : \\d+"
+   ],
+   "note": "logs with limit keep the most recent entries"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "method": "tools/call",
+    "params": {
+     "name": "retrieve_logs",
+     "arguments": {
+      "limit": 2,
+      "correlationId": "no-such-correlation-id"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+",
+    "epochTime\\\\*\" : \\d+",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d+",
+    "\\\\*\"port\\\\*\" : \\d+"
+   ],
+   "note": "logs limit with an unknown correlationId"
+  }
+ ]
+}

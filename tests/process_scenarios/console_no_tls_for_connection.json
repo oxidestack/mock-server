@@ -1,0 +1,41 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_LOG_LEVEL": "INFO",
+    "MOCKSERVER_TLS_MUTUAL_AUTHENTICATION_REQUIRED": "true",
+    "MOCKSERVER_TLS_MUTUAL_AUTHENTICATION_ALLOW_BUNDLED_CA": "true",
+    "MOCKSERVER_CONTROL_PLANE_TLS_MUTUAL_AUTHENTICATION_REQUIRED": "true",
+    "MOCKSERVER_CONTROL_PLANE_TLS_MUTUAL_AUTHENTICATION_CERTIFICATE_CHAIN": "{{files}}/auth/mtls-control-plane-ca-cert.pem"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/some/path",
+        "ownHost": true,
+        "expectStatus": 426
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "[INFO] no tls for connection:\n\n  /",
+      "\n\n returning response:\n\n  {\n    \"statusCode\" : 426,\n    \"headers\" : {\n      \"Upgrade\" : [ \"TLS/1.2, HTTP/1.1\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    }\n  }\n",
+      "[WARN] SSL or decoder fault caught by port unification handler -> closing pipeline [id: 0x",
+      "\nshaded_package.io.netty.handler.codec.DecoderException: PortUnificationHandler.decode() must consume the inbound data or change its state if it did not decode anything.",
+      "[WARN] SSL or decoder fault caught by port unification handler -> closing pipeline [id: 0x"
+    ]
+  }
+}

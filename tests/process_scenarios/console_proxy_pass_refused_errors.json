@@ -1,0 +1,71 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/configuration",
+        "ownHost": true,
+        "body": "{\"proxyPassMappings\": [{\"pathPrefix\": \"/api/\", \"targetUri\": \"not a uri\"}]}",
+        "expectStatus": 500
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "ownHost": true,
+        "expectStatus": 500
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/api/x",
+        "ownHost": true,
+        "expectStatus": 500,
+        "expectBodyContains": "unexpected error processing request, see the MockServer log for correlation id: "
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      " configuration updated via API\n",
+      " exception while serializing configuration to JSON with value:\n\n  org.mockserver.configuration.Configuration@",
+      "\nshaded_package.com.fasterxml.jackson.databind.JsonMappingException: Illegal character in path at index 3: not a uri (through reference chain: org.mockserver.serialization.model.ConfigurationDTO[\"proxyPassMappings\"]->java.util.ArrayList[0]->org.mockserver.model.ProxyPassMapping[\"targetHost\"])\n",
+      "Caused by: java.lang.IllegalArgumentException: Illegal character in path at index 3: not a uri\n",
+      "Caused by: java.net.URISyntaxException: Illegal character in path at index 3: not a uri\n",
+      " unexpected exception processing request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/configuration\",",
+      " correlation id:\n\n  ",
+      "\njava.lang.RuntimeException: Exception while serializing configuration to JSON with value org.mockserver.configuration.Configuration@",
+      " exception while serializing configuration to JSON with value:\n\n  org.mockserver.configuration.Configuration@",
+      "\nshaded_package.com.fasterxml.jackson.databind.JsonMappingException: Illegal character in path at index 3: not a uri (through reference chain: ",
+      " unexpected exception processing request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/configuration\",",
+      " correlation id:\n\n  ",
+      "\njava.lang.RuntimeException: Exception while serializing configuration to JSON with value org.mockserver.configuration.Configuration@",
+      "Caused by: shaded_package.com.fasterxml.jackson.databind.JsonMappingException: Illegal character in path at index 3: not a uri (through reference chain: ",
+      "Caused by: java.lang.IllegalArgumentException: Illegal character in path at index 3: not a uri\n",
+      "Caused by: java.net.URISyntaxException: Illegal character in path at index 3: not a uri\n",
+      "received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/api/x\",",
+      " unexpected exception processing request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/api/x\",",
+      " correlation id:\n\n  ",
+      "\njava.lang.IllegalArgumentException: Illegal character in path at index 3: not a uri\n",
+      "Caused by: java.net.URISyntaxException: Illegal character in path at index 3: not a uri\n"
+    ],
+    "stdoutOccurrences": {
+      "[ERROR]": 5
+    }
+  }
+}

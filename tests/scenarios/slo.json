@@ -1,0 +1,467 @@
+{
+ "properties": {
+  "sloTrackingEnabled": "true",
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ok"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/boom"
+     },
+     "httpResponse": {
+      "statusCode": 503
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fwd-ok"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/ok",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fwd-boom"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/boom",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "no samples",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "name": "empty",
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.5
+     },
+     {
+      "sli": "LATENCY_P50",
+      "comparator": "LESS_THAN",
+      "threshold": 5000
+     }
+    ]
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/fwd-ok"
+  },
+  {
+   "method": "GET",
+   "path": "/fwd-ok"
+  },
+  {
+   "method": "GET",
+   "path": "/fwd-ok"
+  },
+  {
+   "method": "GET",
+   "path": "/fwd-boom"
+  },
+  {
+   "method": "GET",
+   "path": "/ok"
+  },
+  {
+   "note": "pass",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "name": "checkout",
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "minimumSampleCount": 2,
+    "upstreamHosts": [
+     "localhost"
+    ],
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "LESS_THAN_OR_EQUAL",
+      "threshold": 0.25
+     },
+     {
+      "sli": "LATENCY_P95",
+      "comparator": "LESS_THAN",
+      "threshold": 5000,
+      "scope": "FORWARD"
+     }
+    ]
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "fail",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.1
+     },
+     {
+      "sli": "LATENCY_P99",
+      "comparator": "GREATER_THAN",
+      "threshold": 0
+     }
+    ]
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "inconclusive minimum",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "name": "min",
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "minimumSampleCount": 100,
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.5
+     }
+    ]
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "note": "inbound scope",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.5,
+      "scope": "INBOUND"
+     }
+    ]
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "note": "other host",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "upstreamHosts": [
+     "nowhere"
+    ],
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "GREATER_THAN_OR_EQUAL",
+      "threshold": 0
+     }
+    ]
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "note": "explicit window",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "name": "old",
+    "window": {
+     "type": "EXPLICIT",
+     "fromEpochMillis": 0,
+     "toEpochMillis": 1000
+    },
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.5
+     }
+    ]
+   }
+  },
+  {
+   "note": "no objectives",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    }
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "note": "minimum null",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "minimumSampleCount": null,
+    "objectives": []
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "note": "blank",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO"
+  },
+  {
+   "note": "malformed",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": "{\"window\": }"
+  },
+  {
+   "note": "no window",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "objectives": []
+   }
+  },
+  {
+   "note": "bad lookback",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 0
+    }
+   }
+  },
+  {
+   "note": "explicit missing",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "EXPLICIT",
+     "fromEpochMillis": 1
+    }
+   }
+  },
+  {
+   "note": "no type",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "lookbackMillis": 5
+    }
+   }
+  },
+  {
+   "note": "unknown sli",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 5
+    },
+    "objectives": [
+     {
+      "sli": "THROUGHPUT",
+      "comparator": "LESS_THAN",
+      "threshold": 1
+     }
+    ]
+   }
+  },
+  {
+   "note": "no comparator",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "threshold": 1
+     }
+    ]
+   }
+  },
+  {
+   "note": "bad window type",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "SLIDING",
+     "lookbackMillis": 5
+    }
+   }
+  },
+  {
+   "note": "array body",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": "[]"
+  },
+  {
+   "note": "legacy alias",
+   "method": "PUT",
+   "path": "/verifySLO",
+   "body": {
+    "window": {
+     "type": "EXPLICIT",
+     "fromEpochMillis": 0,
+     "toEpochMillis": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "reset clears samples",
+   "method": "PUT",
+   "path": "/mockserver/verifySLO",
+   "body": {
+    "window": {
+     "type": "LOOKBACK",
+     "lookbackMillis": 60000
+    },
+    "objectives": [
+     {
+      "sli": "ERROR_RATE",
+      "comparator": "LESS_THAN",
+      "threshold": 0.5
+     }
+    ]
+   },
+   "mask": [
+    "\"(windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}]}
+]
+}

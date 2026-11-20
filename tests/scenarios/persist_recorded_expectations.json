@@ -1,0 +1,45 @@
+{
+ "properties": {
+  "persistRecordedExpectations": "true",
+  "persistedRecordedExpectationsPath": "{{scratch}}/persist_recorded_expectations.json"
+ },
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/reset", "note": "the log update after a reset rewrites the file as an empty list"},
+  {"sleepMillis": 1500},
+  {"readFile": "{{scratch}}/persist_recorded_expectations.json", "note": "empty after reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/target.*"}, "httpResponse": {"statusCode": 203, "headers": {"X-Target": ["yes"]}, "body": "from target"}},
+    {"httpRequest": {"path": "/fwd-first"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target/first", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/fwd-second"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target/second", "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ]},
+  {"method": "GET", "path": "/target/direct", "note": "a mocked exchange is not a recorded expectation"},
+  {"method": "GET", "path": "/fwd-first", "headers": {"X-In": "in"}, "note": "first forwarded exchange"},
+  {"sleepMillis": 1500},
+  {"readFile": "{{scratch}}/persist_recorded_expectations.json", "note": "one recorded expectation"},
+  {"method": "POST", "path": "/fwd-second?q=1", "body": "payload", "note": "second forwarded exchange"},
+  {"sleepMillis": 1500},
+  {"readFile": "{{scratch}}/persist_recorded_expectations.json", "note": "two, oldest first"},
+  {"method": "PUT", "path": "/mockserver/clear", "body": {"path": "/fwd-first"}, "note": "clearing the log by request"},
+  {"sleepMillis": 1500},
+  {"readFile": "{{scratch}}/persist_recorded_expectations.json", "note": "the cleared exchange is gone"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/json-target"}, "httpResponse": {"headers": {"Content-Type": ["application/json"]}, "body": "{\"answer\": [1, 2]}"}},
+    {"httpRequest": {"path": "/xml-target"}, "httpResponse": {"headers": {"Content-Type": ["application/xml"]}, "body": "<a><b>1</b></a>"}},
+    {"httpRequest": {"path": "/text-target"}, "httpResponse": {"headers": {"Content-Type": ["text/plain; charset=utf-8"]}, "body": "plain text"}},
+    {"httpRequest": {"path": "/fwd-text"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/text-target", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/bin-target"},"httpResponse": {"headers": {"Content-Type": ["application/octet-stream"]}, "body": {"type": "BINARY", "base64Bytes": "AAECAwQ="}}},
+    {"httpRequest": {"path": "/fwd-json"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/json-target", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/fwd-xml"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/xml-target", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/fwd-bin"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/bin-target", "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ]},
+  {"method": "POST", "path": "/fwd-json", "headers": {"Content-Type": "application/json"}, "body": "{\"question\": \"?\"}", "note": "typed bodies: a JSON request and response"},
+  {"method": "POST", "path": "/fwd-xml", "headers": {"Content-Type": "application/xml; charset=utf-16"}, "body": "<q/>", "note": "an XML response, a request with a charset"},
+  {"method": "POST", "path": "/fwd-text", "headers": {"Content-Type": "text/plain"}, "body": "ask", "note": "a string body with a content type, in both directions"},
+  {"method": "GET", "path": "/fwd-bin", "note": "a binary response"},
+  {"sleepMillis": 1500},
+  {"readFile": "{{scratch}}/persist_recorded_expectations.json", "note": "bodies by type"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"sleepMillis": 1500},
+  {"readFile": "{{scratch}}/persist_recorded_expectations.json", "note": "empty again"}
+ ]
+}

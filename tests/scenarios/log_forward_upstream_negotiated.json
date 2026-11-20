@@ -1,0 +1,88 @@
+{
+ "source": "at DEBUG, 8.0.0's HttpClientInitializer.recordForwardUpstreamProtocol logs `forward upstream connection to {} negotiated {}` once per new upstream connection: a plain one at channel set-up (so a refused one too), a TLS one after its handshake, named by the host's reverse-lookup name (127.0.0.1 is localhost); a pooled connection reused logs nothing.",
+ "properties": {
+  "logLevel": "DEBUG"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/neg/b"}, "httpResponse": {"body": "b"}}
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/neg/plain"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/neg/b", "headers": {"Host": ["localhost:{{port}}"]}}}}
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/neg/tls"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/neg/b", "secure": true, "headers": {"Host": ["127.0.0.1:{{port}}"]}}}}
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/neg/refused"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/neg/b", "headers": {"Host": ["{{deadhost}}"]}}}}
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "a new plain connection: logged",
+   "method": "GET",
+   "path": "/neg/plain"
+  },
+  {
+   "note": "the pooled connection again: not logged",
+   "method": "GET",
+   "path": "/neg/plain"
+  },
+  {
+   "note": "a new TLS connection to 127.0.0.1: logged as localhost, after the handshake",
+   "method": "GET",
+   "path": "/neg/tls"
+  },
+  {
+   "method": "GET",
+   "path": "/neg/tls"
+  },
+  {
+   "note": "a refused plain connection: logged before it connects",
+   "method": "GET",
+   "path": "/neg/refused"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "DEBUG LOGS: the negotiation entries among the forwards' own entries (the forwarded request's entries race the forwarding one's: unordered; serials and timings vary; the forwarding client's DEBUG `streaming decision` entries, from StreamingAwareHttpObjectAggregator, are not written here yet and are cut out)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "mask": [
+    {
+     "regex": "(serialNumber\\\" : \\\")\\d+",
+     "replace": "${1}<random>"
+    },
+    {
+     "regex": "(and certificate serial:\\n\\n  )\\d+",
+     "replace": "${1}<random>"
+    },
+    {
+     "regex": "(\"[A-Za-z]+Millis\" : )\\d+",
+     "replace": "${1}<ms>"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - streaming decision:\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    }
+   ]
+  }
+ ]
+}

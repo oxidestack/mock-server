@@ -1,0 +1,48 @@
+{
+  "note": "an unbuildable XML schema is a fault, logged as `unexpected exception processing request` with the request as its argument; redactSecretsInLog redacts that request field by field (LogEntry.redactArgument), so the Authorization header is masked but the copy of its token inside the schema body stays, as the oracle image shows (checked with target oracleDocker, 2026-10-14)",
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_LOG_LEVEL": "INFO",
+    "MOCKSERVER_REDACT_SECRETS_IN_LOG": "true"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"httpRequest\": {\"path\": \"/pets\"}, \"httpForwardValidateAction\": {\"specUrlOrPayload\": \"{\\\"openapi\\\": \\\"3.0.0\\\", \\\"info\\\": {\\\"version\\\": \\\"1.0.0\\\", \\\"title\\\": \\\"Pets\\\"}, \\\"paths\\\": {\\\"/pets\\\": {\\\"post\\\": {\\\"operationId\\\": \\\"createPets\\\", \\\"requestBody\\\": {\\\"required\\\": true, \\\"content\\\": {\\\"application/json\\\": {\\\"schema\\\": {\\\"$ref\\\": \\\"#/components/schemas/Pet\\\"}}}}, \\\"responses\\\": {\\\"201\\\": {\\\"description\\\": \\\"created\\\"}}}}}, \\\"components\\\": {\\\"schemas\\\": {\\\"Pet\\\": {\\\"type\\\": \\\"object\\\", \\\"required\\\": [\\\"id\\\", \\\"name\\\"], \\\"properties\\\": {\\\"id\\\": {\\\"type\\\": \\\"integer\\\"}, \\\"name\\\": {\\\"type\\\": \\\"string\\\"}}}}}}\", \"host\": \"localhost\", \"port\": 1}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "tcp": "UE9TVCAvcGV0cyBIVFRQLzEuMQ0KSG9zdDogbG9jYWxob3N0DQpDb250ZW50LUxlbmd0aDogMTENCkNvbm5lY3Rpb246IGNsb3NlDQpBdXRob3JpemF0aW9uOiBCZWFyZXIgRk9SV0FSRC1TRUNSRVQtVE9LRU4tNzc3DQpDb250ZW50LVR5cGU6IGFwcGxpY2F0aW9uL2pzb24NCg0KeyJuYW1lIjogNX0="
+    },
+    {
+      "tcp": "UFVUIC9tb2Nrc2VydmVyL2V4cGVjdGF0aW9uIEhUVFAvMS4xDQpIb3N0OiBsb2NhbGhvc3QNCkNvbnRlbnQtTGVuZ3RoOiAyMDQNCkNvbm5lY3Rpb246IGNsb3NlDQpBdXRob3JpemF0aW9uOiBCZWFyZXIgWFNELVNFQ1JFVC1UT0tFTi0xMjM0NQ0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9qc29uDQoNCnsiaHR0cFJlcXVlc3QiOiB7InBhdGgiOiAiL3htbCIsICJib2R5IjogeyJ0eXBlIjogIlhNTF9TQ0hFTUEiLCAieG1sU2NoZW1hIjogIjx4czpzY2hlbWEgeG1sbnM6eHM9XCJodHRwOi8vd3d3LnczLm9yZy8yMDAxL1hNTFNjaGVtYVwiPlhTRC1TRUNSRVQtVE9LRU4tMTIzNDU8L3hzOnNjaGVtYT4ifX0sICJodHRwUmVzcG9uc2UiOiB7ImJvZHkiOiAieCJ9fQ=="
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 30,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "OpenAPI request validation failed for request",
+      " unexpected exception processing request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/expectation\",",
+      "      \"Authorization\" : [ \"***REDACTED***\" ]\n"
+    ],
+    "stdoutNotContains": [
+      "FORWARD-SECRET-TOKEN-777",
+      "Bearer XSD-SECRET-TOKEN-12345"
+    ]
+  }
+}

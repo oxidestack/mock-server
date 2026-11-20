@@ -1,0 +1,143 @@
+{
+  "note": "A built-in class callback that throws (the IdP's /token signing with an RSA JWK whose CRT values are inconsistent): the ERROR entry `<class> throw exception while executing handle callback method - <message>` carries the exception chain as its throwable.",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an RSA JWK whose dp is not d mod (p - 1) is accepted; the JWKS publishes its n/e",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"RSA\", \"kid\": \"rsa-bad-dp\", \"n\": \"mohzVGloeBdxpDQyd1JG_rw27BVqENyAlRyVAie28M3dEQGGJau-TH4eQhlIn__qnRWNoeu-0O_zJxnRRcya_Wf0imfdm9wOWUectDJ5_LSJ9mjsCESPTLFDVGZUZyf3ZmOxM4_1bG6z0M_hsw-djEOkNGq_E5sLFZjCPOEDVhKbRaWxsvf618ctAAOhWh3LTenS8-NXfBt0Gemjii5F2h8E4QjK4k9NG29AADralVwh-_1xC2F6EtTVgFhR4fpYil9EUDq4b31kicqxZTFpnHpYlUwU6LbqHTWaezkXsudaCaNrHbtmHshZB4ceMDrDvidPv1DZtmi2hIt0dNj2WQ\", \"e\": \"AQAB\", \"d\": \"CN9618bxo6uc79O7bhSAVRITiTy1iWBP1b_9YlFLdMotPlO7EyCoXZYEQMFY5S75lqltJ3X0z-RnLsCRvpM_9vroFKZgGBnrjP7KpaIcVQE8xrRBkTv2im3HMuppQD8QOoXQ3-gNLHuywXOePvzPjAU6QXQ7onGNkmDiDkLRQTjbYt0JffARTYW0ws_INAaXGOIxJhxJK0_bVwkqkQJssQ5kiF5O_TlCH01JeC1OBD9ZuRkcf225cYie9STkahuldZlSYpil2s8Si45ggJpAc1PhDwCwOWJ1TCxbak-ZoOfqvu7LyiX3Y7hL0B4zluCZjJuF9ta8_HZmtjY9EKok3Q\", \"p\": \"1M7V3Mv2tJO8GDQ_ycryw27A-0FSSahmny3IyG5J1CYg3oReKIyMOXz4VrkMKBWiQ2Qf69i7ZlkWUGXvjsZO_6HDDhdjqhGhGEU__JJqxHecSOPRF61v1S19SOygNBacGC_36X-uTl-FcXDCNrWpzxEHJWLwmay05-qlEqNbBsc\", \"q\": \"ueW9x4CDMm2-3hBfBPLqUze3TAJ5J_pqBYDyAnyh_5UrSEHw9CPPgLPMX57A4eD8M5nq4cBGGCFIYo86dpLJg67vWLgfnUSxr8ELJQHwI-n_kwA1lRJG1M7z36DCqgWi-P_dzMuUktYSs9t6s9aH8llf8IKPv2DBZr6SacjWed8\", \"dp\": \"IbBozN6BPM8SfOZwnrqBOg0jgeMyarS9Ij_2RDypdWtf0rozycmOPV-aVOhQk1vxZyfHoeeaqzY5QRsSFJEyWme6YFW1kmveC-CSo6JuQpII7MUcCdqMFLxx1ASZzAU0SuP1JELxTjjzACVwqYaSzlQMxI9oNXvQ29Iatdukgm0\", \"dq\": \"lEBExhqWBpyBEAWMUZ0MBMu1MTfzuU86SCNaXWNZqkMjHmAAMiNw81nwTf2EI19SojBIojq9a7b3TCqfXDqZ3JuhI2bLR5emANz570yJX4rYmDodgUHvHP3ifWBufjs6iks7bnyYgzWX-rm5NDyNdFeUbHEjBGO8OR0YFKbnbI8\", \"qi\": \"OkE8jLnhs2GWONLacnjqc-Ioytn5iQpMhoRjXeON24BHz1SED00PspxV_1IfP9pVZkp2x1A0Rp6pvbdt3MrqC4-TF0ergsxehYaxtydeAwcoEOK1Zyk3YQ0odp6GJvZjjs8FmH3BE-QHnri40t2CkaEMAlJKB8MB14amSY6yZ3I\"}",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's CRT signature fails its own check (RSA private key operation failed): the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token callback's ERROR entry: its throwable is the signing exception chain (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an RSA JWK whose CRT values belong to another key is accepted too",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"RSA\", \"kid\": \"rsa-other-primes\", \"n\": \"rqPFu5Tg70Wq6E2jxnaHtZyDKNTGOVb9AW9Ap2zUYzG_55-sR548uf3l4qDx-ZUbRPuXr6YHk5Dt6FoRgxJAxrofxOiqVOTepF4wmZoVgx4LZK3T6RMw3gr0P5EUmDY12d3EfDSt2vZl7MNNOueO8j1dAfAPxv0FiNzLRSGK80mnR0NnK-2h3TPKN065lZ0x4Jq0WSdDG1gQQJZkdwAyvBETUr6UGRs0AlgY3s7C-wapSM5TiNun-QvJTfFf--FL4bKzZVdYMlDYwMPXEKaRRCxiBb7T4YwMI7TWtw7cOQeN4TOLniyMkpw06cWSAxfNI5LeD6fBkdxBnmGRVpakHw\", \"e\": \"AQAB\", \"d\": \"IDTHpF5CVR3t9MVMrK7zPATPE1qZ670lD3yq2bVyPZDRKTADH3oJDOvL102DElnzG3eic5wUzZvuo-joTdmx5HQyo6ecsec7P-i24bzOts11oG2GJPeLDYfLn2Vr_N4SdEk3kQhN_5FtHoqt1W0aqYWzf0X8QuAqgyDkw6z56P-fvKmbMNmea6znWzZ9osSqMAdfLIDH_2nEs-1Neqv2Mxx4VOV6v51zgsqPnipPTwGkwnNF_1wcTJkCAxGnPoAgCVQW_2gayoLGCobq1NXBhQclZFoKQFfZgbjsUpoSZiA6kSInvHRgSBZz22hAF4lmNbWnk3RruyenQz15BtSloQ\", \"p\": \"-tAI5UC_SIGqZxw4cbxTa4320mOHVqLzUycYadibeX7ZNMDO_lgUrWVjqkjz-r3k_KcBdcz1PZirtfPi7xzp4czstv4VX-1f5RfJpf57WZUzJu329bPsDZeijwoQvvwqkNvX2T9pEu05QVlB4I4ReYpxx5mYmwUK59iWBpwBUgE\", \"q\": \"w5FUpYwkmOv9slYymn4cNaMVdN9HEHpOL-_qpIZLlidUgDekRvs_rvACeRX6CGanLelsT_fHTpf6U3RkPK32QrXOjtDsp4D_5Sj49pGdGwH_6OUbt9wCpHnL9-mgVSpjV8ZMCAtyoCfQGXHRrSsEgF-BlFryQA4LpYxbKDri7RU\", \"dp\": \"QxWLm43y27ja1BNnQXyGr3jcMK-wTkrtXCtTy1PFWfzEqeh8NOloNmys-KnkoAdUjQM6T8DPQ3dnThZ6d0w7fkqqcdOJ8gtyn7r6E2z6nx5Z_Sqe6F8EXypUr3-YtQyLcg1rMU9Vklti-giepyo4oFKYVjPN7oCtxw9WKVRmwgE\", \"dq\": \"idc1Qjm00dQDzF7U6-9XErcPuIBnJkYONdt0FuJRBFRUSsrtDtqn2DVyiMXkpWc1DjcoEHUkFVEpLwkqXVp_6CUcoazAII_bzTlDwQaBJTgTl6NkFgMMGcF-8g3I5D4sJwGtNT5cXGWzVzvR_awEUDcArgAsHtnHe7ehyIk4yME\", \"qi\": \"wtNkfttEz5tZyYluJVKlF_95IHtA3DNYP5r5FLTHgv5FeRHTYaEDb2TBcqb3SO_zXvjYDuFPIf9rY33Gui1FdqFGorfMOvssHza-GXP8w5fBK1aR523DKsjcqD9lrwEJPZ61-0BL9LugkJLJ05kjdLFdxyqYRrhUqXdOLHaZgOI\"}",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "signing fails the same way",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the same chain for CRT values of another key",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    }
+  ]
+}

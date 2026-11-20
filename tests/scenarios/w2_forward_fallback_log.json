@@ -1,0 +1,63 @@
+{
+ "properties": {
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"target\", \"httpRequest\": {\"path\": \"/fbl/(ok|503)\"}, \"httpResponse\": {\"statusCode\": 200, \"body\": \"upstream ok\"}}, {\"id\": \"target-503\", \"httpRequest\": {\"path\": \"/fbl/503\"}, \"priority\": 1, \"httpResponse\": {\"statusCode\": 503, \"body\": \"upstream down\"}}, {\"id\": \"fwf-ok\", \"httpRequest\": {\"path\": \"/fbl/ok\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"statusCode\": 203, \"body\": \"fallback for /fbl/ok\"}}}, {\"id\": \"fwf-503\", \"httpRequest\": {\"path\": \"/fbl/503\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"statusCode\": 203, \"body\": \"fallback for /fbl/503\"}}}, {\"id\": \"fwf-refused\", \"httpRequest\": {\"path\": \"/fbl/refused\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{deadport}}}, \"fallbackResponse\": {\"statusCode\": 203, \"body\": \"fallback for /fbl/refused\"}}}, {\"id\": \"fwf-refused-strict\", \"httpRequest\": {\"path\": \"/fbl/refused-strict\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{deadport}}}, \"fallbackResponse\": {\"statusCode\": 203, \"body\": \"fallback for /fbl/refused-strict\"}, \"fallbackOnTimeout\": false}}]"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "upstream 200",
+   "method": "GET",
+   "path": "/fbl/ok",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "upstream 503: fallback",
+   "method": "GET",
+   "path": "/fbl/503",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "refused: fallback",
+   "method": "GET",
+   "path": "/fbl/refused",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "refused, fallbackOnTimeout false: 502",
+   "method": "GET",
+   "path": "/fbl/refused-strict",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\"host\" : \\[ \"front\\.example\" \\],\\s*\"content-length\" : \\[ \"0\" \\]|\"content-length\" : \\[ \"0\" \\],\\s*\"Host\" : \\[ \"(?:localhost:<port>|<deadhost>)\" \\]",
+     "replace": "<received request headers>"
+    },
+    {
+     "regex": "\"timing\" : \\{[^{}]*\\}",
+     "replace": "\"timing\" : <masked>"
+    }
+   ]
+  }
+ ]
+}

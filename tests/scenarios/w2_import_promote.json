@@ -1,0 +1,142 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/backend/.*"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": {
+      "type": "JSON",
+      "json": {
+       "ok": true,
+       "session": "abcdefghijklmnopqrstuvwxyz0123"
+      }
+     }
+    }
+   },
+   "note": "backend"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/backend/users/2"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": {
+      "type": "JSON",
+      "json": {
+       "ok": false,
+       "session": "abcdefghijklmnopqrstuvwxyz0123"
+      }
+     }
+    },
+    "priority": 1
+   },
+   "note": "backend for user 2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\"httpRequest\":{\"path\":\"/api/users/1\"},\"httpOverrideForwardedRequest\":{\"httpRequest\":{\"path\":\"/backend/users/1\",\"headers\":{\"Host\":[\"localhost:{{port}}\"]}}}}",
+   "note": "override /api/users/1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\"httpRequest\":{\"path\":\"/api/users/2\"},\"httpOverrideForwardedRequest\":{\"httpRequest\":{\"path\":\"/backend/users/2\",\"headers\":{\"Host\":[\"localhost:{{port}}\"]}}}}",
+   "note": "override /api/users/2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\"httpRequest\":{\"path\":\"/api/orders\"},\"httpOverrideForwardedRequest\":{\"httpRequest\":{\"path\":\"/backend/orders\",\"headers\":{\"Host\":[\"localhost:{{port}}\"]}}}}",
+   "note": "override /api/orders"
+  },
+  {
+   "method": "GET",
+   "path": "/api/users/1?at=2026-06-20T12:34:56Z",
+   "headers": {
+    "Authorization": "Bearer secret",
+    "X-Api-Key": "k"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api/users/2?at=2026-06-21T12:34:56Z",
+   "headers": {
+    "Authorization": "Bearer secret"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/orders",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "body": {
+    "password": "p",
+    "id": "123e4567-e89b-12d3-a456-426614174000"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "note": "what promotion reads",
+   "mask": [
+    "content-length: [0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/recordings/promote?consolidate=false",
+   "note": "verbatim, redacted",
+   "mask": [
+    "content-length: [0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/recordings/promote",
+   "note": "consolidated and parameterized",
+   "mask": [
+    "content-length: [0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/recordings/promote?parameterize=false&redactSensitiveData=false",
+   "body": {
+    "method": "GET"
+   },
+   "note": "consolidated, not redacted",
+   "mask": [
+    "content-length: [0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "active",
+   "mask": [
+    "content-length: [0-9]+"
+   ]
+  }
+ ]
+}

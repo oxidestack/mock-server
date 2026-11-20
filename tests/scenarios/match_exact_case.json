@@ -1,0 +1,275 @@
+{
+ "properties": {
+  "matchExactCase": "true"
+ },
+ "steps": [
+  {
+   "note": "a literal method and path, a regex path with a capture group, a REGEX body, a STRING body, a header value",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "literal",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/Exact/Path"
+     },
+     "httpResponse": {
+      "body": "literal"
+     }
+    },
+    {
+     "id": "regexPath",
+     "httpRequest": {
+      "path": "/Reg/([a-z]+)"
+     },
+     "httpResponse": {
+      "body": "regex path"
+     }
+    },
+    {
+     "id": "regexBody",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/body/regex",
+      "body": {
+       "type": "REGEX",
+       "regex": "Hello.*"
+      }
+     },
+     "httpResponse": {
+      "body": "regex body"
+     }
+    },
+    {
+     "id": "stringBody",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/body/string",
+      "body": "Hello"
+     },
+     "httpResponse": {
+      "body": "string body"
+     }
+    },
+    {
+     "id": "subStringBody",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/body/sub",
+      "body": {
+       "type": "STRING",
+       "string": "Hello",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "body": "substring body"
+     }
+    },
+    {
+     "id": "header",
+     "httpRequest": {
+      "path": "/header",
+      "headers": {
+       "X-Case": [
+        "Value"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "header"
+     }
+    },
+    {
+     "id": "regexMethod",
+     "httpRequest": {
+      "method": "P.*",
+      "path": "/method/regex"
+     },
+     "httpResponse": {
+      "body": "regex method"
+     }
+    }
+   ]
+  },
+  {
+   "note": "the exact path matches",
+   "method": "GET",
+   "path": "/Exact/Path"
+  },
+  {
+   "note": "a path in another case does not",
+   "method": "GET",
+   "path": "/exact/path"
+  },
+  {
+   "note": "a method in another case does not",
+   "method": "get",
+   "path": "/Exact/Path"
+  },
+  {
+   "note": "a regex path matches in its own case",
+   "method": "GET",
+   "path": "/Reg/abc"
+  },
+  {
+   "note": "a regex path in another case does not",
+   "method": "GET",
+   "path": "/reg/abc"
+  },
+  {
+   "note": "the regex is compiled without CASE_INSENSITIVE",
+   "method": "GET",
+   "path": "/Reg/ABC"
+  },
+  {
+   "note": "a REGEX body in its own case",
+   "method": "POST",
+   "path": "/body/regex",
+   "body": "Hello world"
+  },
+  {
+   "note": "a REGEX body in another case does not match",
+   "method": "POST",
+   "path": "/body/regex",
+   "body": "hello world"
+  },
+  {
+   "note": "a STRING body in its own case",
+   "method": "POST",
+   "path": "/body/string",
+   "body": "Hello"
+  },
+  {
+   "note": "a STRING body in another case",
+   "method": "POST",
+   "path": "/body/string",
+   "body": "HELLO"
+  },
+  {
+   "note": "a subString body in another case",
+   "method": "POST",
+   "path": "/body/sub",
+   "body": "say hello there"
+  },
+  {
+   "note": "header values stay case-insensitive",
+   "method": "GET",
+   "path": "/header",
+   "headers": {
+    "X-Case": "VALUE"
+   }
+  },
+  {
+   "note": "a regex method in its own case",
+   "method": "PUT",
+   "path": "/method/regex"
+  },
+  {
+   "note": "a regex method in another case",
+   "method": "put",
+   "path": "/method/regex"
+  },
+  {
+   "note": "control plane filters stay case-insensitive: retrieve by a path in another case",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/EXACT/PATH",
+    "method": "get"
+   }
+  },
+  {
+   "note": "verify by a path and regex body in another case",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/BODY/REGEX",
+     "body": {
+      "type": "REGEX",
+      "regex": "HELLO WORLD"
+     }
+    },
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "clear by a path in another case",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "path": "/HEADER"
+   }
+  },
+  {
+   "note": "the header expectation is gone",
+   "method": "GET",
+   "path": "/header",
+   "headers": {
+    "X-Case": "Value"
+   }
+  },
+  {
+   "note": "switch matchExactCase off at runtime",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "matchExactCase": false
+   }
+  },
+  {
+   "note": "an expectation created while it was on",
+   "method": "GET",
+   "path": "/exact/path"
+  },
+  {
+   "note": "a new expectation, created while it is off",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "later",
+    "httpRequest": {
+     "method": "GET",
+     "path": "/Later/Path",
+     "body": {
+      "type": "REGEX",
+      "regex": "Later.*"
+     }
+    },
+    "httpResponse": {
+     "body": "later"
+    }
+   }
+  },
+  {
+   "note": "matches in another case",
+   "method": "GET",
+   "path": "/later/path",
+   "body": "later on"
+  },
+  {
+   "note": "switch it back on",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "matchExactCase": true
+   }
+  },
+  {
+   "note": "the expectation created while it was off",
+   "method": "GET",
+   "path": "/later/path",
+   "body": "later on"
+  },
+  {
+   "note": "the expectation created while it was on",
+   "method": "GET",
+   "path": "/exact/path"
+  }
+ ]
+}

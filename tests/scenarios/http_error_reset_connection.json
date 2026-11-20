@@ -1,0 +1,15 @@
+{"steps": [
+  {"note": "reset", "method": "PUT", "path": "/mockserver/reset"},
+  {"note": "create: resetConnection alone, with dropConnection and streamError, and with responseBytes", "method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"id": "reset", "httpRequest": {"path": "/reset"}, "httpError": {"resetConnection": true}},
+    {"id": "both", "httpRequest": {"path": "/both"}, "httpError": {"delay": {"timeUnit": "MILLISECONDS", "value": 1}, "dropConnection": true, "resetConnection": true, "streamError": 8}},
+    {"id": "bytes", "httpRequest": {"path": "/bytes"}, "httpError": {"resetConnection": true, "responseBytes": "SGVsbG8="}},
+    {"id": "off", "httpRequest": {"path": "/off"}, "httpError": {"resetConnection": false, "dropConnection": true}}
+  ]},
+  {"note": "echo", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "java", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVA"},
+  {"note": "the reset request, on the data plane", "method": "GET", "path": "/reset"},
+  {"note": "the reset request with response bytes", "method": "GET", "path": "/bytes"},
+  {"note": "resetConnection false falls back to the drop", "method": "GET", "path": "/off"},
+  {"note": "log", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS"}
+]}

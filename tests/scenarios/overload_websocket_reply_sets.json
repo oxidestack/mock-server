@@ -1,0 +1,90 @@
+{
+ "source": "Scheduler.scheduleReplySet / WebSocketReplySender: a WebSocket mock's reply set is admitted or refused whole against maxPendingDelayedResponses reply frames; a refused set closes the WebSocket with 1013 Try Again Later and sends none of its frames; the reply-frame budget is apart from delayed responses (SchedulerReplySetTest, SchedulerOverloadTest)",
+ "properties": {
+  "maxPendingDelayedResponses": "1"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ws-replies"
+     },
+     "httpWebSocketResponse": {
+      "matchers": [
+       {
+        "frameType": "TEXT",
+        "textMatcher": "ping",
+        "responses": [
+         {
+          "text": "now"
+         },
+         {
+          "text": "later",
+          "delay": {
+           "timeUnit": "MILLISECONDS",
+           "value": 2000
+          }
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/delayed"
+     },
+     "httpResponse": {
+      "body": "delayed",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 300
+      }
+     }
+    }
+   ]
+  },
+  {
+   "wsOpen": "w",
+   "path": "/ws-replies"
+  },
+  {
+   "note": "the first reply set is admitted: one delayed frame fills the budget of 1",
+   "wsSend": "w",
+   "text": "ping"
+  },
+  {
+   "wsRead": "w"
+  },
+  {
+   "note": "a delayed response has a budget of its own",
+   "method": "GET",
+   "path": "/delayed"
+  },
+  {
+   "note": "the second set is refused whole: the WebSocket is closed with 1013, before the first set's delayed frame",
+   "wsSend": "w",
+   "text": "ping"
+  },
+  {
+   "wsRead": "w",
+   "waitMillis": 4000
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "mask": [
+    "(?<=\"totalTimeInMillis\" : )\\d+",
+    "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+   ]
+  }
+ ]
+}

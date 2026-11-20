@@ -1,0 +1,143 @@
+{
+ "source": "HttpActionHandler serves GET /v1/responses/{id} from OpenAiResponsesStore before attemptRequestBreakpoint and writes it with no response breakpoint.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "wsOpen": "bp",
+   "headers": {
+    "X-CLIENT-REGISTRATION-ID": "bp-stored-responses-client"
+   },
+   "note": "callback WebSocket under a fixed client id"
+  },
+  {
+   "wsRead": "bp",
+   "note": "the client id message"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "responses",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/v1/responses"
+    },
+    "httpLlmResponse": {
+     "provider": "OPENAI_RESPONSES",
+     "model": "m",
+     "completion": {
+      "text": "stored answer"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/breakpoint/matcher",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/v1/responses/.*"
+    },
+    "phases": [
+     "REQUEST",
+     "RESPONSE"
+    ],
+    "clientId": "bp-stored-responses-client"
+   },
+   "note": "both phases for every retrieval"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/responses",
+   "body": {
+    "model": "m",
+    "input": "hello"
+   },
+   "note": "a stored Responses API answer (the breakpoint does not match POST /v1/responses)",
+   "capture": {
+    "bodyRegex": "\"id\"\\s*:\\s*\"(resp_[^\"]+)\"",
+    "as": "responseId"
+   },
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/responses/{{capture:responseId}}",
+   "note": "retrieved from the store before any breakpoint: answered without a hold",
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "wsRead": "bp",
+   "waitMillis": 500,
+   "note": "nothing was held"
+  },
+  {
+   "method": "GET",
+   "path": "/v1/responses/resp_unknown",
+   "async": "unknown",
+   "note": "control: an unknown id falls through to the not-found path, whose REQUEST breakpoint holds it"
+  },
+  {
+   "wsRead": "bp",
+   "capture": {
+    "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+    "as": "unknown"
+   },
+   "mask": [
+    "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+   ],
+   "note": "control: the held request"
+  },
+  {
+   "wsSend": "bp",
+   "envelope": {
+    "type": "org.mockserver.model.HttpResponse",
+    "value": {
+     "statusCode": 418,
+     "headers": {
+      "WebSocketCorrelationId": [
+       "{{capture:unknown}}"
+      ]
+     },
+     "body": "aborted"
+    }
+   },
+   "note": "ABORT: the client answers it"
+  },
+  {
+   "await": "unknown",
+   "note": "control: the client's answer"
+  },
+  {
+   "wsRead": "bp",
+   "waitMillis": 500,
+   "note": "nothing more is held"
+  }
+ ]
+}

@@ -1,0 +1,36 @@
+{
+  "source": "below 1792 MiB of memory the JVM is not server class: with a user JAVA_TOOL_OPTIONS (no ZGC) it picks Serial, whose 2 MiB alignment replaces G1's 8 MiB region for the 20000001k ceiling.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-Xmx20000001k"
+  },
+  "containerMemoryBytes": 1073741824,
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "compareBody": "configuration"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

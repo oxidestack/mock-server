@@ -1,0 +1,81 @@
+{
+  "properties": {
+    "logLevel": "WARN"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "id": "chunk-line-upload",
+        "httpRequest": {
+          "method": "POST",
+          "path": "/upload",
+          "body": "hello world"
+        },
+        "httpResponse": {
+          "body": "uploaded"
+        }
+      }
+    },
+    {
+      "note": "chunk extensions within 8192 bytes are read (HttpChunkLineLimiter)",
+      "tcp": [
+        {
+          "text": "POST /upload HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5;chunk-signature={{repeat:64:a}}\r\nhello\r\n6;note={{repeat:4096:b}}\r\n world\r\n0\r\nx-checksum: abc\r\n\r\n"
+        }
+      ]
+    },
+    {
+      "note": "a chunk-size line that never ends is refused with 400 and connection: close once over 8192 bytes, before it ends",
+      "tcp": [
+        {
+          "text": "POST /upload HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5;name="
+        },
+        {
+          "text": "{{repeat:4096:a}}"
+        },
+        {
+          "text": "{{repeat:4096:a}}"
+        },
+        {
+          "text": "{{repeat:4096:a}}"
+        },
+        {
+          "text": "{{repeat:4096:a}}"
+        }
+      ],
+      "chunkMillis": 100
+    },
+    {
+      "note": "a trailer section that never ends is refused the same way",
+      "tcp": [
+        {
+          "text": "POST /upload HTTP/1.1\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\nx-a: {{repeat:3000:a}}\r\n"
+        },
+        {
+          "text": "x-b: {{repeat:3000:b}}\r\n"
+        },
+        {
+          "text": "x-c: {{repeat:3000:c}}\r\n"
+        },
+        {
+          "text": "x-d: {{repeat:3000:d}}\r\n"
+        }
+      ],
+      "chunkMillis": 100
+    },
+    {
+      "note": "the WARN for each refusal",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "from:\n\n  /[^\n]+",
+          "replace": "from:\n\n  <client>",
+          "reason": "the client's address seen from inside the oracle's container"
+        }
+      ]
+    }
+  ]
+}

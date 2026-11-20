@@ -1,0 +1,161 @@
+{
+ "source": "InboundConnectionIdleHandler (b765b8271). A connection that has read and written nothing for inboundConnectionIdleTimeoutMillis with nothing in progress is closed, a CONNECT or SOCKS tunnel's client leg too; a delayed response, a streaming response's gap, and a WebSocket outlive it (InboundConnectionIdleTimeoutIntegrationTest). Each tcp step reads for two seconds after its last chunk: closed means the server closed it within them",
+ "properties": {
+  "inboundConnectionIdleTimeoutMillis": "600",
+  "startupWarmup": "false",
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/simple"
+     },
+     "httpResponse": {
+      "body": "simple"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/slow"
+     },
+     "httpResponse": {
+      "body": "slow but sure",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 900
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/sse"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "first"
+       },
+       {
+        "data": "second",
+        "delay": {
+         "timeUnit": "MILLISECONDS",
+         "value": 900
+        }
+       }
+      ],
+      "closeConnection": true
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ws"
+     },
+     "httpWebSocketResponse": {
+      "messages": [
+       {
+        "text": "after the quiet",
+        "delay": {
+         "timeUnit": "MILLISECONDS",
+         "value": 900
+        }
+       }
+      ]
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "a connection that never sends anything",
+   "tcp": [],
+   "minMillis": 550
+  },
+  {
+   "note": "a keep-alive connection, once idle after its response",
+   "tcp": [
+    {
+     "text": "GET /simple HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"
+    }
+   ],
+   "text": true,
+   "minMillis": 550
+  },
+  {
+   "note": "a delayed response outlives the timeout; then idle",
+   "tcp": [
+    {
+     "text": "GET /slow HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"
+    }
+   ],
+   "text": true
+  },
+  {
+   "note": "an SSE gap longer than the timeout",
+   "tcp": [
+    {
+     "text": "GET /sse HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"
+    }
+   ],
+   "text": true
+  },
+  {
+   "note": "a WebSocket quiet for longer than the timeout stays open",
+   "tcp": [
+    {
+     "text": "GET /ws HTTP/1.1\r\nHost: localhost:{{port}}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ],
+   "text": true
+  },
+  {
+   "note": "a CONNECT tunnel, once idle after its response",
+   "tcp": [
+    {
+     "text": "CONNECT localhost:{{port}} HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"
+    },
+    {
+     "text": "GET /simple HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 300,
+   "text": true
+  },
+  {
+   "note": "a SOCKS5 tunnel: its handshake is no activity (the SOCKS handlers sit in front of the idle handler), so it is closed 600 ms after the accept, before its request at 800 ms",
+   "tcp": [
+    {
+     "hex": "050100"
+    },
+    {
+     "hex": "050100030973696d706c652e696f0050"
+    },
+    {
+     "text": "GET /simple HTTP/1.1\r\nHost: simple.io\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 400
+  },
+  {
+   "sleepMillis": 700
+  },
+  {
+   "note": "five closed as idle: the silent, keep-alive, delayed, the CONNECT tunnel and the SOCKS one",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_inbound_connections_idle_closed)[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives"
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

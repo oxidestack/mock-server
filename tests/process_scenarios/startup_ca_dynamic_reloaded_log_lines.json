@@ -1,0 +1,36 @@
+{
+  "target": "both",
+  "files": {
+    "ca/dynamic/CertificateAuthorityCertificate.pem": {"from": "ca/dynamic/CertificateAuthorityCertificate.pem"},
+    "ca/dynamic/PKCS8CertificateAuthorityPrivateKey.pem": {"from": "ca/dynamic/PKCS8CertificateAuthorityPrivateKey.pem"},
+    "ca/dynamic/mockserver-ca.pem": {"from": "ca/dynamic/mockserver-ca.pem"}
+  },
+  "args": [
+    "-serverPort",
+    "0",
+    "-Dmockserver.dynamicallyCreateCertificateAuthorityCertificate=true",
+    "-Dmockserver.directoryToSaveDynamicSSLCertificate={{scratch}}/ca/dynamic"
+  ],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "logContains": "logger level is",
+    "settleMillis": 8000
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "started on port:",
+      "loaded CA private key from path",
+      "{{scratch}}/ca/dynamic/PKCS8CertificateAuthorityPrivateKey.pem",
+      "loaded CA X509 from path",
+      "{{scratch}}/ca/dynamic/CertificateAuthorityCertificate.pem",
+      "containing PEM"
+    ],
+    "stdoutNotContains": [
+      "created dynamic"
+    ]
+  }
+}

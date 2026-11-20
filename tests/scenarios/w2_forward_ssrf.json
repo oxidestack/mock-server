@@ -1,0 +1,115 @@
+{
+ "properties": {
+  "forwardProxyBlockPrivateNetworks": "true",
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "fwf",
+     "httpRequest": {
+      "path": "/ssrf/fallback"
+     },
+     "httpForwardWithFallback": {
+      "httpForward": {
+       "host": "127.0.0.1",
+       "port": 8080
+      },
+      "fallbackResponse": {
+       "statusCode": 203,
+       "body": "blocked fallback"
+      }
+     }
+    },
+    {
+     "id": "fwf-strict",
+     "httpRequest": {
+      "path": "/ssrf/strict"
+     },
+     "httpForwardWithFallback": {
+      "httpForward": {
+       "host": "127.0.0.1",
+       "port": 8080
+      },
+      "fallbackResponse": {
+       "body": "unused"
+      },
+      "fallbackOnTimeout": false
+     }
+    },
+    {
+     "id": "forward",
+     "httpRequest": {
+      "path": "/ssrf/forward"
+     },
+     "httpForward": {
+      "host": "127.0.0.1",
+      "port": 8080
+     }
+    },
+    {
+     "id": "fv",
+     "httpRequest": {
+      "path": "/pets"
+     },
+     "httpForwardValidateAction": {
+      "specUrlOrPayload": "{\"openapi\":\"3.0.0\",\"info\":{\"version\":\"1.0.0\",\"title\":\"Pets\"},\"paths\":{\"/pets\":{\"get\":{\"operationId\":\"listPets\",\"parameters\":[{\"name\":\"limit\",\"in\":\"query\",\"schema\":{\"type\":\"integer\"}}],\"responses\":{\"200\":{\"description\":\"pets\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/Pet\"}}}}}}},\"post\":{\"operationId\":\"createPets\",\"requestBody\":{\"required\":true,\"content\":{\"application/json\":{\"schema\":{\"$ref\":\"#/components/schemas/Pet\"}}}},\"responses\":{\"201\":{\"description\":\"created\"}}}}},\"components\":{\"schemas\":{\"Pet\":{\"type\":\"object\",\"required\":[\"id\",\"name\"],\"properties\":{\"id\":{\"type\":\"integer\"},\"name\":{\"type\":\"string\"}}}}}}",
+      "host": "10.0.0.1",
+      "port": 8080,
+      "validateResponse": false
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "fallback when blocked",
+   "method": "GET",
+   "path": "/ssrf/fallback"
+  },
+  {
+   "note": "blocked, fallbackOnTimeout false: 502",
+   "method": "GET",
+   "path": "/ssrf/strict"
+  },
+  {
+   "note": "httpForward blocked: 502",
+   "method": "GET",
+   "path": "/ssrf/forward"
+  },
+  {
+   "note": "validate action blocked: 502",
+   "method": "GET",
+   "path": "/pets"
+  },
+  {
+   "note": "exchanges",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  },
+  {
+   "note": "log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/(ssrf/.*|pets)"
+   },
+   "mask": [
+    "^content-length: \\d+$",
+    {
+     "regex": "\"host\" : \\[ \"localhost:<port>\" \\],\\s*\"content-length\" : \\[ \"0\" \\]|\"content-length\" : \\[ \"0\" \\],\\s*\"Host\" : \\[ \"127\\.0\\.0\\.1:8080\" \\]",
+     "replace": "<received request headers>"
+    }
+   ]
+  }
+ ]
+}

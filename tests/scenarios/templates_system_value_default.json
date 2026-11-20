@@ -1,0 +1,47 @@
+{
+ "source": "systemValue reads nothing with the default (empty) templateSystemValueAllowList",
+ "properties": {
+  "templateSystemValueAllowList": ""
+ },
+ "env": {
+  "MY_VAR": "one"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+   ],
+   "note": "no startup warning for an empty list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/sv"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"env=[$systemValue.env('MY_VAR')] home=[$systemValue.property('user.home')]\"\n}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/sv"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+   ]
+  }
+ ]
+}

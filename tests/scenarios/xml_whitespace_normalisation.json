@@ -1,0 +1,1020 @@
+{
+ "source": "XMLUnit's whitespace handling as XmlStringMatcher configures it (ignoreWhitespace, normalizeWhitespace, then ignoreComments): each DOM text, CDATA, attribute and processing-instruction value is String.trim()med (chars up to U+0020) and its Character.isWhitespace runs collapsed to one space, which leaves the no-break spaces (U+00A0, U+2007, U+202F) and U+0085 alone; comments go afterwards, joining the trimmed texts around them. Plain text, attributes, processing instructions, CDATA and an isDateTime placeholder.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "no-break space inside text is not whitespace",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u00a0y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "narrow no-break space is not whitespace",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u202fy</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "figure space is not whitespace",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u2007y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "NEL is not whitespace",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u0085y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "em space is whitespace",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u2003y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "ogham space mark is whitespace",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u1680y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "ideographic and em space collapse to one",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u3000\u2003y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "line separator is whitespace",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u2028y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "leading no-break space is not trimmed",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>\u00a0x</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "leading em space is normalised, not trimmed",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>\u2003x</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a> x</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "expected leading space is trimmed",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>\u2003x</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "trailing em space stays a space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u2003</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x </a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "expected trailing space is trimmed",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x\u00a0y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "no-break space on both sides",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x\u00a0y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x\u00a0y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "expected no-break space against a space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x  y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "spaces collapse",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a b=\"x y\"/>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute value trimmed and collapsed",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a b=\"  x   y \"/>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a b=\"x y\"/>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute em space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a b=\"x\u2003y\"/>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a b=\"x y\"/>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "attribute no-break space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a b=\"x\u00a0y\"/>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a><?p  x   y ?></a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "processing instruction data trimmed and collapsed",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a><?p x y?></a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a><b/></a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "em-space-only text is kept",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a><b/>\u2003</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a><b/></a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "no-break-space-only text is kept",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a><b/>\u00a0</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>xy</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "texts around a comment are trimmed before joining",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x <!--c--> y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>x y</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "texts around a comment do not keep a space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>x <!--c--> y</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>ab</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "text and CDATA are trimmed apart",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>a <![CDATA[ b]]></a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>a b</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "text and CDATA do not keep a space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>a <![CDATA[ b]]></a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>a b</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "CDATA content collapses",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a><![CDATA[a  b]]></a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>&lt;ab</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "character references decode inside text next to CDATA",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>&#60;a <![CDATA[ b]]></a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>a b</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "em space after a comment",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>a<!--c-->\u2003b</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>${xmlunit.isDateTime(dd MMM yyyy)}</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "isDateTime: doubled no-break space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>02\u00a0\u00a0Jan 2020</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>${xmlunit.isDateTime(dd MMM yyyy)}</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "isDateTime: leading no-break space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>\u00a002 Jan 2020</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>${xmlunit.isDateTime(dd MMM yyyy)}</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "isDateTime: doubled em space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>02\u2003\u2003Jan 2020</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>${xmlunit.isDateTime(dd MMM yyyy)}</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "isDateTime: leading em space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>\u200302 Jan 2020</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>${xmlunit.isDateTime(dd MMM yyyy)}</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "isDateTime: doubled space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>02  Jan 2020</a>"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xml": "<a>${xmlunit.isDateTime(dd MMM yyyy)}</a>",
+      "type": "XML"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "isDateTime: narrow no-break space",
+   "method": "POST",
+   "path": "/x",
+   "headers": {
+    "Content-Type": "application/xml; charset=utf-8"
+   },
+   "body": "<a>02\u202fJan 2020</a>"
+  }
+ ]
+}

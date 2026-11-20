@@ -1,0 +1,62 @@
+{
+  "note": "a CA-chain certificate whose DSA public key is cut short: the SUN DSA key factory's message",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "ca.pem": {
+      "from": "x509/process/dsa_short_y.der"
+    }
+  },
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{scratch}}/ca.pem\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "control plane authentication is enabled but the authentication handler could not be created - denying all control plane requests until the configuration is corrected\njava.lang.RuntimeException: Exception reading X509 from PEM file {{scratch}}/ca.pem\n",
+      "Caused by: java.lang.RuntimeException: Exception creating X509 from PEM\n",
+      "Caused by: java.security.cert.CertificateParsingException: java.io.IOException: subject key, Inappropriate key specification: Invalid key: y value\n"
+    ],
+    "stdoutOccurrences": {
+      "exception building JWT validator for:": 0,
+      "authentication handler could not be created": 1
+    }
+  }
+}

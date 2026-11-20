@@ -1,0 +1,39 @@
+{
+ "properties": {
+  "proxyPass": "[{\"pathPrefix\":\"/api/\",\"targetUri\":\"not a uri\"}]"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "a property that does not read: the configuration cannot be written (the log line carrying the value fails to format)",
+   "mask": [
+    "Configuration@[0-9a-f]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 17
+   },
+   "note": "an update cannot be answered either",
+   "mask": [
+    "Configuration@[0-9a-f]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": []
+   },
+   "note": "an instance list restores it"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "and the update before it did apply"
+  }
+ ]
+}

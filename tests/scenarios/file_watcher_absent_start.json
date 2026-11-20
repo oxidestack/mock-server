@@ -1,0 +1,45 @@
+{
+ "properties": {
+  "initializationJsonPath": "{{scratch}}/file_watcher_absent_start.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the watched file does not exist at server start (the last step deletes it again)"
+  },
+  {
+   "readFile": "{{scratch}}/file_watcher_absent_start.json",
+   "note": "absent"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_absent_start.json",
+    "content": "[{\"id\":\"late\",\"httpRequest\":{\"path\":\"/late\"},\"httpResponse\":{\"body\":\"created after start\"}}]"
+   },
+   "note": "the file appears"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "loaded from the file that appeared"
+  },
+  {
+   "deleteFile": "{{scratch}}/file_watcher_absent_start.json",
+   "note": "the file disappears"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "what a deletion leaves behind"
+  }
+ ]
+}

@@ -1,0 +1,23 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_LOCAL_BOUND_IP": "no-such-host.invalid"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception binding to port(s) [",
+      "Caused by: java.nio.channels.UnresolvedAddressException",
+      "[ERROR] exception while starting:{}\njava.lang.RuntimeException: Exception while binding MockServer to port",
+      "Caused by: java.nio.channels.UnresolvedAddressException"
+    ],
+    "stdoutNotContains": ["started on port"]
+  }
+}

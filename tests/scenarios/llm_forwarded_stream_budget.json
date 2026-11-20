@@ -1,0 +1,161 @@
+{
+  "source": "hand-written (generated from upstream's ProviderStreamFixtures): HttpActionHandlerStreamedLlmUsageTest's shouldBlockTheNextLlmForwardOnceAStreamedCallHasSpentTheBudget and shouldCountNothingAndWarnWhenAnOpenAiStreamCarriesNoUsage, forwarded to this server's own mocks",
+  "properties": {
+    "metricsEnabled": "true",
+    "llmMetricsEnabled": "true",
+    "llmProvider": "OPENAI",
+    "llmCostBudgetUsd": "0.0001",
+    "logLevel": "WARN"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "upstream-openai-no-usage",
+          "priority": 10,
+          "httpRequest": {
+            "method": "POST",
+            "path": "/v1/chat/completions",
+            "headers": {
+              "x-case": [
+                "openai-no-usage"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "headers": {
+              "content-type": [
+                "text/event-stream"
+              ]
+            },
+            "body": "data: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"
+          }
+        },
+        {
+          "id": "forward-openai-no-usage",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/client/openai-no-usage/v1/chat/completions"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/v1/chat/completions",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ],
+                "x-case": [
+                  "openai-no-usage"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "upstream-openai-usage",
+          "priority": 10,
+          "httpRequest": {
+            "method": "POST",
+            "path": "/v1/chat/completions",
+            "headers": {
+              "x-case": [
+                "openai-usage"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "headers": {
+              "content-type": [
+                "text/event-stream"
+              ]
+            },
+            "body": "data: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" there, the \\\"usage\\\":{\\\"prompt_tokens\\\":999} you asked about\"},\"logprobs\":null,\"finish_reason\":null}],\"usage\":null}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":null}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[],\"usage\":{\"prompt_tokens\":19,\"completion_tokens\":10,\"total_tokens\":29,\"prompt_tokens_details\":{\"cached_tokens\":4,\"audio_tokens\":0},\"completion_tokens_details\":{\"reasoning_tokens\":3,\"audio_tokens\":0,\"accepted_prediction_tokens\":0,\"rejected_prediction_tokens\":0}}}\n\ndata: [DONE]\n\n"
+          }
+        },
+        {
+          "id": "forward-openai-usage",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/client/openai-usage/v1/chat/completions"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/v1/chat/completions",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ],
+                "x-case": [
+                  "openai-usage"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "no usage in the stream: nothing counted, a WARN (a budget is set) with the include_usage hint",
+      "method": "POST",
+      "path": "/client/openai-no-usage/v1/chat/completions",
+      "body": "{\"model\":\"gpt-4o\",\"stream\":true,\"messages\":[]}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "note": "19 in, 10 out: $0.0001475 spends the $0.0001 budget",
+      "method": "POST",
+      "path": "/client/openai-usage/v1/chat/completions",
+      "body": "{\"model\":\"gpt-4o\",\"stream\":true}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "sleepMillis": 1000,
+      "note": "the stream is accounted once its relay has ended, after the client has read it"
+    },
+    {
+      "note": "the next LLM forward is refused: 429 cost_budget_exceeded (the budget is checked against the inbound path, so the client path is an LLM one)",
+      "method": "POST",
+      "path": "/client/openai-usage/v1/chat/completions",
+      "body": "{\"model\":\"gpt-4o\",\"stream\":true}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "sleepMillis": 500,
+      "note": "a relayed stream is accounted once its relay has ended, which may be after the client read it"
+    },
+    {
+      "note": "the LLM token and cost counters",
+      "method": "GET",
+      "path": "/mockserver/metrics",
+      "mask": [
+        {
+          "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+          "replace": ""
+        },
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "the streamed-usage lines of the event log",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+          "replace": "",
+          "reason": "every entry but the streamed-usage lines"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"target-list\", \"httpRequest\": {\"method\": \"GET\", \"path\": \"/pets\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"[{\\\"id\\\":1,\\\"name\\\":\\\"rex\\\"}]\"}}, {\"id\": \"target-bad\", \"httpRequest\": {\"method\": \"GET\", \"path\": \"/pets\", \"queryStringParameters\": {\"case\": [\"bad.*\"]}}, \"priority\": 1, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\\"not\\\":\\\"an array\\\"}\"}}, {\"id\": \"fv-lenient\", \"httpRequest\": {\"method\": \"GET\", \"path\": \"/pets\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForwardValidateAction\": {\"specUrlOrPayload\": \"{\\\"openapi\\\":\\\"3.0.0\\\",\\\"info\\\":{\\\"version\\\":\\\"1.0.0\\\",\\\"title\\\":\\\"Pets\\\"},\\\"paths\\\":{\\\"/pets\\\":{\\\"get\\\":{\\\"operationId\\\":\\\"listPets\\\",\\\"parameters\\\":[{\\\"name\\\":\\\"limit\\\",\\\"in\\\":\\\"query\\\",\\\"schema\\\":{\\\"type\\\":\\\"integer\\\"}}],\\\"responses\\\":{\\\"200\\\":{\\\"description\\\":\\\"pets\\\",\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}}}}},\\\"post\\\":{\\\"operationId\\\":\\\"createPets\\\",\\\"requestBody\\\":{\\\"required\\\":true,\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}},\\\"responses\\\":{\\\"201\\\":{\\\"description\\\":\\\"created\\\"}}}}},\\\"components\\\":{\\\"schemas\\\":{\\\"Pet\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"id\\\",\\\"name\\\"],\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"integer\\\"},\\\"name\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\", \"host\": \"localhost\", \"port\": {{port}}, \"validationMode\": \"LOG_ONLY\"}}, {\"id\": \"fv-strict\", \"httpRequest\": {\"method\": \"GET\", \"path\": \"/pets\", \"queryStringParameters\": {\"strict\": [\"yes\"]}, \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 11, \"httpForwardValidateAction\": {\"specUrlOrPayload\": \"{\\\"openapi\\\":\\\"3.0.0\\\",\\\"info\\\":{\\\"version\\\":\\\"1.0.0\\\",\\\"title\\\":\\\"Pets\\\"},\\\"paths\\\":{\\\"/pets\\\":{\\\"get\\\":{\\\"operationId\\\":\\\"listPets\\\",\\\"parameters\\\":[{\\\"name\\\":\\\"limit\\\",\\\"in\\\":\\\"query\\\",\\\"schema\\\":{\\\"type\\\":\\\"integer\\\"}}],\\\"responses\\\":{\\\"200\\\":{\\\"description\\\":\\\"pets\\\",\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}}}}},\\\"post\\\":{\\\"operationId\\\":\\\"createPets\\\",\\\"requestBody\\\":{\\\"required\\\":true,\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}},\\\"responses\\\":{\\\"201\\\":{\\\"description\\\":\\\"created\\\"}}}}},\\\"components\\\":{\\\"schemas\\\":{\\\"Pet\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"id\\\",\\\"name\\\"],\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"integer\\\"},\\\"name\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\", \"host\": \"localhost\", \"port\": {{port}}}}]"
+  },
+  {
+   "method": "GET",
+   "path": "/pets?case=valid",
+   "headers": {
+    "Host": "front.example"
+   },
+   "note": "buffered: valid response"
+  },
+  {
+   "method": "GET",
+   "path": "/pets?case=bad",
+   "headers": {
+    "Host": "front.example"
+   },
+   "note": "buffered: invalid response, lenient"
+  },
+  {
+   "method": "GET",
+   "path": "/pets?case=bad&strict=yes",
+   "headers": {
+    "Host": "front.example"
+   },
+   "note": "buffered: invalid response, strict"
+  },
+  {
+   "method": "GET",
+   "path": "/pets?case=valid",
+   "headers": {
+    "Host": "front.example",
+    "accept": "text/event-stream"
+   },
+   "note": "streamed (accept: text/event-stream): valid response"
+  },
+  {
+   "method": "GET",
+   "path": "/pets?case=bad",
+   "headers": {
+    "Host": "front.example",
+    "accept": "text/event-stream"
+   },
+   "note": "streamed (accept: text/event-stream): invalid response, lenient"
+  },
+  {
+   "method": "GET",
+   "path": "/pets?case=bad&strict=yes",
+   "headers": {
+    "Host": "front.example",
+    "accept": "text/event-stream"
+   },
+   "note": "streamed (accept: text/event-stream): invalid response, strict"
+  }
+ ]
+}

@@ -1,0 +1,27 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "0"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_PROPERTY_FILE": "{{files}}/properties/typo.properties",
+    "MOCKSERVER_LOG_LEVEL_OVERRIDES": "{\"SERVER_CONFIGURATION\":\"ERROR\"}"
+  },
+  "readiness": {
+    "logContains": "AsyncAPI control-plane registered",
+    "settleMillis": 2000
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "[INFO] Reading properties from property file [",
+      "  mockserver.maxExpectations = 5\n  mockserver.typoThing = 1\n",
+      "[WARN] unrecognised MockServer configuration properties-file key [mockserver.typoThing] - it is not a known configuration property and will be ignored (check for a typo)",
+      "AsyncAPI control-plane registered"
+    ],
+    "stdoutNotContains": [
+      "started on port",
+      "logger level is"
+    ]
+  }
+}

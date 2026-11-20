@@ -1,0 +1,47 @@
+{
+ "source": "OpenApiSpecUrlImportIntegrationTest.shouldImportSpecUrlWithoutAFileExtension (master b765b8271): a specUrlOrPayload URL with no file extension and a query string, served by this server as a JSON string body, is fetched and imported.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v3/api-docs"
+    },
+    "httpResponse": {
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"Self Hosted\",\"version\":\"1.0.0\"},\"paths\":{\"/self-hosted/pets\":{\"get\":{\"operationId\":\"listPets\",\"responses\":{\"200\":{\"description\":\"ok\",\"content\":{\"application/json\":{\"example\":[{\"id\":1}]}}}}}}}}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "http://localhost:{{port}}/v3/api-docs?group=public"
+   },
+   "maxMillis": 20000,
+   "note": "the spec URL has no file extension: it is fetched, not read as a payload; the id hashes the URL, which holds the server's own port, so it is masked",
+   "mask": [
+    "openapi:self_hosted_[0-9a-f]{16}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/self-hosted/pets",
+   "note": "the imported operation answers its example"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

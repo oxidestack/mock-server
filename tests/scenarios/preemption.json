@@ -1,0 +1,21 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/ok"}, "httpResponse": {"body": "hello-world"}}},
+  {"note": "inactive", "method": "GET", "path": "/mockserver/preemption"},
+  {"note": "invalid json", "method": "PUT", "path": "/mockserver/preemption", "body": "{\"mode\": }"},
+  {"note": "start reject503", "method": "PUT", "path": "/mockserver/preemption", "body": {"mode": "reject503", "drainMillis": 0, "ttlMillis": 60000}},
+  {"note": "drained state", "method": "GET", "path": "/mockserver/preemption"},
+  {"note": "data plane rejected", "method": "GET", "path": "/ok"},
+  {"note": "bare alias not exempt", "method": "GET", "path": "/preemption"},
+  {"note": "uncordon", "method": "DELETE", "path": "/mockserver/preemption"},
+  {"note": "served again", "method": "GET", "path": "/ok"},
+  {"note": "start goaway", "method": "PUT", "path": "/mockserver/preemption", "body": {"mode": "GOAWAY", "drainMillis": 0}},
+  {"note": "goaway mode serves HTTP/1.1", "method": "GET", "path": "/ok"},
+  {"note": "start default mode, clamped", "method": "PUT", "path": "/mockserver/preemption", "body": {"drainMillis": -5, "ttlMillis": -1}},
+  {"note": "both mode rejects", "method": "GET", "path": "/ok"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"note": "reset uncordons", "method": "GET", "path": "/mockserver/preemption"},
+  {"note": "empty body starts default", "method": "PUT", "path": "/mockserver/preemption", "mask": ["\"drainRemainingMillis\" : \\d+"]},
+  {"method": "DELETE", "path": "/mockserver/preemption"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS"},
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}]}
+]}

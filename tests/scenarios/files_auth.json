@@ -1,0 +1,41 @@
+{
+ "source": "control-plane authentication gates the file store (incorrectly configured: every call is refused)",
+ "properties": {
+  "controlPlaneJWTAuthenticationRequired": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\":\"a\",\"content\":\"b\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/retrieve",
+   "body": "{\"name\":\"a\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/delete",
+   "body": "{\"name\":\"a\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/files/list",
+   "note": "the bare alias too"
+  },
+  {
+   "method": "OPTIONS",
+   "path": "/mockserver/files/store",
+   "headers": {
+    "Origin": "http://example.com",
+    "Access-Control-Request-Method": "PUT"
+   },
+   "note": "a CORS preflight"
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+# org.mockserver.persistence.RecordedRequestsFileSystemPersistenceTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldAppendOneCompactJsonLinePerExchange  http:persist_recorded_requests  # step "one compact line per served exchange"
+shouldBeInertWhenDisabled  http:persist_recorded_disabled  # mocked and forwarded exchanges with persistRecordedRequestsToDisk=false and a persistedRecordedRequestsPath: no archive
+shouldMaskSensitiveDataInPersistedArchiveWhenRedactionOn  http:persist_recorded_requests_redacted
+shouldWriteSingleLineForBodyContainingEmbeddedNewline  http:persist_recorded_requests  # the mocked response body "line1\nline2" is one line
+shouldWriteLinesParsingToTheSameJsonAsThePrettyPrintedCollapsedForm  http:persist_recorded_requests_corpus  # formatting whitespace in raw JSON, whitespace inside strings, non-ASCII and non-BMP characters kept as raw UTF-8; every line imports back
+shouldKeepOneRecordPerLineWhenScalarJsonBodyTextContainsRealLineBreaks  http:persist_recorded_requests_corpus  # a scalar JSON request body with newlines, a scalar JSON response body with a lone carriage return
+shouldWriteNothingForAnExchangeWhoseSerialisationFailsPartWay  n/a  # the failure is forced inside the serialiser; no exchange fails to serialise on the wire
+shouldMakeAppendedLinesReadableOnFlushBeforeStop  http:persist_recorded_requests  # the archive is read while the server is still running
+shouldAppendInLinearTimeForLongWhitespaceRuns  n/a  # a running-time bound on the line writer, not an observable answer

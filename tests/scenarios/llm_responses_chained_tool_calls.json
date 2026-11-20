@@ -1,0 +1,260 @@
+{
+ "source": "OpenAiResponsesAgentLoopEndToEndTest.toolResultChainedByPreviousResponseIdSelectsTheNextTurn and OpenAiResponsesStateEndToEndTest.chainsAndRetrievesAStreamedToolCallTurnOverTheWire (master b765b8271): OpenAiResponsesStore keeps a turn's issued call ids (issuedToolCalls) and records streamed turns from response.completed (recordStreamedIfStored).",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/responses"
+     },
+     "scenarioName": "__llm_conv_generated_ids",
+     "scenarioState": "Started",
+     "newScenarioState": "turn_1",
+     "httpLlmResponse": {
+      "provider": "OPENAI_RESPONSES",
+      "model": "gpt-4o",
+      "completion": {
+       "toolCalls": [
+        {
+         "name": "get_weather",
+         "arguments": "{\"city\":\"Paris\"}"
+        },
+        {
+         "name": "get_time",
+         "arguments": "{\"tz\":\"CET\"}"
+        }
+       ]
+      },
+      "conversationPredicates": {
+       "turnIndex": 0
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/responses"
+     },
+     "scenarioName": "__llm_conv_generated_ids",
+     "scenarioState": "turn_1",
+     "newScenarioState": "DONE",
+     "httpLlmResponse": {
+      "provider": "OPENAI_RESPONSES",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "It is 18C and sunny in Paris."
+      },
+      "conversationPredicates": {
+       "containsToolResultFor": "get_weather"
+      }
+     }
+    }
+   ],
+   "note": "two tool calls with generated call ids, then a turn selected by the get_weather result"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/responses",
+   "body": {
+    "model": "gpt-4o",
+    "input": [
+     {
+      "role": "user",
+      "content": "What is the weather in Paris?"
+     }
+    ]
+   },
+   "note": "turn 1: two function_call items, call ids generated",
+   "capture": [
+    {
+     "bodyRegex": "\"id\"\\s*:\\s*\"(resp_[A-Za-z0-9]+)\"",
+     "as": "firstId"
+    },
+    {
+     "bodyRegex": "\"call_id\"\\s*:\\s*\"(call_[A-Za-z0-9]+)\"",
+     "as": "weatherCallId"
+    }
+   ],
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/responses",
+   "body": {
+    "model": "gpt-4o",
+    "previous_response_id": "{{capture:firstId}}",
+    "input": [
+     {
+      "type": "function_call_output",
+      "call_id": "{{capture:weatherCallId}}",
+      "output": "18C and sunny"
+     }
+    ]
+   },
+   "note": "turn 2 carries only the tool result: the stored turn's issued call_id names get_weather",
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/responses"
+     },
+     "scenarioName": "__llm_conv_streamed_first",
+     "scenarioState": "Started",
+     "newScenarioState": "DONE",
+     "httpLlmResponse": {
+      "provider": "OPENAI_RESPONSES",
+      "model": "gpt-4o",
+      "completion": {
+       "toolCalls": [
+        {
+         "name": "get_weather",
+         "id": "call_abc123",
+         "arguments": "{\"city\":\"Paris\"}"
+        }
+       ],
+       "streaming": true
+      },
+      "conversationPredicates": {
+       "turnIndex": 0
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/responses"
+     },
+     "scenarioName": "__llm_conv_streamed_second",
+     "scenarioState": "Started",
+     "newScenarioState": "DONE",
+     "httpLlmResponse": {
+      "provider": "OPENAI_RESPONSES",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "It is 18C in Paris."
+      },
+      "conversationPredicates": {
+       "containsToolResultFor": "get_weather"
+      }
+     }
+    }
+   ],
+   "note": "a streamed tool call turn, and a turn selected by its result"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/responses",
+   "body": {
+    "model": "gpt-4o",
+    "input": "weather in Paris?",
+    "stream": true
+   },
+   "note": "turn 1 streamed",
+   "capture": [
+    {
+     "bodyRegex": "\"type\":\"response.completed\".*?\"id\":\"(resp_[A-Za-z0-9]+)\"",
+     "as": "streamedId"
+    }
+   ],
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/responses",
+   "body": {
+    "model": "gpt-4o",
+    "previous_response_id": "{{capture:streamedId}}",
+    "input": [
+     {
+      "type": "function_call_output",
+      "call_id": "call_abc123",
+      "output": "18C"
+     }
+    ]
+   },
+   "note": "turn 2 chained from the streamed turn",
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/responses/{{capture:streamedId}}",
+   "note": "a streamed response is retrievable: the response object of response.completed",
+   "mask": [
+    {
+     "regex": "(resp|msg|rs|fc|call|item)_[A-Za-z0-9]{8,}",
+     "replace": "<id>",
+     "reason": "generated per response"
+    },
+    {
+     "regex": "(created_at|completed_at)(\\\\?\"\\s*:\\s*)\\d+",
+     "replace": "${1}${2}<time>",
+     "reason": "wall clock"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

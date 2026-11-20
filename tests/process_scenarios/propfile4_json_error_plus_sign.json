@@ -1,0 +1,26 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "0"
+  ],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_PROPERTY_FILE": "{{files}}/properties/json/syntax_plus_sign.json"
+  },
+  "readiness": {
+    "logContains": "exception loading JSON property file",
+    "settleMillis": 3000
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "[ERROR] exception loading JSON property file [{{files}}/properties/json/syntax_plus_sign.json]",
+      "shaded_package.com.fasterxml.jackson.core.JsonParseException: Unexpected character ('+' (code 43)) in numeric value: JSON spec does not allow numbers to have plus signs: enable `JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS` to allow\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 8]"
+    ],
+    "stdoutNotContains": [
+      "Reading properties from property file"
+    ]
+  }
+}

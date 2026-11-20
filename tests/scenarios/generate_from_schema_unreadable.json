@@ -1,0 +1,14 @@
+{"steps": [
+  {"note": "reset", "method": "PUT", "path": "/mockserver/reset"},
+  {"note": "schemas Jackson cannot read, and readable ones no example comes from", "method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/eof"}, "httpResponse": {"statusCode": 200, "generateFromSchema": "{bad"}},
+    {"httpRequest": {"path": "/no-value"}, "httpResponse": {"statusCode": 200, "generateFromSchema": "{\"type\": }"}},
+    {"httpRequest": {"path": "/array"}, "httpResponse": {"statusCode": 200, "generateFromSchema": "[1, 2]"}}
+  ]},
+  {"note": "clear the log so only the requests remain", "method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"note": "unreadable: the body stays unset, and a WARN entry says why", "method": "GET", "path": "/eof"},
+  {"note": "unreadable, another Jackson message", "method": "GET", "path": "/no-value"},
+  {"note": "readable but not a schema: no example, no WARN", "method": "GET", "path": "/array"},
+  {"note": "logged again on every request", "method": "GET", "path": "/eof"},
+  {"note": "the log", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS"}
+]}

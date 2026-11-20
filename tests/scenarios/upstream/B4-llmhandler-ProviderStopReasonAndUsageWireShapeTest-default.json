@@ -1,0 +1,82 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmhandler-ProviderStopReasonAndUsageWireShapeTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "dbc366c8573f",
+   "note": "bedrockEnforcementErrorIsAnAwsException (llmhandler): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/model/amazon.nova-pro-v1:0/converse"
+    },
+    "httpLlmResponse": {
+     "provider": "BEDROCK",
+     "completion": {
+      "enforceOutputSchema": true,
+      "outputSchema": "{\"type\":\"object\",\"required\":[\"age\"]}",
+      "text": "{\"name\":\"Ada\"}"
+     }
+    }
+   },
+   "note": "bedrockEnforcementErrorIsAnAwsException (llmhandler): enforcementErrorResponseOrNull",
+   "case": "dbc366c8573f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "bedrockEnforcementErrorIsAnAwsException (llmhandler): echo",
+   "case": "dbc366c8573f"
+  },
+  {
+   "method": "POST",
+   "path": "/model/amazon.nova-pro-v1:0/converse",
+   "note": "bedrockEnforcementErrorIsAnAwsException (llmhandler): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "dbc366c8573f"
+  }
+ ]
+}

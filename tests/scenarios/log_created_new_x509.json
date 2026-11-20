@@ -1,0 +1,172 @@
+{
+ "source": "at TRACE, 8.0.0's BCKeyAndCertificateFactory.buildAndSavePrivateKeyAndX509Certificate logs `created new X509{}with SAN Domain Names{}and IPs{}` with BouncyCastle's toString of each leaf it generates: on the first TLS context and each time the subject alternative names grew (a new Host header or SNI name), not on a handshake that reuses the leaf.; socketConnectionTimeoutInMillis bounds the first handshake, whose certificate generation can take over the default 20 s on a loaded machine",
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/x509/a"
+     },
+     "httpResponse": {
+      "body": "a"
+     }
+    }
+   ]
+  },
+  {
+   "note": "the first TLS connection: the CA loads and the first leaf",
+   "tcp": [
+    {
+     "text": "GET /x509/a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "the same names again: the leaf is reused, no entry",
+   "tcp": [
+    {
+     "text": "GET /x509/a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "the reused-leaf connection's `disconnected and closed socket` lands before the next request's entries (without the pause the oracle logged it after them)",
+   "sleepMillis": 300
+  },
+  {
+   "note": "a plain request whose Host is a new name grows the SAN set (no leaf yet)",
+   "method": "GET",
+   "path": "/x509/a",
+   "headers": {
+    "Host": [
+     "created.example.com"
+    ]
+   }
+  },
+  {
+   "note": "the next handshake mints a leaf carrying the new name",
+   "tcp": [
+    {
+     "text": "GET /x509/a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "a new SNI name: a leaf carrying it",
+   "tcp": [
+    {
+     "text": "GET /x509/a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ],
+   "sni": "sni.example.com"
+  },
+  {
+   "note": "back to localhost: the names are unchanged, the leaf is reused",
+   "tcp": [
+    {
+     "text": "GET /x509/a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "TRACE LOGS: one `created new X509` entry per leaf minted, before the DEBUG `using certificate authority` entry for it; the random parts of the certificate are masked",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "(disconnected and closed socket )\\S+",
+     "replace": "${1}<local address>"
+    },
+    {
+     "regex": "(SerialNumber: )\\d{1,20}\\n",
+     "replace": "${1}<random 64-bit>\n"
+    },
+    {
+     "regex": "((?:Start|Final) Date: )[A-Z][a-z]{2} [A-Z][a-z]{2} \\d\\d \\d\\d:\\d\\d:\\d\\d GMT \\d{4}",
+     "replace": "${1}<date>"
+    },
+    {
+     "regex": "(RSA Public Key \\[)[0-9a-f:]{59}(\\],\\[56:66:d1:a4\\]\\n +modulus: )[89a-f][0-9a-f]{511}\\n",
+     "replace": "${1}<fingerprint>${2}<2048-bit modulus>\n"
+    },
+    {
+     "regex": "(Signature: )[0-9a-f]{40}(\\n +[0-9a-f]{2,40})+",
+     "replace": "${1}<signature>"
+    },
+    {
+     "regex": "(and certificate serial:\\n\\n  )\\d{1,20}\\n",
+     "replace": "${1}<random 64-bit>\n"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - streaming decision:\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+{
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+   {"id": "c-a", "httpRequest": {"path": "/a"}, "httpResponse": {"body": "a"}},
+   {"id": "c-b", "httpRequest": {"path": "/b"}, "httpResponse": {"body": "b"}},
+   {"id": "c-c", "httpRequest": {"path": "/c"}, "httpResponse": {"body": "c"}, "times": {"remainingTimes": 1}},
+   {"id": "c-d", "httpRequest": {"path": "/d"}, "httpResponse": {"body": "d"}},
+   {"id": "c-e", "httpRequest": {"path": "/e"}, "httpResponse": {"body": "e"}, "scenarioName": "s", "newScenarioState": "X"}
+  ]},
+  {"note": "use c-c up and move scenario s", "method": "GET", "path": "/c"},
+  {"method": "GET", "path": "/e"},
+  {"note": "by matcher", "method": "PUT", "path": "/mockserver/clear?type=expectations", "body": {"path": "/a"}},
+  {"note": "matcher matching nothing", "method": "PUT", "path": "/mockserver/clear?type=expectations", "body": {"path": "/zzz"}},
+  {"note": "by id", "method": "PUT", "path": "/mockserver/clear?type=expectations", "body": {"id": "c-b"}},
+  {"note": "by id of a used-up expectation", "method": "PUT", "path": "/mockserver/clear?type=expectations", "body": {"id": "c-c"}},
+  {"note": "by id again", "method": "PUT", "path": "/mockserver/clear?type=expectations", "body": {"id": "c-b"}},
+  {"note": "by unknown id", "method": "PUT", "path": "/mockserver/clear?type=expectations", "body": {"id": "c-unknown"}},
+  {"note": "type all with a matcher", "method": "PUT", "path": "/mockserver/clear", "body": {"path": "/d"}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "mask": ["[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"]},
+  {"note": "scenario still moved", "method": "GET", "path": "/mockserver/scenario/s"},
+  {"note": "expectations without a filter", "method": "PUT", "path": "/mockserver/clear?type=expectations"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "mask": ["[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"]},
+  {"note": "scenario after clear", "method": "GET", "path": "/mockserver/scenario/s"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "c-f", "httpRequest": {"path": "/f"}, "httpResponse": {"body": "f"}}},
+  {"note": "all without a filter", "method": "PUT", "path": "/mockserver/clear"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "mask": ["[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"]},
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}, "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"]}
+]
+}

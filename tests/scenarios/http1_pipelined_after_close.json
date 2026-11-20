@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/reset", "note": "Netty's HttpObjectDecoder decodes every request already read in the same channelRead: requests pipelined behind a Connection: close request are still received, logged, matched and counted against times, though the connection closes after the first response and their responses are never written"},
+    {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "pipelined-b", "httpRequest": {"path": "/b"}, "httpResponse": {"body": "bee"}, "times": {"remainingTimes": 1}}},
+    {"tcp": [{"text": "GET /a HTTP/1.1\r\nHost: {{host}}\r\nConnection: close\r\n\r\nGET /b HTTP/1.1\r\nHost: {{host}}\r\n\r\n"}], "note": "one write: /a closes the connection, /b follows it (a third request would race with the action scheduler that answers /b and uses up its expectation)"},
+    {"sleepMillis": 500},
+    {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "pipelined-e", "httpRequest": {"path": "/e"}, "httpResponse": {"body": "eee"}, "times": {"remainingTimes": 1}}},
+    {"tcp": [{"text": "GET /d HTTP/1.0\r\nHost: {{host}}\r\n\r\nGET /e HTTP/1.1\r\nHost: {{host}}\r\n\r\n"}], "note": "an HTTP/1.0 request without keep-alive, then another in the same write"},
+    {"sleepMillis": 500},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/.*"}, "note": "what the log says", "mask": ["\"(local|remote)Address\" : \"[^\"]*\""]},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "note": "what was recorded"},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "note": "both expectations used up"}
+  ]
+}

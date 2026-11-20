@@ -1,0 +1,194 @@
+{
+ "properties": {
+  "logLevel": "INFO",
+  "tlsMutualAuthenticationRequired": "true",
+  "tlsMutualAuthenticationAllowBundledCa": "true",
+  "forwardProxyTLSX509CertificatesTrustManagerType": "JVM"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "HttpStateConfigurationUpdateTest.shouldWarnWhenPutLowersTlsPosture: all three downgraded (9.1.0: data-plane mTLS on the bundled CA needs tlsMutualAuthenticationAllowBundledCa to start)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyTLSX509CertificatesTrustManagerType": "ANY",
+    "tlsMutualAuthenticationRequired": false,
+    "forwardProxyTLSHostnameVerificationEnabled": false
+   },
+   "maxMillis": 60000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the same update again warns again (the baseline is the startup configuration)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyTLSX509CertificatesTrustManagerType": "ANY",
+    "tlsMutualAuthenticationRequired": false,
+    "forwardProxyTLSHostnameVerificationEnabled": false
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "trust manager only"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyTLSX509CertificatesTrustManagerType": "ANY"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "mutual TLS only, as the text false"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": "false"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "shouldNotWarnWhenPutDoesNotLowerTlsPosture: nothing lowered"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": true,
+    "forwardProxyTLSX509CertificatesTrustManagerType": "JVM",
+    "forwardProxyTLSHostnameVerificationEnabled": true,
+    "maxLogEntries": 50
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a key and certificate repointed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "privateKeyPath": "/nonexistent/key.pem",
+    "x509CertificatePath": "/nonexistent/cert.pem"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "a certificate authority repointed, the same path as it started with is not"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "certificateAuthorityCertificate": "/nonexistent/ca.pem",
+    "certificateAuthorityPrivateKey": "org/mockserver/socket/PKCS8CertificateAuthorityPrivateKey.pem"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "refused after the warning: a chain that names no file"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationCertificateChain": "/nonexistent/chain.pem"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "refused before the warning: a trust manager type that is not an enum name"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyTLSX509CertificatesTrustManagerType": "any"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "an earlier update does not move the baseline"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": true,
+    "forwardProxyTLSHostnameVerificationEnabled": true
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": true,
+    "forwardProxyTLSX509CertificatesTrustManagerType": "JVM",
+    "forwardProxyTLSHostnameVerificationEnabled": true,
+    "privateKeyPath": "",
+    "x509CertificatePath": "",
+    "certificateAuthorityCertificate": "org/mockserver/socket/CertificateAuthorityCertificate.pem"
+   },
+   "note": "restore"
+  }
+ ]
+}

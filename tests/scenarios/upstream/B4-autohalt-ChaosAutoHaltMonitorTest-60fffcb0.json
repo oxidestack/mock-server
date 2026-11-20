@@ -1,0 +1,111 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) autohalt-ChaosAutoHaltMonitorTest-60fffcb0 (conformance/harvest)",
+ "properties": {
+  "metricsEnabled": "true",
+  "chaosAutoHaltEnabled": "true",
+  "chaosAutoHaltErrorThreshold": "3",
+  "chaosAutoHaltWindowMillis": "1000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ae8726f3fbb7",
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "upstream.svc",
+    "chaos": {
+     "errorStatus": 503
+    }
+   },
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): ServiceChaosRegistry.put",
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-autohalt-error",
+    "httpRequest": {
+     "path": "/harvested/autohalt/error"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "harvested chaos response"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1.0
+    }
+   },
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): the expectation whose chaos injects a error fault",
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "sleepMillis": 500,
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): the test's clock advances 500 ms",
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "sleepMillis": 3500,
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): the test's clock advances 3500 ms",
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested/autohalt/error",
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): ChaosAutoHaltMonitor.recordError(\"error\")",
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): ChaosAutoHaltMonitor.getHaltCount (the mock_server_chaos_auto_halt counter)",
+   "mask": [
+    {
+     "regex": "(?m)^(?:# (?:HELP|TYPE) )?(?!mock_server_chaos_auto_halt)[a-zA-Z_][a-zA-Z0-9_]*(?:\\{[^\\n]*\\})?(?: [^\\n]*)?\\n",
+     "replace": ""
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole exposition>"
+    }
+   ],
+   "case": "ae8726f3fbb7"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "note": "shouldUseWindowMillisFromConfigurationInstance (autohalt): ServiceChaosRegistry.entries",
+   "mask": [
+    {
+     "regex": "(\"ttlRemainingMillis\" : \\{[^}]*?\" : )\\d+",
+     "replace": "$1<millis>"
+    }
+   ],
+   "case": "ae8726f3fbb7"
+  }
+ ]
+}

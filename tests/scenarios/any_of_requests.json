@@ -1,0 +1,565 @@
+{
+ "steps": [
+  {
+   "note": "reset",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "create anyOf",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "anyOf": [
+      {
+       "method": "GET",
+       "path": "/a"
+      },
+      {
+       "path": "/b",
+       "headers": {
+        "X-Tenant": [
+         "t"
+        ]
+       }
+      },
+      {
+       "path": "/c/.*",
+       "queryStringParameters": {
+        "q": [
+         "1"
+        ]
+       }
+      }
+     ],
+     "not": false
+    },
+    "httpResponse": {
+     "body": "hit"
+    }
+   }
+  },
+  {
+   "note": "first branch matches",
+   "method": "GET",
+   "path": "/a"
+  },
+  {
+   "note": "second branch matches",
+   "method": "POST",
+   "path": "/b",
+   "headers": {
+    "X-Tenant": "t"
+   }
+  },
+  {
+   "note": "third branch matches",
+   "method": "GET",
+   "path": "/c/x?q=1"
+  },
+  {
+   "note": "no branch matches, closest is the second (one field)",
+   "method": "POST",
+   "path": "/b",
+   "headers": {
+    "X-Tenant": "u"
+   }
+  },
+  {
+   "note": "no branch matches, closest is the first on a tie",
+   "method": "POST",
+   "path": "/zzz"
+  },
+  {
+   "note": "logs after branches",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/zzz"
+   },
+   "capture": {
+    "bodyRegex": "\"RECEIVED_REQUEST\",\\s*\"correlationId\" : \"([^\"]+)\"",
+    "as": "cz"
+   },
+   "mask": [
+    {
+     "regex": "^[\\s\\S]*$",
+     "replace": "<log entries>"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "explain an unmatched request",
+   "method": "PUT",
+   "path": "/mockserver/explain?correlationId={{capture:cz}}",
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    {
+     "regex": "\"differingFields\" : \\[[^\\]]*\\]",
+     "replace": "\"differingFields\" : \"<fields>\"",
+     "reason": "upstream lists a branch's MatchDifference.Field keys in HashMap order, identity-hashed enum constants: it varies run to run"
+    }
+   ]
+  },
+  {
+   "note": "explainUnmatched: per-branch comparison",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    {
+     "regex": "\"differingFields\" : \\[[^\\]]*\\]",
+     "replace": "\"differingFields\" : \"<fields>\"",
+     "reason": "upstream lists a branch's MatchDifference.Field keys in HashMap order, identity-hashed enum constants: it varies run to run"
+    }
+   ]
+  },
+  {
+   "note": "retrieve active",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "retrieve requests by anyOf",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "anyOf": [
+     {
+      "path": "/a"
+     },
+     {
+      "path": "/c/x"
+     }
+    ]
+   }
+  },
+  {
+   "note": "retrieve requests by negated anyOf",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "not": true,
+    "anyOf": [
+     {
+      "path": "/a"
+     },
+     {
+      "path": "/b"
+     }
+    ]
+   }
+  },
+  {
+   "note": "verify by anyOf",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "anyOf": [
+      {
+       "path": "/a"
+      },
+      {
+       "path": "/c/x"
+      }
+     ]
+    },
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "verify by anyOf never",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "anyOf": [
+      {
+       "path": "/four"
+      },
+      {
+       "path": "/five"
+      }
+     ]
+    },
+    "times": {
+     "atMost": 0
+    }
+   }
+  },
+  {
+   "note": "verify by anyOf fails",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "anyOf": [
+      {
+       "path": "/four"
+      },
+      {
+       "method": "DELETE"
+      }
+     ]
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "verify sequence with anyOf",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "anyOf": [
+       {
+        "path": "/a"
+       },
+       {
+        "path": "/b"
+       }
+      ]
+     },
+     {
+      "anyOf": [
+       {
+        "path": "/c/x"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "note": "java",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVA"
+  },
+  {
+   "note": "javascript",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVASCRIPT"
+  },
+  {
+   "note": "reset 2",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "create negated, nested, conditional branch",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "not": true,
+      "anyOf": [
+       {
+        "path": "/health"
+       },
+       {
+        "path": "/ready"
+       }
+      ]
+     },
+     "httpResponse": {
+      "body": "other"
+     },
+     "priority": -1
+    },
+    {
+     "httpRequest": {
+      "anyOf": [
+       {
+        "anyOf": [
+         {
+          "path": "/n1"
+         },
+         {
+          "path": "/n2"
+         }
+        ]
+       },
+       {
+        "if": {
+         "method": "PUT"
+        },
+        "then": {
+         "path": "/n3"
+        }
+       },
+       {
+        "not": true,
+        "path": "/n.*"
+       }
+      ]
+     },
+     "httpResponse": {
+      "body": "nested"
+     }
+    },
+    {
+     "httpRequest": {
+      "anyOf": [
+       {
+        "path": "/health",
+        "method": "GET"
+       }
+      ]
+     },
+     "httpResponse": {
+      "body": "health"
+     }
+    }
+   ]
+  },
+  {
+   "note": "retrieve active 2",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "nested anyOf branch",
+   "method": "GET",
+   "path": "/n2"
+  },
+  {
+   "note": "conditional branch",
+   "method": "PUT",
+   "path": "/n3"
+  },
+  {
+   "note": "conditional branch else (no else: matches)",
+   "method": "GET",
+   "path": "/n9"
+  },
+  {
+   "note": "negated anyOf misses /health, health matches",
+   "method": "GET",
+   "path": "/health"
+  },
+  {
+   "note": "/ready: negated misses, nested's not-branch misses",
+   "method": "GET",
+   "path": "/ready"
+  },
+  {
+   "note": "logs after nested",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "java 2",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVA"
+  },
+  {
+   "note": "retrieve by plain filter lists anyOfs",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/nothing"
+   }
+  },
+  {
+   "note": "retrieve by anyOf filter",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "anyOf": [
+     {
+      "path": "/nothing"
+     },
+     {
+      "if": {
+       "path": "/n3"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "note": "retrieve by conditional filter",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "if": {
+     "path": "/health"
+    }
+   }
+  },
+  {
+   "note": "clear by plain filter keeps anyOfs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {}
+  },
+  {
+   "note": "retrieve after plain clear",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "clear by anyOf",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "anyOf": [
+     {
+      "path": "/health"
+     }
+    ]
+   }
+  },
+  {
+   "note": "retrieve after clear",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "reset 3",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "invalid: empty anyOf",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "anyOf": []
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "note": "invalid: anyOf not an array",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "anyOf": {
+      "path": "/x"
+     }
+    },
+    "httpResponse": {}
+   }
+  },
+  {
+   "note": "invalid: bad branch",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "anyOf": [
+      {
+       "path": "/x"
+      },
+      {
+       "bogus": 1
+      }
+     ]
+    },
+    "httpResponse": {}
+   }
+  },
+  {
+   "note": "invalid: extra key beside anyOf",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "anyOf": [
+      {
+       "path": "/x"
+      }
+     ],
+     "path": "/y"
+    },
+    "httpResponse": {}
+   }
+  },
+  {
+   "note": "openapi branch",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "anyOf": [
+      {
+       "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+       "operationId": "listPets"
+      },
+      {
+       "path": "/plain"
+      }
+     ]
+    },
+    "httpResponse": {
+     "body": "oa"
+    }
+   }
+  },
+  {
+   "note": "openapi branch matches",
+   "method": "GET",
+   "path": "/pets"
+  },
+  {
+   "note": "plain branch matches",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "neither matches",
+   "method": "GET",
+   "path": "/nope"
+  },
+  {
+   "note": "logs after openapi",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "debugMismatch on anyOf",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "method": "POST",
+    "path": "/plainx"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    {
+     "regex": "\"differingFields\" : \\[[^\\]]*\\]",
+     "replace": "\"differingFields\" : \"<fields>\"",
+     "reason": "upstream lists a branch's MatchDifference.Field keys in HashMap order, identity-hashed enum constants: it varies run to run"
+    }
+   ]
+  }
+ ]
+}

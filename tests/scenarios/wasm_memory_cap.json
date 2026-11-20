@@ -1,0 +1,31 @@
+{
+ "source": "wasmMaxMemoryPages caps a module's memory.grow (WasmRuntimeConfigurationRouteTest#memoryPageLimitMustComeFromTheConfigurationInstance, WasmRuntimeTest#shouldUseConfiguredMaxMemoryPages*)",
+ "properties": {
+  "wasmEnabled": "true",
+  "wasmMaxMemoryPages": "4"
+ },
+ "steps": [
+  {
+   "note": "4 pages: growing by 10 fails",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/memory-grow.wasm}}",
+    "request": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "note": "4 pages: a module that stays within them still runs",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/match.wasm}}",
+    "request": {
+     "body": "{\"amount\": 5000}"
+    }
+   }
+  }
+ ]
+}

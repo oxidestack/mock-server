@@ -1,0 +1,30 @@
+{
+  "note": "--extensions names the class; refused as by the env variable",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "--extensions",
+    "com.acme.FromOption"
+  ],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 120,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}\norg.mockserver.extension.ExtensionException: extension class com.acme.FromOption could not be loaded, check it is on the classpath: java.lang.ClassNotFoundException: com.acme.FromOption"
+    ],
+    "stdoutNotContains": [
+      "started on port"
+    ],
+    "stderrNotContains": [
+      "exception while starting"
+    ]
+  }
+}

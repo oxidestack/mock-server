@@ -1,0 +1,112 @@
+{
+  "properties": {
+    "breakpointTimeoutMillis": "5000",
+    "breakpointMaxHeld": "1"
+  },
+  "steps": [
+    {
+      "wsOpen": "bp",
+      "headers": {
+        "X-CLIENT-REGISTRATION-ID": "bp-frame-limits-client"
+      }
+    },
+    {
+      "wsRead": "bp"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "path": "/ws-out"
+        },
+        "httpWebSocketResponse": {
+          "messages": [
+            {
+              "text": "one"
+            },
+            {
+              "text": "two"
+            }
+          ],
+          "closeConnection": false
+        }
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/breakpoint/matcher",
+      "body": {
+        "httpRequest": {
+          "path": "/ws-out"
+        },
+        "phases": [
+          "RESPONSE_STREAM"
+        ],
+        "clientId": "bp-frame-limits-client"
+      }
+    },
+    {
+      "wsOpen": "first",
+      "path": "/ws-out",
+      "note": "its frame 0 is held and never answered"
+    },
+    {
+      "wsRead": "bp",
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "the held frame"
+    },
+    {
+      "wsOpen": "second",
+      "path": "/ws-out",
+      "note": "breakpointMaxHeld 1: this stream's frames go out unheld"
+    },
+    {
+      "wsRead": "second",
+      "note": "frame 0 unheld"
+    },
+    {
+      "wsRead": "second",
+      "note": "frame 1 unheld"
+    },
+    {
+      "wsRead": "bp",
+      "waitMillis": 300,
+      "note": "nothing of the second stream was sent to the client"
+    },
+    {
+      "wsRead": "first",
+      "waitMillis": 15000,
+      "note": "auto-continued after breakpointTimeoutMillis"
+    },
+    {
+      "wsRead": "bp",
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "the next frame of the first stream is held in its turn"
+    },
+    {
+      "wsRead": "first",
+      "waitMillis": 15000,
+      "note": "auto-continued too"
+    },
+    {
+      "wsClose": "first"
+    },
+    {
+      "wsClose": "second"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered",
+      "note": "the cap and auto-continue lines"
+    }
+  ]
+}

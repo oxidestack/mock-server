@@ -1,0 +1,59 @@
+{
+  "note": "an x5c certificate whose subjectAltName URI has a malformed IPv6 host: java.net.URI's message",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "jwks.json": "{\"keys\": [{\"kty\": \"RSA\", \"n\": \"zBNDa1oY23bvXJZrscpVb9ZOByt9Ygo5FpOTPFWppnPvMrnvTGj2wAj7C6rzhytf_nvNgXCG_98_pvjdIOlHoXGP-IGWwm2XNtYwgOuudun4ECwq_t0pfTizQlRX8edvoJfwozcxDZ4vked3Jp3X2-fZ7F9xuFcPNrbRyV8QUSc\", \"e\": \"AQAB\", \"x5c\": [\"MIICrjCCAhegAwIBAgIUWNEBEw/5zssru4niMq05gTuDJ6owDQYJKoZIhvcNAQELBQAwMjELMAkGA1UEBhMCR0IxEzARBgNVBAoMCk1vY2tTZXJ2ZXIxDjAMBgNVBAMMBXJzIGNhMB4XDTI2MTAwNzA3NDY1OVoXDTM2MTAwNDA3NDY1OVowMjELMAkGA1UEBhMCR0IxEzARBgNVBAoMCk1vY2tTZXJ2ZXIxDjAMBgNVBAMMBXJzIGNhMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDME0NrWhjbdu9clmuxylVv1k4HK31iCjkWk5M8Vammc+8yue9MaPbACPsLqvOHK1/+e82BcIb/3z+m+N0g6UehcY/4gZbCbZc21jCA66526fgQLCr+3Sl9OLNCVFfx52+gl/CjNzENni+R53cmndfb59nsX3G4Vw82ttHJXxBRJwIDAQABo4HAMIG9MBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYDVR0PAQH/BAQDAgGGMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAgBgNVHQ4BAf8EFgQUpiljWcXfqN/wrP6eig9vj+BXLYwwMgYDVR0RAQH/BCgwJoIJbG9jYWxob3N0hwR/AAABgQVhQGIuY4YMaHR0cDovL3gueS96MB8GA1UdEgEB/wQVMBOGEWh0dHA6Ly9bMTo6Mjo6M10vMA0GCSqGSIb3DQEBCwUAA4GBAL86H3VBvvu/DaCsOfkhSM+NmjCpfw29+n56j6jXiLTHE8GTLLMFcpOU3Mnp1LlGOtZ7XTo9pp4IzhT5+JCa8DWkORMN25NrXGIItPjyKBUqqOOrdDifuE1GLIozIXkuDiuyJJwkCTqcMYcu9I9eH5f0MItrjMOT5m7NUygXPPDg\"]}]}"
+  },
+  "propertyFile": "mockserver.controlPlaneJWTAuthenticationRequired=true\nmockserver.controlPlaneJWTAuthenticationJWKSource={{scratch}}/jwks.json\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "exception building JWT validator for:\n\n  {{scratch}}/jwks.json\n\njava.text.ParseException: Invalid JWK at position 0: Invalid X.509 certificate chain \"x5c\": Invalid X.509 certificate at position 0: java.io.IOException: invalid URI name:http://[1::2::3]/",
+      "control plane authentication is enabled but the authentication handler could not be created"
+    ],
+    "stdoutOccurrences": {
+      "exception building JWT validator for:": 1,
+      "authentication handler could not be created": 1
+    }
+  }
+}

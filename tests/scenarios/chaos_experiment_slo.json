@@ -1,0 +1,202 @@
+{
+ "properties": {
+  "sloTrackingEnabled": "true",
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ok"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/boom"
+     },
+     "httpResponse": {
+      "statusCode": 503
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fwd-ok"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/ok",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fwd-boom"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/boom",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/fwd-ok"
+  },
+  {
+   "method": "GET",
+   "path": "/fwd-ok"
+  },
+  {
+   "note": "baseline healthy",
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "guarded",
+    "baselineWindowMillis": 60000,
+    "sloCriteria": {
+     "name": "gate",
+     "objectives": [
+      {
+       "sli": "ERROR_RATE",
+       "comparator": "LESS_THAN",
+       "threshold": 0.1
+      }
+     ]
+    },
+    "stages": [
+     {
+      "durationMillis": 600000,
+      "profiles": {
+       "z.svc": {
+        "errorStatus": 500
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "note": "running with verdict pending",
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "mask": [
+    "\"(stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/fwd-boom"
+  },
+  {
+   "sleepMillis": 1600
+  },
+  {
+   "note": "slo breach halt",
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "mask": [
+    "\"(stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "note": "chaos cleared",
+   "method": "GET",
+   "path": "/mockserver/serviceChaos"
+  },
+  {
+   "note": "history",
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment/history",
+   "mask": [
+    "\"(stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  },
+  {
+   "note": "auto halt forces fail",
+   "method": "PUT",
+   "path": "/mockserver/chaosExperiment",
+   "body": {
+    "name": "forced",
+    "sloCriteria": {
+     "objectives": [
+      {
+       "sli": "ERROR_RATE",
+       "comparator": "LESS_THAN_OR_EQUAL",
+       "threshold": 1.0
+      }
+     ]
+    },
+    "stages": [
+     {
+      "durationMillis": 4000,
+      "profiles": {
+       "y.svc": {
+        "errorStatus": 500
+       }
+      }
+     },
+     {
+      "durationMillis": 4000,
+      "profiles": {
+       "y.svc": {
+        "errorStatus": 501
+       }
+      }
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "clear": true
+   }
+  },
+  {
+   "sleepMillis": 5500
+  },
+  {
+   "note": "forced fail",
+   "method": "GET",
+   "path": "/mockserver/chaosExperiment",
+   "mask": [
+    "\"(stageElapsedMillis|stageRemainingMillis|totalElapsedMillis|startRemainingMillis|terminatedAtMillis|windowFromEpochMillis|windowToEpochMillis)\" : \\d+",
+    {
+     "regex": "(\"observedValue\" : )[0-9.E]+(,\\n\\s+\"result\" : \"PASS\",\\n\\s+\"sli\" : \"LATENCY)",
+     "replace": "${1}<latency>${2}"
+    }
+   ]
+  }
+ ]
+}

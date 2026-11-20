@@ -1,0 +1,93 @@
+{
+ "properties": {
+  "detailedMatchFailures": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "dmf-plain",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/dmf",
+      "headers": {
+       "x-want": [
+        "yes"
+       ]
+      },
+      "body": {
+       "type": "JSON",
+       "json": {
+        "a": 1
+       }
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200
+     }
+    },
+    {
+     "id": "dmf-path",
+     "httpRequest": {
+      "path": "/dmf/[0-9]+"
+     },
+     "httpResponse": {
+      "statusCode": 200
+     }
+    },
+    {
+     "id": "dmf-openapi",
+     "httpRequest": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+      "operationId": "showPetById"
+     },
+     "httpResponse": {
+      "statusCode": 200
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/dmf",
+   "headers": {
+    "content-type": "application/json",
+    "x-want": "no"
+   },
+   "body": "{\"a\": 2}",
+   "note": "a header and the body differ: the hint is unchanged"
+  },
+  {
+   "method": "POST",
+   "path": "/dmf",
+   "headers": {
+    "content-type": "application/json",
+    "x-want": "yes"
+   },
+   "body": "{\"a\": 2}"
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets/7",
+   "headers": {
+    "X-Request-ID": "not-a-uuid"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "body": {
+    "path": "/dmf"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "body": {
+    "path": "/v1/pets/7"
+   }
+  }
+ ]
+}

@@ -1,0 +1,199 @@
+# The ported Java libraries (java-compat-rs, jackson-rs, swagger-parser-rs, velocity-rs, jmustache, avro-codec-rs,
+# datafaker, infinispan-rs, jgroups and their own dependencies) are crates.io packages, each linted and tested in its
+# own repository under github.com/oxidestack: here they are ordinary versioned dependencies.
+[workspace]
+members = ["plugins/*", "k8s-webhook"]
+exclude = ["upstream"]
+
+[package]
+name = "mock-server"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+[dependencies]
+mock-server-callback-sdk = { path = "plugins/callback-sdk" }
+libloading = "0.9.0"
+libc = "0.2"
+wasmi = "2.0.0"
+java-compat = { package = "java-compat-rs", version = "0.1" }
+jmustache = "0.1"
+avro = { package = "avro-codec-rs", version = "0.1" }
+swagger-parser = { package = "swagger-parser-rs", version = "0.1" }
+jackson = { package = "jackson-rs", version = "0.1" }
+num-bigint = "0.4.8"
+velocity = { package = "velocity-rs", version = "0.1" }
+datafaker = "0.1"
+infinispan = { package = "infinispan-rs", version = "0.1" }
+jgroups = "0.1"
+base64 = "0.23.1"
+bytes = "1.12.1"
+chrono = "0.4.45"
+fancy-regex = "0.19.2"
+flate2 = "1.1.10"
+form_urlencoded = "1.2.2"
+futures-util = "0.3.34"
+glob = "0.3.4"
+http-body-util = "0.1.5"
+httparse = "1.10.1"
+hyper = { version = "1.11.1", features = ["http1", "http2", "server", "client"] }
+hyper-util = { version = "0.1.21", features = ["tokio", "server-auto", "http1", "http2", "client-legacy"] }
+jsonschema = "0.57.0"
+parking_lot = "0.12.5"
+concurrent-queue = "2.5.0"
+percent-encoding = "2.3.2"
+rand_core = { version = "0.6", features = ["getrandom"] }
+rcgen = { version = "0.14.10", default-features = false, features = ["ring", "pem", "crypto", "x509-parser"] }
+loona-hpack = "0.4.3"
+regex = "1.13.1"
+# java.util.regex backtracking replay for regexMatchingTimeoutMillis (src/matcher/backtrack.rs).
+regex-syntax = "0.8.11"
+# redactSecretsInLog scrubs free text of an entry's credential values in one pass (`SensitiveValueMatcher`).
+aho-corasick = "1.1.5"
+roxmltree = "0.21.1"
+# `xpath.formatXml` re-serialises a document token by token, keeping CDATA sections roxmltree merges into text
+# (`src/templates/format_xml.rs`); MIT OR Apache-2.0, already in the tree through aws-smithy-xml.
+xmlparser = "0.13.6"
+# NFC for `Pattern`'s `NFCCharProperty` under an inline `(?c)` (`java_pattern/engine.rs`); 0.1.25 is
+# Unicode 17.0.0, as JDK 26's `Normalizer`; already in the tree through datafaker-rs.
+unicode-normalization = "0.1.25"
+rsa = { version = "0.9.10", features = ["pem"] }
+# RSA key generation for identity providers (`keys::Signer::generate`); rustls already links it, same features.
+aws-lc-rs = { version = "1.18.1", default-features = false, features = ["aws-lc-sys"] }
+x509-parser = { version = "0.18.1", features = ["verify"] }
+rustls = { version = "0.23.45", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls-pki-types = "1.15.1"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.151", features = ["preserve_order", "arbitrary_precision"] }
+serde_json_path = "0.7.2"
+snap = "1.1.2"
+sxd-document = "0.3.2"
+sxd-xpath = "0.4.2"
+time = "0.3.55"
+# zstd content coding (`client::decoding`, `forward::encoded_body`): libzstd itself, as zstd-jni wraps it in upstream's
+# runnable jar, so streamed output, error names and encoded frames are libzstd's.
+zstd = { version = "0.13.3", default-features = false }
+# Console output: `src/log.rs` emits events; the binary installs the only subscriber.
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", default-features = false, features = ["fmt", "std"] }
+tokio = { version = "1.53.1", features = ["full"] }
+tokio-rustls = { version = "0.26.5", default-features = false, features = ["ring", "tls12"] }
+tokio-tungstenite = "0.30.0"
+uuid = { version = "1.26.1", features = ["v4", "v5"] }
+ring = "0.17"
+bcrypt = { version = "0.17.1", default-features = false, features = ["std"] }
+argon2 = { version = "0.5.3", default-features = false, features = ["alloc"] }
+md-5 = "0.10"
+serde_yaml = "0.9"
+socket2 = { version = "0.6", features = ["all"] }
+idna = "1"
+# Bidi classes, general categories and NFC for networknt's `idn-hostname` format (already in the tree through idna).
+icu_properties = "2.3.0"
+icu_normalizer = "2.3.0"
+h3 = "0.0.8"
+h3-quinn = "0.0.10"
+http = "1"
+quinn = { version = "0.11", default-features = false, features = ["runtime-tokio", "rustls", "ring"] }
+# quinn's own protocol crate, for the types of `crypto::Session` quinn does not re-export (`TransportParameters`,
+# `TransportError`): `http3::peer_grants` wraps the server's sessions to read the client's transport parameters.
+quinn-proto = { version = "0.11.18", default-features = false }
+p256 = { version = "0.13", features = ["ecdsa", "pkcs8"] }
+p384 = { version = "0.13", features = ["ecdsa", "pkcs8"] }
+p521 = { version = "0.13", features = ["ecdsa", "pkcs8"] }
+rumqttc = { version = "0.25.1", default-features = false, features = ["use-rustls-no-provider", "websocket"] }
+kafka-protocol = { version = "0.18.0", default-features = false, features = ["client", "broker", "gzip", "snappy"] }
+# Kafka lz4 and zstd batches, decoded in pure Rust (kafka-protocol's own codecs are the C libraries).
+lz4_flex = "0.14.0"
+ruzstd = "0.9.0"
+lapin = { version = "4.12.0", default-features = false, features = ["tokio"] }
+async-compat = "0.2"
+async-rs = { version = "0.8.12", default-features = false, features = ["tokio"] }
+futures-io = "0.3"
+p12-keystore = "0.3.2"
+# Cloud blob stores (`blobStoreType=s3|gcs|azure`, src/blob/): the official SDKs, as upstream's modules use.
+aws-sdk-s3 = { version = "1.152.0", default-features = false, features = ["default-https-client", "rt-tokio", "http-1x"] }
+# Direct only for `Builder::build_http` (a client with no TLS, for a plain http:// blobStoreEndpoint); Apache-2.0, already in the tree through aws-sdk-s3.
+aws-smithy-http-client = { version = "1.5.0", default-features = false }
+aws-config = { version = "1.12.0", default-features = false, features = ["default-https-client", "rt-tokio", "credentials-process"] }
+azure_storage_blob = "1.1.0"
+azure_core = "1.1.0"
+google-cloud-storage = "1.20.0"
+google-cloud-auth = "1.17.0"
+# The GCS JSON API calls the SDK makes over gRPC only (`src/blob/gcs.rs`); the version the SDK already uses.
+reqwest = { version = "0.13.5", default-features = false, features = ["json", "query", "rustls"] }
+crc32c = "0.6.8"
+
+# The static musl image's allocator: musl's own malloc is one lock, 3-4x slower at --cpus 2 on amd64.
+# mimalloc is MIT. Other targets keep the system allocator.
+[target.'cfg(target_env = "musl")'.dependencies]
+mimalloc = { version = "0.1", default-features = false }
+
+# build.rs compresses the embedded dashboard bundle (the same crate inflates it at runtime).
+[build-dependencies]
+flate2 = "1.1.10"
+
+[dev-dependencies]
+webpki-roots = "1"
+# The oracle harness's `"h2": true` step writes HTTP/2 frames itself (hyper's client rewrites headers).
+h2 = "0.4"
+mock-server-integration-testing-callbacks = { path = "plugins/integration-testing" }
+# The admission webhook binary's library, for the ports of its upstream tests (tests/upstream/k8s_webhook.rs).
+mock-server-k8s-webhook = { path = "k8s-webhook" }
+# An independent Kafka client for the live-broker ports' "plain consumer" checks.
+rskafka = { version = "0.6.0", default-features = false }
+tokio = { version = "1.53.1", features = ["full", "test-util"] }
+
+# Scrubbing megabytes of log text against thousands of credential values.
+[profile.dev.package.aho-corasick]
+opt-level = 3
+
+# RSA key generation (3072/4096-bit keys for RS384/RS512 identity providers) takes tens of seconds unoptimised.
+[profile.dev.package.rsa]
+opt-level = 3
+
+[profile.dev.package.num-bigint-dig]
+opt-level = 3
+
+# aws-lc's C is compiled at the package's opt-level: unoptimised, its 4096-bit key generation is 4x slower.
+[profile.dev.package.aws-lc-sys]
+opt-level = 3
+
+# `wasmExecutionTimeoutMillis` is wall-clock, and unoptimised `wasmi` interprets about 1M instructions a second: under
+# load a bounded start function of 2M fuel used up wasm_start_budget's 2 s budget in test builds. Optimised,
+# `wasmi` dispatches by tail calls (its build.rs), which the debug assertions and overflow checks keep LLVM from turning
+# into jumps: with them on, a call overflows the stack, so `wasmi` is built as in release.
+[profile.dev.package.wasmi]
+opt-level = 3
+debug-assertions = false
+overflow-checks = false
+
+[profile.dev.package.wasmi_core]
+opt-level = 3
+
+[profile.dev.package.wasmi_ir]
+opt-level = 3
+
+[profile.dev.package.wasmi_collections]
+opt-level = 3
+
+# Base64 of a 10 MiB body (replay_body_cap's expectations) took a third of its time unoptimised.
+[profile.dev.package.data-encoding]
+opt-level = 3
+
+# Velocity renders are wall-clock bound like a request: unoptimised, overload_template_queue's 10M-iteration `#foreach`
+# took 65 s at load ~175, so its two renders in a row outlasted the step's 120 s. The interpreter and its
+# Java values (variable maps, method dispatch) are optimised; overflow checks stay as in every other dev build.
+[profile.dev.package.velocity-rs]
+opt-level = 3
+
+[profile.dev.package.java-compat-rs]
+opt-level = 3
+
+# The Docker image's build (`make image`): release plus whole-program LTO in one codegen unit and stripped
+# symbols. The image is the binary alone, so this is where its size is decided; `cargo build --release` stays as it was
+# (the upstream suites' rs-process target and local runs build it, and LTO multiplies their link time).
+[profile.image]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+strip = "symbols"

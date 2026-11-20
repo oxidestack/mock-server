@@ -1,0 +1,28 @@
+{
+  "note": "a jar in a callbackPlugins directory (the image's /libs) is named in a warning on stderr and ignored, instead of being skipped silently",
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_CALLBACK_PLUGINS": "{{scratch}}/libs"
+  },
+  "files": {
+    "libs/callbacks.jar": "PK",
+    "libs/README.txt": "not a plugin"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": true,
+    "stderrContains": [
+      "ignoring Java archive {{scratch}}/libs/callbacks.jar: mock-server does not load Java classes; callback plugins are .wasm, .so, .dylib or .dll files (docs/callback-plugins.md)"
+    ],
+    "stderrNotContains": [
+      "README.txt"
+    ]
+  }
+}

@@ -1,0 +1,125 @@
+{
+ "source": "A server of its own (the property is incidental): names that share a ConcurrentHashMap bin up to 256 slots, through treeifyBin's presize and a tree bin.",
+ "properties": {
+  "maxExpectations": "5000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"aB\", \"content\": \"aB\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"hi\", \"content\": \"hi\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"iJ\", \"content\": \"iJ\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"pq\", \"content\": \"pq\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"qR\", \"content\": \"qR\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"r3\", \"content\": \"r3\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"xy\", \"content\": \"xy\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"yZ\", \"content\": \"yZ\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/list",
+   "note": "eight names in bin 1 of a table of 16"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"Gh\", \"content\": \"Gh\"}",
+   "note": "a ninth in that bin: treeifyBin on a table under 64 presizes it (16 to 128)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"HI\", \"content\": \"HI\"}",
+   "note": "a tenth: the table is 64 or more, so the bin becomes a tree bin, order kept"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"Op\", \"content\": \"Op\"}",
+   "note": "a tree bin takes a new node at its head"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"PQ\", \"content\": \"PQ\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"aB\", \"content\": \"replaced\"}",
+   "note": "replacing keeps the position"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/delete",
+   "body": "{\"name\":\"hi\"}",
+   "note": "removing from a tree bin"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\": \"hi\", \"content\": \"hi\"}",
+   "note": "and adding it back"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/retrieve",
+   "body": "{\"name\":\"aB\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/store",
+   "body": "{\"name\":\"q\",\"content\":\"q\"}",
+   "note": "bin 113 of the presized table, not bin 1 of 16"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/files/list"
+  }
+ ]
+}

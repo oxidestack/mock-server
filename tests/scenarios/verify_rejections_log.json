@@ -1,0 +1,11 @@
+{"steps": [
+  {"note": "verify by an unknown expectation id", "method": "PUT", "path": "/mockserver/verify", "body": {"expectationId": {"id": "nope"}}},
+  {"note": "verify with JSON cut short", "method": "PUT", "path": "/mockserver/verify", "body": "{\"httpRequest\":"},
+  {"note": "verify the schema reports on", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/x"}, "times": {"atLeast": "x"}}},
+  {"note": "verify sequence by an unknown expectation id", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"expectationIds": [{"id": "nope"}]}},
+  {"note": "verify sequence with JSON cut short", "method": "PUT", "path": "/mockserver/verifySequence", "body": "{\"httpRequests\":"},
+  {"note": "verify sequence the schema reports on", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpRequests": [{"path": "/x"}], "bogus": 1}},
+  {"note": "verify sequence whose httpRequests item is malformed: every requestDefinition branch reports", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpRequests": [{"method": 5}]}},
+  {"note": "verify sequence whose httpRequests is an object: only its type error", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpRequests": {"path": "/x"}}},
+  {"note": "each rejection logs `exception processing request`, a thrown validator failure `exception validating JSON` before it (a Java throwable is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, {"regex": "(\\\\\"(?:local|remote)Address\\\\\" : \\\\\")[^\\\\]*", "replace": "${1}<address>"}]}
+]}

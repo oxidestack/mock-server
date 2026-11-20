@@ -1,0 +1,73 @@
+{
+ "source": "XPathEvaluator runs each XPath through MatchingTimeoutExecutor.callWithTimeout with xpathMatchingTimeoutMillis (a startup property, here 100); an expression cubic in the document (nested `count(//*)` over 300 elements) outlives it, so the error logger records `xpath evaluation timed out after {}ms for expression: {}` at WARNING in the body's match difference (no WARN log entry of its own), the evaluation is false and the request does not match. A cheap XPath still matches.",
+ "properties": {
+  "xpathMatchingTimeoutMillis": "100"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "slow",
+     "httpRequest": {
+      "path": "/x",
+      "body": {
+       "type": "XPATH",
+       "xpath": "count(//*[count(//*[count(//*) > 0]) > 0]) > 0"
+      }
+     },
+     "httpResponse": {
+      "body": "slow"
+     }
+    },
+    {
+     "id": "cheap",
+     "httpRequest": {
+      "path": "/y",
+      "body": {
+       "type": "XPATH",
+       "xpath": "/r/i"
+      }
+     },
+     "httpResponse": {
+      "body": "cheap"
+     }
+    }
+   ]
+  },
+  {
+   "note": "the JDK's XPath outlives the 100 ms budget: no match",
+   "method": "POST",
+   "path": "/x",
+   "body": "<r><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/><i/></r>",
+   "headers": {
+    "content-type": [
+     "application/xml"
+    ]
+   }
+  },
+  {
+   "note": "a cheap XPath is unaffected",
+   "method": "POST",
+   "path": "/y",
+   "body": "<r><i/></r>",
+   "headers": {
+    "content-type": [
+     "application/xml"
+    ]
+   }
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

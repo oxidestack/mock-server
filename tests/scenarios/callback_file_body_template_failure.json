@@ -1,0 +1,85 @@
+{
+ "steps": [
+  {
+   "wsOpen": "cb",
+   "headers": {
+    "X-CLIENT-REGISTRATION-ID": "file-body-failure-client"
+   }
+  },
+  {
+   "wsRead": "cb"
+  },
+  {
+   "note": "an object callback whose response has a FILE body with a template that fails",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/callback-bad-template"
+    },
+    "httpResponseObjectCallback": {
+     "clientId": "file-body-failure-client"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/callback-bad-template",
+   "async": "callback"
+  },
+  {
+   "wsRead": "cb",
+   "capture": {
+    "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+    "as": "correlation"
+   },
+   "mask": [
+    "(?<=\"WebSocketCorrelationId\" : \\[ \")[^\"]+",
+    "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+   ]
+  },
+  {
+   "wsSend": "cb",
+   "envelope": {
+    "type": "org.mockserver.model.HttpResponse",
+    "value": {
+     "statusCode": 200,
+     "headers": {
+      "WebSocketCorrelationId": [
+       "{{capture:correlation}}"
+      ]
+     },
+     "body": {
+      "type": "FILE",
+      "filePath": "{{files}}/templated_file_path/mocks/{{#x}}.json",
+      "contentType": "application/json",
+      "templateType": "MUSTACHE",
+      "templatedFilePath": true
+     }
+    }
+   }
+  },
+  {
+   "await": "callback"
+  },
+  {
+   "note": "the ERROR the web socket handler logs when it receives the message; no response entry follows",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/callback-bad-template"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "(?<=\"WebSocketCorrelationId\" : \\[ \")[^\"]+"
+   ]
+  },
+  {
+   "wsClose": "cb"
+  }
+ ],
+ "settleMillis": 35000
+}

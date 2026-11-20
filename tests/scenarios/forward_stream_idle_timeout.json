@@ -1,0 +1,219 @@
+{
+  "properties": {
+    "streamIdleTimeoutSeconds": "2",
+    "maxSocketTimeoutInMillis": "1000"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/idle/up/idle_chunked"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQpUcmFuc2Zlci1FbmNvZGluZzogY2h1bmtlZA0KDQo5DQpkYXRhOiAxCgoNCg=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/fwd/idle_chunked"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/idle/up/idle_chunked",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/up/idle_length"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQpDb250ZW50LUxlbmd0aDogMTAwDQoNCmRhdGE6IDEKCg=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/fwd/idle_length"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/idle/up/idle_length",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/up/idle_eof"
+          },
+          "httpError": {
+            "dropConnection": false,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQoNCmRhdGE6IDEKCg=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/fwd/idle_eof"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/idle/up/idle_eof",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/up/drop_chunked"
+          },
+          "httpError": {
+            "dropConnection": true,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQpUcmFuc2Zlci1FbmNvZGluZzogY2h1bmtlZA0KDQo5DQpkYXRhOiAxCgoNCg=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/fwd/drop_chunked"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/idle/up/drop_chunked",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/up/drop_length"
+          },
+          "httpError": {
+            "dropConnection": true,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQpDb250ZW50LUxlbmd0aDogMTAwDQoNCmRhdGE6IDEKCg=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/fwd/drop_length"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/idle/up/drop_length",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/up/drop_eof"
+          },
+          "httpError": {
+            "dropConnection": true,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQoNCmRhdGE6IDEKCg=="
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/idle/fwd/drop_eof"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/idle/up/drop_eof",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "chunked upstream idles after one chunk: cut by the idle timeout",
+      "method": "GET",
+      "path": "/idle/fwd/idle_chunked",
+      "minMillis": 1900
+    },
+    {
+      "note": "content-length upstream idles short of its length: cut by the idle timeout",
+      "method": "GET",
+      "path": "/idle/fwd/idle_length",
+      "minMillis": 1900
+    },
+    {
+      "note": "close-delimited upstream idles: the idle close ends it normally",
+      "method": "GET",
+      "path": "/idle/fwd/idle_eof",
+      "minMillis": 1900
+    },
+    {
+      "note": "chunked upstream closes mid-stream: truncated",
+      "method": "GET",
+      "path": "/idle/fwd/drop_chunked"
+    },
+    {
+      "note": "content-length upstream closes short of its length: truncated",
+      "method": "GET",
+      "path": "/idle/fwd/drop_length"
+    },
+    {
+      "note": "close-delimited upstream closes: complete",
+      "method": "GET",
+      "path": "/idle/fwd/drop_eof"
+    },
+    {
+      "note": "exchanges",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "body": {
+        "path": "/idle/fwd/.*"
+      }
+    },
+    {
+      "note": "log",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered",
+      "mask": [
+        {
+          "regex": "id: 0x[0-9a-f]{8}",
+          "replace": "id: 0x<id>"
+        },
+        {
+          "regex": "L:/[^ \\]\"]+",
+          "replace": "L:/<local>"
+        },
+        {
+          "regex": "(\"(?:connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : )\\d+",
+          "replace": "${1}<ms>"
+        }
+      ]
+    }
+  ]
+}

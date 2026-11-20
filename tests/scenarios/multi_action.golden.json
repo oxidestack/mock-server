@@ -1,0 +1,127 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/mirror\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 202,\n    \"body\" : \"mirrored\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/mirror\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/multi\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"primary answer\",\n    \"primary\" : true\n  },\n  \"id\" : \"multi\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"primary\" : true,\n    \"requestOverride\" : {\n      \"path\" : \"/mirror\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/multi2\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"secondary answer\"\n  },\n  \"id\" : \"multi-forward-primary\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 14"
+      ],
+      "body": "primary answer",
+      "note": "response primary, forward secondary"
+    },
+    {
+      "status": 202,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 8"
+      ],
+      "body": "mirrored",
+      "note": "forward primary"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"headers\" : {\n    \"content-length\" : [ \"<n>\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/mirror\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"<n>\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/mirror\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n} ]",
+      "note": "mirrored traffic"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 80",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "when multiple action types are configured, exactly one must be marked as primary",
+      "note": "two actions, no primary"
+    },
+    {
+      "status": 500,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 116",
+        "content-type: text/plain; charset=utf-8"
+      ],
+      "body": "unexpected error processing request, see the MockServer log for correlation id: <uuid>",
+      "note": "serving an expectation without a primary"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 108",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "multiple actions marked as primary, only one action can be primary when multiple action types are configured",
+      "note": "two primaries"
+    },
+    {
+      "status": 500,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 116",
+        "content-type: text/plain; charset=utf-8"
+      ],
+      "body": "unexpected error processing request, see the MockServer log for correlation id: <uuid>",
+      "note": "serving an expectation with two primaries"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 696",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/none\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"a\"\n  },\n  \"httpResponseTemplate\" : {\n    \"template\" : \"return {'body':'b'}\",\n    \"templateType\" : \"JAVASCRIPT\"\n  },\n  \"id\" : \"none\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/both\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"a\",\n    \"primary\" : true\n  },\n  \"httpResponseTemplate\" : {\n    \"primary\" : true,\n    \"template\" : \"return {'body':'b'}\",\n    \"templateType\" : \"JAVASCRIPT\"\n  },\n  \"id\" : \"both\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "stored"
+    }
+  ]
+}

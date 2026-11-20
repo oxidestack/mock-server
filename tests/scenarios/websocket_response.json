@@ -1,0 +1,74 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ws1"
+     },
+     "httpWebSocketResponse": {
+      "subprotocol": "chat",
+      "messages": [
+       {
+        "text": "a",
+        "delay": {
+         "timeUnit": "MILLISECONDS",
+         "value": 5
+        }
+       },
+       {
+        "binary": "AAE="
+       }
+      ],
+      "closeConnection": false,
+      "templateType": "VELOCITY"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ws2"
+     },
+     "httpWebSocketResponse": {
+      "matchers": [
+       {
+        "frameType": "TEXT",
+        "textMatcher": "!x",
+        "responses": [
+         {
+          "text": "y"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ws3"
+     },
+     "httpWebSocketResponse": {
+      "subprotocol": "graphql-transport-ws",
+      "graphqlSubscriptionFilter": {
+       "query": "subscription { onA { id } }"
+      },
+      "messages": [
+       {
+        "text": "{\"onA\":{\"id\":1}}"
+       }
+      ]
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/ws1",
+   "note": "plain request to a websocket expectation"
+  }
+ ]
+}

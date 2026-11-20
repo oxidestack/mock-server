@@ -1,0 +1,158 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/api/",
+      "targetUri": "not a uri"
+     }
+    ]
+   },
+   "note": "a mapping whose target Java refuses: stored, and the configuration cannot be written",
+   "mask": [
+    "Configuration@[0-9a-f]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "mask": [
+    "Configuration@[0-9a-f]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/config",
+   "note": "the effective-configuration diagnostic does not read the instance list (body masked: it differs by the oracle container's environment)",
+   "mask": [
+    "(?s)\\[\\{\"name\".*"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status",
+   "note": "status is unaffected",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "\"ports\" : \\[ \\d+ \\]"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-03-26"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "resources/read",
+    "params": {
+     "uri": "mockserver://configuration"
+    }
+   },
+   "note": "the MCP configuration resource reads a startup snapshot",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "get_status",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "content-length: \\d+",
+    "\\\\\"ports\\\\\" : \\[ \\d+ \\]"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/mockserver/configuration"
+   },
+   "note": "the failed GET is logged as an exception processing the request",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "Configuration@[0-9a-f]+",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/api/x",
+   "note": "a request under the refused mapping: the handler throws and nothing is answered"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/api/x"
+   },
+   "note": "the exception is logged after the received request",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "Configuration@[0-9a-f]+",
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

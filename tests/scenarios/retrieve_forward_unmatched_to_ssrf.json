@@ -1,0 +1,33 @@
+{
+ "properties": {
+  "forwardProxyBlockPrivateNetworks": "true",
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=127.0.0.1:{{port}}",
+   "note": "a loopback upstream refused by the SSRF policy"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=http://169.254.169.254/latest",
+   "note": "the cloud metadata endpoint"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&forwardUnmatchedTo=localhost",
+   "note": "a name that resolves to loopback"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched",
+   "note": "nothing was armed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "one WARN entry per refusal"
+  }
+ ]
+}

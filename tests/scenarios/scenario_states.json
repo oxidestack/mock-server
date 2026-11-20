@@ -1,0 +1,209 @@
+{
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario",
+   "note": "no scenarios"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario/checkout",
+   "note": "unknown scenario is Started"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/cart"
+     },
+     "httpResponse": {
+      "body": "empty"
+     },
+     "scenarioName": "checkout",
+     "scenarioState": "Started",
+     "newScenarioState": "Filled"
+    },
+    {
+     "httpRequest": {
+      "path": "/cart"
+     },
+     "httpResponse": {
+      "body": "one item"
+     },
+     "scenarioName": "checkout",
+     "scenarioState": "Filled"
+    },
+    {
+     "httpRequest": {
+      "path": "/pay"
+     },
+     "httpResponse": {
+      "body": "paid"
+     },
+     "scenarioName": "checkout",
+     "newScenarioState": "Paid"
+    },
+    {
+     "httpRequest": {
+      "path": "/status"
+     },
+     "httpResponse": {
+      "body": "status"
+     },
+     "scenarioName": "other",
+     "scenarioState": "Waiting"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/cart",
+   "note": "Started"
+  },
+  {
+   "method": "GET",
+   "path": "/cart",
+   "note": "Filled"
+  },
+  {
+   "method": "GET",
+   "path": "/cart",
+   "note": "still Filled"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario/checkout",
+   "note": "state"
+  },
+  {
+   "method": "GET",
+   "path": "/pay",
+   "note": "any state, moves to Paid"
+  },
+  {
+   "method": "GET",
+   "path": "/cart",
+   "note": "Paid matches nothing"
+  },
+  {
+   "method": "GET",
+   "path": "/status",
+   "note": "other scenario not waiting"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/other",
+   "body": {
+    "state": "Waiting"
+   },
+   "note": "set"
+  },
+  {
+   "method": "GET",
+   "path": "/status",
+   "note": "now waiting"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/other/trigger",
+   "body": {
+    "newState": "Done"
+   },
+   "note": "trigger"
+  },
+  {
+   "method": "PUT",
+   "path": "/scenario/other",
+   "body": {
+    "state": "A",
+    "transitionAfterMs": 3000,
+    "nextState": "B"
+   },
+   "note": "timed, bare alias"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario/other",
+   "note": "before the timer"
+  },
+  {
+   "sleepMillis": 3500
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario/other",
+   "note": "after the timer"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario",
+   "note": "list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/",
+   "body": {
+    "state": "x"
+   },
+   "note": "no name"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/x",
+   "note": "no body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/x",
+   "body": {
+    "nope": 1
+   },
+   "note": "no state"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/x/trigger",
+   "body": {
+    "state": "s"
+   },
+   "note": "trigger without newState"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/x",
+   "body": "{bad",
+   "note": "bad JSON"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/tpl"
+    },
+    "httpResponse": {
+     "body": "x"
+    },
+    "scenarioName": "t",
+    "scenarioState": "Started"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario",
+   "note": "after reset"
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+{
+  "note": "MainTest.shouldExitNonZeroWhenTheDnsPortIsNotAPort and shouldPrintTheStackTraceOfAnyOtherDnsStartFailure: a dnsPort out of range stops the start, logs the DnsStartupException that names the fix, with its stack trace, and exits 1",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "0",
+    "-Dmockserver.dnsEnabled=true",
+    "-Dmockserver.dnsPort=70000"
+  ],
+  "env": {
+    "SERVER_PORT": "",
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 90,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}",
+      "DNS mocking is enabled (dnsEnabled=true, dnsPort=70000) but its server could not start on UDP port 70000, so MockServer cannot start: fix the underlying error or set dnsEnabled=false to run without DNS mocking (underlying error: IllegalArgumentException: port out of range:70000)"
+    ],
+    "stdoutNotContains": [
+      "[INFO] started on port",
+      "AsyncAPI control-plane registered"
+    ]
+  }
+}

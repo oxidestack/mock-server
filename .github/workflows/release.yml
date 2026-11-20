@@ -1,0 +1,414 @@
+# The release: one version tag (`v9.2.0`, or `v9.2.0-rc.1` for a pre-release) publishes the image, quay.io first. The
+# version is the MockServer release the image matches.
+#
+# - `gate`: the tag is a SemVer tag on `main`, and for a release the tree already says it (Cargo.toml's version, and
+#   the upgrade-guide gate of scripts/release-check.sh: CHANGELOG.md's section, and `## Upgrading to <version>` in
+#   docs/guide/upgrading.md when that section has Action required); then it waits until ci.yml has passed on that
+#   commit. Nothing is built for a tag that fails here.
+# - `build-image`: ci.yml's image job, the same script on the same runners (amd64 on `ubuntu-24.04`, arm64 on
+#   `ubuntu-24.04-arm`, never emulated), with the OCI version and source labels; the tested image saved by `docker
+#   save`, and its SBOMs (syft's SPDX and CycloneDX), as artifacts. No credential reaches it: the tests run code from
+#   the tree.
+# - `publish`, on quay.io, what a release stands on: any failure here fails the release. It pushes both images by
+#   digest into one manifest list tagged `<version>`, and for a release `mockserver-<version>` and `latest` too, the
+#   tags MockServer's own image carries (a pre-release moves neither); signs the list with cosign, keyless (this job's
+#   GitHub identity, Fulcio's certificate, Rekor's log); attests its SLSA build provenance and each architecture's SPDX
+#   SBOM (actions/attest, pushed to quay.io as OCI referrers and kept by GitHub, so `gh attestation verify` finds
+#   them). Each signature is verified before the job goes on. It logs in with no stored secret: the robot account (the
+#   repository variable QUAY_ROBOT) trusts this job's OIDC token through quay.io's robot federation: GitHub's issuer,
+#   this job's subject, which the `release` environment fixes
+#   (`repo:oxidestack@<id>/mock-server@<id>:environment:release`, GitHub's immutable form), and the audience `quay`,
+#   which the token is asked for.
+# - `mirror`: copies the image to ghcr.io/oxidestack/mock-server with every referrer (oras cp -r): the same digest,
+#   the same signature and attestations, verified there. The mirror never blocks a release: three failed tries of any
+#   step are a warning annotation and a line in the run's summary, and the job stays green. The repository variable
+#   MIRROR_REGISTRY replaces `ghcr.io/oxidestack` (a test tag aimed at a registry the token cannot write shows the
+#   failure path).
+# - `github-release`: the GitHub release of the tag, its body CHANGELOG.md's section and how to verify, with the SBOMs
+#   attached; a pre-release is marked one and never `latest`. Each file is signed with cosign keyless as the image is,
+#   its Sigstore bundle attached beside it as <file>.sigstore.json, and one SLSA build provenance naming every file
+#   (actions/attest) is attached as mock-server-<version>.intoto.jsonl; both are verified before the release is made.
+# - `site`: for a release, runs site.yml on `main`, which deploys the documentation site with this release at its root
+#   and under its version (site/README.md, "Versions"). A pre-release builds no documentation version.
+#
+# A manual run (`gh workflow run release.yml`, or Actions → Release → Run workflow) is the dry run: the upgrade-guide
+# gate on the tree, both architectures built and tested, then the publication done to a scratch registry on the
+# runner (tools/ci/release-dry-run.sh: the push, a signature with a throwaway key, the mirror with its referrers, the
+# SBOMs signed, the notes), nothing pushed or published anywhere else.
+# Every action is pinned by its full commit, its release in a comment; every checkout keeps no credential.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+# One run per tag at a time; a second run for the same tag waits rather than cancelling a publication half-way.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+# Nothing at the top: each job is granted what it uses.
+permissions: {}
+
+env:
+  QUAY_REPOSITORY: quay.io/oxidestack/mock-server
+
+jobs:
+  gate:
+    # The same `if:` as every job of ci.yml: a private repository's tag push starts nothing billed, a manual run
+    # always runs.
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read  # actions/checkout reads the repository; the compare API
+      actions: read  # reads ci.yml's runs on the commit
+    # The wait for CI is most of it: ci.yml's image job takes up to three hours.
+    timeout-minutes: 200
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: the tag and the tree agree
+        id: version
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT" = push ]; then
+            version=$(sh tools/ci/release.sh check "$REF_NAME")
+          else
+            # The dry run: the gate as `main`'s CI runs it, on the Unreleased section.
+            sh scripts/release-check.sh
+            version=0.0.0-dry-run
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: the commit is on main and passed CI
+        if: ${{ github.event_name == 'push' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          sh tools/ci/release.sh on-main "$REPOSITORY" "$SHA"
+          sh tools/ci/release.sh wait-ci "$REPOSITORY" "$SHA" 180
+
+  build-image:
+    needs: gate
+    name: image (${{ matrix.arch }})
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read  # actions/checkout reads the repository
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      # As in ci.yml: the image's build stages outgrow the runner's free disk without these.
+      - run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h /
+      - run: git submodule update --init --depth 1 upstream/mockserver
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends openjdk-21-jdk-headless maven > /dev/null
+      # No cargo cache: a release builds from nothing a branch's run could have written.
+      - name: build and test
+        env:
+          IMAGE_VERSION: ${{ needs.gate.outputs.version }}
+          IMAGE_SOURCE: ${{ github.server_url }}/${{ github.repository }}
+          IMAGE_SAVE: ${{ github.workspace }}/mock-server-${{ matrix.arch }}.tar
+        run: sh tools/ci/image-job.sh
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: image-${{ matrix.arch }}
+          path: mock-server-${{ matrix.arch }}.tar
+          if-no-files-found: error
+          compression-level: 1
+          retention-days: 1
+      # The SBOMs of the very image saved above (tools/ci/image-job.sh, step 4).
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: sbom-${{ matrix.arch }}
+          path: |
+            target/sbom/mock-server-${{ matrix.arch }}.spdx.json
+            target/sbom/mock-server-${{ matrix.arch }}.cdx.json
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    if: ${{ github.event_name == 'push' && !github.event.repository.private }}
+    needs: [gate, build-image]
+    runs-on: ubuntu-24.04
+    # The robot's federation trusts this environment's subject; its protection rules decide which tags may deploy.
+    environment: release
+    permissions:
+      contents: read  # actions/checkout reads the repository
+      id-token: write  # the OIDC token quay.io exchanges for a robot token, and cosign's and actions/attest's identity
+      attestations: write  # actions/attest keeps each attestation at GitHub
+      artifact-metadata: write  # actions/attest records where the attested image is stored
+    timeout-minutes: 90
+    outputs:
+      digest: ${{ steps.image.outputs.digest }}
+    env:
+      VERSION: ${{ needs.gate.outputs.version }}
+      REF_NAME: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          pattern: image-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/image
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          pattern: sbom-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/sbom
+      - name: log in to quay.io
+        env:
+          QUAY_ROBOT: ${{ vars.QUAY_ROBOT }}
+        run: sh tools/ci/release.sh quay-login "$QUAY_ROBOT"
+      - name: push, sign and verify the image
+        id: image
+        env:
+          IMAGES: ${{ runner.temp }}/image
+        run: |
+          export CRANE_CONFIG="$HOME/.docker"
+          digest=$(sh tools/ci/publish-image.sh push "$QUAY_REPOSITORY" "$VERSION" \
+            "$IMAGES/mock-server-amd64.tar" "$IMAGES/mock-server-arm64.tar" | tail -n 1)
+          sh tools/ci/release.sh sign "$QUAY_REPOSITORY@$digest"
+          sh tools/ci/release.sh verify "$QUAY_REPOSITORY:$VERSION" "$REF_NAME"
+          sh tools/ci/release.sh platforms "$QUAY_REPOSITORY@$digest" > "$RUNNER_TEMP/platforms"
+          {
+            echo "digest=$digest"
+            echo "amd64=$(sed -n 's#^linux/amd64 ##p' "$RUNNER_TEMP/platforms")"
+            echo "arm64=$(sed -n 's#^linux/arm64 ##p' "$RUNNER_TEMP/platforms")"
+          } >> "$GITHUB_OUTPUT"
+      - name: attest the image's provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6  # v4.2.2
+        with:
+          subject-name: ${{ env.QUAY_REPOSITORY }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          push-to-registry: true
+      - name: attest the amd64 image's SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6  # v4.2.2
+        with:
+          subject-name: ${{ env.QUAY_REPOSITORY }}
+          subject-digest: ${{ steps.image.outputs.amd64 }}
+          sbom-path: ${{ runner.temp }}/sbom/mock-server-amd64.spdx.json
+          push-to-registry: true
+      - name: attest the arm64 image's SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6  # v4.2.2
+        with:
+          subject-name: ${{ env.QUAY_REPOSITORY }}
+          subject-digest: ${{ steps.image.outputs.arm64 }}
+          sbom-path: ${{ runner.temp }}/sbom/mock-server-arm64.spdx.json
+          push-to-registry: true
+      - name: verify the attestations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          AMD64: ${{ steps.image.outputs.amd64 }}
+          ARM64: ${{ steps.image.outputs.arm64 }}
+        run: |
+          gh attestation verify "oci://$QUAY_REPOSITORY:$VERSION" --repo "$REPOSITORY" > /dev/null
+          for d in "$AMD64" "$ARM64"; do
+            gh attestation verify "oci://$QUAY_REPOSITORY@$d" --repo "$REPOSITORY" \
+              --predicate-type https://spdx.dev/Document/v2.3 > /dev/null
+          done
+      - name: summary
+        env:
+          DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          {
+            echo "### quay.io"
+            echo
+            echo "- \`$QUAY_REPOSITORY:$VERSION\` is \`$DIGEST\` (linux/amd64, linux/arm64):" \
+              "signed, provenance and SBOMs attested."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  mirror:
+    if: ${{ github.event_name == 'push' && !github.event.repository.private }}
+    needs: [gate, publish]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read  # actions/checkout reads the repository
+      packages: write  # pushes to ghcr.io/oxidestack
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: copy to the mirror
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ needs.gate.outputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+          MIRROR: ${{ vars.MIRROR_REGISTRY || 'ghcr.io/oxidestack' }}
+        run: |
+          # quay.io is public: reading it needs no login. Each step is tried three times (release.sh); the first that
+          # still fails ends the mirror as a warning, never as a failed job.
+          fail() {
+            echo "::warning title=ghcr.io mirror::$1; the release stands on quay.io. Re-run this job to retry."
+            {
+              echo "### ghcr.io (mirror): not published"
+              echo
+              echo "$1 (the log of this job says why). The release stands on quay.io."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          }
+          printf '%s' "$GH_TOKEN" | sh tools/ci/release.sh login "${MIRROR%%/*}" "$GITHUB_ACTOR" ||
+            fail "the login to ${MIRROR%%/*} failed"
+          # shellcheck disable=SC2046 # the tags are words
+          digest=$(sh tools/ci/release.sh mirror "$QUAY_REPOSITORY" "$MIRROR/mock-server" \
+            $(sh tools/ci/publish-image.sh tags "$VERSION")) || fail "$MIRROR/mock-server:$VERSION was not copied"
+          sh tools/ci/release.sh verify "$MIRROR/mock-server:$VERSION" "$REF_NAME" ||
+            fail "the signature of $MIRROR/mock-server:$VERSION does not verify"
+          # From the mirror's own referrers, not GitHub's copy: the attestations travelled with the image.
+          gh attestation verify "oci://$MIRROR/mock-server:$VERSION" --repo "$REPOSITORY" \
+            --bundle-from-oci > /dev/null ||
+            fail "the provenance of $MIRROR/mock-server:$VERSION does not verify from the mirror"
+          {
+            echo "### ghcr.io (mirror)"
+            echo
+            echo "- \`$MIRROR/mock-server:$VERSION\` is \`$digest\`, the same as quay.io," \
+              "signature and attestations copied and verified."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  github-release:
+    if: ${{ github.event_name == 'push' && !github.event.repository.private }}
+    needs: [gate, publish]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write  # creates the release and uploads its files
+      id-token: write  # cosign's and actions/attest's identity, to sign the files
+      attestations: write  # actions/attest keeps the files' provenance at GitHub
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.gate.outputs.version }}
+      REF_NAME: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          pattern: sbom-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/files
+      # One SLSA provenance naming every file by its sha256, kept at GitHub and attached as <name>.intoto.jsonl.
+      - name: attest the files' provenance
+        id: provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6  # v4.2.2
+        with:
+          subject-path: ${{ runner.temp }}/files/*
+      - name: sign and verify the files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          BUNDLE: ${{ steps.provenance.outputs.bundle-path }}
+          FILES: ${{ runner.temp }}/files
+        run: |
+          set -- "$FILES"/*
+          sh tools/ci/release.sh sign-blob "$@"
+          sh tools/ci/release.sh verify-blob "$REF_NAME" "$@"
+          cp "$BUNDLE" "$FILES/mock-server-$VERSION.intoto.jsonl"
+          for file; do
+            gh attestation verify "$file" --repo "$REPOSITORY" \
+              --bundle "$FILES/mock-server-$VERSION.intoto.jsonl" > /dev/null
+          done
+      - name: the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIGEST: ${{ needs.publish.outputs.digest }}
+          FILES: ${{ runner.temp }}/files
+        run: |
+          sh tools/ci/release.sh notes "$VERSION" "$DIGEST" > "$RUNNER_TEMP/notes.md"
+          ls -l "$FILES"
+          case $VERSION in
+          *-*) kind="--prerelease --latest=false" ;;
+          *) kind="--latest" ;;
+          esac
+          if gh release view "$REF_NAME" > /dev/null 2>&1; then
+            # A re-run: the same release, its notes and files replaced.
+            # shellcheck disable=SC2086 # $kind is flags
+            gh release edit "$REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" $kind
+            gh release upload "$REF_NAME" --clobber "$FILES"/*
+          else
+            # shellcheck disable=SC2086 # $kind is flags
+            gh release create "$REF_NAME" --verify-tag --title "$REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" \
+              $kind "$FILES"/*
+          fi
+
+  site:
+    # The documentation site serves the latest release at its root and every release under its version
+    # (site/README.md, "Versions"), built from the release tags. It deploys from `main` only, so once this release
+    # is out the site workflow is run again on `main`, where the tag now exists. A pre-release has no documentation
+    # version: its notes are its GitHub release's. Until the site's workflow exists there is nothing to run, which
+    # the job says and passes on.
+    if: >-
+      github.event_name == 'push' && !github.event.repository.private && !contains(needs.gate.outputs.version, '-')
+    needs: [gate, github-release]
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write  # starts site.yml on main
+    timeout-minutes: 5
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if ! gh workflow view site.yml --repo "$REPOSITORY" > /dev/null 2>&1; then
+            echo "::notice title=site::no site.yml in $REPOSITORY yet: no documentation site to deploy"
+            exit 0
+          fi
+          gh workflow run site.yml --repo "$REPOSITORY" --ref main
+
+  dry-run:
+    # The publication of a manual run, against a scratch registry on the runner (tools/ci/release-dry-run.sh).
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: [gate, build-image]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read  # actions/checkout reads the repository
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          pattern: image-*
+          merge-multiple: true
+          path: target/dry-run/image
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          pattern: sbom-*
+          merge-multiple: true
+          path: target/dry-run/sbom
+      - name: publish to a scratch registry
+        env:
+          VERSION: ${{ needs.gate.outputs.version }}
+        run: |
+          sh tools/ci/release-dry-run.sh "$VERSION" target/dry-run/image/mock-server-amd64.tar \
+            target/dry-run/image/mock-server-arm64.tar -- target/dry-run/sbom/* > "$RUNNER_TEMP/notes.md"
+          {
+            echo "### Dry run: the release notes"
+            echo
+            cat "$RUNNER_TEMP/notes.md"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,27 @@
+{
+  "note": "Upstream #230: data-plane mTLS while MockServer's CA is the bundled one, without tlsMutualAuthenticationAllowBundledCa, is refused before anything is bound (DataPlaneMutualTlsTrust.requireUsableDataPlaneMutualTls); an IllegalArgumentException, so RunCommand shows the usage without its message and exits 0",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_TLS_MUTUAL_AUTHENTICATION_REQUIRED": "true"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": false,
+    "exitCode": 0,
+    "stdoutInOrder": [
+      "[INFO] stopped for ports: []",
+      "java -jar <path to mockserver-netty-jar-with-dependencies.jar> -serverPort <port>"
+    ],
+    "stdoutNotContains": [
+      "started on port",
+      "tlsMutualAuthenticationAllowBundledCa"
+    ]
+  }
+}

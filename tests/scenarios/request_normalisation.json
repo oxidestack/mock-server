@@ -1,0 +1,86 @@
+{
+ "steps": [
+  {
+   "note": "lenient JSON: comments, single quotes, trailing comma",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n  // a comment\n  'httpRequest': {'path': '/lenient',},\n  \"httpResponse\": {\"body\": \"ok\"},\n}"
+  },
+  {
+   "method": "GET",
+   "path": "/lenient"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/query-case",
+      "queryStringParameters": {
+       "Name": [
+        "v"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "query-case"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/chunked",
+      "body": "hello chunks"
+     },
+     "httpResponse": {
+      "body": "chunked"
+     }
+    }
+   ]
+  },
+  {
+   "note": "query name with other case",
+   "method": "GET",
+   "path": "/query-case?name=v"
+  },
+  {
+   "note": "query name same case",
+   "method": "GET",
+   "path": "/query-case?Name=v"
+  },
+  {
+   "note": "chunked request",
+   "method": "POST",
+   "path": "/chunked",
+   "headers": {
+    "Transfer-Encoding": "chunked"
+   },
+   "body": "hello chunks"
+  },
+  {
+   "note": "gzip request body",
+   "method": "POST",
+   "path": "/gzip",
+   "headers": {
+    "Content-Encoding": "gzip"
+   },
+   "bodyBase64": "H4sIADT9tWoAA6vKLChITVFIyk+pBADAE813CwAAAA=="
+  },
+  {
+   "note": "recorded gzip request",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/gzip"
+   }
+  },
+  {
+   "note": "recorded chunked request",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/chunked"
+   }
+  }
+ ]
+}

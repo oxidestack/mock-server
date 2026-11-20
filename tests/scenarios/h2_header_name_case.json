@@ -1,0 +1,35 @@
+{
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {"path": "/h2hc/mixed"},
+          "httpResponse": {"statusCode": 200, "headers": {"X-Mixed-Case": ["m"], "lower-name": ["l"], "UPPER-NAME": ["u"], "Content-Type": ["text/plain"]}, "cookies": {"Sess": "c"}, "body": "x"}
+        },
+        {
+          "httpRequest": {"path": "/h2hc/trailers"},
+          "httpResponse": {"statusCode": 200, "body": "x", "trailers": {"X-Trailer-Case": ["t"]}}
+        }
+      ]
+    },
+    {
+      "note": "response header names as an HTTP/2 client decodes them from the HPACK block",
+      "h2raw": {"method": "GET", "path": "/h2hc/mixed", "decode": true}
+    },
+    {
+      "note": "trailer names likewise",
+      "h2raw": {"method": "GET", "path": "/h2hc/trailers", "decode": true}
+    },
+    {
+      "note": "a lower-case request header over HTTP/2, recorded",
+      "h2raw": {"method": "GET", "path": "/h2hc/mixed", "headers": [["x-req-name", "r"]], "decode": true}
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS",
+      "body": {"path": "/h2hc/mixed"}
+    }
+  ]
+}

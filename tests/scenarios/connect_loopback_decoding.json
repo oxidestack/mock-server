@@ -1,0 +1,165 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/t/gzip"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-encoding": [
+        "gzip"
+       ],
+       "content-type": [
+        "text/plain"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "H4sIAAAAAAACE8tIzcnJV0ivyixQKMkoyi9NzwDSqQolpXl5qTkAVEvxfR0AAAA="
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/t/deflate"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-encoding": [
+        "deflate"
+       ],
+       "content-type": [
+        "text/plain"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "eJzLSM3JyVdISU3LSSxJVSjJKMovTc8A0kB2aV5eag4AyS0MQg=="
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/t/zstd"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-encoding": [
+        "zstd"
+       ],
+       "content-type": [
+        "text/plain"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "KLUv/QBY2QAAeyJoZWxsbyI6IndvcmxkIiwibiI6MTIzNDV9"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/t/list"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-encoding": [
+        "gzip, br"
+       ],
+       "content-type": [
+        "text/plain"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "H4sIAAAAAAACE8tIzcnJV0ivyixQKMkoyi9NzwDSqQolpXl5qTkAVEvxfR0AAAA="
+      }
+     }
+    }
+   ],
+   "note": "RelayConnectHandler's loopback leg (configureHttp1LoopbackPipeline / configureHttp2LoopbackPipeline): a response MockServer writes into a CONNECT tunnel is read back through BoundedZstdHttpContentDecompressor (HTTP/2: BoundedZstdDecompressorFrameListener) and an aggregator, so the client gets it decoded, without its Content-Encoding, with the decoded content-length. zstd: the image cannot load zstd-jni's natives (502); upstream's runnable jar decodes it (docs/divergences.md). Port: tests/upstream/zstd_coding.rs"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /t/gzip HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "gzip through a cleartext CONNECT: decoded by the loopback"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /t/deflate HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "deflate through a cleartext CONNECT: decoded by the loopback"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /t/list HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "a coding list is never decoded: relayed as written"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /t/zstd HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "zstd through a cleartext CONNECT: decoded by the loopback"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a000000040000000000000034010500000001828600053a70617468072f742f677a6970000a3a617574686f72697479166d6f636b65642e6578616d706c652e746573743a3830"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "h2c gzip through a cleartext CONNECT: decoded by the loopback's frame listener"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a000000040000000000000034010500000001828600053a70617468072f742f7a737464000a3a617574686f72697479166d6f636b65642e6578616d706c652e746573743a3830"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "h2c zstd through a cleartext CONNECT"
+  }
+ ]
+}

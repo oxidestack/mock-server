@@ -1,0 +1,83 @@
+{
+  "source": "HAR export of JSON, text and binary bodies in requests and responses, as REQUEST_RESPONSES and RECORDED_EXPECTATIONS (src/export/har.rs). Forwards target the server itself; each forward is used once, then a lower-priority expectation answers.",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": "[{\"httpRequest\": {\"path\": \"/fwd/json\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}}, {\"httpRequest\": {\"path\": \"/fwd/json\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\n  \\\"a\\\" :   1,\\n \\\"b\\\":[1, 2], \\\"s\\\": \\\"\\u00e9\\\"\\n}\"}}, {\"httpRequest\": {\"path\": \"/fwd/text\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}}, {\"httpRequest\": {\"path\": \"/fwd/text\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"text/plain; charset=utf-8\"]}, \"body\": \"hello \\u00e9 world\"}}, {\"httpRequest\": {\"path\": \"/fwd/bin\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}}, {\"httpRequest\": {\"path\": \"/fwd/bin\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/octet-stream\"]}, \"body\": {\"type\": \"BINARY\", \"base64Bytes\": \"AAECA/8=\"}}}, {\"httpRequest\": {\"path\": \"/fwd/ct\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}}, {\"httpRequest\": {\"path\": \"/fwd/ct\"}, \"httpResponse\": {\"statusCode\": 200, \"body\": \"{\\\"no\\\": \\\"content type\\\"}\"}}]"
+    },
+    {
+      "note": "JSON request body with irregular whitespace, JSON response body",
+      "method": "POST",
+      "path": "/fwd/json",
+      "headers": {"content-type": "application/json"},
+      "body": "{\n  \"q\" :   1,\n \"r\":[1, 2], \"u\": \"\u00e9\"\n}"
+    },
+    {
+      "note": "text request and response",
+      "method": "POST",
+      "path": "/fwd/text",
+      "headers": {"content-type": "text/plain; charset=utf-8"},
+      "body": "request \u00e9 text"
+    },
+    {
+      "note": "binary request and response",
+      "method": "POST",
+      "path": "/fwd/bin",
+      "headers": {"content-type": "application/octet-stream"},
+      "bodyBase64": "/wABAgM="
+    },
+    {
+      "note": "JSON-looking bodies without a content type",
+      "method": "POST",
+      "path": "/fwd/ct",
+      "body": "{ \"x\" :  1 }"
+    },
+    {
+      "note": "REQUEST_RESPONSES as HAR",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=HAR",
+      "mask": [
+        "\"serverIPAddress\" : \"[^\"]*\"",
+        {"regex": "(\"(?:time|totalTimeInMillis|wait|receive|connect)\" : )-?\\d+", "replace": "${1}0"},
+        {"regex": "(x-mockserver-response-time-ms\"\\s*\\}?,?\\s*\"value\" : \")\\d+", "replace": "${1}0"}
+      ]
+    },
+    {
+      "note": "RECORDED_EXPECTATIONS as HAR",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=HAR",
+      "mask": [
+        "\"serverIPAddress\" : \"[^\"]*\"",
+        {"regex": "(\"(?:time|totalTimeInMillis|wait|receive|connect)\" : )-?\\d+", "replace": "${1}0"},
+        {"regex": "(x-mockserver-response-time-ms\"\\s*\\}?,?\\s*\"value\" : \")\\d+", "replace": "${1}0"}
+      ]
+    },
+    {
+      "note": "REQUEST_RESPONSES as JSON, for comparison",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "mask": [
+        "\"serverIPAddress\" : \"[^\"]*\"",
+        {"regex": "(\"(?:time|totalTimeInMillis|wait|receive|connect)\" : )-?\\d+", "replace": "${1}0"},
+        {"regex": "(x-mockserver-response-time-ms\"\\s*\\}?,?\\s*\"value\" : \")\\d+", "replace": "${1}0"}
+      ]
+    },
+    {
+      "note": "RECORDED_EXPECTATIONS as JSON, for comparison",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+      "mask": [
+        "\"serverIPAddress\" : \"[^\"]*\"",
+        {"regex": "(\"(?:time|totalTimeInMillis|wait|receive|connect)\" : )-?\\d+", "replace": "${1}0"},
+        {"regex": "(x-mockserver-response-time-ms\"\\s*\\}?,?\\s*\"value\" : \")\\d+", "replace": "${1}0"}
+      ]
+    },
+    {
+      "note": "REQUESTS as HAR",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=HAR",
+      "mask": ["\"serverIPAddress\" : \"[^\"]*\""]
+    }
+  ]
+}

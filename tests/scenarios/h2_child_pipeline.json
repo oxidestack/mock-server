@@ -1,0 +1,11 @@
+{"properties": {"maxRequestBodySize": "64"}, "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/p"}, "httpResponse": {"body": "ok"}}},
+  {"note": "frames: a body at maxRequestBodySize is accepted (Http2MultiplexChildInitializer aggregator)", "h2raw": {"path": "/p", "body": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"}},
+  {"note": "frames: a body over maxRequestBodySize without content-length", "h2raw": {"path": "/p", "body": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"}},
+  {"note": "frames: a body over maxRequestBodySize with its content-length", "h2raw": {"path": "/p", "headers": [["content-length", "65"]], "body": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"}},
+  {"note": "an oversized body over h2 is refused by the aggregator", "h2": true, "method": "POST", "path": "/p", "body": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"},
+  {"note": "an oversized body over h2 with its content-length", "h2": true, "method": "POST", "path": "/p", "headers": {"content-length": "65"}, "body": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"},
+  {"note": "gRPC-like headers survive the re-aggregation", "h2": true, "method": "POST", "path": "/p", "headers": {"content-type": "application/grpc", "te": "trailers", "grpc-encoding": "identity", "x-custom-metadata": "test-value"}, "body": "payload"},
+  {"note": "a gzip request body is inflated on an h2 stream", "h2": true, "method": "POST", "path": "/p", "headers": {"content-encoding": "gzip"}, "bodyBase64": "H4sIAAAAAAAAA8tIzcnJ102vyiwAAKiuQicKAAAA"},
+  {"note": "recorded requests", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS"}
+]}

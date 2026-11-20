@@ -1,0 +1,115 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "wrote": true,
+      "note": "the archive is opened for append at start: truncate it in place"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": ""
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/target.*\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : \"from target\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/mocked\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 201,\n    \"body\" : \"line1\\nline2\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/target/fwd\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fwd\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11"
+      ],
+      "body": "line1\nline2",
+      "note": "mocked exchange"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11",
+        "x-target: yes"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "forwarded exchange: the forwarded request and the target's own answer"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: path did not match (  string or regex match failed expected:     /target.*    found:     /nothing-here )"
+      ],
+      "body": "",
+      "note": "no match: not archived"
+    },
+    {
+      "fileContent": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/mocked\",\"queryStringParameters\":{\"q\":[\"1\"]},\"headers\":{\"host\":[\"localhost:<port>\"],\"content-type\":[\"application/json\"],\"content-length\":[\"8\"],\"authorization\":[\"Bearer SECRET123\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\",\"body\":{\"contentType\":\"application/json\",\"type\":\"JSON\",\"json\":{\"a\":1}}},\"httpResponse\":{\"statusCode\":201,\"body\":\"line1\\nline2\"}}\n{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/target/fwd\",\"headers\":{\"x-mockserver-forwarded-by\":[\"MockServer_<instance id>\"],\"x-in\":[\"in\"],\"host\":[\"localhost:<port>\"],\"content-length\":[\"0\"],\"connection\":[\"keep-alive\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\"},\"httpResponse\":{\"statusCode\":203,\"headers\":{\"X-Target\":[\"yes\"]},\"body\":\"from target\"}}\n{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/fwd\",\"headers\":{\"x-in\":[\"in\"],\"host\":[\"localhost:<port>\"],\"content-length\":[\"0\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\"},\"httpResponse\":{\"statusCode\":203,\"reasonPhrase\":\"Non-Authoritative Information\",\"headers\":{\"x-mockserver-response-time-ms\":[\"<ms>\"],\"X-Target\":[\"yes\"]},\"body\":\"from target\"}}\n",
+      "note": "one compact line per served exchange"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/mocked\",\n    \"queryStringParameters\" : {\n      \"q\" : [ \"1\" ]\n    },\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-type\" : [ \"application/json\" ],\n      \"content-length\" : [ \"8\" ],\n      \"authorization\" : [ \"***REDACTED***\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"a\\\":1}\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 201,\n    \"body\" : \"line1\\nline2\"\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/target/fwd\",\n    \"headers\" : {\n      \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ],\n      \"x-in\" : [ \"in\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : \"from target\"\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd\",\n    \"headers\" : {\n      \"x-in\" : [ \"in\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : \"from target\"\n  }\n} ]",
+      "note": "re-importing the archive does not append to it"
+    },
+    {
+      "fileContent": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/mocked\",\"queryStringParameters\":{\"q\":[\"1\"]},\"headers\":{\"host\":[\"localhost:<port>\"],\"content-type\":[\"application/json\"],\"content-length\":[\"8\"],\"authorization\":[\"Bearer SECRET123\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\",\"body\":{\"contentType\":\"application/json\",\"type\":\"JSON\",\"json\":{\"a\":1}}},\"httpResponse\":{\"statusCode\":201,\"body\":\"line1\\nline2\"}}\n{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/target/fwd\",\"headers\":{\"x-mockserver-forwarded-by\":[\"MockServer_<instance id>\"],\"x-in\":[\"in\"],\"host\":[\"localhost:<port>\"],\"content-length\":[\"0\"],\"connection\":[\"keep-alive\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\"},\"httpResponse\":{\"statusCode\":203,\"headers\":{\"X-Target\":[\"yes\"]},\"body\":\"from target\"}}\n{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/fwd\",\"headers\":{\"x-in\":[\"in\"],\"host\":[\"localhost:<port>\"],\"content-length\":[\"0\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\"},\"httpResponse\":{\"statusCode\":203,\"reasonPhrase\":\"Non-Authoritative Information\",\"headers\":{\"x-mockserver-response-time-ms\":[\"<ms>\"],\"X-Target\":[\"yes\"]},\"body\":\"from target\"}}\n",
+      "note": "unchanged"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset does not touch the archive"
+    },
+    {
+      "fileContent": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/mocked\",\"queryStringParameters\":{\"q\":[\"1\"]},\"headers\":{\"host\":[\"localhost:<port>\"],\"content-type\":[\"application/json\"],\"content-length\":[\"8\"],\"authorization\":[\"Bearer SECRET123\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\",\"body\":{\"contentType\":\"application/json\",\"type\":\"JSON\",\"json\":{\"a\":1}}},\"httpResponse\":{\"statusCode\":201,\"body\":\"line1\\nline2\"}}\n{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/target/fwd\",\"headers\":{\"x-mockserver-forwarded-by\":[\"MockServer_<instance id>\"],\"x-in\":[\"in\"],\"host\":[\"localhost:<port>\"],\"content-length\":[\"0\"],\"connection\":[\"keep-alive\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\"},\"httpResponse\":{\"statusCode\":203,\"headers\":{\"X-Target\":[\"yes\"]},\"body\":\"from target\"}}\n{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/fwd\",\"headers\":{\"x-in\":[\"in\"],\"host\":[\"localhost:<port>\"],\"content-length\":[\"0\"]},\"keepAlive\":true,\"secure\":false,\"protocol\":\"HTTP_1_1\",\"localAddress\":\"<address>\",\"remoteAddress\":\"<address>\"},\"httpResponse\":{\"statusCode\":203,\"reasonPhrase\":\"Non-Authoritative Information\",\"headers\":{\"x-mockserver-response-time-ms\":[\"<ms>\"],\"X-Target\":[\"yes\"]},\"body\":\"from target\"}}\n",
+      "note": "still there"
+    }
+  ]
+}

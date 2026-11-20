@@ -1,0 +1,90 @@
+{
+ "properties": {
+  "detailedVerificationFailures": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "oa",
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/a"
+  },
+  {
+   "method": "GET",
+   "path": "/other"
+  },
+  {
+   "note": "count: no diff, no summary",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/b"
+    }
+   }
+  },
+  {
+   "note": "response count",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpResponse": {
+     "statusCode": 500
+    }
+   }
+  },
+  {
+   "note": "request sequence",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/a"
+     },
+     {
+      "path": "/b"
+     }
+    ]
+   }
+  },
+  {
+   "note": "response sequence",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpResponses": [
+     {
+      "statusCode": 500
+     }
+    ]
+   }
+  },
+  {
+   "note": "id sequence",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "expectationIds": [
+     {
+      "id": "oa"
+     },
+     {
+      "id": "oa"
+     }
+    ]
+   }
+  }
+ ]
+}

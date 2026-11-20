@@ -1,0 +1,213 @@
+{
+  "source": "path_parameters_log_entries under redactSecretsInLog (startup-only on the oracle, so its own server). No credentials in the requests, so 8.0.0 and the adopted c76143e4a/cc7d7d185 (upstream commits adopted after 8.0.0) render the same: upstream memoises an entry's message when it is first formatted, at log time, before the match sets the path parameters, with or without redaction.",
+  "properties": {
+    "redactSecretsInLog": "true"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "ppl-header-first",
+          "httpRequest": {
+            "method": "GET",
+            "path": "/ppl/{id}/items/{item}",
+            "pathParameters": {
+              "id": [
+                "[0-9]+"
+              ]
+            },
+            "headers": {
+              "x-need": [
+                "yes"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 418
+          }
+        },
+        {
+          "id": "ppl-body-header-first",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/ppl-body/{id}",
+            "pathParameters": {
+              "id": [
+                "[0-9]+"
+              ]
+            },
+            "headers": {
+              "x-need": [
+                "yes"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 418
+          }
+        },
+        {
+          "id": "ppl-plain",
+          "httpRequest": {
+            "method": "GET",
+            "path": "/ppl/{id}/items/{item}",
+            "pathParameters": {
+              "id": [
+                "[0-9]+"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "body": "plain"
+          }
+        },
+        {
+          "id": "ppl-template-no-matcher",
+          "httpRequest": {
+            "method": "GET",
+            "path": "/ppl-tpl/{id}"
+          },
+          "httpResponse": {
+            "statusCode": 201,
+            "body": "template without matcher"
+          }
+        },
+        {
+          "id": "ppl-none",
+          "httpRequest": {
+            "method": "GET",
+            "path": "/ppl-none/7"
+          },
+          "httpResponse": {
+            "statusCode": 202,
+            "body": "none"
+          }
+        },
+        {
+          "id": "ppl-body",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/ppl-body/{id}",
+            "pathParameters": {
+              "id": [
+                "[0-9]+"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 203,
+            "body": "body"
+          }
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/ppl/42/items/x?q=1",
+      "note": "matched through a plain pathParameters matcher"
+    },
+    {
+      "method": "GET",
+      "path": "/ppl-tpl/42",
+      "note": "a {id} template with no pathParameters matcher"
+    },
+    {
+      "method": "GET",
+      "path": "/ppl-none/7",
+      "note": "control: no path parameters at all"
+    },
+    {
+      "method": "GET",
+      "path": "/ppl/abc/items/x",
+      "note": "a miss on the path parameter"
+    },
+    {
+      "method": "POST",
+      "path": "/ppl-body/5",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "a": 1
+      },
+      "note": "a JSON body: upstream's log arguments copy a request with a body"
+    },
+    {
+      "method": "POST",
+      "path": "/ppl-body/6",
+      "headers": {
+        "content-type": "text/plain"
+      },
+      "body": "hello",
+      "note": "a string body"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        "(?s)\"stackTrace\" : \\[.*?\\]",
+        "\"epochTime\" : \\d+",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "ppl-openapi",
+          "httpRequest": {
+            "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+            "operationId": "showPetById"
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "body": "pet"
+          }
+        }
+      ],
+      "maxMillis": 60000
+    },
+    {
+      "method": "GET",
+      "path": "/v1/pets/7",
+      "headers": {
+        "X-Request-ID": "0b2b9b38-3c44-4a8e-9a11-6f0f0c5c3a7e"
+      },
+      "maxMillis": 30000,
+      "note": "matched through an OpenAPI operation's path parameter"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        "(?s)\"stackTrace\" : \\[.*?\\]",
+        "\"epochTime\" : \\d+",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS"
+    }
+  ]
+}

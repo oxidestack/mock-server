@@ -1,0 +1,73 @@
+{
+  "note": "control-plane mTLS against a DER chain: a client certificate it signed is accepted, one another CA signed is refused",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "ca-chain": {
+      "from": "x509/mtls/ca.der"
+    }
+  },
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{scratch}}/ca-chain\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "x509/mtls/client.pem",
+          "key": "x509/mtls/client-key.pem"
+        },
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "x509/mtls/foreign.pem",
+          "key": "x509/mtls/foreign-key.pem"
+        },
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates can be validated by control plane CA"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "x509/mtls/client.pem",
+          "key": "x509/mtls/client-key.pem"
+        },
+        "expectStatus": 200
+      }
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "authentication handler could not be created": 0,
+      "includes the bundled default Certificate Authority": 0
+    }
+  }
+}

@@ -1,0 +1,98 @@
+{
+ "properties": {
+  "maxEventLogSizeInBytes": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "budget-1",
+    "httpRequest": {
+     "path": "/budget"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "a-very-long-response-body"
+    }
+   },
+   "maxMillis": 90000
+  },
+  {
+   "method": "POST",
+   "path": "/budget",
+   "body": "0123456789012345678901234567890123456789",
+   "note": "entries weigh request plus response body bytes: 40 (received) + 40 (matched) + 40+25 (response) = 145 each"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "all of the first request's entries fit under the budget of 300",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/budget",
+   "body": "0123456789012345678901234567890123456789"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the second request pushes the oldest entries out",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/budget",
+   "body": "0123456789012345678901234567890123456789x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/budget",
+   "body": "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij",
+   "note": "a single entry over the budget is kept, alone"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

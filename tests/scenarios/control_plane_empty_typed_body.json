@@ -1,0 +1,75 @@
+{
+ "source": "control-plane replies whose media-typed body is empty still carry content-type (MockServerHttpResponseToFullHttpResponse.setHeaders checks the body's content type, not its length)",
+ "steps": [
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=java HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "no expectations: the Java writer writes nothing, and withBody(\"\", MediaType) still names application/java, after connection, with content-length 0",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=java HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "nothing recorded: the same empty Java body with its media type",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/retrieve?type=REQUESTS&format=curl HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "no requests: the cURL writer writes only its closing newline, text/plain",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/files/store HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 38\r\nConnection: close\r\n\r\n{\"name\":\"empty-0874.txt\",\"content\":\"\"}"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "an empty file",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/files/retrieve HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 25\r\nConnection: close\r\n\r\n{\"name\":\"empty-0874.txt\"}"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "contrast: an empty binary body names no media type, so no content-type",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/files/delete HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 25\r\nConnection: close\r\n\r\n{\"name\":\"empty-0874.txt\"}"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "remove the file again",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /mockserver/llm/optimisationReport?format=openai-evals HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "contrast: no LLM traffic, an empty dataset through ResponseWriter.writeResponse(…, contentType), which names no type for an empty body",
+   "text": true
+  }
+ ]
+}

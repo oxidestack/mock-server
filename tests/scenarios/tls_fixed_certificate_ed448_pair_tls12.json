@@ -1,0 +1,73 @@
+{
+ "note": "a fixed Ed448 pair, and a TLS 1.2-only client offering ECDHE_ECDSA suites, ECDSA and RSA schemes but not ed448: the JDK takes the key for an ECDHE_ECDSA suite, then finds no ServerKeyExchange scheme for an Ed448 key and fails the handshake with SSLException '(internal_error) No supported signature algorithm for EdDSA  key' and an internal_error alert (after its ServerHello and Certificate; ours before them, docs/divergences.md).",
+ "properties": {
+  "privateKeyPath": "{{files}}/tls/fixed-ed448-key.pem",
+  "x509CertificatePath": "{{files}}/tls/fixed-ed448-cert.pem"
+ },
+ "steps": [
+  {
+   "note": "an HTTP request on each event loop",
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "note": "TLS 1.2, ECDSA P-256 and rsa_pkcs1_sha256: the handshake fails with an internal_error alert",
+   "tcp": [
+    {
+     "text": "GET /target HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "signatureSchemes": [
+    "ECDSA_NISTP256_SHA256",
+    "RSA_PKCS1_SHA256"
+   ],
+   "tls12": true
+  },
+  {
+   "note": "the log: the CA load, then the failed handshake's WARN",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^  /[0-9.]+:[0-9]+$",
+     "replace": "  <client address>",
+     "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+    }
+   ]
+  },
+  {
+   "note": "the entries as JSON: the CA load carries no port (the context is built off the event loop), the WARN the port of the handshake's event loop",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "\"(   /)?[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+:[0-9]+\"",
+     "replace": "\"${1}<client address>\"",
+     "reason": "the client's address: the Docker gateway for the oracle, loopback on replay"
+    }
+   ]
+  }
+ ]
+}

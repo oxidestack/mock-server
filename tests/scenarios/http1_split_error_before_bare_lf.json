@@ -1,0 +1,13 @@
+{
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/reset", "note": "Netty's readHeaders splits each header line as it reads it (splitHeader: `No colon found`), but adds the header (validating it) only when it reads the next line; strict line parsing fails a line ended by a bare LF as it is read. So a split error on the line before a bare-LF line wins, the pending header is never added, nor are the continuation lines folded into it"},
+    {"tcp": [{"text": "GET /a HTTP/1.1\r\nA: 1\r\nB\r\nC: 3\n\r\n"}], "note": "no colon on the line before a bare-LF header line"},
+    {"tcp": [{"text": "GET /b HTTP/1.1\r\nA: 1\r\nB\r\n\n"}], "note": "no colon on the line before a bare-LF blank line"},
+    {"tcp": [{"text": "GET /c HTTP/1.1\r\nB\r\nC: 3\n\r\n"}], "note": "no colon on the first header line"},
+    {"tcp": [{"text": "GET /d HTTP/1.1\r\n B\r\nC: 3\n\r\n"}], "note": "a first header line starting with a space is split too (no header to fold it into)"},
+    {"tcp": [{"text": "GET /e HTTP/1.1\r\nA: 1\r\n B\r\nC: 3\n\r\n"}], "note": "a continuation line is folded, not split: the LF fault, and the pending A is never added"},
+    {"tcp": [{"text": "GET /f HTTP/1.1\r\nHost: {{host}}\r\n\r\n"}, {"text": "GET /g HTTP/1.1\r\nA: 1\r\nB\r\nC: 3\n\r\n"}], "note": "the same on a connection's second request: logged once"},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/.*"}, "note": "what the log says", "mask": ["\"(local|remote)Address\" : \"[^\"]*\"", {"regex": "(closing connection from:\\n\\n  )/\\S+", "replace": "${1}<client address>", "reason": "the client's socket address: the oracle sees the Docker bridge's"}]},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "note": "what was recorded"}
+  ]
+}

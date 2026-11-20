@@ -1,0 +1,19 @@
+{"steps": [
+  {"note": "empty registry", "method": "GET", "path": "/mockserver/cassettes"},
+  {"note": "register with every field", "method": "PUT", "path": "/mockserver/cassettes", "body": {"path": "/tmp/fixtures/checkout.json", "filename": "checkout.json", "expectationCount": 3, "origin": "recorded"}, "mask": ["\"lastUsed\" : \\d+"]},
+  {"note": "filename derived, origin defaulted", "method": "PUT", "path": "/mockserver/cassettes", "body": {"path": " /data/recordings/login.json ", "origin": "weird"}, "mask": ["\"lastUsed\" : \\d+"]},
+  {"note": "no path", "method": "PUT", "path": "/mockserver/cassettes", "body": {"filename": "x.json"}},
+  {"note": "no body", "method": "PUT", "path": "/mockserver/cassettes"},
+  {"note": "invalid json", "method": "PUT", "path": "/mockserver/cassettes", "body": "{not json"},
+  {"sleepMillis": 20},
+  {"note": "bare alias", "method": "PUT", "path": "/cassettes", "body": {"path": "/c/bare.json", "expectationCount": 2, "origin": "recorded"}, "mask": ["\"lastUsed\" : \\d+"]},
+  {"note": "list, most recently used first", "method": "GET", "path": "/mockserver/cassettes", "mask": ["\"lastUsed\" : \\d+"]},
+  {"note": "list via bare alias", "method": "GET", "path": "/cassettes", "mask": ["\"lastUsed\" : \\d+"]},
+  {"note": "delete via query", "method": "DELETE", "path": "/mockserver/cassettes?path=/c/bare.json"},
+  {"note": "delete via body", "method": "DELETE", "path": "/mockserver/cassettes", "body": {"path": "/tmp/fixtures/checkout.json"}},
+  {"note": "delete unknown", "method": "DELETE", "path": "/cassettes?path=/nope.json"},
+  {"note": "delete without path", "method": "DELETE", "path": "/mockserver/cassettes"},
+  {"note": "cross-origin", "method": "GET", "path": "/mockserver/cassettes", "headers": {"Origin": ["https://dashboard.example.com"]}, "mask": ["\"lastUsed\" : \\d+"]},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"note": "reset empties the registry", "method": "GET", "path": "/mockserver/cassettes"}
+]}

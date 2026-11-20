@@ -1,0 +1,42 @@
+{
+ "properties": {
+  "proxySetupLogging": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/calc/forward"
+    },
+    "httpForward": {
+     "host": "localhost",
+     "port": "{{deadport}}",
+     "scheme": "HTTPS"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "a TLS forward to a port that refuses: the forwarding client's context is built with the channel, before it connects",
+   "method": "GET",
+   "path": "/calc/forward",
+   "maxMillis": 30000
+  },
+  {
+   "note": "the client context's CA load, then the refused connection",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\"(local|remote)Address\" : \"[^\"]*\"",
+     "replace": "\"${1}Address\" : \"<address>\"",
+     "reason": "the connection's addresses (the harness writes <address> for them, but their length still differs): masked so the content-length is not compared"
+    }
+   ]
+  }
+ ]
+}

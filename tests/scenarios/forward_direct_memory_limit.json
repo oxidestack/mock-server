@@ -1,0 +1,94 @@
+{
+ "source": "Netty's direct-memory limit (io.netty.maxDirectMemory) on a forward that collects an upstream response, and on a request body, probed on the 9.2.0 oracle.",
+ "properties": {
+  "logLevel": "DEBUG",
+  "maxResponseBodySize": "104857600",
+  "maxSocketTimeoutInMillis": "120000",
+  "maxFutureTimeoutInMillis": "150000"
+ },
+ "jvmOptions": [
+  "-Dio.netty.maxDirectMemory=8388608"
+ ],
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/dm/up"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{'statusCode': 200, 'body': \"#set($s = 'aaaaaaaaaa')#foreach($i in [1..20])#set($s = \"$s$s\")#end$s\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dm/fwd"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/dm/up",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dm/echo"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    }
+   ],
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "a 10 MB upstream response against an 8 MiB limit",
+   "method": "GET",
+   "path": "/dm/fwd",
+   "maxMillis": 150000
+  },
+  {
+   "note": "what it logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "mask": [
+    {
+     "regex": "id: 0x[0-9a-f]{8}",
+     "replace": "id: 0x<id>",
+     "reason": "Netty's random channel id"
+    },
+    {
+     "regex": "L:/[^ \\]\"]+",
+     "replace": "L:/<local>",
+     "reason": "the oracle sits behind Docker's network, an address of its own"
+    },
+    {
+     "regex": "R:[^ \\]\"]*/[^\\]\"]+",
+     "replace": "R:<remote>",
+     "reason": "the peer's address and port"
+    },
+    {
+     "regex": "used: \\d+",
+     "replace": "used: <used>",
+     "reason": "what the pool holds at the failure depends on the sizes the socket's reads came in"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - streaming decision:\\n.*?\\n-{36}\\n",
+     "replace": "\n",
+     "reason": "the forwarding client's DEBUG `streaming decision` entry is not written yet, as in log_forward_upstream_negotiated"
+    }
+   ]
+  }
+ ]
+}

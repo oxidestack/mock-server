@@ -1,0 +1,12 @@
+{"properties": {"defaultResponseHeaders": "X-Default=one|X-Own=default|Cache-Control=no-store"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/plain"}, "httpResponse": {"statusCode": 200, "body": "plain"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/own"}, "httpResponse": {"statusCode": 201, "headers": {"X-Own": ["mine"], "B-Header": ["b"]}, "body": "own"}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=log"},
+  {"note": "matched, no own headers", "method": "GET", "path": "/plain"},
+  {"note": "matched, own headers", "method": "GET", "path": "/own"},
+  {"note": "not found", "method": "GET", "path": "/missing"},
+  {"note": "the response entries", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS"}
+]}

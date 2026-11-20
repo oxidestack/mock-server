@@ -1,0 +1,34 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "0", "-Dmockserver.dynamicallyCreateCertificateAuthorityCertificate=true"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "logContains": "logger level is",
+    "settleMillis": 8000
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "caCertificateInCwd": true,
+    "stdoutInOrder": [
+      "started on port:",
+      "[INFO] ",
+      "created dynamic Certificate Authority Private Key PEM file at",
+      "/./PKCS8CertificateAuthorityPrivateKey.pem",
+      "created dynamic Certificate Authority X509 Certificate PEM file at",
+      "/./CertificateAuthorityCertificate.pem",
+      "loaded CA private key from path",
+      "/./PKCS8CertificateAuthorityPrivateKey.pem",
+      "loaded CA X509 from path",
+      "/./CertificateAuthorityCertificate.pem",
+      "containing PEM",
+      "MockServer proxy setup"
+    ],
+    "stdoutNotContains": [
+      "MockServer is signing TLS traffic with the bundled default Certificate Authority",
+      "WARNING: The default CA private key is published"
+    ]
+  }
+}

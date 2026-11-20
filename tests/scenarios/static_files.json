@@ -1,0 +1,240 @@
+{
+ "source": "staticFilesDirectory (upstream #35 e69643b39, StaticFileDirectory, StaticFilesIntegrationTest): unmatched GET/HEAD served from the directory, its containment, content types and log entries",
+ "properties": {
+  "staticFilesDirectory": "{{files}}/static"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/",
+   "note": "the directory's index.html"
+  },
+  {
+   "method": "HEAD",
+   "path": "/",
+   "note": "HEAD: content-length, no body"
+  },
+  {
+   "method": "GET",
+   "path": "/app.js"
+  },
+  {
+   "method": "GET",
+   "path": "/style.css"
+  },
+  {
+   "method": "GET",
+   "path": "/data.json"
+  },
+  {
+   "method": "GET",
+   "path": "/readme.md"
+  },
+  {
+   "method": "GET",
+   "path": "/noext"
+  },
+  {
+   "method": "GET",
+   "path": "/file.unknownext"
+  },
+  {
+   "method": "GET",
+   "path": "/IMAGE.PNG"
+  },
+  {
+   "method": "GET",
+   "path": "/dot."
+  },
+  {
+   "method": "HEAD",
+   "path": "/app.js"
+  },
+  {
+   "method": "GET",
+   "path": "/app.js?version=1",
+   "note": "the query string does not choose the file"
+  },
+  {
+   "method": "GET",
+   "path": "/app.js",
+   "note": "conditional request headers are not honoured",
+   "headers": {
+    "If-None-Match": "\"x\"",
+    "If-Modified-Since": "Wed, 21 Oct 2015 07:28:00 GMT"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/a+b.txt",
+   "note": "a plus is a literal plus"
+  },
+  {
+   "method": "GET",
+   "path": "/sp%20ace.txt",
+   "note": "percent-decoded once"
+  },
+  {
+   "method": "GET",
+   "path": "/a%2Bb.txt"
+  },
+  {
+   "method": "GET",
+   "path": "/sub/",
+   "note": "a path ending in / names that directory's index.html"
+  },
+  {
+   "method": "GET",
+   "path": "/sub",
+   "note": "a directory without the slash is no file"
+  },
+  {
+   "method": "GET",
+   "path": "/empty/",
+   "note": "a directory without index.html"
+  },
+  {
+   "method": "GET",
+   "path": "/sub/index.html"
+  },
+  {
+   "method": "GET",
+   "path": "/sub//index.html",
+   "note": "an empty segment"
+  },
+  {
+   "method": "GET",
+   "path": "/.hidden.txt",
+   "note": "a hidden file"
+  },
+  {
+   "method": "GET",
+   "path": "/sub/.secret/x.txt",
+   "note": "a hidden directory"
+  },
+  {
+   "method": "GET",
+   "path": "/sub/./index.html",
+   "note": "a dot segment"
+  },
+  {
+   "method": "GET",
+   "path": "/sub/../index.html",
+   "note": "a dot-dot segment"
+  },
+  {
+   "method": "GET",
+   "path": "/%2e%2e/plain.txt",
+   "note": "an encoded dot-dot segment"
+  },
+  {
+   "method": "GET",
+   "path": "/sub%2f..%2findex.html",
+   "note": "encoded slashes and a dot-dot segment"
+  },
+  {
+   "method": "GET",
+   "path": "/%2541pp.js",
+   "note": "double encoding: a % left after one decode"
+  },
+  {
+   "method": "GET",
+   "path": "/a%5capp.js",
+   "note": "a backslash"
+  },
+  {
+   "method": "GET",
+   "path": "/c:app.js",
+   "note": "a colon"
+  },
+  {
+   "method": "GET",
+   "path": "/app.js%00",
+   "note": "a NUL"
+  },
+  {
+   "method": "GET",
+   "path": "/link-in.txt",
+   "note": "a symlink to a file inside the directory: served, typed by the real file's name"
+  },
+  {
+   "method": "GET",
+   "path": "/link-out.txt",
+   "note": "a symlink leaving the directory"
+  },
+  {
+   "method": "GET",
+   "path": "/missing.txt",
+   "note": "no such file"
+  },
+  {
+   "method": "POST",
+   "path": "/app.js",
+   "note": "only GET and HEAD",
+   "body": "x"
+  },
+  {
+   "method": "DELETE",
+   "path": "/app.js"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/x.txt",
+   "note": "a control-plane path"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/dashboard/missing.txt",
+   "note": "a control-plane route"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/data.json"
+     },
+     "httpResponse": {
+      "statusCode": 201,
+      "body": "from the expectation"
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/data.json",
+   "note": "an expectation wins over the file"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/app.js"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/app.js"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/missing.txt"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/",
+    "method": "HEAD"
+   }
+  }
+ ]
+}

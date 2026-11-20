@@ -1,0 +1,1022 @@
+{
+ "source": "isolated because it PUTs configuration (maxExpectations, maxLogEntries) that reset does not clear.",
+ "isolated": true,
+ "steps": [
+  {
+   "note": "empty body",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "invalid json",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": "{\"jsonrpc\": }",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "scalar",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": "42",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "wrong version",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "1.0",
+    "method": "ping",
+    "id": 1
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "no method",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "float id",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "ping",
+    "id": 1.5
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "object id",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "ping",
+    "id": {
+     "a": 1
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": null,
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "tools/list",
+    "id": 1
+   },
+   "note": "no session",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "nope"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "tools/list",
+    "id": 1
+   },
+   "note": "unknown session",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": null,
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "ping"
+   },
+   "note": "notification without session",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": null,
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "initialize",
+    "id": 1,
+    "params": {
+     "protocolVersion": "1999-01-01",
+     "capabilities": {}
+    }
+   },
+   "note": "initialize unknown version",
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "old"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": null,
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "initialize",
+    "id": 1,
+    "params": {
+     "protocolVersion": "2025-03-26"
+    }
+   },
+   "note": "initialize",
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "session"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "tools/list",
+    "id": 1
+   },
+   "note": "not initialized yet",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "ping",
+    "id": "abc"
+   },
+   "note": "ping exempt, string id",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/other"
+   },
+   "note": "other notification before initialized",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "note": "initialized",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "resources/list",
+    "id": 7
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "prompts/list",
+    "id": 8
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "prompts/get",
+    "id": 1,
+    "params": {
+     "name": "debug_unmatched_request",
+     "arguments": {
+      "method": "POST",
+      "path": "/orders"
+     }
+    }
+   },
+   "note": "prompt get",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "prompts/get",
+    "id": 1,
+    "params": {
+     "name": "create_mock_from_description",
+     "arguments": {
+      "description": "GET /users returns a list"
+     }
+    }
+   },
+   "note": "prompt get 2",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "prompts/get",
+    "id": 1,
+    "params": {
+     "name": "debug_unmatched_request",
+     "arguments": {
+      "method": "{{path}}",
+      "path": "/secret"
+     }
+    }
+   },
+   "note": "prompt no cascade substitution",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "prompts/get",
+    "id": 1,
+    "params": {
+     "name": "debug_unmatched_request"
+    }
+   },
+   "note": "prompt no arguments",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "prompts/get",
+    "id": 1,
+    "params": {
+     "name": "nope"
+    }
+   },
+   "note": "unknown prompt",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "prompts/get",
+    "id": 1,
+    "params": {}
+   },
+   "note": "prompt no name",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "prompts/get",
+    "id": 1
+   },
+   "note": "prompt no params",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "resources/read",
+    "id": 1,
+    "params": {
+     "uri": "mockserver://nope"
+    }
+   },
+   "note": "unknown resource",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "resources/read",
+    "id": 1,
+    "params": {}
+   },
+   "note": "resource no uri",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "resources/read",
+    "id": 1,
+    "params": {
+     "uri": "mockserver://expectations"
+    }
+   },
+   "note": "resource expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "resources/read",
+    "id": 1,
+    "params": {
+     "uri": "mockserver://requests"
+    }
+   },
+   "note": "resource requests",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "resources/read",
+    "id": 1,
+    "params": {
+     "uri": "mockserver://unmatched"
+    }
+   },
+   "note": "resource unmatched",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "resources/read",
+    "id": 1,
+    "params": {
+     "uri": "mockserver://configuration"
+    }
+   },
+   "note": "resource configuration before change",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 15050,
+    "maxLogEntries": 100050
+   },
+   "note": "configuration changed at runtime",
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <configuration>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "resources/read",
+    "id": 1,
+    "params": {
+     "uri": "mockserver://configuration"
+    }
+   },
+   "note": "resource configuration unaffected by runtime change (matches the oracle: this MCP resource reads a startup snapshot, not the live Configuration instance GET /mockserver/configuration reads)",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "sampling/createMessage",
+    "id": 1,
+    "params": {
+     "messages": [
+      {
+       "role": "user",
+       "content": {
+        "type": "text",
+        "text": "hi"
+       }
+      }
+     ]
+    }
+   },
+   "note": "sampling default",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "sampling/createMessage",
+    "id": 1,
+    "params": {
+     "messages": [
+      {
+       "role": "user"
+      }
+     ],
+     "mockResponse": "yes",
+     "modelPreferences": {
+      "hints": [
+       {
+        "name": "claude-x"
+       }
+      ]
+     }
+    }
+   },
+   "note": "sampling hint",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "sampling/createMessage",
+    "id": 1,
+    "params": {
+     "messages": []
+    }
+   },
+   "note": "sampling empty",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "frobnicate",
+    "id": 1
+   },
+   "note": "unknown method",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "id": 1,
+    "params": {
+     "name": "nope"
+    }
+   },
+   "note": "unknown tool",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "id": 1,
+    "params": {}
+   },
+   "note": "tool no name",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "id": 1
+   },
+   "note": "tool no params",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "empty batch",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": "[]",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "batch",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": [
+    {
+     "jsonrpc": "2.0",
+     "method": "ping",
+     "id": 1
+    },
+    {
+     "jsonrpc": "2.0",
+     "method": "notifications/initialized"
+    },
+    {
+     "jsonrpc": "1.0",
+     "method": "x",
+     "id": 2
+    },
+    {
+     "jsonrpc": "2.0",
+     "method": "initialize",
+     "id": 3
+    },
+    {
+     "jsonrpc": "2.0",
+     "method": "frob",
+     "id": 4
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "batch of notifications",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": [
+    {
+     "jsonrpc": "2.0",
+     "method": "notifications/initialized"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "batch without session",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": [
+    {
+     "jsonrpc": "2.0",
+     "method": "ping",
+     "id": 1
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "batch on uninitialized session",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:old}}"
+    ]
+   },
+   "body": [
+    {
+     "jsonrpc": "2.0",
+     "method": "tools/list",
+     "id": 1
+    },
+    {
+     "jsonrpc": "2.0",
+     "method": "ping",
+     "id": 2
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "get",
+   "method": "GET",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "options no origin",
+   "method": "OPTIONS",
+   "path": "/mockserver/mcp",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "options with origin",
+   "method": "OPTIONS",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Origin": [
+     "http://ui.test"
+    ],
+    "Access-Control-Request-Headers": [
+     "mcp-session-id"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "post with origin",
+   "method": "POST",
+   "path": "/mockserver/mcp?x=1",
+   "headers": {
+    "Origin": [
+     "http://ui.test"
+    ],
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "ping",
+    "id": 9
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "put",
+   "method": "PUT",
+   "path": "/mockserver/mcp/sub",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "not mcp path",
+   "method": "POST",
+   "path": "/mockserver/mcpx",
+   "body": "{}",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "delete",
+   "method": "DELETE",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "delete again",
+   "method": "DELETE",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:session}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "ping",
+    "id": 1
+   },
+   "note": "terminated session",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    },
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  }
+ ]
+}

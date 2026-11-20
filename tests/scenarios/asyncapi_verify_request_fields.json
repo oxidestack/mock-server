@@ -1,0 +1,104 @@
+{
+ "source": "AsyncApiControlPlaneIntegrationTest (master b765b8271). AsyncApiControlPlaneImpl.rejectUnknownFields refuses a count field outside \"count\", an unknown field and a malformed \"count\"; an unparseable spec answers a JSON error keeping the parser's message.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": "garbage: [",
+   "note": "a YAML document the parser rejects with a multi-line message"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "asyncapi": "2.6.0",
+    "info": {
+     "title": "Verify fields",
+     "version": "1.0.0"
+    },
+    "channels": {
+     "orders/shipped": {
+      "subscribe": {
+       "message": {
+        "payload": {
+         "type": "object"
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "a spec to verify against"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"atMost\": 0 }",
+   "note": "atMost at the top level"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"bogus\": 1, \"exactly\": 2 }",
+   "note": "an unknown field before a misplaced count field: the first in document order is named"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"count\": 3 }",
+   "note": "count is not an object"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"count\": { \"atLeast\": 1, \"most\": 2 } }",
+   "note": "an unknown field inside count"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"count\": { \"atLeast\": -1 } }",
+   "note": "a negative count"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"count\": { \"atLeast\": 1.5 } }",
+   "note": "a fractional count"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"count\": { \"atMost\": \"2\" } }",
+   "note": "a count given as a string"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"count\": { \"exactly\": 3000000000 } }",
+   "note": "a count beyond an int"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"count\": null, \"payloadSubstring\": \"x\" }",
+   "note": "a null count is the default"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi/verify",
+   "body": "{ \"channel\": \"orders/shipped\", \"count\": { \"atMost\": 0 } }",
+   "note": "a well-formed count"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": "{\"spec\": \"garbage: [\"}",
+   "note": "an unparseable spec inside the wrapper"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

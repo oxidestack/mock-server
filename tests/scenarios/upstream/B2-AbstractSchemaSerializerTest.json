@@ -1,0 +1,129 @@
+{
+  "source": "hand-authored, not harvested. `AbstractSchemaSerializerTest` (5 tests) pins that an OpenAPI-3.1 schema's array-valued `type` (`[\"string\",\"null\"]`...) is translated into the Draft-07/OAS-3.0 `type`(+`nullable`) form MockServer targets. The harvest pipeline cannot reach this: `AbstractSchemaSerializer`'s own serialized text is never echoed on any retrieve endpoint (`retrieve?type=ACTIVE_EXPECTATIONS` always echoes the ORIGINAL `specUrlOrPayload`, never the derived per-operation `body.jsonSchema` — confirmed empirically against every existing recorded `openapi*.golden.json`); the translation is observable only through the resulting MATCH/NO-MATCH decision for an OpenAPI-3.1-derived request body. Each group below pairs a high-priority OpenAPI-derived expectation with a low-priority catch-all fallback on the same path, so the match/no-match outcome shows up as a plain, stable 200 body (`matched` vs `fallback`) instead of a closest-match hint (whose field order is JVM-identity-hash-dependent and would make the golden flaky).",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "specUrlOrPayload": {
+              "openapi": "3.1.0",
+              "info": {"title": "t", "version": "1.0"},
+              "paths": {
+                "/nullable-string": {
+                  "post": {
+                    "operationId": "opStringNull",
+                    "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": ["string", "null"]}}}},
+                    "responses": {"200": {"description": "ok"}}
+                  }
+                }
+              }
+            }
+          },
+          "httpResponse": {"statusCode": 200, "body": "matched"},
+          "priority": 10
+        },
+        {"httpRequest": {"method": "POST", "path": "/nullable-string"}, "httpResponse": {"statusCode": 200, "body": "fallback"}, "priority": -10},
+        {
+          "httpRequest": {
+            "specUrlOrPayload": {
+              "openapi": "3.1.0",
+              "info": {"title": "t", "version": "1.0"},
+              "paths": {
+                "/nullable-integer": {
+                  "post": {
+                    "operationId": "opIntegerNull",
+                    "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": ["integer", "null"]}}}},
+                    "responses": {"200": {"description": "ok"}}
+                  }
+                }
+              }
+            }
+          },
+          "httpResponse": {"statusCode": 200, "body": "matched"},
+          "priority": 10
+        },
+        {"httpRequest": {"method": "POST", "path": "/nullable-integer"}, "httpResponse": {"statusCode": 200, "body": "fallback"}, "priority": -10},
+        {
+          "httpRequest": {
+            "specUrlOrPayload": {
+              "openapi": "3.1.0",
+              "info": {"title": "t", "version": "1.0"},
+              "paths": {
+                "/string-or-integer": {
+                  "post": {
+                    "operationId": "opStringOrInteger",
+                    "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": ["string", "integer"]}}}},
+                    "responses": {"200": {"description": "ok"}}
+                  }
+                }
+              }
+            }
+          },
+          "httpResponse": {"statusCode": 200, "body": "matched"},
+          "priority": 10
+        },
+        {"httpRequest": {"method": "POST", "path": "/string-or-integer"}, "httpResponse": {"statusCode": 200, "body": "fallback"}, "priority": -10},
+        {
+          "httpRequest": {
+            "specUrlOrPayload": {
+              "openapi": "3.1.0",
+              "info": {"title": "t", "version": "1.0"},
+              "paths": {
+                "/string-or-integer-or-null": {
+                  "post": {
+                    "operationId": "opStringOrIntegerOrNull",
+                    "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": ["string", "integer", "null"]}}}},
+                    "responses": {"200": {"description": "ok"}}
+                  }
+                }
+              }
+            }
+          },
+          "httpResponse": {"statusCode": 200, "body": "matched"},
+          "priority": 10
+        },
+        {"httpRequest": {"method": "POST", "path": "/string-or-integer-or-null"}, "httpResponse": {"statusCode": 200, "body": "fallback"}, "priority": -10},
+        {
+          "httpRequest": {
+            "specUrlOrPayload": {
+              "openapi": "3.1.0",
+              "info": {"title": "t", "version": "1.0"},
+              "paths": {
+                "/single-element-string": {
+                  "post": {
+                    "operationId": "opSingleElementString",
+                    "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": ["string"]}}}},
+                    "responses": {"200": {"description": "ok"}}
+                  }
+                }
+              }
+            }
+          },
+          "httpResponse": {"statusCode": 200, "body": "matched"},
+          "priority": 10
+        },
+        {"httpRequest": {"method": "POST", "path": "/single-element-string"}, "httpResponse": {"statusCode": 200, "body": "fallback"}, "priority": -10}
+      ],
+      "note": "5 OpenAPI-3.1-derived expectations (one per AbstractSchemaSerializerTest case) plus a lower-priority catch-all per path"
+    },
+    {"method": "POST", "path": "/nullable-string", "headers": {"Content-Type": "application/json"}, "body": "null", "note": "[\"string\",\"null\"]: null accepted"},
+    {"method": "POST", "path": "/nullable-string", "headers": {"Content-Type": "application/json"}, "body": "\"hello\"", "note": "[\"string\",\"null\"]: string accepted"},
+    {"method": "POST", "path": "/nullable-string", "headers": {"Content-Type": "application/json"}, "body": "123", "note": "[\"string\",\"null\"]: wrong type falls through"},
+    {"method": "POST", "path": "/nullable-integer", "headers": {"Content-Type": "application/json"}, "body": "null", "note": "[\"integer\",\"null\"]: null accepted"},
+    {"method": "POST", "path": "/nullable-integer", "headers": {"Content-Type": "application/json"}, "body": "42", "note": "[\"integer\",\"null\"]: integer accepted"},
+    {"method": "POST", "path": "/nullable-integer", "headers": {"Content-Type": "application/json"}, "body": "\"x\"", "note": "[\"integer\",\"null\"]: wrong type falls through"},
+    {"method": "POST", "path": "/string-or-integer", "headers": {"Content-Type": "application/json"}, "body": "\"x\"", "note": "[\"string\",\"integer\"]: string accepted"},
+    {"method": "POST", "path": "/string-or-integer", "headers": {"Content-Type": "application/json"}, "body": "5", "note": "[\"string\",\"integer\"]: integer accepted"},
+    {"method": "POST", "path": "/string-or-integer", "headers": {"Content-Type": "application/json"}, "body": "null", "note": "[\"string\",\"integer\"] (no null): null falls through"},
+    {"method": "POST", "path": "/string-or-integer-or-null", "headers": {"Content-Type": "application/json"}, "body": "null", "note": "[\"string\",\"integer\",\"null\"]: null accepted"},
+    {"method": "POST", "path": "/string-or-integer-or-null", "headers": {"Content-Type": "application/json"}, "body": "\"x\"", "note": "[\"string\",\"integer\",\"null\"]: string accepted"},
+    {"method": "POST", "path": "/string-or-integer-or-null", "headers": {"Content-Type": "application/json"}, "body": "5", "note": "[\"string\",\"integer\",\"null\"]: integer accepted"},
+    {"method": "POST", "path": "/string-or-integer-or-null", "headers": {"Content-Type": "application/json"}, "body": "true", "note": "[\"string\",\"integer\",\"null\"]: boolean falls through"},
+    {"method": "POST", "path": "/single-element-string", "headers": {"Content-Type": "application/json"}, "body": "\"x\"", "note": "[\"string\"] (regression guard): string accepted"},
+    {"method": "POST", "path": "/single-element-string", "headers": {"Content-Type": "application/json"}, "body": "null", "note": "[\"string\"] (regression guard, no null in set): null falls through"},
+    {"method": "POST", "path": "/single-element-string", "headers": {"Content-Type": "application/json"}, "body": "5", "note": "[\"string\"] (regression guard): wrong type falls through"},
+    {"method": "PUT", "path": "/mockserver/reset"}
+  ]
+}

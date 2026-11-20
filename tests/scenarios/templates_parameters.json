@@ -1,0 +1,185 @@
+{
+ "source": "HttpTemplate.parameters bound as parameters in Velocity and Mustache templates (9.2.0)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/p/v"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"g=$parameters.greeting | n=$parameters.n | next=$math.add($parameters.n, 1) | big=$parameters.big | dec=$parameters.dec | flag=$parameters.flag | nul=$parameters.nul | empty=[$parameters.empty] | list=$parameters.list | l1=$parameters.list[1] | map=$parameters.map | k=$parameters.map.k | z=$parameters.map.inner.z | all=$parameters | classes=$parameters.getClass().getName(),$parameters.list.getClass().getName(),$parameters.n.getClass().getName(),$parameters.big.getClass().getName(),$parameters.dec.getClass().getName()\"\n}",
+     "parameters": {
+      "greeting": "hello",
+      "n": 41,
+      "big": 12345678901,
+      "dec": 1.5,
+      "flag": true,
+      "nul": null,
+      "empty": "",
+      "list": [
+       "a",
+       "b",
+       3
+      ],
+      "map": {
+       "k": "v",
+       "inner": {
+        "z": [
+         1
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/p/put"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"put=$parameters.put('x', 1) after=$parameters\"\n}",
+     "parameters": {
+      "a": 1
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/p/m"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    \"statusCode\": 200,\n    \"body\": \"g={{parameters.greeting}} | list={{#parameters.list}}{{.}},{{/parameters.list}} | k={{parameters.map.k}} | n={{parameters.n}} | flag={{parameters.flag}} | missing={{parameters.missing}}\"\n}",
+     "parameters": {
+      "greeting": "hello",
+      "n": 41,
+      "big": 12345678901,
+      "dec": 1.5,
+      "flag": true,
+      "nul": null,
+      "empty": "",
+      "list": [
+       "a",
+       "b",
+       3
+      ],
+      "map": {
+       "k": "v",
+       "inner": {
+        "z": [
+         1
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/p/none"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"p=$parameters\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/p/empty"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"p=$parameters\"\n}",
+     "parameters": {}
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/p/bad"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"p=$parameters\"\n}",
+     "parameters": [
+      "not",
+      "an",
+      "object"
+     ]
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/p/str"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"p=$parameters\"\n}",
+     "parameters": "text"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/p/v"
+  },
+  {
+   "method": "GET",
+   "path": "/p/put",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/p/m"
+  },
+  {
+   "method": "GET",
+   "path": "/p/none"
+  },
+  {
+   "method": "GET",
+   "path": "/p/empty"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  }
+ ]
+}

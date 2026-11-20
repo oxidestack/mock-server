@@ -1,0 +1,39 @@
+{
+ "properties": {
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/persistence_end_date.json"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "finite",
+    "httpRequest": {"path": "/finiteTtl"},
+    "httpResponse": {"body": "x"},
+    "timeToLive": {"timeUnit": "SECONDS", "timeToLive": 300}
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "forever",
+    "httpRequest": {"path": "/unlimited"},
+    "httpResponse": {"body": "y"}
+   }
+  },
+  {
+   "sleepMillis": 1500
+  },
+  {
+   "readFile": "{{scratch}}/persistence_end_date.json",
+   "note": "the finite expectation carries an endDate (a clock value, masked), the unlimited one none",
+   "mask": ["(?<=\"endDate\" : )\\d+"]
+  }
+ ]
+}

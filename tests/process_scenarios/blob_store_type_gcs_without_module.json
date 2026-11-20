@@ -1,0 +1,22 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_BLOB_STORE_TYPE": "GCS"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 120,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}\njava.lang.IllegalStateException: blobStoreType=gcs configured but org.mockserver.blob.gcs.GcsBlobStoreRegistrar is not on the classpath; add the mockserver-blob-gcs dependency\n",
+      "Caused by: java.lang.ClassNotFoundException: org.mockserver.blob.gcs.GcsBlobStoreRegistrar"
+    ],
+    "stdoutNotContains": ["started on port", "valid options are:"],
+    "stderrNotContains": ["exception while starting"]
+  }
+}

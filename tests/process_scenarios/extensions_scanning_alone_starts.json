@@ -1,0 +1,23 @@
+{
+  "note": "extensionScanning=true alone loads what the providers export, which is nothing (the stock image has no META-INF/services entry either): the server starts, and /mockserver/extensions/<x>/ is answered as without it",
+  "target": "both",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_EXTENSION_SCANNING": "true"
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 120,
+  "afterReady": [
+    {"http": {"method": "GET", "path": "/mockserver/extensions/acme/status", "ownHost": true, "expectStatus": 404}},
+    {"http": {"method": "PUT", "path": "/mockserver/extensions/acme", "ownHost": true, "expectStatus": 404}}
+  ],
+  "expect": {
+    "running": true,
+    "stdoutContains": ["[INFO] started on port: "],
+    "stdoutNotContains": ["exception while starting", "ExtensionException"]
+  }
+}

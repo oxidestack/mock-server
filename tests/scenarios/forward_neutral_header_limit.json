@@ -1,0 +1,89 @@
+{
+ "source": "ForwardRetryPolicy.isTransientFailure and ForwardCircuitBreaker.isNeutral (HeaderLimitExceededException): a forward refused for its response headers over maxHeaderSize is neither retried nor counted against its target's breaker",
+ "properties": {
+  "forwardProxyRetryCount": "2",
+  "forwardProxyCircuitBreakerEnabled": "true",
+  "forwardProxyCircuitBreakerFailureThreshold": "2",
+  "forwardProxyCircuitBreakerWindowMillis": "60000",
+  "maxHeaderSize": "4096",
+  "forwardProxyRetryBackoffMillis": "100"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/big"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "x-big": [
+        "{{repeat:5000:a}}"
+       ]
+      },
+      "body": "big"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/hl"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/big",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "header-limit refusal 1: a 502 with the reason, never the breaker's 503",
+   "method": "GET",
+   "path": "/hl"
+  },
+  {
+   "note": "header-limit refusal 2: a 502 with the reason, never the breaker's 503",
+   "method": "GET",
+   "path": "/hl"
+  },
+  {
+   "note": "header-limit refusal 3: a 502 with the reason, never the breaker's 503",
+   "method": "GET",
+   "path": "/hl"
+  },
+  {
+   "note": "the upstream was asked once per forward: no retries",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/big"
+    },
+    "times": {
+     "atLeast": 3,
+     "atMost": 3
+    }
+   }
+  },
+  {
+   "note": "no 'forward circuit breaker opened' WARN",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "a{5000}",
+     "replace": "<5000 a>",
+     "reason": "readability"
+    }
+   ]
+  }
+ ]
+}

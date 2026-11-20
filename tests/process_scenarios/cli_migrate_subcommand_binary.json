@@ -1,0 +1,30 @@
+{
+  "note": "`migrate` is ours, intercepted before the picocli tree; the oracle answers `mockserver migrate` with a usage error (exit 2, `ERROR: Unmatched arguments from index 1: 'migrate', ...` and the run usage). A deliberate divergence (docs/divergences.md)",
+  "target": "binary",
+  "args": [
+    "migrate",
+    "--env",
+    "{{files}}/migrate/repo/pom.xml"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-Xss1m"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "{{files}}/migrate/repo/pom.xml\n    9  action   packaging.maven          org.mock-server:mockserver-netty-no-dependencies: starts an in-JVM MockServer",
+      "(environment)\n    -  warn     jvm.options.memory       JAVA_TOOL_OPTIONS -Xss1m: no effect",
+      "summary: 0 rewrite, 1 warn, 1 action, 0 blocker\n"
+    ],
+    "stdoutNotContains": [
+      "Unmatched arguments",
+      "started on port"
+    ],
+    "stderrContains": []
+  }
+}

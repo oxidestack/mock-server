@@ -1,0 +1,17 @@
+# org.mockserver.state.InMemoryKeyValueStoreTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldPutAndGet  rust:src/state_backend/memory.rs::put_then_get_round_trips_with_version_one
+shouldReturnEmptyForMissingKey  rust:src/state_backend/memory.rs::compare_and_remove_succeeds_only_on_matching_version  # get of a removed key is None
+shouldIncrementVersionOnUpdate  rust:src/state_backend/memory.rs::put_again_increments_version_last_writer_wins
+shouldCompareAndSetSuccessfully  rust:src/state_backend/memory.rs::compare_and_set_succeeds_only_on_matching_version
+shouldFailCompareAndSetWithWrongVersion  rust:src/state_backend/memory.rs::compare_and_set_succeeds_only_on_matching_version
+shouldFailCompareAndSetForMissingKey  rust:tests/upstream/cluster_state_backend.rs::should_fail_compare_and_set_for_missing_key  # the contract's run on the clustered store; the in-memory store has no own test of it
+shouldCompareAndRemoveSuccessfully  rust:src/state_backend/memory.rs::compare_and_remove_succeeds_only_on_matching_version
+shouldFailCompareAndRemoveWithWrongVersion  rust:src/state_backend/memory.rs::compare_and_remove_succeeds_only_on_matching_version
+shouldRemoveUnconditionally  rust:src/state_backend/memory.rs::remove_reports_presence
+shouldReturnFalseForRemovingMissingKey  rust:src/state_backend/memory.rs::remove_reports_presence
+shouldReturnCorrectSize  rust:src/state_backend/memory.rs::entries_size_and_clear
+shouldClear  rust:src/state_backend/memory.rs::entries_size_and_clear
+shouldStreamEntries  rust:src/state_backend/memory.rs::entries_size_and_clear
+shouldFireInvalidationListenerOnChange  rust:src/state_backend/memory.rs::invalidation_listener_fires_on_changed_and_cleared

@@ -1,0 +1,1657 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) loadorch-LoadScenarioOrchestratorTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2c4e1e77b871",
+   "note": "validateRejectsWeightedWithNonPositiveWeight (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"weighted-zero\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"stepSelection\" : \"WEIGHTED\",\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\"\n    },\n    \"weight\" : 1.0\n  }, {\n    \"request\" : {\n      \"path\" : \"/b\"\n    },\n    \"weight\" : 0.0\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateRejectsWeightedWithNonPositiveWeight (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "2c4e1e77b871"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f278e7669199",
+   "note": "nonePacingReschedulesImmediately (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"unpaced\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "nonePacingReschedulesImmediately (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "f278e7669199"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/unpaced",
+   "note": "nonePacingReschedulesImmediately (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "f278e7669199"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0db5f11513a1",
+   "note": "validateAcceptsWeightedWithDefaultedAbsentWeights (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"weighted-defaulted\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"stepSelection\" : \"WEIGHTED\",\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\"\n    }\n  }, {\n    \"request\" : {\n      \"path\" : \"/b\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateAcceptsWeightedWithDefaultedAbsentWeights (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "0db5f11513a1"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/weighted-defaulted",
+   "note": "validateAcceptsWeightedWithDefaultedAbsentWeights (loadorch): LoadScenarioOrchestrator.validate (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "0db5f11513a1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2e0ca46fb51c",
+   "note": "triggeringMultipleScenariosRunsThemConcurrently (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"concurrent-a\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    },\n    \"thinkTime\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 5\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "triggeringMultipleScenariosRunsThemConcurrently (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "2e0ca46fb51c"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/concurrent-a",
+   "note": "triggeringMultipleScenariosRunsThemConcurrently (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "2e0ca46fb51c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"concurrent-b\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/b\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    },\n    \"thinkTime\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 5\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "triggeringMultipleScenariosRunsThemConcurrently (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "2e0ca46fb51c"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/concurrent-b",
+   "note": "triggeringMultipleScenariosRunsThemConcurrently (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "2e0ca46fb51c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "6b8c391c413f",
+   "note": "feederRandomSelectsWithinTheDataset (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"feeder\" : {\n    \"rows\" : [ {\n      \"user\" : \"a\"\n    }, {\n      \"user\" : \"b\"\n    }, {\n      \"user\" : \"c\"\n    } ],\n    \"strategy\" : \"RANDOM\"\n  },\n  \"maxRequests\" : 30,\n  \"name\" : \"feeder-random\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/u/{{iteration.data.user}}\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "feederRandomSelectsWithinTheDataset (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "6b8c391c413f"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/feeder-random",
+   "note": "feederRandomSelectsWithinTheDataset (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "6b8c391c413f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a3b0a75f6847",
+   "note": "validateRejectsProfileWithNeitherStagesNorShape (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"empty\",\n  \"profile\" : { },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateRejectsProfileWithNeitherStagesNorShape (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "a3b0a75f6847"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ee5554d28937",
+   "note": "linearProfileRampsTargetVusOverTime (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"linear\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"endVus\" : 8,\n      \"startVus\" : 0,\n      \"type\" : \"VU\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "linearProfileRampsTargetVusOverTime (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "ee5554d28937"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/linear",
+   "note": "linearProfileRampsTargetVusOverTime (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "ee5554d28937"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e570c87c15ff",
+   "note": "aStopThatLosesToAnotherStopKeepsTheTerminalStatus (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"stop-vs-stop\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "aStopThatLosesToAnotherStopKeepsTheTerminalStatus (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "e570c87c15ff"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/stop-vs-stop",
+   "note": "aStopThatLosesToAnotherStopKeepsTheTerminalStatus (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "e570c87c15ff"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b33b72d6c6df",
+   "note": "pacingDelayIsZeroWhenIterationOverrunsCycle (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"overrun\",\n  \"pacing\" : {\n    \"mode\" : \"CONSTANT_PACING\",\n    \"value\" : 1.0\n  },\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "pacingDelayIsZeroWhenIterationOverrunsCycle (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "b33b72d6c6df"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/overrun",
+   "note": "pacingDelayIsZeroWhenIterationOverrunsCycle (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "b33b72d6c6df"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f2d7705a197e",
+   "note": "getStatusReportsTerminalStateAfterStop (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"stoppable\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "getStatusReportsTerminalStateAfterStop (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "f2d7705a197e"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/stoppable",
+   "note": "getStatusReportsTerminalStateAfterStop (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "f2d7705a197e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "39c5ea0b3cd3",
+   "note": "rejectsRateStageExceedingMaxRate (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"too-fast\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"rate\" : 1000000.0,\n      \"type\" : \"RATE\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rejectsRateStageExceedingMaxRate (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "39c5ea0b3cd3"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "87277768215a",
+   "note": "statusPercentilesPopulateWithMetricsDisabled (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 12,\n  \"name\" : \"hdr-no-metrics\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 3\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "statusPercentilesPopulateWithMetricsDisabled (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "87277768215a"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/hdr-no-metrics",
+   "note": "statusPercentilesPopulateWithMetricsDisabled (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "87277768215a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e045e834ad52",
+   "note": "rateStageAfterPauseDoesNotBurstOnFirstTick (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"rate-pause-rate\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"rate\" : 10.0,\n      \"type\" : \"RATE\"\n    }, {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 5000,\n      \"type\" : \"PAUSE\"\n    }, {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"rate\" : 10.0,\n      \"type\" : \"RATE\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rateStageAfterPauseDoesNotBurstOnFirstTick (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "e045e834ad52"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/rate-pause-rate",
+   "note": "rateStageAfterPauseDoesNotBurstOnFirstTick (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "e045e834ad52"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2242f8c94db1",
+   "note": "validateRejectsShapeThatExpandsToNoStages (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"empty-shape\",\n  \"profile\" : {\n    \"shape\" : {\n      \"curve\" : \"LINEAR\",\n      \"metric\" : \"VU\",\n      \"start\" : 5.0,\n      \"step\" : 5.0,\n      \"stepDurationMillis\" : 1000,\n      \"steps\" : 0,\n      \"type\" : \"STAIRS\"\n    }\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateRejectsShapeThatExpandsToNoStages (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "2242f8c94db1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8b09ed1308ab",
+   "note": "aStopLandingWhileItsRunIsStillStartingKeepsTheStoppedStatus (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"start-vs-stop\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "aStopLandingWhileItsRunIsStillStartingKeepsTheStoppedStatus (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "8b09ed1308ab"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/start-vs-stop",
+   "note": "aStopLandingWhileItsRunIsStillStartingKeepsTheStoppedStatus (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "8b09ed1308ab"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "1f28eef5ed96",
+   "note": "constantThroughputPacingComputesCycleFromRate (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"throughput-paced\",\n  \"pacing\" : {\n    \"mode\" : \"CONSTANT_THROUGHPUT\",\n    \"value\" : 5.0\n  },\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "constantThroughputPacingComputesCycleFromRate (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "1f28eef5ed96"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/throughput-paced",
+   "note": "constantThroughputPacingComputesCycleFromRate (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "1f28eef5ed96"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "13bef823ab13",
+   "note": "feederDataAsCsvResolvesIntoRows (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"feeder\" : {\n    \"data\" : \"user\\nalice\\nbob\",\n    \"format\" : \"CSV\",\n    \"strategy\" : \"CIRCULAR\"\n  },\n  \"maxRequests\" : 4,\n  \"name\" : \"feeder-csv-run\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/u/{{iteration.data.user}}\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "feederDataAsCsvResolvesIntoRows (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "13bef823ab13"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/feeder-csv-run",
+   "note": "feederDataAsCsvResolvesIntoRows (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "13bef823ab13"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ec173caabd21",
+   "note": "validateRejectsWeightedWithNegativeWeight (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"weighted-negative\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"stepSelection\" : \"WEIGHTED\",\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\"\n    },\n    \"weight\" : -2.0\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateRejectsWeightedWithNegativeWeight (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "ec173caabd21"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "18551f24c100",
+   "note": "perIterationTemplatingProducesDistinctPaths (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 5,\n  \"name\" : \"templated\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/item/$iteration.index\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "perIterationTemplatingProducesDistinctPaths (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "18551f24c100"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/templated",
+   "note": "perIterationTemplatingProducesDistinctPaths (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "18551f24c100"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "1eb869a4b65c",
+   "note": "unregisteringTheSenderOfARunStillActiveKeepsThatRun (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"active\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "unregisteringTheSenderOfARunStillActiveKeepsThatRun (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "1eb869a4b65c"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/active",
+   "note": "unregisteringTheSenderOfARunStillActiveKeepsThatRun (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "1eb869a4b65c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "128dede075e9",
+   "note": "perStepChecksRecordPassAndFail (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"checks-record\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"checks\" : [ {\n      \"comparator\" : \"EQUALS\",\n      \"source\" : \"STATUS\",\n      \"valid\" : true,\n      \"value\" : \"200\"\n    }, {\n      \"comparator\" : \"EQUALS\",\n      \"jsonPath\" : \"$.status\",\n      \"source\" : \"BODY_JSONPATH\",\n      \"valid\" : true,\n      \"value\" : \"ok\"\n    } ],\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "perStepChecksRecordPassAndFail (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "128dede075e9"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/checks-record",
+   "note": "perStepChecksRecordPassAndFail (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "128dede075e9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d7e3d71a46ec",
+   "note": "rateStageAfterVuStageDoesNotBurstOnFirstTick (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"rate-vu-rate\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"rate\" : 10.0,\n      \"type\" : \"RATE\"\n    }, {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 3000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    }, {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"rate\" : 10.0,\n      \"type\" : \"RATE\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    },\n    \"thinkTime\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"value\" : 60\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rateStageAfterVuStageDoesNotBurstOnFirstTick (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "d7e3d71a46ec"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/rate-vu-rate",
+   "note": "rateStageAfterVuStageDoesNotBurstOnFirstTick (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "d7e3d71a46ec"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "58f80210d9eb",
+   "note": "capturesDoNotLeakAcrossIterations (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 6,\n  \"name\" : \"capture-isolation\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"captures\" : [ {\n      \"expression\" : \"$.token\",\n      \"name\" : \"token\",\n      \"source\" : \"BODY_JSONPATH\"\n    } ],\n    \"request\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/login\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  }, {\n    \"request\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/echo/{{iteration.captured.token}}\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "capturesDoNotLeakAcrossIterations (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "58f80210d9eb"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/capture-isolation",
+   "note": "capturesDoNotLeakAcrossIterations (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "58f80210d9eb"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "47d5f6dda198",
+   "note": "checkFailureRateThresholdTripsAndAbortsAfterGrace (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"abortGraceMillis\" : 1000,\n  \"abortOnFail\" : true,\n  \"name\" : \"check-rate-abort\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"checks\" : [ {\n      \"comparator\" : \"EQUALS\",\n      \"jsonPath\" : \"$.status\",\n      \"source\" : \"BODY_JSONPATH\",\n      \"valid\" : true,\n      \"value\" : \"ok\"\n    } ],\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\",\n  \"thresholds\" : [ {\n    \"comparator\" : \"LESS_THAN\",\n    \"metric\" : \"CHECK_FAILURE_RATE\",\n    \"threshold\" : 0.5\n  } ]\n}",
+   "note": "checkFailureRateThresholdTripsAndAbortsAfterGrace (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "47d5f6dda198"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/check-rate-abort",
+   "note": "checkFailureRateThresholdTripsAndAbortsAfterGrace (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "47d5f6dda198"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "897223ce8aa5",
+   "note": "captureNoMatchUsesDefaultValueAndMissingLeavesVarUnset (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 2,\n  \"name\" : \"capture-default\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"captures\" : [ {\n      \"defaultValue\" : \"fallback\",\n      \"expression\" : \"$.token\",\n      \"name\" : \"token\",\n      \"source\" : \"BODY_JSONPATH\"\n    }, {\n      \"expression\" : \"$.alsoMissing\",\n      \"name\" : \"missing\",\n      \"source\" : \"BODY_JSONPATH\"\n    } ],\n    \"request\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/login\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  }, {\n    \"request\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/a/{{iteration.captured.token}}/{{iteration.captured.missing}}\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "captureNoMatchUsesDefaultValueAndMissingLeavesVarUnset (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "897223ce8aa5"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/capture-default",
+   "note": "captureNoMatchUsesDefaultValueAndMissingLeavesVarUnset (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "897223ce8aa5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "6190c862f805",
+   "note": "noThresholdsLeavesVerdictNull (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 15,\n  \"name\" : \"no-thresholds\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "noThresholdsLeavesVerdictNull (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "6190c862f805"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/no-thresholds",
+   "note": "noThresholdsLeavesVerdictNull (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "6190c862f805"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2a9d420433e7",
+   "note": "validateRejectsMalformedFeederData (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"feeder\" : {\n    \"data\" : \"{not an array\",\n    \"format\" : \"JSON\",\n    \"strategy\" : \"CIRCULAR\"\n  },\n  \"name\" : \"bad-feeder\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateRejectsMalformedFeederData (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "2a9d420433e7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f0931d15e441",
+   "note": "thresholdBreachedYieldsFailVerdict (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"threshold-fail\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\",\n  \"thresholds\" : [ {\n    \"comparator\" : \"LESS_THAN\",\n    \"metric\" : \"ERROR_RATE\",\n    \"threshold\" : 0.1\n  } ]\n}",
+   "note": "thresholdBreachedYieldsFailVerdict (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "f0931d15e441"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/threshold-fail",
+   "note": "thresholdBreachedYieldsFailVerdict (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "f0931d15e441"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "6786e0369bd1",
+   "note": "feederDataAsJsonResolvesIntoRows (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"feeder\" : {\n    \"data\" : \"[{\\\"user\\\":\\\"alice\\\"},{\\\"user\\\":\\\"bob\\\"}]\",\n    \"format\" : \"JSON\",\n    \"strategy\" : \"CIRCULAR\"\n  },\n  \"maxRequests\" : 4,\n  \"name\" : \"feeder-json\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/u/{{iteration.data.user}}\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "feederDataAsJsonResolvesIntoRows (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "6786e0369bd1"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/feeder-json",
+   "note": "feederDataAsJsonResolvesIntoRows (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "6786e0369bd1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ae05bc9e8138",
+   "note": "correctedLatencyIncludesFullInFlightTime (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 12,\n  \"name\" : \"co-latency\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 3\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "correctedLatencyIncludesFullInFlightTime (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "ae05bc9e8138"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/co-latency",
+   "note": "correctedLatencyIncludesFullInFlightTime (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "ae05bc9e8138"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "bec6422817a2",
+   "note": "rejectsStageWithZeroDuration (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"zero-duration\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 0,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rejectsStageWithZeroDuration (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "bec6422817a2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "29b2b44aea81",
+   "note": "unregisteringAnotherServersSenderKeepsTheEndedRun (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"ended\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "unregisteringAnotherServersSenderKeepsTheEndedRun (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "29b2b44aea81"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/ended",
+   "note": "unregisteringAnotherServersSenderKeepsTheEndedRun (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "29b2b44aea81"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d3305da72414",
+   "note": "startDelayKeepsScenarioPendingUntilDelayElapses (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"delayed\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"startDelayMillis\" : 500,\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "startDelayKeepsScenarioPendingUntilDelayElapses (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "d3305da72414"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/delayed",
+   "note": "startDelayKeepsScenarioPendingUntilDelayElapses (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "d3305da72414"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "fb0025804e97",
+   "note": "rateStageAchievesTargetArrivalRate (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"rate\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 2000,\n      \"rate\" : 50.0,\n      \"type\" : \"RATE\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rateStageAchievesTargetArrivalRate (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "fb0025804e97"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/rate",
+   "note": "rateStageAchievesTargetArrivalRate (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "fb0025804e97"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "bfd4d5fb4c3d",
+   "note": "constantPacingDelaysNextIterationToTargetCycle (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"paced\",\n  \"pacing\" : {\n    \"mode\" : \"CONSTANT_PACING\",\n    \"value\" : 200.0\n  },\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "constantPacingDelaysNextIterationToTargetCycle (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "bfd4d5fb4c3d"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/paced",
+   "note": "constantPacingDelaysNextIterationToTargetCycle (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "bfd4d5fb4c3d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a9f09696c1f9",
+   "note": "aCompletingTickOfAReplacedRunLeavesTheNewRunActive (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"tick-vs-retrigger\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "aCompletingTickOfAReplacedRunLeavesTheNewRunActive (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "a9f09696c1f9"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/tick-vs-retrigger",
+   "note": "aCompletingTickOfAReplacedRunLeavesTheNewRunActive (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "a9f09696c1f9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"tick-vs-retrigger\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "aCompletingTickOfAReplacedRunLeavesTheNewRunActive (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "a9f09696c1f9"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/tick-vs-retrigger",
+   "note": "aCompletingTickOfAReplacedRunLeavesTheNewRunActive (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "a9f09696c1f9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "29179fc777f8",
+   "note": "pauseStageProducesNoRequests (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"pause-only\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 500,\n      \"type\" : \"PAUSE\"\n    }, {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 500,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "pauseStageProducesNoRequests (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "29179fc777f8"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/pause-only",
+   "note": "pauseStageProducesNoRequests (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "29179fc777f8"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0191c27931c7",
+   "note": "stagesRunInSequenceVuThenPauseThenRate (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"sequenced\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 400,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    }, {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 200,\n      \"type\" : \"PAUSE\"\n    }, {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 500,\n      \"rate\" : 20.0,\n      \"type\" : \"RATE\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "stagesRunInSequenceVuThenPauseThenRate (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "0191c27931c7"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/sequenced",
+   "note": "stagesRunInSequenceVuThenPauseThenRate (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "0191c27931c7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f03fdb8f2426",
+   "note": "abortOnFailTerminatesRunAfterGraceWindow (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"abortGraceMillis\" : 1000,\n  \"abortOnFail\" : true,\n  \"name\" : \"abort-on-fail\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\",\n  \"thresholds\" : [ {\n    \"comparator\" : \"LESS_THAN\",\n    \"metric\" : \"ERROR_RATE\",\n    \"threshold\" : 0.1\n  } ]\n}",
+   "note": "abortOnFailTerminatesRunAfterGraceWindow (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "f03fdb8f2426"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/abort-on-fail",
+   "note": "abortOnFailTerminatesRunAfterGraceWindow (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "f03fdb8f2426"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "21702c139f81",
+   "note": "activeVuCountReturnsToZeroAfterCompletion (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 30,\n  \"name\" : \"drain-on-complete\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 4\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "activeVuCountReturnsToZeroAfterCompletion (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "21702c139f81"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/drain-on-complete",
+   "note": "activeVuCountReturnsToZeroAfterCompletion (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "21702c139f81"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "986b910920c2",
+   "note": "rejectsMissingProfileAndSteps (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"x\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rejectsMissingProfileAndSteps (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "986b910920c2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"x\",\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rejectsMissingProfileAndSteps (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "986b910920c2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "68fa99e35fcf",
+   "note": "weightedSelectionRunsExactlyOneStepPerIteration (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 1,\n  \"name\" : \"weighted-one-step\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"stepSelection\" : \"WEIGHTED\",\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    },\n    \"weight\" : 1.0\n  }, {\n    \"request\" : {\n      \"path\" : \"/b\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    },\n    \"weight\" : 1.0\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "weightedSelectionRunsExactlyOneStepPerIteration (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "68fa99e35fcf"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/weighted-one-step",
+   "note": "weightedSelectionRunsExactlyOneStepPerIteration (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "68fa99e35fcf"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "94e055b78e15",
+   "note": "aCompletingTickThatLosesToAnotherTickKeepsTheCompletedStatus (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"tick-vs-tick\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "aCompletingTickThatLosesToAnotherTickKeepsTheCompletedStatus (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "94e055b78e15"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/tick-vs-tick",
+   "note": "aCompletingTickThatLosesToAnotherTickKeepsTheCompletedStatus (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "94e055b78e15"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "64a2c5598ccc",
+   "note": "validateAcceptsSequentialWithWeightsPresentButIgnored (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"sequential-with-weights\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\"\n    },\n    \"weight\" : 5.0\n  }, {\n    \"request\" : {\n      \"path\" : \"/b\"\n    },\n    \"weight\" : 0.0\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateAcceptsSequentialWithWeightsPresentButIgnored (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "64a2c5598ccc"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/sequential-with-weights",
+   "note": "validateAcceptsSequentialWithWeightsPresentButIgnored (loadorch): LoadScenarioOrchestrator.validate (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "64a2c5598ccc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b1d5179826bc",
+   "note": "thresholdSatisfiedYieldsPassVerdict (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"threshold-pass\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\",\n  \"thresholds\" : [ {\n    \"comparator\" : \"LESS_THAN\",\n    \"metric\" : \"LATENCY_P95\",\n    \"threshold\" : 10000.0\n  } ]\n}",
+   "note": "thresholdSatisfiedYieldsPassVerdict (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "b1d5179826bc"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/threshold-pass",
+   "note": "thresholdSatisfiedYieldsPassVerdict (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "b1d5179826bc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f68f423aac62",
+   "note": "activeVuCountReturnsToZeroAfterStop (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"drain-on-stop\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 4\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "activeVuCountReturnsToZeroAfterStop (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "f68f423aac62"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/drain-on-stop",
+   "note": "activeVuCountReturnsToZeroAfterStop (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "f68f423aac62"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f52631f3b86e",
+   "note": "captureBodyJsonPathFlowsIntoSubsequentStepPathBodyAndHeader (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 2,\n  \"name\" : \"capture-jsonpath\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"captures\" : [ {\n      \"expression\" : \"$.token\",\n      \"name\" : \"token\",\n      \"source\" : \"BODY_JSONPATH\"\n    } ],\n    \"request\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/login\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  }, {\n    \"request\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/account/{{iteration.captured.token}}\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ],\n        \"Authorization\" : [ \"Bearer {{iteration.captured.token}}\" ]\n      },\n      \"body\" : \"{\\\"t\\\":\\\"{{iteration.captured.token}}\\\"}\"\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "captureBodyJsonPathFlowsIntoSubsequentStepPathBodyAndHeader (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "f52631f3b86e"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/capture-jsonpath",
+   "note": "captureBodyJsonPathFlowsIntoSubsequentStepPathBodyAndHeader (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "f52631f3b86e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b82521630512",
+   "note": "aCompletingTickThatLosesToAStopKeepsTheStoppedStatus (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"tick-vs-stop\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "aCompletingTickThatLosesToAStopKeepsTheStoppedStatus (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "b82521630512"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/tick-vs-stop",
+   "note": "aCompletingTickThatLosesToAStopKeepsTheStoppedStatus (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "b82521630512"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8a87cc7c01b0",
+   "note": "countsARequestForwardProxyBlockPrivateNetworksRefusedAsBlockedAndLogsItOncePerRun (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"refused\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\",\n      \"headers\" : {\n        \"Host\" : [ \"127.0.0.1\" ]\n      }\n    },\n    \"thinkTime\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 5\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "countsARequestForwardProxyBlockPrivateNetworksRefusedAsBlockedAndLogsItOncePerRun (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "8a87cc7c01b0"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/refused",
+   "note": "countsARequestForwardProxyBlockPrivateNetworksRefusedAsBlockedAndLogsItOncePerRun (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "8a87cc7c01b0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "7ebb54ddabc7",
+   "note": "sequentialSelectionRunsAllStepsInOrderEachIteration (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 3,\n  \"name\" : \"sequential-order\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/a\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  }, {\n    \"request\" : {\n      \"path\" : \"/b\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  }, {\n    \"request\" : {\n      \"path\" : \"/c\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "sequentialSelectionRunsAllStepsInOrderEachIteration (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "7ebb54ddabc7"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/sequential-order",
+   "note": "sequentialSelectionRunsAllStepsInOrderEachIteration (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "7ebb54ddabc7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d56ca13afd83",
+   "note": "feederSequentialUsesEachRowOnceThenCompletes (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"feeder\" : {\n    \"rows\" : [ {\n      \"user\" : \"a\"\n    }, {\n      \"user\" : \"b\"\n    }, {\n      \"user\" : \"c\"\n    }, {\n      \"user\" : \"d\"\n    } ],\n    \"strategy\" : \"SEQUENTIAL\"\n  },\n  \"name\" : \"feeder-sequential\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 600000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/u/{{iteration.data.user}}\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "feederSequentialUsesEachRowOnceThenCompletes (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "d56ca13afd83"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/feeder-sequential",
+   "note": "feederSequentialUsesEachRowOnceThenCompletes (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "d56ca13afd83"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "953413ab9263",
+   "note": "constantProfileDrivesRequestsUntilMaxRequests (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 25,\n  \"name\" : \"constant\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 3\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "constantProfileDrivesRequestsUntilMaxRequests (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "953413ab9263"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/constant",
+   "note": "constantProfileDrivesRequestsUntilMaxRequests (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "953413ab9263"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9dd26c9869fd",
+   "note": "noChecksLeavesCheckResultsEmpty (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 10,\n  \"name\" : \"no-checks\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "noChecksLeavesCheckResultsEmpty (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "9dd26c9869fd"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/no-checks",
+   "note": "noChecksLeavesCheckResultsEmpty (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "9dd26c9869fd"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b59b06946c80",
+   "note": "completedRunCarriesFinalVerdict (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 15,\n  \"name\" : \"final-verdict\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 2\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\",\n  \"thresholds\" : [ {\n    \"comparator\" : \"LESS_THAN_OR_EQUAL\",\n    \"metric\" : \"LATENCY_P99\",\n    \"threshold\" : 60000.0\n  } ]\n}",
+   "note": "completedRunCarriesFinalVerdict (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "b59b06946c80"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/final-verdict",
+   "note": "completedRunCarriesFinalVerdict (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "b59b06946c80"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "dadd191d06ea",
+   "note": "rejectsRampStageMissingEndpoints (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"bad-ramp\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"startVus\" : 1,\n      \"type\" : \"VU\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rejectsRampStageMissingEndpoints (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "dadd191d06ea"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a30d6d992038",
+   "note": "rampRateStageIncreasesOverTime (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"ramp-rate\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"endRate\" : 100.0,\n      \"startRate\" : 0.0,\n      \"type\" : \"RATE\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "rampRateStageIncreasesOverTime (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "a30d6d992038"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/ramp-rate",
+   "note": "rampRateStageIncreasesOverTime (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "a30d6d992038"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "cd4b531f4b67",
+   "note": "validateAcceptsShapedProfile (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"shaped\",\n  \"profile\" : {\n    \"shape\" : {\n      \"curve\" : \"LINEAR\",\n      \"holdMillis\" : 20000,\n      \"metric\" : \"VU\",\n      \"rampMillis\" : 5000,\n      \"target\" : 10.0,\n      \"type\" : \"RAMP_HOLD\"\n    }\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateAcceptsShapedProfile (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "cd4b531f4b67"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/shaped",
+   "note": "validateAcceptsShapedProfile (loadorch): LoadScenarioOrchestrator.validate (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "cd4b531f4b67"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "6fd5560bb962",
+   "note": "validateAcceptsTemplatizedRecordingGeneratedWeightedScenario (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"rec\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"stepSelection\" : \"WEIGHTED\",\n  \"steps\" : [ {\n    \"name\" : \"GET /orders/{id}\",\n    \"request\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/orders/1\"\n    },\n    \"weight\" : 2.0\n  }, {\n    \"name\" : \"GET /users/{id}\",\n    \"request\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/users/9\"\n    },\n    \"weight\" : 1.0\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateAcceptsTemplatizedRecordingGeneratedWeightedScenario (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "6fd5560bb962"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/rec",
+   "note": "validateAcceptsTemplatizedRecordingGeneratedWeightedScenario (loadorch): LoadScenarioOrchestrator.validate (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "6fd5560bb962"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "79bb520af0eb",
+   "note": "captureHeaderFlowsIntoSubsequentStep (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 2,\n  \"name\" : \"capture-header\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"captures\" : [ {\n      \"expression\" : \"Location\",\n      \"name\" : \"loc\",\n      \"source\" : \"HEADER\"\n    } ],\n    \"request\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/login\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  }, {\n    \"request\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/follow$iteration.captured.loc\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "captureHeaderFlowsIntoSubsequentStep (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "79bb520af0eb"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/capture-header",
+   "note": "captureHeaderFlowsIntoSubsequentStep (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "79bb520af0eb"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "69de6ef9a53e",
+   "note": "validateAcceptsNonePacing (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"none-pacing\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateAcceptsNonePacing (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "69de6ef9a53e"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/none-pacing",
+   "note": "validateAcceptsNonePacing (loadorch): LoadScenarioOrchestrator.validate (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "69de6ef9a53e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "42dce9afe942",
+   "note": "validateRejectsShapeWhoseExpansionExceedsVuCap (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"too-big\",\n  \"profile\" : {\n    \"shape\" : {\n      \"curve\" : \"LINEAR\",\n      \"holdMillis\" : 20000,\n      \"metric\" : \"VU\",\n      \"rampMillis\" : 5000,\n      \"target\" : 500.0,\n      \"type\" : \"RAMP_HOLD\"\n    }\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateRejectsShapeWhoseExpansionExceedsVuCap (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "42dce9afe942"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a2f48e318f3c",
+   "note": "weightedSelectionDistributesProportionallyToWeights (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 450,\n  \"name\" : \"weighted-distribution\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 8\n    } ]\n  },\n  \"stepSelection\" : \"WEIGHTED\",\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/heavy\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    },\n    \"weight\" : 8.0\n  }, {\n    \"request\" : {\n      \"path\" : \"/light1\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    },\n    \"weight\" : 1.0\n  }, {\n    \"request\" : {\n      \"path\" : \"/light2\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    },\n    \"weight\" : 1.0\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "weightedSelectionDistributesProportionallyToWeights (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "a2f48e318f3c"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/weighted-distribution",
+   "note": "weightedSelectionDistributesProportionallyToWeights (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "a2f48e318f3c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8ca4e75d52f8",
+   "note": "captureBodyRegexGroupOneFlowsIntoSubsequentStep (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"maxRequests\" : 2,\n  \"name\" : \"capture-regex\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"captures\" : [ {\n      \"expression\" : \"value=\\\"([^\\\"]+)\\\"\",\n      \"name\" : \"csrf\",\n      \"source\" : \"BODY_REGEX\"\n    } ],\n    \"request\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/form\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  }, {\n    \"request\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/submit\",\n      \"headers\" : {\n        \"X-CSRF\" : [ \"{{iteration.captured.csrf}}\" ],\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "captureBodyRegexGroupOneFlowsIntoSubsequentStep (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "8ca4e75d52f8"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/capture-regex",
+   "note": "captureBodyRegexGroupOneFlowsIntoSubsequentStep (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "8ca4e75d52f8"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "601958adf348",
+   "note": "activeVuCountRampsDownToTargetWithoutUnderflow (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"ramp-down\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"endVus\" : 2,\n      \"startVus\" : 6,\n      \"type\" : \"VU\"\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "activeVuCountRampsDownToTargetWithoutUnderflow (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "601958adf348"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/ramp-down",
+   "note": "activeVuCountRampsDownToTargetWithoutUnderflow (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "601958adf348"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2caf60b558e2",
+   "note": "validateRejectsNonPositivePacingValue (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"bad-pacing\",\n  \"pacing\" : {\n    \"mode\" : \"CONSTANT_PACING\",\n    \"value\" : 0.0\n  },\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateRejectsNonPositivePacingValue (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "2caf60b558e2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9b9cbd9bbe8b",
+   "note": "feederDataResolvesInPathBodyAndHeader (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"feeder\" : {\n    \"rows\" : [ {\n      \"user\" : \"zoe\"\n    } ],\n    \"strategy\" : \"CIRCULAR\"\n  },\n  \"maxRequests\" : 1,\n  \"name\" : \"feeder-pbh\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/u/{{iteration.data.user}}\",\n      \"headers\" : {\n        \"X-User\" : [ \"{{iteration.data.user}}\" ],\n        \"Host\" : [ \"target\" ]\n      },\n      \"body\" : \"{\\\"u\\\":\\\"{{iteration.data.user}}\\\"}\"\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "feederDataResolvesInPathBodyAndHeader (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "9b9cbd9bbe8b"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/feeder-pbh",
+   "note": "feederDataResolvesInPathBodyAndHeader (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "9b9cbd9bbe8b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "fe730f94d0ad",
+   "note": "feederCircularCyclesRowsAcrossIterations (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"feeder\" : {\n    \"rows\" : [ {\n      \"user\" : \"a\"\n    }, {\n      \"user\" : \"b\"\n    } ],\n    \"strategy\" : \"CIRCULAR\"\n  },\n  \"maxRequests\" : 6,\n  \"name\" : \"feeder-circular\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 60000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/u/{{iteration.data.user}}\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"MUSTACHE\"\n}",
+   "note": "feederCircularCyclesRowsAcrossIterations (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "fe730f94d0ad"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/feeder-circular",
+   "note": "feederCircularCyclesRowsAcrossIterations (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "fe730f94d0ad"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "cf3badf6e842",
+   "note": "validateRejectsFeederWithNoRows (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"feeder\" : {\n    \"strategy\" : \"CIRCULAR\"\n  },\n  \"name\" : \"empty-feeder\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\"\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "validateRejectsFeederWithNoRows (loadorch): LoadScenarioOrchestrator.validate (validation)",
+   "case": "cf3badf6e842"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b4345989673e",
+   "note": "unregisteringASenderKeepsANewerOneAndFallsBackToTheOlderOneStillRegistered (loadorch): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"kept\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "unregisteringASenderKeepsANewerOneAndFallsBackToTheOlderOneStillRegistered (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "b4345989673e"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/kept",
+   "note": "unregisteringASenderKeepsANewerOneAndFallsBackToTheOlderOneStillRegistered (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "b4345989673e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"fallen-back\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "unregisteringASenderKeepsANewerOneAndFallsBackToTheOlderOneStillRegistered (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "b4345989673e"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/fallen-back",
+   "note": "unregisteringASenderKeepsANewerOneAndFallsBackToTheOlderOneStillRegistered (loadorch): LoadScenarioOrchestrator.start (the definition loaded)",
+   "mask": [
+    {
+     "regex": "\"(elapsedMillis|currentVus|requestsSent|succeeded|failed|droppedIterations|errorRate|startedAt|endedAt|startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|p50Millis|p95Millis|p99Millis|p999Millis)\" : -?[0-9][0-9.E-]*",
+     "replace": "\"$1\" : <run>"
+    }
+   ],
+   "case": "b4345989673e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": "{\n  \"name\" : \"none\",\n  \"profile\" : {\n    \"stages\" : [ {\n      \"curve\" : \"LINEAR\",\n      \"durationMillis\" : 1000,\n      \"type\" : \"VU\",\n      \"vus\" : 1\n    } ]\n  },\n  \"steps\" : [ {\n    \"request\" : {\n      \"path\" : \"/api\",\n      \"headers\" : {\n        \"Host\" : [ \"target\" ]\n      }\n    }\n  } ],\n  \"templateType\" : \"VELOCITY\"\n}",
+   "note": "unregisteringASenderKeepsANewerOneAndFallsBackToTheOlderOneStillRegistered (loadorch): LoadScenarioOrchestrator.start (validation)",
+   "case": "b4345989673e"
+  }
+ ]
+}

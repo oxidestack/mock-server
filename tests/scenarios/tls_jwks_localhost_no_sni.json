@@ -1,0 +1,49 @@
+{
+ "note": "the control plane's remote JWK set (nimbus RemoteJWKSet over BoundedResourceRetriever, an HttpsURLConnection) fetched from a dotless host (localhost) sends no SNI, as the JDK; the JWK set host is a peer in this server's network namespace whose refused fixed chain leaves the handshake without a certificate, and its fault entry shows whether the ClientHello named one. The OIDC discovery document and its jwks_uri go through the same retriever (src/jwks.rs::retrieve)",
+ "peer": true,
+ "peerNetwork": "shared",
+ "peerProperties": {
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/x509/mtls/chain-garbage.txt"
+ },
+ "properties": {
+  "controlPlaneJWTAuthenticationRequired": "true",
+  "controlPlaneJWTAuthenticationJWKSource": "{{peerhttpsurl}}/jwks"
+ },
+ "steps": [
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the JWK set host starts empty"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x"
+    },
+    "httpResponse": {
+     "body": "some_body"
+    }
+   },
+   "note": "a token: the remote set is fetched over TLS from localhost, and the handshake fails",
+   "headers": {
+    "authorization": "Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6Im1vY2stc2VydmVyLXJzLXRlc3QtZWMyNTYiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjQxMzM4OTQ0MDAsInN1YiI6ImVjMjU2LXN1YmplY3QifQ.Ddc3iYmi12KoPWbJYCRlHZhkgC_GdJmFkB2EMKta34JlfNkG1RP_aZbOUp2FPhtqCs0jr1Kg_bkck_Ku4iKX1A"
+   }
+  },
+  {
+   "node": "peer",
+   "note": "the JWK set host's log: its fault entry names no SNI",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)^.*?SSL or decoder fault caught by port unification handler -> closing pipeline \\[id: [^\n]*?\\]( \\(SNI: [^)\n]*\\))?\n.*$",
+     "replace": "the first fault entry's SNI:${1}",
+     "reason": "only whether the first handshake named an SNI: the rest of the log is not this scenario's subject"
+    }
+   ]
+  }
+ ]
+}

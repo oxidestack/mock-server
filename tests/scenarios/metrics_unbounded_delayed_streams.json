@@ -1,0 +1,57 @@
+{"source": "Scheduler.schedule(command, false, delay) without a rejectable wrapper counts pendingUnboundedDelayedTasks until the delay elapses (scheduleAfterDelay), whatever became of the stream: GrpcStreamResponseActionHandler's next message, HttpWebSocketResponseActionHandler's next scripted message, NettyResponseWriter's closeSocketDelay; both scheduler gauges read it",
+ "properties": {"metricsEnabled": "true"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/grpc/descriptors", "bodyFile": "grpc/greeting.dsc"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+   {"httpRequest": {"path": "/com.example.grpc.GreetingService/ListGreetings", "headers": {"x-case": ["slow"]}}, "grpcStreamResponse": {"statusName": "OK", "messages": [
+    {"json": "{\"greeting\": \"one\"}"},
+    {"json": "{\"greeting\": \"two\"}", "delay": {"timeUnit": "MILLISECONDS", "value": 5000}}
+   ]}},
+   {"httpRequest": {"path": "/com.example.grpc.GreetingService/ListGreetings", "headers": {"x-case": ["deadline"]}}, "grpcStreamResponse": {"statusName": "OK", "messages": [
+    {"json": "{\"greeting\": \"one\"}", "delay": {"timeUnit": "MILLISECONDS", "value": 3000}}
+   ]}},
+   {"httpRequest": {"path": "/ws"}, "httpWebSocketResponse": {"messages": [
+    {"text": "a", "delay": {"timeUnit": "MILLISECONDS", "value": 5000}},
+    {"text": "b"}
+   ], "closeConnection": false}},
+   {"httpRequest": {"path": "/close"}, "httpResponse": {"body": "bye", "connectionOptions": {"closeSocket": true, "closeSocketDelay": {"timeUnit": "MILLISECONDS", "value": 5000}}}}
+  ], "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]},
+  {"note": "nothing waits yet", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "a gRPC stream: the first message now, the second after its delay", "async": "g", "maxMillis": 30000, "h2": true, "method": "POST", "path": "/com.example.grpc.GreetingService/ListGreetings", "headers": {"content-type": "application/grpc", "te": "trailers", "x-case": "slow"}, "bodyBase64": "AAAAAAcKBUFsaWNl", "trailers": true},
+    {"note": "one: the stream's next message", "method": "GET", "path": "/mockserver/metrics", "pollUntil": "mock_server_pending_delayed_tasks 1\\.0\\n(?s:.*)mock_server_scheduler_queued_tasks 1\\.0", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "a WebSocket response whose first message waits", "wsOpen": "w", "path": "/ws"},
+    {"note": "two: and the socket's next message", "method": "GET", "path": "/mockserver/metrics", "pollUntil": "mock_server_pending_delayed_tasks 2\\.0\\n(?s:.*)mock_server_scheduler_queued_tasks 2\\.0", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "answered at once, its socket closed after the delay", "async": "c", "maxMillis": 30000, "method": "GET", "path": "/close"},
+    {"note": "three: and the close-socket delay", "method": "GET", "path": "/mockserver/metrics", "pollUntil": "mock_server_pending_delayed_tasks 3\\.0\\n(?s:.*)mock_server_scheduler_queued_tasks 3\\.0", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"await": "g"},
+  {"await": "c"},
+  {"wsRead": "w", "waitMillis": 10000},
+  {"wsRead": "w"},
+  {"wsClose": "w"},
+    {"note": "nothing waits", "method": "GET", "path": "/mockserver/metrics", "pollUntil": "mock_server_pending_delayed_tasks 0\\.0\\n(?s:.*)mock_server_scheduler_queued_tasks 0\\.0", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "the deadline ends the stream before its message's delay", "h2": true, "method": "POST", "path": "/com.example.grpc.GreetingService/ListGreetings", "headers": {"content-type": "application/grpc", "te": "trailers", "x-case": "deadline", "grpc-timeout": "300m"}, "bodyBase64": "AAAAAAcKBUFsaWNl", "trailers": true},
+    {"note": "one: the message's delay still counts after the stream ended", "method": "GET", "path": "/mockserver/metrics", "pollUntil": "mock_server_pending_delayed_tasks 1\\.0\\n(?s:.*)mock_server_scheduler_queued_tasks 1\\.0", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "nothing waits again", "method": "GET", "path": "/mockserver/metrics", "pollUntil": "mock_server_pending_delayed_tasks 0\\.0\\n(?s:.*)mock_server_scheduler_queued_tasks 0\\.0", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]}
+ ]
+}

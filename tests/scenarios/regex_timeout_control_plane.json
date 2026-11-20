@@ -1,0 +1,79 @@
+{
+ "source": "on the control plane RegexStringMatcher runs each filter regex in MatchingTimeoutExecutor too, both directions (filter -> recorded value, and recorded value -> filter); a catastrophic retrieve, verify, verifySequence or clear filter (path `/(.*a){25}` against a recorded 40-character path) passes regexMatchingTimeoutMillis (here 300), logs the WARN `regex evaluation timed out after {}ms for pattern:{}— treating as non-match`, and the recorded request is not selected.",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "GET",
+   "path": "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "method": "GET",
+   "path": "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+   "note": "a second recorded request: each evaluation times out and logs its own WARN"
+  },
+  {
+   "note": "the filter times out against the recorded path: nothing is selected",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/(.*a){25}"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/(.*a){25}"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/(.*a){25}"
+     }
+    ]
+   }
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "the order of the retrieve and verify WARNs",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": {
+    "path": "/(.*a){25}"
+   }
+  },
+  {
+   "note": "the clear removed nothing",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

@@ -1,0 +1,96 @@
+{
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/limit"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/upload"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[^\"]+\""
+      ]
+    },
+    {
+      "note": "by default (maxHeaderSize 262144) a 100 KiB header list is served",
+      "h2raw": {
+        "method": "GET",
+        "path": "/limit",
+        "authority": "localhost",
+        "decode": true,
+        "headers": [
+          [
+            "x-filler",
+            "{{repeat:102181:a}}"
+          ]
+        ]
+      }
+    },
+    {
+      "note": "by default one byte over 262144 is answered 431",
+      "h2raw": {
+        "method": "POST",
+        "path": "/limit",
+        "authority": "localhost",
+        "decode": true,
+        "open": true,
+        "headers": [
+          [
+            "x-filler",
+            "{{repeat:261925:a}}"
+          ]
+        ]
+      }
+    },
+    {
+      "note": "a 4 KB field referred to 20,000 times from the dynamic table (80 MB decoded) is answered 431; the next stream is served",
+      "h2raw": {
+        "method": "POST",
+        "path": "/limit",
+        "authority": "localhost",
+        "decode": true,
+        "open": true,
+        "indexedRepeat": {
+          "name": "x-filler",
+          "value": "{{repeat:4000:a}}",
+          "count": 20000
+        },
+        "streams": [
+          {
+            "method": "GET",
+            "path": "/limit"
+          }
+        ]
+      }
+    },
+    {
+      "note": "only the served requests were dispatched",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+      "body": {
+        "path": "/limit"
+      },
+      "mask": [
+        {
+          "regex": "a{100,}",
+          "replace": "a...",
+          "reason": "the filler values"
+        }
+      ]
+    }
+  ]
+}

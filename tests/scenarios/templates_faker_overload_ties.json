@@ -1,0 +1,253 @@
+{
+ "source": "Datafaker expression overload ties resolved in the 8.0.0 image's getMethods() order (Temurin 26): date.future(int, TimeUnit, String) before the Date overload, so a date-like third argument fails; date.past takes the Date overload; aviation.flight takes AviationCodeType first. Mustache cannot pass arguments, so only zero-argument calls reach Datafaker there",
+ "properties": {
+  "templateFakerSeed": "4242"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity1"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{date.future ''10'',''DAYS'',''12 Aug 1995''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "future: the String overload is first in 8.0.0's JVM order and fails: $faker.expression('#{date.future ''10'',''DAYS'',''12 Aug 1995''}')",
+   "method": "GET",
+   "path": "/velocity1",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"},
+    {"regex": "Faker\\.en\\)@[0-9a-f]+", "replace": "Faker.en)@<hash>", "reason": "Object.toString's identity hash code differs per run"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity2"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{date.future ''10'',''DAYS'',''Sat, 12 Aug 1995 13:30:00 GMT''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "$faker.expression('#{date.future ''10'',''DAYS'',''Sat, 12 Aug 1995 13:30:00 GMT''}')",
+   "method": "GET",
+   "path": "/velocity2",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"},
+    {"regex": "Faker\\.en\\)@[0-9a-f]+", "replace": "Faker.en)@<hash>", "reason": "Object.toString's identity hash code differs per run"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity3"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{date.future ''0'',''DAYS'',''12 Aug 1995''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "$faker.expression('#{date.future ''0'',''DAYS'',''12 Aug 1995''}')",
+   "method": "GET",
+   "path": "/velocity3",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"},
+    {"regex": "Faker\\.en\\)@[0-9a-f]+", "replace": "Faker.en)@<hash>", "reason": "Object.toString's identity hash code differs per run"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity4"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{date.past ''10'',''DAYS'',''12 Aug 1995''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "past: the Date overload wins: $faker.expression('#{date.past ''10'',''DAYS'',''12 Aug 1995''}')",
+   "method": "GET",
+   "path": "/velocity4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity5"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{date.past ''10'',''DAYS'',''Sat, 12 Aug 1995 13:30:00 GMT''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "$faker.expression('#{date.past ''10'',''DAYS'',''Sat, 12 Aug 1995 13:30:00 GMT''}')",
+   "method": "GET",
+   "path": "/velocity5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity6"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{date.past ''0'',''DAYS'',''12 Aug 1995''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "$faker.expression('#{date.past ''0'',''DAYS'',''12 Aug 1995''}')",
+   "method": "GET",
+   "path": "/velocity6",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"},
+    {"regex": "Faker\\.en\\)@[0-9a-f]+", "replace": "Faker.en)@<hash>", "reason": "Object.toString's identity hash code differs per run"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity7"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{aviation.flight ''ICAO''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "flight: the AviationCodeType overload first in 8.0.0's JVM order: $faker.expression('#{aviation.flight ''ICAO''}')",
+   "method": "GET",
+   "path": "/velocity7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity8"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{aviation.flight ''icao''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "$faker.expression('#{aviation.flight ''icao''}')",
+   "method": "GET",
+   "path": "/velocity8"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/velocity9"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x=$faker.expression('#{aviation.flight ''XYZ''}')\"\n}"
+    }
+   }
+  },
+  {
+   "note": "$faker.expression('#{aviation.flight ''XYZ''}')",
+   "method": "GET",
+   "path": "/velocity9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/mustache10"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x={{#faker.expression}}#{date.future '10','DAYS','12 Aug 1995'}{{/faker.expression}}\"\n}"
+    }
+   }
+  },
+  {
+   "note": "Mustache passes no arguments: a section over faker.expression renders nothing: {{#faker.expression}}#{date.future '10','DAYS','12 Aug 1995'}{{/faker.expression}}",
+   "method": "GET",
+   "path": "/mustache10"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/mustache11"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x={{faker.date.future}}\"\n}"
+    }
+   }
+  },
+  {
+   "note": "no zero-argument date.future: renders nothing: {{faker.date.future}}",
+   "method": "GET",
+   "path": "/mustache11"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/mustache12"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    'statusCode': 200,\n    'body': \"x={{faker.aviation.flight}}\"\n}"
+    }
+   }
+  },
+  {
+   "note": "only the zero-argument flight() is reachable: {{faker.aviation.flight}}",
+   "method": "GET",
+   "path": "/mustache12"
+  },
+  {
+   "note": "what each failed expression threw",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}",
+    "Faker\\.en\\)@[0-9a-f]+"
+   ]
+  }
+ ]
+}

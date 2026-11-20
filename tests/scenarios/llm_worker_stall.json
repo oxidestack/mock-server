@@ -1,0 +1,176 @@
+{
+ "source": "hand-written: NettyHttpClientLlmTransport blocks the Netty worker thread handling the request on the LLM call, while the client's channels share the worker group (round robin with the accepted connections) and its connection pool keeps one channel: a request whose connection is on that channel's event loop cannot read its own answer and falls back after llmRequestTimeoutMillis",
+ "peer": true,
+ "properties": {
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "1500"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "any",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"httpRequest\\\": {\\\"method\\\": \\\"GET\\\", \\\"path\\\": \\\"/orders/1\\\"}, \\\"httpResponse\\\": {\\\"statusCode\\\": 200, \\\"body\\\": \\\"order\\\"}}\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    }
+   ],
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p1"
+    }
+   },
+   "note": "the first call opens the LLM client's connection on the worker event loop after this request's: pooled, every later call reuses it"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p2"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p3"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p4"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p1"
+    }
+   },
+   "note": "cached: no call, but its connection still takes the next event loop in turn"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p5"
+    }
+   },
+   "note": "this request's connection is on the pooled channel's event loop, which it blocks: the call waits out llmRequestTimeoutMillis and the template stub (0.3) answers"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p6"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p7"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p8"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p9"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p10"
+    }
+   },
+   "note": "five connections later: on the pooled channel's event loop again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p11"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "the backend got every call: a stalled one is written once the event loop is free",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "\"Host\" : \\[ \"[^\"]*\" \\]",
+     "replace": "\"Host\" : [ \"<peer>\" ]"
+    },
+    {
+     "regex": "\"host\" : \"[^\"]*\"",
+     "replace": "\"host\" : \"<host>\""
+    },
+    {
+     "regex": "\"port\" : (<port>|\\d+)",
+     "replace": "\"port\" : <port>"
+    }
+   ],
+   "node": "peer"
+  }
+ ]
+}

@@ -1,0 +1,825 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/pets"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "[{\"id\":1,\"name\":\"rex\"}]"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/pets/7"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"name\":\"no id\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/pets"
+     },
+     "httpResponse": {
+      "statusCode": 201
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "DELETE",
+      "path": "/pets/.*"
+     },
+     "httpResponse": {
+      "statusCode": 500
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/api/v2/pets"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "[]"
+     }
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract all"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}/",
+      "operationId": "getPet"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract one operation"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}/api/v2/",
+      "operationId": "listPets"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract base path"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{deadport}}",
+      "operationId": "listPets"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract unreachable"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}",
+      "operationId": "nope"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract filter matches nothing"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract no base url"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract no spec"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 18,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": {
+       "openapi": "3.0.0",
+       "info": {
+        "title": "Pets",
+        "version": "1"
+       },
+       "paths": {
+        "/pets": {
+         "get": {
+          "operationId": "listPets",
+          "parameters": [
+           {
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+             "type": "integer",
+             "default": 10
+            }
+           },
+           {
+            "name": "x-trace",
+            "in": "header",
+            "schema": {
+             "type": "string",
+             "enum": [
+              "a",
+              "b"
+             ]
+            }
+           }
+          ],
+          "responses": {
+           "200": {
+            "description": "ok",
+            "content": {
+             "application/json": {
+              "schema": {
+               "type": "array",
+               "items": {
+                "type": "object",
+                "required": [
+                 "id"
+                ],
+                "properties": {
+                 "id": {
+                  "type": "integer"
+                 },
+                 "name": {
+                  "type": "string"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         "post": {
+          "requestBody": {
+           "required": true,
+           "content": {
+            "application/json": {
+             "schema": {
+              "type": "object",
+              "required": [
+               "name"
+              ],
+              "properties": {
+               "name": {
+                "type": "string",
+                "example": "rex"
+               },
+               "age": {
+                "type": "integer",
+                "minimum": 0
+               }
+              }
+             }
+            }
+           }
+          },
+          "responses": {
+           "201": {
+            "description": "created"
+           }
+          }
+         }
+        },
+        "/pets/{petId}": {
+         "get": {
+          "operationId": "getPet",
+          "parameters": [
+           {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": {
+             "type": "integer"
+            },
+            "example": 7
+           }
+          ],
+          "responses": {
+           "200": {
+            "description": "ok",
+            "content": {
+             "application/json": {
+              "schema": {
+               "type": "object",
+               "required": [
+                "id"
+               ],
+               "properties": {
+                "id": {
+                 "type": "integer"
+                }
+               }
+              }
+             }
+            }
+           },
+           "404": {
+            "description": "nf"
+           }
+          }
+         },
+         "delete": {
+          "operationId": "deletePet",
+          "parameters": [
+           {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": {
+             "type": "string"
+            }
+           }
+          ],
+          "responses": {
+           "204": {
+            "description": "gone"
+           }
+          }
+         }
+        },
+        "/owners/{ownerId}/pets/{petId}": {
+         "get": {
+          "operationId": "ownerPet",
+          "parameters": [
+           {
+            "name": "ownerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+             "type": "string",
+             "format": "uuid"
+            }
+           }
+          ],
+          "responses": {
+           "200": {
+            "description": "ok"
+           }
+          }
+         }
+        }
+       }
+      },
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract object spec"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 19,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:99999"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract port out of range"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 20,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "ftp://x/y"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract bad scheme"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 21,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "/relative"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract relative url"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 22,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://a b/"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract invalid url"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 23,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "nonsense",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract bad spec"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/api/widgets",
+      "body": {
+       "type": "STRING",
+       "string": "not valid json",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 500
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/api/widgets",
+      "body": {
+       "type": "STRING",
+       "string": "AAAAAAAAAA",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 201
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/api/widgets/example"
+     },
+     "httpResponse": {
+      "statusCode": 200
+     }
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 24,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"W\", \"version\": \"1\"}, \"paths\": {\"/api/widgets\": {\"post\": {\"operationId\": \"createWidget\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\", \"count\"], \"properties\": {\"name\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 100}, \"count\": {\"type\": \"integer\", \"minimum\": 0, \"maximum\": 999}, \"ratio\": {\"type\": \"number\", \"minimum\": 0.5, \"maximum\": 100.0}, \"notes\": {\"type\": \"string\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}, \"meta\": {\"type\": \"object\"}, \"on\": {\"type\": \"boolean\"}}}}}}, \"responses\": {\"201\": {\"description\": \"Created\"}, \"400\": {\"description\": \"Bad\"}}}}, \"/api/widgets/{id}\": {\"get\": {\"operationId\": \"getWidget\", \"parameters\": [{\"name\": \"id\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}, {\"name\": \"verbose\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"boolean\"}}, {\"name\": \"page\", \"in\": \"query\", \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "resiliency all"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 25,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"W\", \"version\": \"1\"}, \"paths\": {\"/api/widgets\": {\"post\": {\"operationId\": \"createWidget\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\", \"count\"], \"properties\": {\"name\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 100}, \"count\": {\"type\": \"integer\", \"minimum\": 0, \"maximum\": 999}, \"ratio\": {\"type\": \"number\", \"minimum\": 0.5, \"maximum\": 100.0}, \"notes\": {\"type\": \"string\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}, \"meta\": {\"type\": \"object\"}, \"on\": {\"type\": \"boolean\"}}}}}}, \"responses\": {\"201\": {\"description\": \"Created\"}, \"400\": {\"description\": \"Bad\"}}}}, \"/api/widgets/{id}\": {\"get\": {\"operationId\": \"getWidget\", \"parameters\": [{\"name\": \"id\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}, {\"name\": \"verbose\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"boolean\"}}, {\"name\": \"page\", \"in\": \"query\", \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}",
+      "operationId": "getWidget"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "resiliency one operation"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 26,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"W\", \"version\": \"1\"}, \"paths\": {\"/api/widgets\": {\"post\": {\"operationId\": \"createWidget\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\", \"count\"], \"properties\": {\"name\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 100}, \"count\": {\"type\": \"integer\", \"minimum\": 0, \"maximum\": 999}, \"ratio\": {\"type\": \"number\", \"minimum\": 0.5, \"maximum\": 100.0}, \"notes\": {\"type\": \"string\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}, \"meta\": {\"type\": \"object\"}, \"on\": {\"type\": \"boolean\"}}}}}}, \"responses\": {\"201\": {\"description\": \"Created\"}, \"400\": {\"description\": \"Bad\"}}}}, \"/api/widgets/{id}\": {\"get\": {\"operationId\": \"getWidget\", \"parameters\": [{\"name\": \"id\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}, {\"name\": \"verbose\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"boolean\"}}, {\"name\": \"page\", \"in\": \"query\", \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{deadport}}",
+      "operationId": "getWidget"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "resiliency unreachable"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 27,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"W\", \"version\": \"1\"}, \"paths\": {\"/api/widgets\": {\"post\": {\"operationId\": \"createWidget\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\", \"count\"], \"properties\": {\"name\": {\"type\": \"string\", \"minLength\": 2, \"maxLength\": 100}, \"count\": {\"type\": \"integer\", \"minimum\": 0, \"maximum\": 999}, \"ratio\": {\"type\": \"number\", \"minimum\": 0.5, \"maximum\": 100.0}, \"notes\": {\"type\": \"string\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}, \"meta\": {\"type\": \"object\"}, \"on\": {\"type\": \"boolean\"}}}}}}, \"responses\": {\"201\": {\"description\": \"Created\"}, \"400\": {\"description\": \"Bad\"}}}}, \"/api/widgets/{id}\": {\"get\": {\"operationId\": \"getWidget\", \"parameters\": [{\"name\": \"id\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}, {\"name\": \"verbose\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"boolean\"}}, {\"name\": \"page\", \"in\": \"query\", \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "resiliency no base url"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "nonsense",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "resiliency bad spec"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 29,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\", \"default\": 10}}, {\"name\": \"x-trace\", \"in\": \"header\", \"schema\": {\"type\": \"string\", \"enum\": [\"a\", \"b\"]}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}, \"age\": {\"type\": \"integer\", \"minimum\": 0}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}, \"example\": 7}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}, \"delete\": {\"operationId\": \"deletePet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\"}}], \"responses\": {\"204\": {\"description\": \"gone\"}}}}, \"/owners/{ownerId}/pets/{petId}\": {\"get\": {\"operationId\": \"ownerPet\", \"parameters\": [{\"name\": \"ownerId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}",
+      "operationId": "getPet"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "resiliency pets"
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+# org.mockserver.llm.OpenAiResponsesStoreByteBudgetTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+weighsTheEchoedBodyAndTheConversation  rust:src/llm/responses.rs::weighs_the_echoed_body_and_the_conversation
+evictsLeastRecentlyUsedOnceOverTheByteBudget  rust:src/llm/responses.rs::evicts_least_recently_used_once_over_the_byte_budget, rust:tests/llm_responses_byte_budget.rs::the_configured_byte_budget_evicts_least_recently_used_responses  # the HTTP port's statuses are the oracle's
+readingAResponseMakesItMostRecentlyUsed  rust:src/llm/responses.rs::reading_a_response_makes_it_most_recently_used
+keepsTheMostRecentResponseEvenWhenItAloneExceedsTheBudget  rust:src/llm/responses.rs::keeps_the_most_recent_response_even_when_it_alone_exceeds_the_budget, rust:tests/llm_responses_byte_budget.rs::the_configured_byte_budget_evicts_least_recently_used_responses
+loweringTheBudgetEvictsAtOnce  rust:src/llm/responses.rs::lowering_the_budget_evicts_at_once, rust:tests/llm_responses_byte_budget.rs::the_configured_byte_budget_evicts_least_recently_used_responses  # over PUT /mockserver/configuration
+zeroBudgetBoundsByCountOnly  rust:src/llm/responses.rs::zero_budget_bounds_by_count_only
+replacingAResponseRechargesIt  rust:src/llm/responses.rs::replacing_a_response_recharges_it
+resetReleasesTheChargedBytes  rust:src/llm/responses.rs::reset_releases_the_charged_bytes
+chainedTurnIsChargedOnlyForTheMessagesItAdds  rust:src/llm/responses.rs::chained_turn_is_charged_only_for_the_messages_it_adds  # shared messages found by position, not identity (see the module)

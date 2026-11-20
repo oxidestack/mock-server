@@ -1,0 +1,16 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/reset", "note": "HttpContentLengthRemoverTest: an empty Content-Length header is dropped on the way out"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/empty-cl-body"}, "httpResponse": {"headers": {"Content-Length": [""]}, "body": "abc"}},
+    {"httpRequest": {"path": "/empty-cl-no-body"}, "httpResponse": {"headers": {"Content-Length": [""]}}},
+    {"httpRequest": {"path": "/empty-cl-lower"}, "httpResponse": {"headers": {"content-length": [""], "X-Other": ["kept"]}, "body": "abc"}},
+    {"httpRequest": {"path": "/cl-kept"}, "httpResponse": {"headers": {"Content-Length": ["3"], "X-Other": ["kept"]}, "body": "abc"}},
+    {"httpRequest": {"path": "/cl-empty-then-real"}, "httpResponse": {"headers": {"Content-Length": ["", "3"]}, "body": "abc"}}
+  ]},
+  {"method": "GET", "path": "/empty-cl-body", "note": "empty Content-Length and a body"},
+  {"method": "GET", "path": "/empty-cl-no-body", "note": "empty Content-Length and no body"},
+  {"method": "GET", "path": "/empty-cl-lower", "note": "lower-case name, other headers preserved"},
+  {"method": "GET", "path": "/cl-kept", "note": "a non-empty value is preserved"},
+  {"method": "GET", "path": "/cl-empty-then-real", "note": "two values, the first empty"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES", "note": "what the log recorded for the responses", "mask": ["\"(local|remote)Address\" : \"[^\"]*\""]}
+]}

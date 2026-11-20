@@ -1,0 +1,31 @@
+{
+ "steps": [
+  {"note": "DNS expectation echo", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "dns-a", "httpRequest": {"dnsType": "A", "dnsName": "api.example.com", "dnsClass": "IN"}, "dnsResponse": {"responseCode": "NOERROR", "answerRecords": [{"value": "10.0.0.1", "type": "A", "name": "api.example.com", "ttl": 60, "dnsClass": "IN"}, {"type": "MX", "value": "mail.example.com", "priority": 5}, {"type": "SRV", "value": "t.example.com", "port": 443, "weight": 2, "priority": 1}], "authorityRecords": [], "additionalRecords": [{"type": "TXT", "value": "x"}], "delay": {"timeUnit": "MILLISECONDS", "value": 10}, "primary": false}}},
+  {"note": "negated, primary, times", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "dns-not", "httpRequest": {"dnsName": "not.example.com", "not": true, "dnsType": "TXT"}, "dnsResponse": {"primary": true, "answerRecords": [{"type": "TXT", "value": "negated"}]}, "times": {"remainingTimes": 1}}},
+  {"note": "not false left out", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "dns-plain", "httpRequest": {"dnsName": "plain.example.com", "not": false}, "dnsResponse": {}}},
+  {"note": "namespaced DNS", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "dns-ns", "httpRequest": {"dnsName": "ns.example.com"}, "dnsResponse": {}, "namespace": "team-a"}},
+  {"note": "HTTP", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "http-1", "httpRequest": {"path": "/x"}, "httpResponse": {"body": "x"}}},
+  {"note": "bad record type", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"dnsName": "a"}, "dnsResponse": {"answerRecords": [{"type": "NS", "value": "x"}]}}},
+  {"note": "bad response code", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"dnsName": "a"}, "dnsResponse": {"responseCode": "BADVERS"}}},
+  {"note": "missing dnsName", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"dnsType": "A"}, "dnsResponse": {}}},
+  {"note": "all, DNS included", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "HTTP filter lists DNS expectations too", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "body": {"path": "/nothing"}},
+  {"note": "DNS filter, case and dot insensitive", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "body": {"dnsName": "API.example.com."}},
+  {"note": "DNS filter against a negated one", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "body": {"dnsName": "other.example.com"}},
+  {"note": "DNS filter with a type", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "body": {"dnsName": "api.example.com", "dnsType": "AAAA"}},
+  {"note": "tenant view", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&namespace=team-b"},
+  {"note": "as java", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=java", "body": {"dnsName": "api.example.com"}},
+  {"note": "log without a filter leaves DNS lines out", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "mask": ["[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"]},
+  {"note": "log with a DNS filter", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"dnsName": "api.example.com"}, "mask": ["[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"]},
+  {"note": "HTTP filter clear keeps DNS", "method": "PUT", "path": "/mockserver/clear?type=expectations", "body": {"path": "/x"}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "DNS filter clear", "method": "PUT", "path": "/mockserver/clear?type=expectations", "body": {"dnsName": "plain.example.com."}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "HTTP never matches a DNS expectation", "method": "GET", "path": "/api.example.com"},
+  {"note": "verify with a DNS definition", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"dnsName": "api.example.com"}, "times": {"atLeast": 1}}},
+  {"note": "verify with an invalid HTTP definition", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/x", "method": 5}}},
+  {"note": "verify with an invalid definition and times", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"bogus": 1}, "times": {"count": 1}}},
+  {"note": "verify sequence with a DNS definition", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpRequests": [{"dnsName": "api.example.com"}]}},
+  {"note": "the typed entries: each rejected verify logs `exception validating JSON` then its 400, an HTTP request logs no mismatch against a DNS expectation (a Java throwable is left out: docs/divergences.md; the addresses inside message lines are the container's)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, {"regex": "(\\\\\"(?:local|remote)Address\\\\\" : \\\\\")[^\\\\]*", "replace": "${1}<address>"}]}
+ ]
+}

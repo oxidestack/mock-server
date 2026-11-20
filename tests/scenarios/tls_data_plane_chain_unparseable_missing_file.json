@@ -1,0 +1,42 @@
+{
+ "note": "tlsMutualAuthenticationCertificateChain names a file that does not exist: what an inbound TLS connection gets, and the log; socketConnectionTimeoutInMillis bounds the first handshake, whose certificate generation can take over the default 20 s on a loaded machine",
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/x509/mtls/chain-missing.pem"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\", \"secure\": true}, \"httpResponse\": {\"statusCode\": 200, \"body\": \"over tls\"}}, {\"httpRequest\": {\"path\": \"/forwarded\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target\", \"secure\": true, \"socketAddress\": {\"host\": \"127.0.0.1\", \"port\": {{port}}, \"scheme\": \"HTTPS\"}}}}]"
+  },
+  {
+   "note": "a TLS request to the data plane",
+   "tcp": [
+    {
+     "text": "GET /target HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true
+  },
+  {
+   "note": "the server forwarding to itself over TLS",
+   "method": "GET",
+   "path": "/forwarded"
+  },
+  {
+   "note": "the log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]",
+    {
+     "regex": "\"serialNumber\" : \"\\d+\"",
+     "replace": "\"serialNumber\" : \"<serial>\"",
+     "reason": "the forwarding client presents the server's own leaf, minted afresh on each server"
+    }
+   ]
+  }
+ ]
+}

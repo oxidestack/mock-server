@@ -1,0 +1,369 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2b/text",
+     "body": "café"
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/text",
+   "body": "café",
+   "note": "text/plain without charset is read as ISO-8859-1: no match",
+   "headers": {
+    "content-type": "text/plain"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/text",
+   "body": "café",
+   "note": "text/plain naming UTF-8 matches",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/text",
+   "body": "café",
+   "note": "no Content-Type is read as UTF-8"
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/text",
+   "body": "café",
+   "note": "JSON defaults to UTF-8",
+   "headers": {
+    "content-type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/text",
+   "body": "café",
+   "note": "XML defaults to UTF-8",
+   "headers": {
+    "content-type": "application/xml"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2b/latin",
+     "body": "cafÃ©"
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/latin",
+   "body": "café",
+   "note": "the ISO-8859-1 reading matches its mojibake",
+   "headers": {
+    "content-type": "text/plain"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/latin",
+   "body": "café",
+   "note": "as does any other string type",
+   "headers": {
+    "content-type": "text/csv"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2b/form",
+     "body": {
+      "type": "PARAMETERS",
+      "parameters": {
+       "name": [
+        "café"
+       ]
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/form",
+   "body": "name=café",
+   "note": "a raw UTF-8 form body",
+   "headers": {
+    "content-type": "application/x-www-form-urlencoded"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/form",
+   "body": "name=caf%C3%A9",
+   "note": "a percent-encoded form body",
+   "headers": {
+    "content-type": "application/x-www-form-urlencoded"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/form",
+   "body": "name=café",
+   "note": "a raw form body naming UTF-8",
+   "headers": {
+    "content-type": "application/x-www-form-urlencoded; charset=utf-8"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2b/bin",
+     "body": "hello"
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/bin",
+   "body": "hello",
+   "note": "a binary body does not match its text",
+   "headers": {
+    "content-type": "application/octet-stream"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2b/bin64",
+     "body": "aGVsbG8="
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/bin64",
+   "body": "hello",
+   "note": "a binary body string-matches its base64",
+   "headers": {
+    "content-type": "application/octet-stream"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2b/sub",
+     "body": {
+      "type": "STRING",
+      "string": "ll",
+      "subString": true
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/w2b/sub",
+   "body": "hello",
+   "note": "substring against a binary body",
+   "headers": {
+    "content-type": "image/png"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/w2b/latin"
+   },
+   "note": "the recorded bodies",
+   "mask": [
+    "\\\"(timestamp|epochTime)\\\"\\s*:\\s*[^,}]+",
+    "(local|remote)Address\\\" : \\\"[^\\\"]*\\\"",
+    "\\\"(clientPort|serverPort|port)\\\"\\s*:\\s*\\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "content-type": "text/plain"
+   },
+   "body": {
+    "httpRequest": {
+     "path": "/w2b/cp-text"
+    },
+    "httpResponse": {
+     "body": "réponse"
+    }
+   },
+   "note": "a control-plane body in text/plain is read as UTF-8 again"
+  },
+  {
+   "method": "GET",
+   "path": "/w2b/cp-text",
+   "body": null,
+   "note": "its response"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "content-type": "application/octet-stream"
+   },
+   "body": {
+    "httpRequest": {
+     "path": "/w2b/cp-bin"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   },
+   "note": "a binary control-plane body is its base64"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "content-type": "application/x-www-form-urlencoded"
+   },
+   "body": {
+    "path": "/w2b/cp-text"
+   },
+   "note": "a form-typed retrieve filter"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "headers": {
+    "content-type": "application/x-www-form-urlencoded"
+   },
+   "body": {
+    "asyncapi": "2.6.0",
+    "info": {
+     "title": "Café"
+    },
+    "channels": {
+     "orders": {
+      "publish": {
+       "message": {
+        "payload": {
+         "type": "object"
+        },
+        "examples": [
+         {
+          "payload": {
+           "name": "café"
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   },
+   "note": "an AsyncAPI spec sent form-typed is read as ISO-8859-1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": {
+    "asyncapi": "2.6.0",
+    "info": {
+     "title": "Café"
+    },
+    "channels": {
+     "orders": {
+      "publish": {
+       "message": {
+        "payload": {
+         "type": "object"
+        },
+        "examples": [
+         {
+          "payload": {
+           "name": "café"
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   },
+   "note": "and naming UTF-8, as UTF-8"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "headers": {
+    "content-type": "application/octet-stream"
+   },
+   "body": {
+    "asyncapi": "2.6.0",
+    "info": {
+     "title": "Café"
+    },
+    "channels": {
+     "orders": {
+      "publish": {
+       "message": {
+        "payload": {
+         "type": "object"
+        },
+        "examples": [
+         {
+          "payload": {
+           "name": "café"
+          }
+         }
+        ]
+       }
+      }
+     }
+    }
+   },
+   "note": "and binary, as its base64"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

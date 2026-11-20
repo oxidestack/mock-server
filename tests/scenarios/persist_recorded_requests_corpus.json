@@ -1,0 +1,22 @@
+{
+ "properties": {
+  "persistRecordedRequestsToDisk": "true",
+  "persistedRecordedRequestsPath": "{{scratch}}/persist_recorded_requests_corpus.ndjson"
+ },
+ "steps": [
+  {"writeFile": {"path": "{{scratch}}/persist_recorded_requests_corpus.ndjson", "content": ""}, "note": "the archive is opened for append at start: truncate it in place"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/api/scalar"}, "httpResponse": {"headers": {"Content-Type": ["application/json"]}, "body": {"type": "JSON", "json": "\"done\"  \r\t "}}},
+    {"httpRequest": {"path": "/api/pretty"}, "httpResponse": {"headers": {"Content-Type": ["application/json"]}, "body": "{\n    \"reply\" :   [ 1,\n 2 ],\n  \"text\" : \"  kept  as  is  \"\n}"}},
+    {"httpRequest": {"path": "/api/unicode"}, "httpResponse": {"headers": {"Content-Type": ["text/plain; charset=utf-8"]}, "body": "héllo wörld 世界 😀"}},
+    {"httpRequest": {"path": "/api/next"}, "httpResponse": {"body": "next"}}
+  ]},
+  {"method": "POST", "path": "/api/scalar", "headers": {"Content-Type": "application/json"}, "body": "\n  42\n", "note": "a scalar JSON body whose text holds newlines, answered by one holding a lone carriage return"},
+  {"method": "POST", "path": "/api/pretty", "headers": {"Content-Type": "application/json"}, "body": "{\n  \"a\" : [ 1, 2 ],\n\t\"b\" : { \"c\" : \"two  spaces and a \\n escaped newline\" }\n}", "note": "formatting whitespace in raw JSON, and whitespace inside strings"},
+  {"method": "POST", "path": "/api/unicode", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "body": "café über ж 😀 𝄞", "note": "non-ASCII and non-BMP characters, kept as raw UTF-8"},
+  {"method": "GET", "path": "/api/next", "note": "the next exchange is a line of its own"},
+  {"readFile": "{{scratch}}/persist_recorded_requests_corpus.ndjson", "pollUntil": "/api/next", "mask": [{"regex": "^\\x00+", "replace": ""}], "note": "one compact line per exchange"},
+  {"method": "PUT", "path": "/mockserver/import?format=recording&source=disk", "note": "every line imports back"}
+ ]
+}

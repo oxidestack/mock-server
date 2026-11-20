@@ -1,0 +1,219 @@
+{
+  "properties": {
+    "llmProvider": "AZURE_OPENAI",
+    "llmApiKey": "secret-key"
+  },
+  "steps": [
+    {
+      "method": "POST",
+      "path": "/mockserver/mcp",
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+          "protocolVersion": "2025-06-18"
+        }
+      },
+      "capture": {
+        "header": "Mcp-Session-Id",
+        "as": "s"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/mockserver/mcp",
+      "headers": {
+        "Mcp-Session-Id": [
+          "{{capture:s}}"
+        ]
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "method": "notifications/initialized"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "method": "POST",
+            "path": "/v1/chat/completions"
+          },
+          "httpLlmResponse": {
+            "provider": "OPENAI",
+            "model": "gpt-4o",
+            "completion": {
+              "text": "hi",
+              "usage": {
+                "inputTokens": 1,
+                "outputTokens": 1
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/proxy/v1/chat/completions"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/v1/chat/completions",
+              "headers": {
+                "Host": [
+                  "127.0.0.1:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/proxy/sse"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/sse",
+              "headers": {
+                "Host": [
+                  "127.0.0.1:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/sse"
+          },
+          "httpSseResponse": {
+            "events": [
+              {
+                "data": "x"
+              }
+            ],
+            "closeConnection": true
+          }
+        }
+      ],
+      "note": "expectations",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/proxy/v1/chat/completions",
+      "body": {
+        "model": "gpt-4o",
+        "messages": [
+          {
+            "role": "system",
+            "content": "s"
+          },
+          {
+            "role": "user",
+            "content": "hello"
+          }
+        ]
+      },
+      "mask": [
+        {
+          "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+          "replace": "\"<id>\""
+        },
+        {
+          "regex": "\"created\":\\d+",
+          "replace": "\"created\":<time>"
+        },
+        {
+          "regex": "\"created_at\":\\d+",
+          "replace": "\"created_at\":<time>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/mockserver/mcp",
+      "headers": {
+        "Mcp-Session-Id": [
+          "{{capture:s}}"
+        ]
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 22,
+        "method": "tools/call",
+        "params": {
+          "name": "record_llm_fixtures",
+          "arguments": {
+            "path": "/tmp/llm_drift_azure_no_base_url.json"
+          }
+        }
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        "content-length: \\d+"
+      ],
+      "note": "record cassette"
+    },
+    {
+      "method": "POST",
+      "path": "/mockserver/mcp",
+      "headers": {
+        "Mcp-Session-Id": [
+          "{{capture:s}}"
+        ]
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 23,
+        "method": "tools/call",
+        "params": {
+          "name": "detect_llm_drift",
+          "arguments": {
+            "provider": "AZURE_OPENAI",
+            "cassettePath": "/tmp/llm_drift_azure_no_base_url.json"
+          }
+        }
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        "content-length: \\d+"
+      ],
+      "note": "azure backend without a base URL sends nothing"
+    },
+    {
+      "method": "POST",
+      "path": "/mockserver/mcp",
+      "headers": {
+        "Mcp-Session-Id": [
+          "{{capture:s}}"
+        ]
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 24,
+        "method": "tools/call",
+        "params": {
+          "name": "detect_llm_drift",
+          "arguments": {
+            "provider": "OPENAI",
+            "cassettePath": "/tmp/llm_drift_azure_no_base_url.json"
+          }
+        }
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        "content-length: \\d+"
+      ],
+      "note": "cassette provider differs from the azure backend"
+    }
+  ]
+}

@@ -1,0 +1,798 @@
+{
+ "properties": {
+  "grpcBidiStreamingEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: static json with a $ref is not a template",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi $ref #/not/a/template\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "no templateType: emitted verbatim",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: velocity jsonPath",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hello $jsonPath.find(\"$.name\")\"}",
+         "templateType": "VELOCITY"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "velocity renders against the inbound message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNlAAAAAAUKA0JvYg=="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: velocity request.body",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"$!request.body\"}",
+         "templateType": "VELOCITY"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "velocity sees the inbound JSON as request.body",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAUKA0JvYg=="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: velocity request.headers",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"[$!request.path][$!request.method][$!request.headers]\"}",
+         "templateType": "VELOCITY"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "the template request carries only the body",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAUKA0JvYg=="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: mustache jsonPath",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hello {{#jsonPath}}$.name{{/jsonPath}}{{jsonPathResult}}\"}",
+         "templateType": "MUSTACHE"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "mustache renders against the inbound message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUNhcm9s"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: javascript template",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "return { greeting: 'hi' };",
+         "templateType": "JAVASCRIPT"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "javascript templateType is rejected",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: templated eager message",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"static-from-template [$!request.body]\"}",
+       "templateType": "VELOCITY"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "an eager template renders without an inbound message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: invalid velocity",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"#if(\"}",
+         "templateType": "VELOCITY"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "a template that fails to render",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: template rendering to invalid json",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": $!request.body.missing}",
+         "templateType": "VELOCITY"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "a template rendering to something that is not the message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: scenario set",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hi $jsonPath.find(\"$.name\")$scenario.set('chat','GREETED')\"}",
+         "templateType": "VELOCITY"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "expectation: http expectation in state GREETED",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/state"
+    },
+    "httpResponse": {
+     "body": "greeted"
+    },
+    "scenarioName": "chat",
+    "scenarioState": "GREETED"
+   }
+  },
+  {
+   "note": "expectation: http expectation in state Started",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/state"
+    },
+    "httpResponse": {
+     "body": "started"
+    },
+    "scenarioName": "chat",
+    "scenarioState": "Started"
+   }
+  },
+  {
+   "note": "before the bidi match: Started",
+   "method": "GET",
+   "path": "/state"
+  },
+  {
+   "note": "bidi template transitions the scenario; set() emits nothing",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "after the bidi match: the matcher sees GREETED",
+   "method": "GET",
+   "path": "/state"
+  },
+  {
+   "note": "expectation: scenario get",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"$scenario.get('chat')\"}",
+         "templateType": "VELOCITY"
+        }
+       ]
+      }
+     ]
+    },
+    "priority": 10
+   }
+  },
+  {
+   "note": "bidi template reads the state written by the earlier match",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAUKA0JvYg=="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: velocity request fields",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": \"[$!request.path][$!request.method][$!request.headers.get('x-grpc-method')]\"}",
+       "templateType": "VELOCITY"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "server streaming: velocity request fields",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAYKBERhdmU="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: velocity jsonPath on an application/grpc request",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": \"one $jsonPath.find(\"$.name\")\"}",
+       "templateType": "VELOCITY"
+      },
+      {
+       "json": "{\"greeting\": \"after\"}"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "server streaming: velocity jsonPath on an application/grpc request",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAYKBERhdmU="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: mustache jsonPath on an application/grpc request",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": \"two {{#jsonPath}}$.name{{/jsonPath}}{{jsonPathResult}}\"}",
+       "templateType": "MUSTACHE"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "server streaming: mustache jsonPath on an application/grpc request",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAYKBERhdmU="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: mustache request path",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": \"{{request.path}}\"}",
+       "templateType": "MUSTACHE"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "server streaming: mustache request path",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAYKBERhdmU="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: javascript template",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "return { greeting: 'hi' };",
+       "templateType": "JAVASCRIPT"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "server streaming: javascript template",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAYKBERhdmU="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: velocity rendering to an invalid message",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": $!request.body}",
+       "templateType": "VELOCITY"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "server streaming: velocity rendering to an invalid message",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAYKBERhdmU="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: unary velocity jsonPath",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": {\"greeting\": \"Hi $jsonPath.find(\"$.name\")\"}}"
+    }
+   }
+  },
+  {
+   "note": "unary: velocity jsonPath on an application/grpc request",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAYKBEVyaW4="
+  },
+  {
+   "note": "clear expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "expectation: unary mustache jsonPath",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\"statusCode\": 200, \"body\": {\"greeting\": \"Hi {{#jsonPath}}$.name{{/jsonPath}}{{jsonPathResult}}\"}}"
+    }
+   }
+  },
+  {
+   "note": "unary: mustache jsonPath on an application/grpc request",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAYKBEVyaW4="
+  },
+  {
+   "note": "clear descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  }
+ ]
+}

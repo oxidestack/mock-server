@@ -1,0 +1,86 @@
+{
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "openai",
+     "httpRequest": {"method": "POST", "path": "/v1/chat/completions"},
+     "httpLlmResponse": {"provider": "OPENAI", "model": "gpt-4o", "completion": {"text": "hi", "usage": {"inputTokens": 1000, "outputTokens": 500}}}
+    },
+    {
+     "id": "anthropic",
+     "httpRequest": {"method": "POST", "path": "/v1/messages"},
+     "httpLlmResponse": {"provider": "ANTHROPIC", "model": "claude-opus-4", "completion": {"text": "hello", "usage": {"inputTokens": 1000000, "outputTokens": 0}}}
+    },
+    {
+     "id": "no-usage",
+     "httpRequest": {"method": "POST", "path": "/v1/no-usage/chat/completions"},
+     "httpLlmResponse": {"provider": "OPENAI", "completion": {"text": "x"}}
+    },
+    {
+     "id": "unpriced",
+     "httpRequest": {"method": "POST", "path": "/v1/unpriced/chat/completions"},
+     "httpLlmResponse": {"provider": "OPENAI", "model": "my-own-model", "completion": {"text": "x", "usage": {"inputTokens": 7, "outputTokens": 3}}}
+    },
+    {
+     "id": "proxy-llm",
+     "httpRequest": {"path": "/v1/proxy-llm"},
+     "httpOverrideForwardedRequest": {"requestOverride": {"path": "/v1/chat/completions", "headers": {"Host": ["localhost:{{port}}"]}}}
+    }
+   ]
+  },
+  {"method": "POST", "path": "/v1/chat/completions", "body": "{\"model\":\"gpt-4o\",\"messages\":[]}", "headers": {"Content-Type": ["application/json"]},
+   "mask": ["chatcmpl-[0-9a-f]{29}", "created\\\\?\":\\d+", "\"created\" : \\d+", "content-length: \\d+"]},
+  {"method": "POST", "path": "/v1/chat/completions", "body": "{\"model\":\"gpt-4o\",\"messages\":[]}", "headers": {"Content-Type": ["application/json"]},
+   "mask": ["chatcmpl-[0-9a-f]{29}", "created\\\\?\":\\d+", "\"created\" : \\d+", "content-length: \\d+"]},
+  {"method": "POST", "path": "/v1/messages", "body": "{\"model\":\"claude-opus-4\",\"messages\":[]}", "headers": {"Content-Type": ["application/json"]},
+   "mask": ["msg_[0-9A-Za-z]+", "content-length: \\d+"]},
+  {"method": "POST", "path": "/v1/no-usage/chat/completions", "body": "{\"messages\":[]}", "headers": {"Content-Type": ["application/json"]},
+   "mask": ["chatcmpl-[0-9a-f]{29}", "created\\\\?\":\\d+", "\"created\" : \\d+", "content-length: \\d+"]},
+  {"method": "POST", "path": "/v1/unpriced/chat/completions", "body": "{\"messages\":[]}", "headers": {"Content-Type": ["application/json"]},
+   "mask": ["chatcmpl-[0-9a-f]{29}", "created\\\\?\":\\d+", "\"created\" : \\d+", "content-length: \\d+"]},
+  {"note": "a forwarded completion counts again", "method": "POST", "path": "/v1/proxy-llm", "body": "{\"model\":\"gpt-4o\",\"messages\":[]}", "headers": {"Content-Type": ["application/json"]},
+   "mask": ["chatcmpl-[0-9a-f]{29}", "created\\\\?\":\\d+", "\"created\" : \\d+", "content-length: \\d+"]},
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-03-26"}},
+   "capture": {"header": "Mcp-Session-Id", "as": "s"},
+   "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "\"(ports|timestamp)\" ?: ?[^,}]+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)", "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]
+  },
+  {"method": "POST", "path": "/mockserver/mcp", "headers": {"Mcp-Session-Id": ["{{capture:s}}"]}, "body": {"jsonrpc": "2.0", "method": "notifications/initialized"}, "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "\"(ports|timestamp)\" ?: ?[^,}]+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)", "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"method": "POST", "path": "/mockserver/mcp", "headers": {"Mcp-Session-Id": ["{{capture:s}}"]},
+   "body": {"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "verify_request", "arguments": {}}}, "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "\"(ports|timestamp)\" ?: ?[^,}]+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)", "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"method": "POST", "path": "/mockserver/mcp", "headers": {"Mcp-Session-Id": ["{{capture:s}}"]},
+   "body": {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "verify_request", "arguments": {}}}, "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "\"(ports|timestamp)\" ?: ?[^,}]+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)", "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"method": "POST", "path": "/mockserver/mcp", "headers": {"Mcp-Session-Id": ["{{capture:s}}"]},
+   "body": {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "create_expectation", "arguments": {}}}, "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "\"(ports|timestamp)\" ?: ?[^,}]+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)", "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {"note": "unknown tool is not counted", "method": "POST", "path": "/mockserver/mcp", "headers": {"Mcp-Session-Id": ["{{capture:s}}"]},
+   "body": {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "no_such_tool", "arguments": {}}}, "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "\"(ports|timestamp)\" ?: ?[^,}]+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)", "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "content-length: \\d+"]},
+  {
+   "note": "LLM token, cost and MCP tool-call counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {"regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_(llm_(cost_usd|input|output)|mcp))[^\\n]*\\n", "replace": ""},
+    "content-length: \\d+"
+   ]
+  },
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {
+   "note": "a reset leaves the counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {"regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_(llm_(cost_usd|input|output)|mcp))[^\\n]*\\n", "replace": ""},
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

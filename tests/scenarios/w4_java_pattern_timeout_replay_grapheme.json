@@ -1,0 +1,109 @@
+{
+ "source": "the regex-timeout replay walks XGrapheme (\\X), GraphemeBound (\\b{g}, reading Matcher.last) and NFCCharProperty (classes under an inline (?c)), as Curly atoms when quantified alone, so RegexStringMatcher (DOTALL | CASE_INSENSITIVE | UNICODE_CASE, matches()) passes regexMatchingTimeoutMillis (here 300) on a 40-character value where the oracle's JVM does and logs its WARN, and stays within it where the JVM does",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "grapheme",
+     "httpRequest": {
+      "path": "/g(\\X*a){25}"
+     },
+     "httpResponse": {
+      "body": "grapheme"
+     }
+    },
+    {
+     "id": "canon-eq",
+     "httpRequest": {
+      "path": "/c(?c)([a-z]*a){25}"
+     },
+     "httpResponse": {
+      "body": "canon-eq"
+     }
+    },
+    {
+     "id": "grapheme-bound",
+     "httpRequest": {
+      "path": "/h(\\b{g}.*a){25}"
+     },
+     "httpResponse": {
+      "body": "grapheme-bound"
+     }
+    },
+    {
+     "id": "grapheme-bound-last",
+     "httpRequest": {
+      "path": "/j(?=\\X)(\\b{g}.*a){25}"
+     },
+     "httpResponse": {
+      "body": "grapheme-bound-last"
+     }
+    },
+    {
+     "id": "grapheme-curly",
+     "httpRequest": {
+      "path": "/v\\X*\\X*\\X*\\X*\\X*\\X*\\X*\\X*\\X*b"
+     },
+     "httpResponse": {
+      "body": "grapheme-curly"
+     }
+    },
+    {
+     "id": "grapheme-match",
+     "httpRequest": {
+      "path": "/k(\\X*a){3}"
+     },
+     "httpResponse": {
+      "body": "grapheme-match"
+     }
+    }
+   ]
+  },
+  {
+   "note": "XGrapheme in a Curly inside the {25} loop explodes as .* does",
+   "method": "GET",
+   "path": "/gaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "an inline (?c) makes [a-z] an NFCCharProperty, a Curly atom: the loop still explodes",
+   "method": "GET",
+   "path": "/caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "\\b{g} holds between the a's (Matcher.last stays 0), so the loop explodes as without it",
+   "method": "GET",
+   "path": "/haaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "the look-ahead's accept leaves Matcher.last after the first a, so \\b{g} fails there at once: no timeout",
+   "method": "GET",
+   "path": "/jaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "nine \\X* are Curly nodes without Loop.posIndex: polynomial past the budget",
+   "method": "GET",
+   "path": "/vaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  {
+   "note": "a finished replay that matches",
+   "method": "GET",
+   "path": "/kaaaa"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

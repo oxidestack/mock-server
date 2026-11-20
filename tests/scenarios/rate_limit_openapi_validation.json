@@ -1,0 +1,283 @@
+{
+ "source": "hand-written: is validateOpenAPIResponse run on a rate limit's 429 (report only)",
+ "properties": {
+  "openAPIResponseValidation": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "one expectation at a time: the listPets operation has no path parameters"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "rlv-respond",
+     "httpRequest": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+      "operationId": "listPets"
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "[{\"id\": 1, \"name\": \"rex\"}]"
+     }
+    }
+   ],
+   "maxMillis": 60000
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "maxMillis": 30000,
+   "note": "response within the limit"
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "maxMillis": 30000,
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "response over the limit: the 429 is validated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/v1/pets"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "(totalTimeInMillis|injectedChaosLatencyMillis|injectedDelayMillis)\\\\?\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "one expectation at a time: the listPets operation has no path parameters"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "rlv-template",
+     "httpRequest": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+      "operationId": "listPets"
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     },
+     "httpResponseTemplate": {
+      "template": "{\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"[]\"}",
+      "templateType": "VELOCITY"
+     }
+    }
+   ],
+   "maxMillis": 60000
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "maxMillis": 30000,
+   "note": "template within the limit"
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "maxMillis": 30000,
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "template over the limit: the 429 is validated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/v1/pets"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "(totalTimeInMillis|injectedChaosLatencyMillis|injectedDelayMillis)\\\\?\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "one expectation at a time: the listPets operation has no path parameters"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "rlv-callback",
+     "httpRequest": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+      "operationId": "listPets"
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     },
+     "httpResponseClassCallback": {
+      "callbackClass": "com.example.NoSuchCallback"
+     }
+    }
+   ],
+   "maxMillis": 60000
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "maxMillis": 30000,
+   "note": "class callback not found within the limit"
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "maxMillis": 30000,
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "class callback not found over the limit: the 429 is validated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/v1/pets"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "(totalTimeInMillis|injectedChaosLatencyMillis|injectedDelayMillis)\\\\?\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "one expectation at a time: the listPets operation has no path parameters"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "rlv-list",
+     "httpRequest": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+      "operationId": "listPets"
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     },
+     "httpResponses": [
+      {
+       "statusCode": 200,
+       "headers": {
+        "content-type": [
+         "application/json"
+        ]
+       },
+       "body": "[]"
+      },
+      {
+       "statusCode": 200,
+       "body": "second"
+      }
+     ]
+    }
+   ],
+   "maxMillis": 60000
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "maxMillis": 30000,
+   "note": "response list within the limit"
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "maxMillis": 30000,
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "response list over the limit: the 429 is validated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/v1/pets"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "(totalTimeInMillis|injectedChaosLatencyMillis|injectedDelayMillis)\\\\?\" : \\d+"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "properties": {
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/file_persistence_smoke.json"
+ },
+ "steps": [
+  {
+   "note": "an expectation with persistExpectations enabled; the write is synchronous with this PUT",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "persisted-smoke-1",
+    "httpRequest": {
+     "path": "/persisted-smoke"
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   }
+  },
+  {
+   "note": "the persisted file now holds that expectation, in its canonical form",
+   "readFile": "{{scratch}}/file_persistence_smoke.json",
+   "pollUntil": "persisted-smoke-1"
+  },
+  {
+   "note": "an external edit of the persisted file, read back byte for byte (writeFile/readFile round-trip)",
+   "writeFile": {
+    "path": "{{scratch}}/file_persistence_smoke_external.json",
+    "content": "[ ]"
+   }
+  },
+  {
+   "readFile": "{{scratch}}/file_persistence_smoke_external.json"
+  },
+  {
+   "note": "readFile of a file that does not exist yet",
+   "readFile": "{{scratch}}/file_persistence_smoke_missing.json"
+  }
+ ]
+}

@@ -1,0 +1,110 @@
+{
+ "isolated": true,
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "note": "upstream #230: data-plane mTLS that would trust the bundled CA (MockServer's CA, no chain) is refused whole",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": true,
+    "maxExpectations": 7
+   }
+  },
+  {
+   "note": "a chain holding the bundled CA is refused, mTLS required or not",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/fwd-ca.pem"
+   }
+  },
+  {
+   "note": "a chain holding another certificate for the bundled CA's key is refused (recognised by key)",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/private-ca/attack/trusted-and-bundled-reissued.pem"
+   }
+  },
+  {
+   "note": "the opt-in is fixed at startup: an update supplying it is warned about and not applied",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationAllowBundledCa": true
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "note": "so data-plane mTLS on the bundled CA is still refused",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": true
+   }
+  },
+  {
+   "note": "a private chain is accepted: only it is trusted, MockServer's bundled CA is left out",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": true,
+    "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/private-ca/ca-cert.pem"
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "note": "a data-plane request in the clear is told to upgrade",
+   "method": "GET",
+   "path": "/anything"
+  },
+  {
+   "note": "mTLS off again",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "tlsMutualAuthenticationRequired": false,
+    "tlsMutualAuthenticationCertificateChain": ""
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "nothing of the refused updates is logged as applied; the opt-in warning"
+  },
+  {
+   "note": "the refused maxExpectations is not in force",
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*(\"maxExpectations\" : [0-9]+).*\\}$",
+     "replace": "${1}",
+     "reason": "only maxExpectations"
+    }
+   ]
+  }
+ ]
+}

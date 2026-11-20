@@ -1,0 +1,21 @@
+{"callbackClasses": "integration-testing", "properties": {"driftDetectionEnabled": "false"}, "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/"}, "httpResponse": {"statusCode": 200, "headers": {"x-upstream": ["root"]}, "body": "upstream saw it"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/some/callback"}, "httpResponseClassCallback": {"callbackClass": "org.mockserver.testing.integration.callback.PrecannedTestExpectationResponseCallback"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/some/other"}, "httpResponseClassCallback": {"callbackClass": "org.mockserver.testing.integration.callback.PrecannedTestExpectationResponseCallback"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/static"}, "httpResponseClassCallback": {"callbackClass": "org.mockserver.testing.integration.callback.StaticTestExpectationResponseCallback", "delay": {"timeUnit": "MILLISECONDS", "value": 20}}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/wrong-interface"}, "httpResponseClassCallback": {"callbackClass": "org.mockserver.testing.integration.callback.PrecannedTestExpectationForwardCallbackRequest"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/forward"}, "httpForwardClassCallback": {"callbackClass": "org.mockserver.testing.integration.callback.PrecannedTestExpectationForwardCallbackRequest"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/forward-and-response"}, "httpForwardClassCallback": {"callbackClass": "org.mockserver.testing.integration.callback.PrecannedTestExpectationForwardCallbackRequestAndResponse"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/forward-wrong-interface"}, "httpForwardClassCallback": {"callbackClass": "org.mockserver.testing.integration.callback.PrecannedTestExpectationResponseCallback"}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"note": "response callback", "method": "POST", "path": "/some/callback", "body": "anything"},
+  {"note": "response callback answering 404", "method": "GET", "path": "/some/other"},
+  {"note": "response callback with a delay, empty response", "method": "GET", "path": "/static"},
+  {"note": "forward-only class as a response callback", "method": "GET", "path": "/wrong-interface"},
+  {"note": "forward callback", "method": "POST", "path": "/forward", "headers": {"x-test": ["test_headers_and_body"], "x-echo-server-port": ["{{port}}"]}, "body": "an_example_body_http"},
+  {"note": "forward and response callback", "method": "POST", "path": "/forward-and-response", "headers": {"x-test": ["test_headers_and_body"], "x-echo-server-port": ["{{port}}"]}, "body": "an_example_body_http"},
+  {"note": "response-only class as a forward callback", "method": "GET", "path": "/forward-wrong-interface", "headers": {"Host": ["{{deadhost}}"]}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "mask": ["\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : \\d+"]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES"},
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": "(\"type\" : \"WARN\",\\n)    \"port\" : <port>,\\n", "replace": "${1}"}, {"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}, "\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : \\d+"]}
+]}

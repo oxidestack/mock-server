@@ -1,0 +1,803 @@
+{
+ "note": "an MQTT SSL key store holding several private keys, to a broker that requires a client certificate: the key the JDK's key manager (SunX509 or NewSunX509/PKIX) chooses for the issuers and signature schemes the broker's CertificateRequest names. Key stores and their generator: tests/files/asyncapi/mqtt-ssl/key-choice",
+ "properties": {
+  "tlsMutualAuthenticationRequired": "true",
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/private-ca/ca-cert.pem"
+ },
+ "steps": [
+  {
+   "note": "the broker: every binary message this server receives (after its TLS, which requires a client certificate issued by its tlsMutualAuthenticationCertificateChain, a private CA, and names that CA in its CertificateRequest) but a lone zero byte is answered with an MQTT CONNACK, so a load connects exactly when the client presents a certificate the server accepts",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": "AA==",
+     "not": true
+    },
+    "binaryResponse": {
+     "binaryData": "IAMAAAA="
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "SunX509 (the default): a key issued by another CA, then one issued by the CA the server names: the issuers filter the keys, the second connects",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/other-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "NewSunX509: the same",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/other-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the same from a JKS file",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/other-good.jks",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "only a key issued by another CA: no key matches, the client sends no certificate and the server refuses",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/other.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "PKIX (NewSunX509's alias): the same",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/other.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "PKIX"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "SunX509: an expired key and a valid one, both from the server's CA: the oracle image's JDK 26 SunX509 checks the certificates as X509KeyManagerImpl does, so the valid key ranks first though its HashMap puts \"expired\" before \"good\"",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/expired-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "NewSunX509: a valid key ranks before an expired one",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/expired-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "SunX509: the same keys in the other file order",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-expired.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "PKIX: the same keys in the other file order",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-expired.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "PKIX"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "SunX509: an expired key whose alias (\"gone\") comes after \"good\" in the HashMap",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-gone.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "SunX509: a key whose extended key usage is serverAuth only, first in the HashMap: an extension mismatch ranks after a valid key",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/server-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "NewSunX509: the same",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/server-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "SunX509: the same keys in the other file order",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-server.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "SunX509: an EC key and an RSA key, both valid: the EC key (the first key type the server's signature schemes name) connects",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/ec-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "SunX509: an expired EC key and a valid RSA key: validity ranks before the key type",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-ec-stale.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "NewSunX509: the same",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-ec-stale.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "TLSv1.2: SunX509 the same",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-ec-stale.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "TLSv1.2"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "TLSv1.2: NewSunX509 the same",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/good-ec-stale.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.protocol": "TLSv1.2",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "MQTT 5's client: SunX509 the same",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttProtocolVersion": 5,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/expired-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "MQTT 5's client: NewSunX509 the same",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "ssl://localhost:{{port}}",
+     "publishOnLoad": false,
+     "mqttProtocolVersion": 5,
+     "mqttSecurity": {
+      "sslProperties": {
+       "com.ibm.ssl.keyStore": "{{files}}/asyncapi/mqtt-ssl/key-choice/expired-good.p12",
+       "com.ibm.ssl.keyStorePassword": "changeit",
+       "com.ibm.ssl.trustStore": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+       "com.ibm.ssl.trustStorePassword": "changeit",
+       "com.ibm.ssl.keyManager": "NewSunX509"
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a reset closes the connections",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

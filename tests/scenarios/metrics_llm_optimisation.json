@@ -1,0 +1,224 @@
+{
+ "source": "MetricsTest llmOptimisationGaugesReflectLatestSnapshot and clearDropsLlmOptimisationSnapshot over the wire: building the optimisation report (GET /mockserver/llm/optimisationReport) publishes its verdict's saving, cache-hit ratio and one-shot rate as the three mock_server_llm_* gauges; what a reset does to them",
+ "properties": {
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_llm_(?:estimated_waste_usd|cache_hit_ratio|one_shot_rate))[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ],
+   "note": "zero before any report"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "Answer",
+       "usage": {
+        "inputTokens": 1200,
+        "outputTokens": 300,
+        "cachedInputTokens": 0
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/messages"
+     },
+     "httpLlmResponse": {
+      "provider": "ANTHROPIC",
+      "model": "claude-3-5-sonnet-20241022",
+      "completion": {
+       "text": "Tool time",
+       "toolCalls": [
+        {
+         "name": "search",
+         "arguments": "{\"q\":\"x\"}"
+        }
+       ],
+       "usage": {
+        "inputTokens": 5000,
+        "outputTokens": 800,
+        "cachedInputTokens": 4000
+       }
+      }
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a helpful assistant. Always be concise."
+     },
+     {
+      "role": "user",
+      "content": "What is 2+2?"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are a helpful assistant. Always be concise."
+     },
+     {
+      "role": "user",
+      "content": "What is 2+2?"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/messages",
+   "body": {
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 1024,
+    "system": "Long system prompt",
+    "messages": [
+     {
+      "role": "user",
+      "content": "find x"
+     }
+    ],
+    "tools": [
+     {
+      "name": "search",
+      "input_schema": {
+       "type": "object"
+      }
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=json",
+   "note": "builds the report (its body is pinned by llm_optimisation_report)",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{.*\\}\\z",
+     "replace": "<report>",
+     "reason": "pinned by llm_optimisation_report"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_llm_(?:estimated_waste_usd|cache_hit_ratio|one_shot_rate))[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ],
+   "note": "the latest report's figures"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_llm_(?:estimated_waste_usd|cache_hit_ratio|one_shot_rate))[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ],
+   "note": "after a reset"
+  }
+ ]
+}

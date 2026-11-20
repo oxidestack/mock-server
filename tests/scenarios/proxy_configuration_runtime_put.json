@@ -1,0 +1,15 @@
+{"source": "ProxyConfigurationTest. PUT /mockserver/configuration accepts HTTP and SOCKS proxies together (the oracle refuses the pair only when starting); the proxy list is fixed at startup, so a later PUT does not reroute forwards",
+ "properties": {"logLevel": "INFO"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "from target"}},
+    {"httpRequest": {"path": "/override"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ]},
+  {"note": "direct", "method": "GET", "path": "/override"},
+  {"note": "HTTP and SOCKS proxy together", "method": "PUT", "path": "/mockserver/configuration", "body": {"forwardHttpProxy": "{{deadhost}}", "forwardSocksProxy": "{{deadhost}}"}, "mask": ["Configuration@[0-9a-f]+"]},
+  {"note": "still direct", "method": "GET", "path": "/override"},
+  {"note": "HTTPS and SOCKS proxy together", "method": "PUT", "path": "/mockserver/configuration", "body": {"forwardHttpProxy": null, "forwardHttpsProxy": "{{deadhost}}", "forwardSocksProxy": "{{deadhost}}"}, "mask": ["Configuration@[0-9a-f]+"]},
+  {"note": "still direct", "method": "GET", "path": "/override"},
+  {"note": "an address without a port", "method": "PUT", "path": "/mockserver/configuration", "body": {"forwardHttpProxy": "nonsense"}},
+  {"note": "a blank address", "method": "PUT", "path": "/mockserver/configuration", "body": {"forwardSocksProxy": ""}}
+]}

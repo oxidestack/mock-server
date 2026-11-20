@@ -1,0 +1,39 @@
+{
+ "properties": {
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/lts"}, "httpResponse": {"body": "x"}}
+  },
+  {
+   "method": "GET",
+   "path": "/lts"
+  },
+  {
+   "note": "HTTP/2 with prior knowledge",
+   "method": "GET",
+   "path": "/lts",
+   "h2": true
+  },
+  {
+   "note": "TRACE: the event log's and each connection's set-up entries, and every request received, the control plane's too (the start-up warm-up and the harness's readiness requests race each other: masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "(?s)(started on port: <port>\\n-+\\n).*?(<timestamp> - adding HTTP decoders for channel:\\n\\n  \\[id: <channel>\\]\\n\\n pipeline:\\n\\n  \\[[^\\n]*\\]\\n\\n-+\\n<timestamp> - received request:\\n\\n  \\{\\n    \"method\" : \"PUT\",\\n    \"path\" : \"/mockserver/expectation\")",
+     "replace": "${1}(the start-up requests)\n${2}"
+    }
+   ]
+  }
+ ]
+}

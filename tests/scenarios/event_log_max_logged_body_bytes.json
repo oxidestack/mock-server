@@ -1,0 +1,120 @@
+{
+ "properties": {
+  "maxLoggedBodyBytes": "5"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "cap-1",
+    "httpRequest": {
+     "path": "/capture"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "a-very-long-response-body"
+    }
+   },
+   "maxMillis": 90000,
+   "note": "the first logged body over the limit warms the oracle JVM for several seconds"
+  },
+  {
+   "note": "the live response is not truncated",
+   "method": "POST",
+   "path": "/capture",
+   "body": "0123456789ABCDEF"
+  },
+  {
+   "note": "a body at the limit is kept whole",
+   "method": "POST",
+   "path": "/capture",
+   "body": "01234"
+  },
+  {
+   "method": "POST",
+   "path": "/nomatch",
+   "body": "unmatched-request-body"
+  },
+  {
+   "note": "a typed body is cut to BINARY too, and the response's own headers keep their place around the marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "cap-2",
+    "httpRequest": {
+     "path": "/typed"
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "headers": {
+      "X-Zed": [
+       "1"
+      ],
+      "Content-Type": [
+       "application/json"
+      ],
+      "A-First": [
+       "2"
+      ]
+     },
+     "body": {
+      "type": "JSON",
+      "json": {
+       "alpha": 1,
+       "beta": [
+        1,
+        2,
+        3
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/typed",
+   "headers": {
+    "Content-Type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "first": "request",
+    "second": [
+     1,
+     2,
+     3
+    ]
+   }
+  },
+  {
+   "note": "a request without a body is left alone",
+   "method": "GET",
+   "path": "/typed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

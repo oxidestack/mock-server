@@ -1,0 +1,12 @@
+{"steps": [
+  {"note": "reset", "method": "PUT", "path": "/mockserver/reset"},
+  {"note": "an early (respondBeforeBody) response that recovers after two failures", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"method": "POST", "path": "/early", "respondBeforeBody": true}, "httpResponse": {"statusCode": 200, "body": "ok", "recoverAfter": {"failTimes": 2}}}},
+  {"note": "an early response with a failure response, counted per idempotency key", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"method": "POST", "path": "/early-key", "respondBeforeBody": true}, "httpResponse": {"statusCode": 201, "body": "created", "recoverAfter": {"failTimes": 1, "idempotencyHeader": "Idempotency-Key", "failResponse": {"statusCode": 429, "headers": {"Retry-After": ["1"]}, "body": "slow down"}}}}},
+  {"note": "first attempt fails", "method": "POST", "path": "/early", "body": "some body"},
+  {"note": "second attempt fails", "method": "POST", "path": "/early", "body": "some body"},
+  {"note": "third attempt recovers", "method": "POST", "path": "/early", "body": "some body"},
+  {"note": "key a, first attempt fails with the failure response", "method": "POST", "path": "/early-key", "headers": {"Idempotency-Key": "a"}, "body": "some body"},
+  {"note": "key a, second attempt recovers", "method": "POST", "path": "/early-key", "headers": {"Idempotency-Key": "a"}, "body": "some body"},
+  {"note": "key b has its own window", "method": "POST", "path": "/early-key", "headers": {"Idempotency-Key": "b"}, "body": "some body"},
+  {"note": "served responses as recorded", "method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON"}
+]}

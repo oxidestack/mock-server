@@ -1,0 +1,68 @@
+{
+ "source": "WriteStallTimeoutHandler closes an HTTP/2 connection whose client opened every flow-control window and then took none of the bytes waiting for it for responseWriteStallTimeoutMillis (the socket, not a window, holds the response back, so no stream is reset), and counts it in mock_server_response_write_stalls_total{protocol=http2,scope=connection} (MetricsTest#countsResponseWriteStallsUnderTheirProtocolAndScope). logLevel WARN keeps the tens of MB out of the event log, whose rendering starved the timed scenarios replayed in the same process",
+ "properties": {
+  "metricsEnabled": "true",
+  "responseWriteStallTimeoutMillis": "1000",
+  "logLevel": "WARN"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/stall"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"#foreach($i in [1..300000])aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#end\"}"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "a 30 MB response on an HTTP/2 connection with every window open whose client stops reading: the connection is closed, without a reset or GOAWAY, before the response ends",
+   "h2raw": {
+    "method": "GET",
+    "path": "/stall",
+    "openWindows": true,
+    "stallMillis": 5000
+   }
+  },
+  {
+   "note": "one HTTP/2 connection cut",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_response_write_stalls)[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "the WARN, with the bytes waiting for the client when it was cut",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "a{1000,}",
+     "replace": "<large body>",
+     "reason": "the 30 MB response, logged when it was returned"
+    },
+    {
+     "regex": "(took none of the\\n\\n  )\\d+",
+     "replace": "${1}<bytes>",
+     "reason": "Netty's ChannelOutboundBuffer.totalPendingWriteBytes (the unwritten messages plus 96 bytes of entry overhead each: 32864 for one 32 KiB slice of PacedLargeWriteHandler, 30000096 for a 30 MB binary answer written whole) against the rest of the write our socket has not taken, which depends on socket buffers"
+    }
+   ]
+  }
+ ]
+}

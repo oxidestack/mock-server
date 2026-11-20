@@ -1,0 +1,223 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a null regex fails BodyDTODeserializer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "body": {
+      "type": "REGEX",
+      "regex": null
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "an array: the good one is not added, the two failures are joined",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/good"
+     },
+     "httpResponse": {
+      "body": "good"
+     }
+    },
+    {
+     "httpRequest": {
+      "body": {
+       "not": true,
+       "type": "JSON_PATH",
+       "jsonPath": null
+      }
+     },
+     "httpResponse": {
+      "body": "a"
+     }
+    },
+    {
+     "httpRequest": {
+      "body": {
+       "Base64Bytes": null
+      }
+     },
+     "httpResponse": {
+      "body": "b"
+     }
+    }
+   ]
+  },
+  {
+   "note": "null string, json, xml, xpath, fuzzy, jsonSchema, xmlSchema, filePath, moduleName",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"body": {"type": "STRING", "string": null}}, "httpResponse": {}},
+    {"httpRequest": {"body": {"type": "JSON", "json": null}}, "httpResponse": {}},
+    {"httpRequest": {"body": {"type": "XML", "xml": null}}, "httpResponse": {}},
+    {"httpRequest": {"body": {"type": "XPATH", "xpath": null}}, "httpResponse": {}},
+    {"httpRequest": {"body": {"type": "FUZZY", "fuzzy": null}}, "httpResponse": {}},
+    {"httpRequest": {"body": {"type": "JSON_SCHEMA", "jsonSchema": null}}, "httpResponse": {}},
+    {"httpRequest": {"body": {"type": "XML_SCHEMA", "xmlSchema": null}}, "httpResponse": {}},
+    {"httpRequest": {"body": {"type": "FILE", "filePath": null}}, "httpResponse": {}},
+    {"httpRequest": {"body": {"type": "WASM", "moduleName": null}}, "httpResponse": {}}
+   ]
+  },
+  {
+   "note": "the null field comes before type PARAMETERS: still fails",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/params-late",
+     "body": {
+      "regex": null,
+      "type": "PARAMETERS"
+     }
+    },
+    "httpResponse": {}
+   }
+  },
+  {
+   "note": "after type PARAMETERS the value fields are not read",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/params-first",
+      "body": {
+       "type": "PARAMETERS",
+       "regex": null
+      }
+     },
+     "httpResponse": {}
+    },
+    {
+     "httpRequest": {
+      "path": "/params-string",
+      "body": {
+       "type": "PARAMETERS",
+       "string": "x",
+       "regex": null
+      }
+     },
+     "httpResponse": {}
+    }
+   ]
+  },
+  {
+   "note": "verify",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "body": {
+      "type": "REGEX",
+      "regex": null
+     }
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "verifySequence",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/a"
+     },
+     {
+      "body": {
+       "xpath": null
+      }
+     }
+    ]
+   }
+  },
+  {
+   "note": "retrieve",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "body": {
+     "regex": null
+    }
+   }
+  },
+  {
+   "note": "retrieve with the filter under httpRequest",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "httpRequest": {
+     "body": {
+      "regex": null
+     }
+    }
+   }
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "body": {
+     "string": null
+    }
+   }
+  },
+  {
+   "note": "debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "body": {
+     "regex": null
+    }
+   },
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "note": "debugMismatch with a schema-invalid definition logs the same way",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "method": 5
+   },
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "note": "only the PARAMETERS ones were added",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "what was logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  }
+ ]
+}

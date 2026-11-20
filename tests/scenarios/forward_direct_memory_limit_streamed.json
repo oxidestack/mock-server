@@ -1,0 +1,111 @@
+{
+ "source": "Netty's direct-memory limit (io.netty.maxDirectMemory) on a streamed forward: an upstream Server-Sent Events response of 10 MB, relayed as it arrives, probed on the 9.2.0 oracle at an 8 MiB limit.",
+ "properties": {
+  "logLevel": "DEBUG",
+  "maxResponseBodySize": "104857600",
+  "maxSocketTimeoutInMillis": "120000",
+  "maxFutureTimeoutInMillis": "150000"
+ },
+ "jvmOptions": [
+  "-Dio.netty.maxDirectMemory=8388608"
+ ],
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/dm/up"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{'statusCode': 200, 'headers': {'content-type': ['text/event-stream']}, 'body': \"data: #set($s = 'aaaaaaaaaa')#foreach($i in [1..20])#set($s = \"$s$s\")#end${s}END\\n\\n\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dm/fwd"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/dm/up",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dm/echo"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    }
+   ],
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "a 10 MB Server-Sent Events upstream response, streamed, against an 8 MiB limit",
+   "method": "GET",
+   "path": "/dm/fwd",
+   "maxMillis": 150000,
+   "mask": [
+    {
+     "regex": "a{64,}",
+     "replace": "<a-run>",
+     "reason": "a 10 MiB run of one letter kept out of the golden; the END after it shows the body came whole (a counted repetition of thousands is too slow on 10 MB)"
+    }
+   ]
+  },
+  {
+   "note": "what it logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "mask": [
+    {
+     "regex": "a{64,}",
+     "replace": "<a-run>",
+     "reason": "a 10 MiB run of one letter kept out of the golden; the END after it shows the body came whole (a counted repetition of thousands is too slow on 10 MB)"
+    },
+    {
+     "regex": "id: 0x[0-9a-f]{8}",
+     "replace": "id: 0x<id>",
+     "reason": "Netty's random channel id"
+    },
+    {
+     "regex": "L:/[^ \\]\"]+",
+     "replace": "L:/<local>",
+     "reason": "the oracle sits behind Docker's network, an address of its own"
+    },
+    {
+     "regex": "R:[^ \\]\"]*/[^\\]\"]+",
+     "replace": "R:<remote>",
+     "reason": "the peer's address and port"
+    },
+    {
+     "regex": "used: \\d+",
+     "replace": "used: <used>",
+     "reason": "what the pool holds at the failure depends on the sizes the socket's reads came in"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - streaming decision:\\n.*?\\n-{36}\\n",
+     "replace": "\n",
+     "reason": "the forwarding client's DEBUG `streaming decision` entry is not written yet, as in log_forward_upstream_negotiated"
+    },
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0",
+     "reason": "a forward's measured timing"
+    }
+   ]
+  }
+ ]
+}

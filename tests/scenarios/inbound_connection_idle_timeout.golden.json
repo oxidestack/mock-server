@@ -1,0 +1,71 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/simple\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"simple\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/slow\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"slow but sure\",\n    \"delay\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 900\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/sse\"\n  },\n  \"httpSseResponse\" : {\n    \"closeConnection\" : true,\n    \"events\" : [ {\n      \"data\" : \"first\"\n    }, {\n      \"data\" : \"second\",\n      \"delay\" : {\n        \"timeUnit\" : \"MILLISECONDS\",\n        \"value\" : 900\n      }\n    } ]\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/ws\"\n  },\n  \"httpWebSocketResponse\" : {\n    \"messages\" : [ {\n      \"delay\" : {\n        \"timeUnit\" : \"MILLISECONDS\",\n        \"value\" : 900\n      },\n      \"text\" : \"after the quiet\"\n    } ]\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "tcp": "",
+      "closed": true,
+      "note": "a connection that never sends anything"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 6\r\n\r\nsimple",
+      "closed": true,
+      "note": "a keep-alive connection, once idle after its response"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 13\r\n\r\nslow but sure",
+      "closed": true,
+      "note": "a delayed response outlives the timeout; then idle"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-type: text/event-stream\r\ncache-control: no-cache\r\nconnection: close\r\ntransfer-encoding: chunked\r\n\r\nd\r\ndata: first\n\n\r\ne\r\ndata: second\n\n\r\n0\r\n\r\n",
+      "closed": true,
+      "note": "an SSE gap longer than the timeout"
+    },
+    {
+      "tcpText": "HTTP/1.1 101 Switching Protocols\r\nupgrade: websocket\r\nconnection: upgrade\r\nsec-websocket-accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n\r\n�\u000fafter the quiet�\u0005\u0003�Bye",
+      "closed": true,
+      "note": "a WebSocket quiet for longer than the timeout stays open"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 200 OK\r\nconnection: keep-alive\r\ncontent-length: 6\r\n\r\nsimple",
+      "closed": true,
+      "note": "a CONNECT tunnel, once idle after its response"
+    },
+    {
+      "tcp": "BQAFAAADCXNpbXBsZS5pbwBQ",
+      "closed": true,
+      "note": "a SOCKS5 tunnel: its handshake is no activity (the SOCKS handlers sit in front of the idle handler), so it is closed 600 ms after the accept, before its request at 800 ms"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "<masked>",
+        "content-type: text/plain; version=0.0.4; charset=utf-8"
+      ],
+      "body": "# HELP mock_server_inbound_connections_idle_closed_total Inbound connections closed after inboundConnectionIdleTimeoutMillis with nothing in progress\n# TYPE mock_server_inbound_connections_idle_closed_total counter\nmock_server_inbound_connections_idle_closed_total 5.0\n",
+      "note": "five closed as idle: the silent, keep-alive, delayed, the CONNECT tunnel and the SOCKS one"
+    }
+  ]
+}

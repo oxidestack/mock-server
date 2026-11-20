@@ -1,0 +1,56 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"afterActions\" : [ {\n    \"httpRequest\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/hook\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  } ],\n  \"httpRequest\" : {\n    \"path\" : \"/orders\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"created\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/hook\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"hooked\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForward\" : {\n    \"host\" : \"localhost\",\n    \"port\" : <port>,\n    \"scheme\" : \"HTTP\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/forward\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/forward\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"reached forward\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 7"
+      ],
+      "body": "created",
+      "note": "the webhook to localhost goes out after the response"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 2",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[]",
+      "note": "it did not arrive: localhost is not looked up, so the listed 127.0.0.1 does not match it"
+    },
+    {
+      "status": 502,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 149"
+      ],
+      "body": "upstream proxy set by forwardHttpProxy could not be reached (it refused the connection): check the proxy is running and its host and port are correct",
+      "note": "an explicit httpForward to localhost is not resolved before the check: proxied"
+    }
+  ]
+}

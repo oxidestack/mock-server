@@ -1,0 +1,227 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpForward\" : {\n    \"host\" : \"localhost\",\n    \"port\" : <deadport>,\n    \"scheme\" : \"HTTP\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/ff\"\n  },\n  \"id\" : \"ff-forward\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "a forward to a port nothing listens on"
+    },
+    {
+      "status": 502,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 101"
+      ],
+      "body": "upstream refused the connection: check the upstream is running and listening on the port forwarded to",
+      "note": "its forward fails: 502"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation ff-forward: path did not match (  string or regex match failed expected:     /ff    found:     /ff-miss )"
+      ],
+      "body": "",
+      "note": "a genuine miss"
+    },
+    {
+      "status": 502,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 101"
+      ],
+      "body": "upstream refused the connection: check the upstream is running and listening on the port forwarded to",
+      "note": "a request for a foreign host is proxied without an expectation, and fails"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"correlationId\" : \"<uuid>\",\n  \"timestamp\" : \"<masked>\",\n  \"unmatchedRequestCount\" : 1,\n  \"truncated\" : false,\n  \"unmatchedRequests\" : [ {\n    \"timestamp\" : \"<timestamp>\",\n    \"method\" : \"GET\",\n    \"path\" : \"/ff-miss\",\n    \"closestExpectations\" : [ {\n      \"expectationId\" : \"ff-forward\",\n      \"expectationPath\" : \"/ff\",\n      \"expectationMethod\" : \"\",\n      \"matches\" : false,\n      \"matchedFieldCount\" : 18,\n      \"totalFieldCount\" : 19,\n      \"differingFieldCount\" : 1,\n      \"differences\" : {\n        \"path\" : [ \"  string or regex match failed expected:\\n\\n    /ff\\n\\n   found:\\n\\n    /ff-miss\\n\" ]\n      },\n      \"remediation\" : {\n        \"path\" : \"check the request path\"\n      }\n    } ],\n    \"totalExpectationsEvaluated\" : 1\n  } ]\n}",
+      "note": "failed forwards are kept out: only the genuine miss"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>"
+      ],
+      "body": "<log entries>"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"correlationId\" : \"<uuid>\",\n  \"timestamp\" : \"<masked>\",\n  \"recomputed\" : true,\n  \"note\" : \"recomputed now against the current expectations, scenario states and remaining Times, so it can differ from what happened when the request arrived\",\n  \"request\" : {\n    \"timestamp\" : \"<timestamp>\",\n    \"method\" : \"GET\",\n    \"path\" : \"/ff\"\n  },\n  \"atArrival\" : {\n    \"outcome\" : \"MATCHED\",\n    \"expectationId\" : \"ff-forward\",\n    \"expectationStillStored\" : true,\n    \"forwardFailure\" : {\n      \"statusCode\" : 502,\n      \"forwardLoopSuspected\" : false,\n      \"reason\" : \"upstream refused the connection: check the upstream is running and listening on the port forwarded to\",\n      \"causeNamed\" : true\n    }\n  },\n  \"expectationsChangedSince\" : false,\n  \"expectationsLastChanged\" : \"<masked>\",\n  \"sameOutcomeAsAtArrival\" : true,\n  \"matchedExpectation\" : {\n    \"expectationId\" : \"ff-forward\",\n    \"expectationPath\" : \"/ff\",\n    \"expectationMethod\" : \"\",\n    \"matches\" : true,\n    \"matchedFieldCount\" : 19,\n    \"totalFieldCount\" : 19,\n    \"differingFieldCount\" : 0,\n    \"position\" : 1,\n    \"priority\" : 0\n  },\n  \"skippedExpectations\" : [ ],\n  \"shadowedExpectations\" : [ ],\n  \"totalExpectations\" : 1,\n  \"evaluatedExpectations\" : 1,\n  \"truncated\" : false\n}",
+      "note": "MATCHED by the forward expectation, with its forward failure"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>"
+      ],
+      "body": "<log entries>"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"correlationId\" : \"<uuid>\",\n  \"timestamp\" : \"<masked>\",\n  \"recomputed\" : true,\n  \"note\" : \"recomputed now against the current expectations, scenario states and remaining Times, so it can differ from what happened when the request arrived\",\n  \"request\" : {\n    \"timestamp\" : \"<timestamp>\",\n    \"method\" : \"GET\",\n    \"path\" : \"/ff-miss\"\n  },\n  \"atArrival\" : {\n    \"outcome\" : \"NO_MATCH\"\n  },\n  \"expectationsChangedSince\" : false,\n  \"expectationsLastChanged\" : \"<masked>\",\n  \"sameOutcomeAsAtArrival\" : true,\n  \"closestExpectationId\" : \"ff-forward\",\n  \"skippedExpectations\" : [ {\n    \"expectationId\" : \"ff-forward\",\n    \"expectationPath\" : \"/ff\",\n    \"expectationMethod\" : \"\",\n    \"matches\" : false,\n    \"matchedFieldCount\" : 18,\n    \"totalFieldCount\" : 19,\n    \"differingFieldCount\" : 1,\n    \"differences\" : {\n      \"path\" : [ \"  string or regex match failed expected:\\n\\n    /ff\\n\\n   found:\\n\\n    /ff-miss\\n\" ]\n    },\n    \"remediation\" : {\n      \"path\" : \"check the request path\"\n    },\n    \"position\" : 1,\n    \"priority\" : 0,\n    \"reason\" : \"FIELDS_DIFFER\",\n    \"explanation\" : \"the request differs on: path\"\n  } ],\n  \"shadowedExpectations\" : [ ],\n  \"totalExpectations\" : 1,\n  \"evaluatedExpectations\" : 1,\n  \"truncated\" : false\n}",
+      "note": "NO_MATCH, no forward failure"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>",
+        "<log entries>"
+      ],
+      "body": "<log entries>"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"correlationId\" : \"<uuid>\",\n  \"timestamp\" : \"<masked>\",\n  \"recomputed\" : true,\n  \"note\" : \"recomputed now against the current expectations, scenario states and remaining Times, so it can differ from what happened when the request arrived\",\n  \"request\" : {\n    \"timestamp\" : \"<timestamp>\",\n    \"method\" : \"GET\",\n    \"path\" : \"/ff-proxy\"\n  },\n  \"atArrival\" : {\n    \"outcome\" : \"FORWARDED_WITHOUT_EXPECTATION\",\n    \"forwardFailure\" : {\n      \"statusCode\" : 502,\n      \"forwardLoopSuspected\" : false,\n      \"reason\" : \"upstream refused the connection: check the upstream is running and listening on the port forwarded to\",\n      \"causeNamed\" : true\n    }\n  },\n  \"expectationsChangedSince\" : false,\n  \"expectationsLastChanged\" : \"<masked>\",\n  \"sameOutcomeAsAtArrival\" : true,\n  \"closestExpectationId\" : \"ff-forward\",\n  \"skippedExpectations\" : [ {\n    \"expectationId\" : \"ff-forward\",\n    \"expectationPath\" : \"/ff\",\n    \"expectationMethod\" : \"\",\n    \"matches\" : false,\n    \"matchedFieldCount\" : 18,\n    \"totalFieldCount\" : 19,\n    \"differingFieldCount\" : 1,\n    \"differences\" : {\n      \"path\" : [ \"  string or regex match failed expected:\\n\\n    /ff\\n\\n   found:\\n\\n    /ff-proxy\\n\" ]\n    },\n    \"remediation\" : {\n      \"path\" : \"check the request path\"\n    },\n    \"position\" : 1,\n    \"priority\" : 0,\n    \"reason\" : \"FIELDS_DIFFER\",\n    \"explanation\" : \"the request differs on: path\"\n  } ],\n  \"shadowedExpectations\" : [ ],\n  \"totalExpectations\" : 1,\n  \"evaluatedExpectations\" : 1,\n  \"truncated\" : false\n}",
+      "note": "FORWARDED_WITHOUT_EXPECTATION, with its forward failure"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<initialize>",
+        "<initialize>",
+        "<initialize>"
+      ],
+      "body": "<initialize>"
+    },
+    {
+      "status": 202,
+      "headers": [
+        "content-length: 0"
+      ],
+      "body": ""
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":2,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"correlationId\\\" : \\\"<uuid>\\\",\\n  \\\"timestamp\\\" : \\\"<masked>\\\",\\n  \\\"recomputed\\\" : true,\\n  \\\"note\\\" : \\\"recomputed now against the current expectations, scenario states and remaining Times, so it can differ from what happened when the request arrived\\\",\\n  \\\"request\\\" : {\\n    \\\"timestamp\\\" : \\\"<timestamp>\\\",\\n    \\\"method\\\" : \\\"GET\\\",\\n    \\\"path\\\" : \\\"/ff\\\"\\n  },\\n  \\\"atArrival\\\" : {\\n    \\\"outcome\\\" : \\\"MATCHED\\\",\\n    \\\"expectationId\\\" : \\\"ff-forward\\\",\\n    \\\"expectationStillStored\\\" : true,\\n    \\\"forwardFailure\\\" : {\\n      \\\"statusCode\\\" : 502,\\n      \\\"forwardLoopSuspected\\\" : false,\\n      \\\"reason\\\" : \\\"upstream refused the connection: check the upstream is running and listening on the port forwarded to\\\",\\n      \\\"causeNamed\\\" : true\\n    }\\n  },\\n  \\\"expectationsChangedSince\\\" : false,\\n  \\\"expectationsLastChanged\\\" : \\\"<masked>\\\",\\n  \\\"sameOutcomeAsAtArrival\\\" : true,\\n  \\\"matchedExpectation\\\" : {\\n    \\\"expectationId\\\" : \\\"ff-forward\\\",\\n    \\\"expectationPath\\\" : \\\"/ff\\\",\\n    \\\"expectationMethod\\\" : \\\"\\\",\\n    \\\"matches\\\" : true,\\n    \\\"matchedFieldCount\\\" : 19,\\n    \\\"totalFieldCount\\\" : 19,\\n    \\\"differingFieldCount\\\" : 0,\\n    \\\"position\\\" : 1,\\n    \\\"priority\\\" : 0\\n  },\\n  \\\"skippedExpectations\\\" : [ ],\\n  \\\"shadowedExpectations\\\" : [ ],\\n  \\\"totalExpectations\\\" : 1,\\n  \\\"evaluatedExpectations\\\" : 1,\\n  \\\"truncated\\\" : false\\n}\"}],\"structuredContent\":{\"correlationId\":\"<uuid>\",\"timestamp\":\"<masked>\",\"recomputed\":true,\"note\":\"recomputed now against the current expectations, scenario states and remaining Times, so it can differ from what happened when the request arrived\",\"request\":{\"timestamp\":\"<timestamp>\",\"method\":\"GET\",\"path\":\"/ff\"},\"atArrival\":{\"outcome\":\"MATCHED\",\"expectationId\":\"ff-forward\",\"expectationStillStored\":true,\"forwardFailure\":{\"statusCode\":502,\"forwardLoopSuspected\":false,\"reason\":\"upstream refused the connection: check the upstream is running and listening on the port forwarded to\",\"causeNamed\":true}},\"expectationsChangedSince\":false,\"expectationsLastChanged\":\"<masked>\",\"sameOutcomeAsAtArrival\":true,\"matchedExpectation\":{\"expectationId\":\"ff-forward\",\"expectationPath\":\"/ff\",\"expectationMethod\":\"\",\"matches\":true,\"matchedFieldCount\":19,\"totalFieldCount\":19,\"differingFieldCount\":0,\"position\":1,\"priority\":0},\"skippedExpectations\":[],\"shadowedExpectations\":[],\"totalExpectations\":1,\"evaluatedExpectations\":1,\"truncated\":false},\"isError\":false}}",
+      "note": "MCP explain_request: the failed forward, MATCHED with its forward failure"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":3,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"correlationId\\\" : \\\"<uuid>\\\",\\n  \\\"timestamp\\\" : \\\"<masked>\\\",\\n  \\\"recomputed\\\" : true,\\n  \\\"note\\\" : \\\"recomputed now against the current expectations, scenario states and remaining Times, so it can differ from what happened when the request arrived\\\",\\n  \\\"request\\\" : {\\n    \\\"timestamp\\\" : \\\"<timestamp>\\\",\\n    \\\"method\\\" : \\\"GET\\\",\\n    \\\"path\\\" : \\\"/ff-proxy\\\"\\n  },\\n  \\\"atArrival\\\" : {\\n    \\\"outcome\\\" : \\\"FORWARDED_WITHOUT_EXPECTATION\\\",\\n    \\\"forwardFailure\\\" : {\\n      \\\"statusCode\\\" : 502,\\n      \\\"forwardLoopSuspected\\\" : false,\\n      \\\"reason\\\" : \\\"upstream refused the connection: check the upstream is running and listening on the port forwarded to\\\",\\n      \\\"causeNamed\\\" : true\\n    }\\n  },\\n  \\\"expectationsChangedSince\\\" : false,\\n  \\\"expectationsLastChanged\\\" : \\\"<masked>\\\",\\n  \\\"sameOutcomeAsAtArrival\\\" : true,\\n  \\\"closestExpectationId\\\" : \\\"ff-forward\\\",\\n  \\\"skippedExpectations\\\" : [ {\\n    \\\"expectationId\\\" : \\\"ff-forward\\\",\\n    \\\"expectationPath\\\" : \\\"/ff\\\",\\n    \\\"expectationMethod\\\" : \\\"\\\",\\n    \\\"matches\\\" : false,\\n    \\\"matchedFieldCount\\\" : 18,\\n    \\\"totalFieldCount\\\" : 19,\\n    \\\"differingFieldCount\\\" : 1,\\n    \\\"differences\\\" : {\\n      \\\"path\\\" : [ \\\"  string or regex match failed expected:\\\\n\\\\n    /ff\\\\n\\\\n   found:\\\\n\\\\n    /ff-proxy\\\\n\\\" ]\\n    },\\n    \\\"remediation\\\" : {\\n      \\\"path\\\" : \\\"check the request path\\\"\\n    },\\n    \\\"position\\\" : 1,\\n    \\\"priority\\\" : 0,\\n    \\\"reason\\\" : \\\"FIELDS_DIFFER\\\",\\n    \\\"explanation\\\" : \\\"the request differs on: path\\\"\\n  } ],\\n  \\\"shadowedExpectations\\\" : [ ],\\n  \\\"totalExpectations\\\" : 1,\\n  \\\"evaluatedExpectations\\\" : 1,\\n  \\\"truncated\\\" : false\\n}\"}],\"structuredContent\":{\"correlationId\":\"<uuid>\",\"timestamp\":\"<masked>\",\"recomputed\":true,\"note\":\"recomputed now against the current expectations, scenario states and remaining Times, so it can differ from what happened when the request arrived\",\"request\":{\"timestamp\":\"<timestamp>\",\"method\":\"GET\",\"path\":\"/ff-proxy\"},\"atArrival\":{\"outcome\":\"FORWARDED_WITHOUT_EXPECTATION\",\"forwardFailure\":{\"statusCode\":502,\"forwardLoopSuspected\":false,\"reason\":\"upstream refused the connection: check the upstream is running and listening on the port forwarded to\",\"causeNamed\":true}},\"expectationsChangedSince\":false,\"expectationsLastChanged\":\"<masked>\",\"sameOutcomeAsAtArrival\":true,\"closestExpectationId\":\"ff-forward\",\"skippedExpectations\":[{\"expectationId\":\"ff-forward\",\"expectationPath\":\"/ff\",\"expectationMethod\":\"\",\"matches\":false,\"matchedFieldCount\":18,\"totalFieldCount\":19,\"differingFieldCount\":1,\"differences\":{\"path\":[\"  string or regex match failed expected:\\n\\n    /ff\\n\\n   found:\\n\\n    /ff-proxy\\n\"]},\"remediation\":{\"path\":\"check the request path\"},\"position\":1,\"priority\":0,\"reason\":\"FIELDS_DIFFER\",\"explanation\":\"the request differs on: path\"}],\"shadowedExpectations\":[],\"totalExpectations\":1,\"evaluatedExpectations\":1,\"truncated\":false},\"isError\":false}}",
+      "note": "MCP explain_request: the proxied failure"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":4,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'correlationId' is required\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'correlationId' is required\"},\"isError\":true}}",
+      "note": "MCP explain_request without a correlationId"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":5,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'correlationId' is required\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'correlationId' is required\"},\"isError\":true}}",
+      "note": "MCP explain_request with a blank correlationId"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":6,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"no request is recorded with this correlationId; it may never have been received, or it has been cleared or evicted from the event log (see maxLogEntries)\\\",\\n  \\\"correlationId\\\" : \\\"no-such-correlation-id\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"no request is recorded with this correlationId; it may never have been received, or it has been cleared or evicted from the event log (see maxLogEntries)\",\"correlationId\":\"no-such-correlation-id\"},\"isError\":true}}",
+      "note": "MCP explain_request for a correlation id never seen"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "0", "-Dmockserver.typoSysprop=1"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_LOG_LEVEL": "WARN",
+    "MOCKSERVER_TOTALLYUNKNOWNPROPERTY": "abc"
+  },
+  "readiness": {
+    "logContains": "logger level is"
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "[WARN] unrecognised MockServer configuration environment variable [MOCKSERVER_TOTALLYUNKNOWNPROPERTY] - it is not a known configuration property and will be ignored (check for a typo)",
+      "[WARN] unrecognised MockServer configuration system property [mockserver.typoSysprop] - it is not a known configuration property and will be ignored (check for a typo)"
+    ],
+    "stdoutNotContains": [
+      "[INFO] ",
+      "started on port"
+    ]
+  }
+}

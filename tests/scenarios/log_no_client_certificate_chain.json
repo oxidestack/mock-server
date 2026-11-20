@@ -1,0 +1,130 @@
+{
+ "source": "at TRACE, 8.0.0's SniHandler logs `found ALPN protocol:{}` for the protocol a TLS handshake negotiated (none for a client that offers no ALPN, such as MockServer's own HTTP/1.1 forwarding client) and `no client certificate chain as client did not complete mTLS` each time it asks for the client's certificates and finds none: on HTTP/1.1 once for the codec's set-up and once for the connection's first request (EarlyMatchingHandler), not for later requests on it.; socketConnectionTimeoutInMillis bounds the first handshake, whose certificate generation can take over the default 20 s on a loaded machine",
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ncc/b"
+     },
+     "httpResponse": {
+      "body": "b"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ncc/fwd"
+     },
+     "httpOverrideForwardedRequest": {
+      "httpRequest": {
+       "path": "/ncc/b",
+       "secure": true,
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "a TLS connection first, so the CA loads are behind us",
+   "tcp": [
+    {
+     "text": "GET /ncc/b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "two requests on one TLS connection (ALPN http/1.1, no client certificate)",
+   "tcp": [
+    {
+     "text": "GET /ncc/b HTTP/1.1\r\nHost: localhost\r\n\r\n"
+    },
+    {
+     "text": "GET /ncc/b HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "a TLS forward to itself: the forwarding client offers no ALPN",
+   "method": "GET",
+   "path": "/ncc/fwd"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "TRACE LOGS (the forwarded request's entries race the forwarding one's: unordered): the ALPN and client-certificate entries; the leaf's `created new X509` entry, random, is cut out (scenario log_created_new_x509)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "(disconnected and closed socket )\\S+",
+     "replace": "${1}<local address>"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - created new X509\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    },
+    {
+     "regex": "(and certificate serial:\\n\\n  )\\d+",
+     "replace": "${1}<random>"
+    },
+    {
+     "regex": "(serialNumber\" : \")\\d+",
+     "replace": "${1}<random>"
+    },
+    {
+     "regex": "(\"[A-Za-z]+Millis\" : )\\d+",
+     "replace": "${1}<ms>"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - streaming decision:\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    }
+   ],
+   "compare": "unordered"
+  }
+ ]
+}

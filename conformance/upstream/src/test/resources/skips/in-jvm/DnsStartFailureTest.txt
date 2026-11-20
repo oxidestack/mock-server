@@ -1,0 +1,12 @@
+# Fails on oracle-process too (confirmed with -DrunSkipped=in-jvm, 2026-10-19). The launcher
+# does turn the refusal into a DnsStartupException (DnsStartFailure.of), but its MockServer is an in-JVM LifeCycle
+# whose MockServer-EventLog thread outlives the refused start, which RefusedStart.refusedStart reports as a thread
+# the refused server left running; and RefusedStart.RecordingMockServer's bindServerPorts hook is never called for a
+# process, so the TCP port it records stays empty.
+shouldRefuseToStartWhenTheDnsPortIsHeldNamingThePortAndTheCauseOnOneLine  # the launcher's MockServer-EventLog thread is left running
+shouldRefuseToStartWhenTheDnsPortIsHeldOnTheIpv4Wildcard  # RecordingMockServer never records the process's TCP port
+shouldHaveClosedItsTcpListenerAndHoldNoUdpSocketWhenTheConstructorThrows  # RecordingMockServer never records the process's TCP port
+shouldStopAndKeepTheInterruptWhenTheStartingThreadIsInterrupted  # RecordingMockServer never records the process's TCP port, so it never interrupts
+shouldRefuseASecondMockServerGivenTheDnsPortOfTheFirst  # the launcher's MockServer-EventLog thread is left running
+shouldRefuseToStartWhenTheDnsPortIsNotAPort  # the launcher's MockServer-EventLog thread is left running
+shouldPropagateTheRefusalFromStartClientAndServer  # the launcher's MockServer-EventLog thread is left running

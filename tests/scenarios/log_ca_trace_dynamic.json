@@ -1,0 +1,75 @@
+{
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false",
+  "dynamicallyCreateCertificateAuthorityCertificate": "true",
+  "directoryToSaveDynamicSSLCertificate": "/tmp/mock-server-log-ca-trace-dynamic"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "first inbound TLS connection: the dynamic CA is created then, its files logged, then its key (TRACE) and X509 (DEBUG) loaded",
+   "tcp": [
+    {
+     "text": "GET /ca/dynamic HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "created dynamic \u2026 file at{} on first TLS use; the generated key and certificate are random; the leaf's TRACE `created new X509` entry is cut out (not written yet, docs/divergences.md)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)^.*?(\\n?[^\\n]* - created dynamic Certificate Authority Private Key)",
+     "replace": "(before: the connection's set-up entries)\n${1}"
+    },
+    {
+     "regex": "(RSA Private CRT Key )\\[[0-9a-f:]+\\],\\[[0-9a-f:]+\\]\\n( +modulus: )[0-9a-f]+",
+     "replace": "${1}[<fingerprint>],[<fingerprint>]\n${2}<random>"
+    },
+    {
+     "regex": "(?s)(-----BEGIN CERTIFICATE-----\\n).*?(  -----END CERTIFICATE-----)",
+     "replace": "${1}  <random>\n${2}"
+    },
+    {
+     "regex": "(?s)(\\n as\\n\\n  \\[\\n).*?(\\n  \\]\\n\\n-+\\n)",
+     "replace": "${1}  <the certificate's toString: random key, serial and validity>${2}"
+    },
+    {
+     "regex": "(serial:\\n\\n  )\\d+",
+     "replace": "${1}<random>"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - created new X509\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    },
+    {
+     "regex": "(?s)^(.*subject:\\n\\n  [^\\n]*CN=localhost\\n\\n-+\\n).*$",
+     "replace": "${1}(the rest: the request served over TLS)"
+    }
+   ]
+  },
+  {
+   "note": "remove the generated CA for the next run",
+   "deleteFile": "/tmp/mock-server-log-ca-trace-dynamic/PKCS8CertificateAuthorityPrivateKey.pem"
+  },
+  {
+   "deleteFile": "/tmp/mock-server-log-ca-trace-dynamic/CertificateAuthorityCertificate.pem"
+  }
+ ]
+}

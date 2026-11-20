@@ -1,0 +1,332 @@
+{
+ "source": "hand-written: delay-template exception throwable, chaos replacing a response, forward override and directory file bodies",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/xm"
+     },
+     "httpResponse": {
+      "body": "xm",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "{{#unclosed}}"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/xv"
+     },
+     "httpResponse": {
+      "body": "xv",
+      "delay": {
+       "templateType": "VELOCITY",
+       "template": "#if("
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ce"
+     },
+     "httpResponse": {
+      "body": "ce",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "not a number"
+      }
+     },
+     "chaos": {
+      "errorStatus": 503,
+      "errorProbability": 1.0
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/cq"
+     },
+     "httpResponse": {
+      "body": "cq",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "not a number"
+      }
+     },
+     "chaos": {
+      "quotaName": "t468",
+      "quotaLimit": 1,
+      "quotaWindowMillis": 600000
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rl"
+     },
+     "httpResponse": {
+      "body": "rl",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "not a number"
+      }
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rf"
+     },
+     "httpResponse": {
+      "body": {
+       "type": "FILE",
+       "filePath": "/no/such/dir/missing.txt"
+      }
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/up"
+     },
+     "httpResponse": {
+      "body": "upstream"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fo"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      },
+      "responseOverride": {
+       "body": {
+        "type": "FILE",
+        "filePath": "/no/such/dir/missing.txt"
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dir"
+     },
+     "httpResponse": {
+      "body": {
+       "type": "FILE",
+       "filePath": "/usr"
+      }
+     }
+    }
+   ],
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/xm",
+   "note": "a mustache delay template that throws: the WARN (twice) carries the rendering exception as its throwable"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/xm"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/xv",
+   "note": "the same with a velocity parse error"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/xv"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/ce",
+   "note": "a chaos error replaces the response: its delay (none) is resolved by the write funnel, so one fallback"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/ce"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/cq",
+   "note": "a chaos quota: the first is served (two fallbacks), the second is the quota response (one)",
+   "mask": [
+    "(?i)x-ratelimit-reset\\W+\\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/cq",
+   "note": "again",
+   "mask": [
+    "(?i)x-ratelimit-reset\\W+\\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/cq"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "(?i)x-ratelimit-reset\\W+\\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/rl",
+   "note": "a rate limit: the first is served, the second is the 429",
+   "mask": [
+    "(?i)x-ratelimit-reset\\W+\\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/rl",
+   "note": "again",
+   "mask": [
+    "(?i)x-ratelimit-reset\\W+\\d+",
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>",
+     "reason": "the fixed window's reset second minus now: 600 only when the window's first request and this one fall in the same wall-clock second, for the oracle too (RateLimitRegistry line 145)"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/rl"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "(?i)x-ratelimit-reset\\W+\\d+",
+    {
+     "regex": "(\"Retry-After\" : \\[\\s*\")\\d+",
+     "replace": "${1}<secs>",
+     "reason": "the 429's fixed-window Retry-After as logged, measured against the wall clock like the header"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/rf",
+   "note": "a rate-limited response whose file body is unreadable"
+  },
+  {
+   "method": "GET",
+   "path": "/rf",
+   "note": "again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/rf"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/fo",
+   "note": "a forward whose responseOverride has an unreadable file body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/fo"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ],
+   "compare": "unordered",
+   "note": "drift analysis is scheduled: its evaluations race the forwarded entry; polled until every scheduled drift evaluation is logged. The forwarded entry's response time, 0 ms on an idle machine, is masked",
+   "pollUntil": "(?s)^(?=(?:.*?\"type\" : \"EXPECTATION_NOT_MATCHED\"){15})(?=(?:.*?\"type\" : \"EXPECTATION_MATCHED\"){2})(?=(?:.*?\"type\" : \"FILE\"){12})"
+  },
+  {
+   "method": "GET",
+   "path": "/dir",
+   "note": "a file body naming a directory"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/dir"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

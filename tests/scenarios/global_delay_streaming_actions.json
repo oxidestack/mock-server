@@ -1,0 +1,288 @@
+{
+ "source": "HttpActionHandler schedules ERROR, SSE_RESPONSE, WEBSOCKET_RESPONSE, GRPC_STREAM_RESPONSE and LLM_RESPONSE with combineWithGlobalDelay(actionDelay) and rejectableIfDelayed (HttpActionHandler.java:676-983), so globalResponseDelayMillis delays each before it is dispatched (a non-streaming LLM response is then written through writeResponseActionResponse, which applies the global delay again), and each is refused with the overload 503 while a delayed response holds the only slot of maxPendingDelayedResponses",
+ "properties": {
+  "globalResponseDelayMillis": "1500",
+  "maxPendingDelayedResponses": "1"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyBase64": "CvgDCg5ncmVldGluZy5wcm90bxIQY29tLmV4YW1wbGUuZ3JwYyIiCgxIZWxsb1JlcXVlc3QSEgoEbmFtZRgBIAEoCVIEbmFtZSIrCg1IZWxsb1Jlc3BvbnNlEhoKCGdyZWV0aW5nGAEgASgJUghncmVldGluZzLWAgoPR3JlZXRpbmdTZXJ2aWNlEksKCEdyZWV0aW5nEh4uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1JlcXVlc3QaHy5jb20uZXhhbXBsZS5ncnBjLkhlbGxvUmVzcG9uc2USUgoNTGlzdEdyZWV0aW5ncxIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlMAESVQoQQ29sbGVjdEdyZWV0aW5ncxIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlKAESSwoEQ2hhdBIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlKAEwAUIiChBjb20uZXhhbXBsZS5ncnBjQg5HcmVldGluZ1Byb3Rvc2IGcHJvdG8z",
+   "note": "the greeting service's descriptors"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "gd-error",
+     "httpRequest": {
+      "path": "/gd/error"
+     },
+     "httpError": {
+      "dropConnection": true
+     }
+    },
+    {
+     "id": "gd-sse",
+     "httpRequest": {
+      "path": "/gd/sse"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "one"
+       }
+      ],
+      "closeConnection": true
+     }
+    },
+    {
+     "id": "gd-ws",
+     "httpRequest": {
+      "path": "/gd/ws"
+     },
+     "httpWebSocketResponse": {
+      "messages": [
+       {
+        "text": "a"
+       }
+      ],
+      "closeConnection": true
+     }
+    },
+    {
+     "id": "gd-grpc",
+     "httpRequest": {
+      "path": "/com.example.grpc.GreetingService/ListGreetings"
+     },
+     "grpcStreamResponse": {
+      "statusName": "OK",
+      "messages": [
+       {
+        "json": "{\"greeting\": \"one\"}"
+       }
+      ]
+     }
+    },
+    {
+     "id": "gd-llm",
+     "httpRequest": {
+      "path": "/gd/llm"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "plain"
+      }
+     }
+    },
+    {
+     "id": "gd-llm-stream",
+     "httpRequest": {
+      "path": "/gd/llm-stream"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "streamed",
+       "streaming": true
+      }
+     }
+    },
+    {
+     "id": "gd-held",
+     "httpRequest": {
+      "path": "/gd/held"
+     },
+     "httpResponse": {
+      "body": "held",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 8000
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "the error is dispatched after the global delay: the connection is dropped no earlier",
+   "tcp": [
+    {
+     "text": "GET /gd/error HTTP/1.1\r\nHost: localhost\r\n\r\n"
+    }
+   ],
+   "minMillis": 1500
+  },
+  {
+   "note": "the SSE stream starts after the global delay",
+   "method": "GET",
+   "path": "/gd/sse",
+   "minMillis": 1500
+  },
+  {
+   "note": "the WebSocket upgrade is answered after the global delay, then the socket closed",
+   "tcp": [
+    {
+     "text": "GET /gd/ws HTTP/1.1\r\nHost: ws.example.com\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ],
+   "minMillis": 1500
+  },
+  {
+   "note": "the gRPC stream starts after the global delay",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "minMillis": 1500
+  },
+  {
+   "note": "a non-streaming LLM response waits the global delay at dispatch and again when it is written",
+   "method": "POST",
+   "path": "/gd/llm",
+   "body": {
+    "model": "m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ]
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]+",
+    "\"created\" ?: ?\\d+"
+   ],
+   "minMillis": 3000
+  },
+  {
+   "note": "a streaming LLM response starts after the global delay",
+   "method": "POST",
+   "path": "/gd/llm-stream",
+   "body": {
+    "model": "m",
+    "stream": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ]
+   },
+   "mask": [
+    "chatcmpl-[0-9a-f]+",
+    "\"created\" ?: ?\\d+"
+   ],
+   "minMillis": 1500
+  },
+  {
+   "note": "a delayed mock response holds the only slot of maxPendingDelayedResponses",
+   "async": "held",
+   "maxMillis": 15000,
+   "method": "GET",
+   "path": "/gd/held"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "the error is refused with the overload 503",
+   "tcp": [
+    {
+     "text": "GET /gd/error HTTP/1.1\r\nHost: localhost\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "the SSE stream is refused with the overload 503",
+   "method": "GET",
+   "path": "/gd/sse",
+   "maxMillis": 1000
+  },
+  {
+   "note": "the WebSocket upgrade is refused with the overload 503",
+   "tcp": [
+    {
+     "text": "GET /gd/ws HTTP/1.1\r\nHost: ws.example.com\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "the gRPC stream is refused with the overload 503",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 1000
+  },
+  {
+   "note": "the non-streaming LLM response is refused with the overload 503",
+   "method": "POST",
+   "path": "/gd/llm",
+   "body": {
+    "model": "m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ]
+   },
+   "maxMillis": 1000
+  },
+  {
+   "note": "the streaming LLM response is refused with the overload 503",
+   "method": "POST",
+   "path": "/gd/llm-stream",
+   "body": {
+    "model": "m",
+    "stream": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ]
+   },
+   "maxMillis": 1000
+  },
+  {
+   "await": "held"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "maxMillis": 30000,
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "\"created\\\\?\" ?: ?\\d+",
+    "chatcmpl-[0-9a-f]+",
+    {
+     "regex": "(totalTimeInMillis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

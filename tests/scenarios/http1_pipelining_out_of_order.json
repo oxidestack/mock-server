@@ -1,0 +1,47 @@
+{
+ "source": "9.2.0 Http1PipeliningInOrderDisabledIntegrationTest: with http1PipeliningInOrder=false pipelined requests are answered as they complete.",
+ "properties": {
+  "http1PipeliningInOrder": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/slow"
+     },
+     "httpResponse": {
+      "body": "slow",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 600
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fast"
+     },
+     "httpResponse": {
+      "body": "fast"
+     }
+    }
+   ]
+  },
+  {
+   "note": "one write: a slow request, then a fast one; the fast response is written first",
+   "text": true,
+   "tcp": [
+    {
+     "text": "GET /slow HTTP/1.1\r\nHost: {{host}}\r\n\r\nGET /fast HTTP/1.1\r\nHost: {{host}}\r\n\r\n"
+    }
+   ]
+  }
+ ]
+}

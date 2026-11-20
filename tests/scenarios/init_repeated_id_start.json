@@ -1,0 +1,36 @@
+{
+ "properties": {
+  "initializationJsonPath": "{{files}}/init/loader/repeated_id.json"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "note": "upstream #106 (33cdd577e): an init file repeating an id keeps the last entry, served from the first entry's place (its log, one creating expectation with the last entry, is checked on a reload in init_repeated_id_reload: at start it also holds the init-file lint WARN)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "the kept (last) entry sits ahead of the middle one, so it answers the path both match",
+   "method": "GET",
+   "path": "/shared"
+  },
+  {
+   "note": "the first entry is gone",
+   "method": "GET",
+   "path": "/firstEntry"
+  },
+  {
+   "note": "the init-file lint WARN: DUPLICATE_ID for the replaced first entry, and SHADOWED for the middle entry the kept one now serves ahead of (polled: the oracle's first lint of a file can take tens of seconds)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "pollUntil": "expectation lint found",
+   "mask": [
+    {
+     "regex": "(?s)\\n-+\\n<timestamp> - Forward proxy is configured.*",
+     "replace": "\n<startup warnings and the requests after them>",
+     "reason": "this step checks the entries before the startup warnings (the lint WARN, then the creating entries); 9.1.0's once-per-start warnings are not checked here"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,468 @@
+{
+ "source": "upstream #119 (20da80972) at 9.2.0. The Kafka JAAS configuration comes only from the startup property asyncKafkaSaslJaasConfig, a SASL_* request may only use the startup asyncKafkaBootstrapServers (omitted, or the same set of host:port values), and PUT /mockserver/configuration ignores both with an init-only WARN. GET /mockserver/config shows the JAAS configuration redacted.",
+ "properties": {
+  "asyncKafkaBootstrapServers": "{{deadhost}}",
+  "asyncKafkaSaslJaasConfig": "shaded_package.org.apache.kafka.common.security.plain.PlainLoginModule required username=\"startup-user\" password=\"startup-secret\";"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "PLAIN"
+     }
+    }
+   },
+   "note": "SASL with the startup JAAS, the startup brokers by omission: the producer is built"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the log: SASL with the startup JAAS",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\"content-length\" : \\[\\s*\"\\d+\"\\s*\\]",
+     "reason": "the logged request's length varies with the dead host's port"
+    },
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": " {{deadhost}} ,",
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "sasl_plaintext",
+      "saslMechanism": "PLAIN"
+     }
+    }
+   },
+   "note": "the startup brokers repeated (blank entries, spaces) and a lower-case protocol: the producer is built"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "elsewhere.invalid:9092",
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "PLAIN"
+     }
+    }
+   },
+   "note": "SASL to brokers other than the startup ones: refused"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "{{deadhost}},elsewhere.invalid:9092",
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "PLAIN"
+     }
+    }
+   },
+   "note": "SASL to the startup brokers plus another: refused"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "elsewhere.invalid:9092",
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "PLAINTEXT"
+     }
+    }
+   },
+   "note": "PLAINTEXT to other brokers: not bound to the startup ones"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "plain"
+     }
+    }
+   },
+   "note": "a lower-case mechanism: refused"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslLoginClass": "x.Y",
+      "saslJaasConfig": "a"
+     }
+    }
+   },
+   "note": "an unknown kafkaSecurity field before saslJaasConfig: the unknown field is named"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "PLAIN",
+      "saslJaasConfig": null
+     }
+    }
+   },
+   "note": "a null saslJaasConfig is absent: the producer is built"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "saslJaasConfig": "x",
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "PLAIN"
+     }
+    }
+   },
+   "note": "a JAAS configuration outside kafkaSecurity: refused"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "KafkaJAAS": null,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "PLAIN"
+     }
+    }
+   },
+   "note": "a null field named for JAAS outside kafkaSecurity: absent, the producer is built"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "asyncKafkaBootstrapServers": "elsewhere.invalid:9092",
+    "asyncKafkaSaslJaasConfig": "other"
+   },
+   "note": "PUT /mockserver/configuration supplies both: neither is applied nor shown",
+   "mask": [
+    {
+     "regex": "(?s)^.*?(\"asyncAmqpUri\".*?\"asyncRecordedMessageMaxEntries\" : \\d+,).*$",
+     "replace": "$1",
+     "reason": "only the asyncapi properties: the rest of the 9.2.0 configuration surface is not compared here"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "asyncKafkaBootstrapServers": "{{deadhost}}",
+    "asyncKafkaSaslJaasConfig": "shaded_package.org.apache.kafka.common.security.plain.PlainLoginModule required username=\"startup-user\" password=\"startup-secret\";"
+   },
+   "note": "the values in force supplied again: no warning",
+   "mask": [
+    {
+     "regex": "(?s)^.*?(\"asyncAmqpUri\".*?\"asyncRecordedMessageMaxEntries\" : \\d+,).*$",
+     "replace": "$1",
+     "reason": "only the asyncapi properties: the rest of the 9.2.0 configuration surface is not compared here"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the log: the two init-only warnings",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "\"content-length\" : \\[\\s*\"\\d+\"\\s*\\]",
+     "reason": "the logged request's length varies with the dead host's port"
+    },
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Startup JAAS"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "publishOnLoad": false,
+     "kafkaSecurity": {
+      "securityProtocol": "SASL_PLAINTEXT",
+      "saslMechanism": "PLAIN"
+     }
+    }
+   },
+   "note": "after the update the startup brokers still bind SASL: the producer is built"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/config",
+   "note": "the effective configuration: the JAAS configuration redacted, from the system property",
+   "mask": [
+    {
+     "regex": "(?s)^.*?(\\{\"name\":\"mockserver.asyncAmqpUri\".*?\\{\"name\":\"mockserver.asyncRecordedMessageMaxEntries\"[^}]*\\}).*$",
+     "replace": "$1",
+     "reason": "only the asyncapi properties: the rest of the 9.2.0 configuration surface is not compared here"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

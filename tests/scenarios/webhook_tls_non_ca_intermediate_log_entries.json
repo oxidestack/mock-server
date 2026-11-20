@@ -1,0 +1,75 @@
+{
+ "source": "a non-CA intermediate (PKIX path validation failed: basic constraints check failed) fails a fire-and-forget afterAction webhook under CUSTOM trust; the oracle's LOG_ENTRIES then fails to serialize the entry (500), as for the PKIX path building failure in webhook_tls_untrusted_log_entries. tests/files/x509/forward-trust/gen-probe.sh",
+ "peer": true,
+ "peerProperties": {
+  "certificateAuthorityCertificate": "{{files}}/x509/forward-trust/probe-noca-ca.pem",
+  "certificateAuthorityPrivateKey": "{{files}}/x509/forward-trust/probe-noca-ca-key.pem",
+  "x509CertificatePath": "{{files}}/x509/forward-trust/probe-noca.pem",
+  "privateKeyPath": "{{files}}/x509/forward-trust/probe-noca-key.pem"
+ },
+ "properties": {
+  "forwardProxyTLSX509CertificatesTrustManagerType": "CUSTOM",
+  "forwardProxyTLSCustomTrustX509Certificates": "{{files}}/x509/forward-trust/ca.pem"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/after"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "afterActions": [
+     {
+      "httpRequest": {
+       "method": "GET",
+       "path": "/hook",
+       "headers": {
+        "Host": [
+         "{{peeraddress}}"
+        ]
+       },
+       "secure": true
+      }
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\"",
+    "(172\\.17\\.\\d+\\.\\d+|127\\.0\\.0\\.1|localhost)(:(<port>|\\d+))?"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/after"
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/after"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "(172\\.17\\.\\d+\\.\\d+|127\\.0\\.0\\.1|localhost)(:(<port>|\\d+))?"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/after"
+   },
+   "mask": [
+    "(172\\.17\\.\\d+\\.\\d+|127\\.0\\.0\\.1|localhost)(:(<port>|\\d+))?"
+   ]
+  }
+ ]
+}

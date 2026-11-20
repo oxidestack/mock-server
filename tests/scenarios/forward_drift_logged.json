@@ -1,0 +1,10 @@
+{"properties": {"enableCORSForAllResponses": "true", "defaultResponseHeaders": "X-Default=one"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/upstream"}, "httpResponse": {"headers": {"X-Up": ["1"]}, "body": "from upstream"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/fwd"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/upstream", "headers": {"Host": ["localhost:{{port}}"]}}}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=log"},
+  {"note": "forwarded through an expectation with drift detection on", "method": "GET", "path": "/fwd", "headers": {"Origin": "http://example.com"}},
+  {"note": "drift's match entries race the forwarded response's entry (analyseDrift is a scheduler.submit; the oracle logs them before, between or after it), so unordered", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "compare": "unordered", "mask": [{"regex": "(Millis\" : )\\d+", "replace": "${1}0", "reason": "measured forward timing"}]},
+  {"note": "a second forward, the same entries", "method": "GET", "path": "/fwd", "headers": {"Origin": "http://example.com"}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "compare": "unordered", "mask": [{"regex": "(Millis\" : )\\d+", "replace": "${1}0", "reason": "measured forward timing"}]}
+]}

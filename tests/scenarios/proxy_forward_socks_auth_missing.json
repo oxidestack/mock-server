@@ -1,0 +1,11 @@
+{"source": "the peer node is a SOCKS proxy that demands proxyAuthentication credentials; a forward through forwardSocksProxy without forwardProxyAuthenticationUsername/Password offers only NO_AUTH, which the proxy accepts",
+ "peer": true,
+ "peerProperties": {"proxyAuthenticationUsername": "userName", "proxyAuthenticationPassword": "password"},
+ "properties": {"forwardSocksProxy": "{{peerhost}}:{{peerport}}"},
+ "steps": [
+  {"node": "peer", "method": "PUT", "path": "/mockserver/reset", "note": "the proxy's startup entries are not the point"},
+  {"node": "peer", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "from proxy"}}, "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/plain"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}}, "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"note": "the SOCKS proxy accepts the NO_AUTH method although it has credentials", "method": "GET", "path": "/plain"},
+  {"note": "the request reached the proxy's own expectation", "node": "peer", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS"}
+]}

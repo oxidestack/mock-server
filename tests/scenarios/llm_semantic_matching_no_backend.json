@@ -1,0 +1,118 @@
+{
+ "source": "hand-written: llmSemanticMatchingEnabled without any LLM backend: semantic matching is not installed, so the predicate is ignored",
+ "properties": {
+  "llmSemanticMatchingEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "refund",
+     "priority": 5,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "conversationPredicates": {
+       "semanticMatchAgainst": "the user asks for a refund"
+      },
+      "completion": {
+       "text": "Refund issued."
+      }
+     }
+    },
+    {
+     "id": "fallback",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "statusCode": 418,
+      "body": "no semantic match"
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "be kind"
+     },
+     {
+      "role": "user",
+      "content": "I want my money back please"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "be kind"
+     },
+     {
+      "role": "user",
+      "content": "What is the weather today?"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "be kind"
+     },
+     {
+      "role": "user",
+      "content": "I want my money back please"
+     }
+    ]
+   },
+   "note": "same prompt again: the cached verdict",
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  }
+ ]
+}

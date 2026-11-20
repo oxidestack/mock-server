@@ -1,0 +1,25 @@
+{
+  "note": "Upstream #230: with a private tlsMutualAuthenticationCertificateChain and the bundled CA, only the chain is trusted, with a WARN naming it",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "propertyFile": "mockserver.tlsMutualAuthenticationRequired=true\nmockserver.tlsMutualAuthenticationCertificateChain={{files}}/tls/private-ca/ca-cert.pem\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "timeoutSecs": 90,
+  "afterReady": [
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "[WARN] mTLS trusts only tlsMutualAuthenticationCertificateChain:",
+      "because MockServer's CA certificate is the default CA bundled with MockServer"
+    ]
+  }
+}

@@ -1,0 +1,346 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "10000000-0000-4000-8000-000000000002",
+    "httpRequest": {
+     "path": "/h-ttl"
+    },
+    "httpResponse": {
+     "body": "x"
+    },
+    "timeToLive": {
+     "timeUnit": "SECONDS",
+     "timeToLive": 600,
+     "unlimited": false
+    }
+   },
+   "note": "a finite time to live: the creation line carries endDate",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/h-ttl",
+   "note": "the matched line carries endDate",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/h-other",
+   "note": "the closest-expectation line carries endDate",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/h-ttl"
+   },
+   "note": "creation and matched lines with endDate",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/h-other"
+   },
+   "note": "the closest-expectation line carries endDate",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "10000000-0000-4000-8000-000000000003",
+    "httpRequest": {
+     "path": "/h-scan"
+    },
+    "httpResponse": {
+     "body": "x"
+    },
+    "times": {
+     "remainingTimes": 0,
+     "unlimited": false
+    }
+   },
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/h-other",
+   "note": "a request scan meets the used-up expectation and drops it",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/h-scan"
+   },
+   "note": "HTTP data plane scan: creating, then removed",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-03-26"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/m0",
+      "times": 0
+     }
+    }
+   },
+   "note": "MCP times 0",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ],
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/mttl",
+      "timeToLive": "60 SECONDS"
+     }
+    }
+   },
+   "note": "MCP time to live",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ],
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/m1",
+      "times": 1
+     }
+    }
+   },
+   "note": "MCP times 1",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ],
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "a listing drops /m0",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "GET",
+   "path": "/m1",
+   "note": "serves the one use; the expectation is removed after the response",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/m0|/mttl|/m1"
+   },
+   "note": "MCP: removed entries and endDate",
+   "mask": [
+    "\"endDate\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,21 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_BLOB_STORE_TYPE": "Banana"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 120,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}\njava.lang.IllegalStateException: blobStoreType=banana is not a recognised blob store type; supported types: memory, filesystem, s3, gcs, azure"
+    ],
+    "stdoutNotContains": ["started on port", "valid options are:", "Caused by"],
+    "stderrNotContains": ["exception while starting"]
+  }
+}

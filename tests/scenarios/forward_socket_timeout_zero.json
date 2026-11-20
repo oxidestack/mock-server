@@ -1,0 +1,47 @@
+{
+ "properties": {
+  "maxSocketTimeoutInMillis": "0"
+ },
+ "steps": [
+  {
+   "note": "an upstream that answers after 300 ms, and a forward to it",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/slow-upstream"
+     },
+     "httpResponse": {
+      "body": "slow ok",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 300
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/via-forward"
+     },
+     "httpOverrideForwardedRequest": {
+      "httpRequest": {
+       "path": "/slow-upstream",
+       "headers": {
+        "Host": [
+         "{{host}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "maxSocketTimeout 0 is no read timeout (Netty's ReadTimeoutHandler(0)), not an immediate one",
+   "method": "GET",
+   "path": "/via-forward",
+   "minMillis": 300
+  }
+ ]
+}

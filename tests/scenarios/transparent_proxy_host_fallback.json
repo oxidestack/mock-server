@@ -1,0 +1,11 @@
+{
+ "properties": {"transparentProxyEnabled": "true"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/reset", "note": "TransparentProxyHandlerTest.shouldFallBackToHostHeaderWhenOriginalDstReturnsNull: in transparent-proxy mode no resolver knows the destination, so an unmatched request goes where its Host header says"},
+  {"method": "GET", "path": "/unmatched", "headers": {"Host": ["{{deadhost}}"]}, "note": "forwarded to the Host header's refusing address"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/matched"}, "httpResponse": {"statusCode": 200, "body": "answered"}}, "note": "an expectation still answers first"},
+  {"method": "GET", "path": "/matched", "headers": {"Host": ["{{deadhost}}"]}, "note": "answered by the expectation, not forwarded"},
+  {"sleepMillis": 300},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "compare": "unordered", "note": "what the forward logs", "mask": ["(?s)\\n\\s+at .*?(?=\\n\\n|\\n[^\\s]|$)"]}
+ ]
+}

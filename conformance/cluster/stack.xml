@@ -1,0 +1,27 @@
+<!--
+  JGroups stack of the mixed-cluster harness: TCP + TCPPING over the harness' docker network, no DNS_PING
+  and no multicast. Both implementations read this same file (MOCKSERVER_CLUSTER_TRANSPORT_CONFIG=/stack.xml).
+  initial_hosts names the two containers (run.sh substitutes INITIAL_HOSTS via the JVM/process environment); the
+  failure detector is tightened so a killed node leaves the view in seconds instead of the 40 s of
+  jgroups-kubernetes.xml.
+-->
+<config xmlns="urn:org:jgroups"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/jgroups.xsd">
+    <TCP bind_addr="match-interface:eth0,site_local,loopback"
+         bind_port="7800"
+         thread_pool.min_threads="0"
+         thread_pool.max_threads="20"
+         thread_pool.keep_alive_time="30000" />
+    <TCPPING initial_hosts="${INITIAL_HOSTS}" port_range="0" />
+    <MERGE3 max_interval="10000" min_interval="5000" />
+    <FD_ALL3 timeout="8000" interval="2000" />
+    <VERIFY_SUSPECT2 timeout="1500" />
+    <pbcast.NAKACK2 use_mcast_xmit="false" />
+    <UNICAST3 />
+    <pbcast.STABLE desired_avg_gossip="50000" max_bytes="4M" />
+    <pbcast.GMS print_local_addr="true" join_timeout="5000" />
+    <UFC max_credits="2M" min_threshold="0.4" />
+    <MFC max_credits="2M" min_threshold="0.4" />
+    <FRAG2 frag_size="60K" />
+</config>

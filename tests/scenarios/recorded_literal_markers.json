@@ -1,0 +1,91 @@
+{
+ "steps": [
+  {
+   "note": "an expectation, and a forward to it whose exchange is recorded",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/literal"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/literal-forward"
+     },
+     "httpOverrideForwardedRequest": {
+      "httpRequest": {
+       "path": "/literal",
+       "headers": {
+        "Host": [
+         "{{host}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "a request whose header, query and cookie names and values start with ! or ?",
+   "method": "GET",
+   "path": "/literal?!q=?v&plain=!w",
+   "headers": {
+    "!foo": "bar",
+    "x-q": "?x",
+    "x-n": "!y",
+    "Cookie": "!c=?v; d=!e"
+   }
+  },
+  {
+   "note": "REQUEST_RESPONSES prints them literally (the list form for a name, the object form for a value)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/literal"
+   }
+  },
+  {
+   "note": "REQUESTS (the flat form)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/literal"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "the same request forwarded",
+   "method": "GET",
+   "path": "/literal-forward?!q=?v",
+   "headers": {
+    "!foo": "bar",
+    "x-q": "?x",
+    "Cookie": "!c=?v"
+   }
+  },
+  {
+   "note": "recorded expectations keep the request's names and values literal",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "path": "/literal-forward"
+   }
+  },
+  {
+   "note": "and as Java",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=JAVA",
+   "body": {
+    "path": "/literal-forward"
+   }
+  }
+ ]
+}

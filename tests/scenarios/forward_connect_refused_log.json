@@ -1,0 +1,9 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/override"}, "httpOverrideForwardedRequest": {"requestOverride": {"headers": {"Host": ["{{deadhost}}"]}}}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/template"}, "httpForwardTemplate": {"templateType": "VELOCITY", "template": "{'path': '/x', 'headers': {'Host': ['{{deadhost}}']}}"}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"note": "override to a closed port", "method": "GET", "path": "/override"},
+  {"note": "template to a closed port", "method": "GET", "path": "/template"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS"},
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": "(\"type\" : \"WARN\",\\n)    \"port\" : <port>,\\n", "replace": "${1}"}, {"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}]}
+]}

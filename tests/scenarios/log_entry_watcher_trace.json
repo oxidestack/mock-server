@@ -1,0 +1,62 @@
+{
+ "properties": {
+  "logLevel": "TRACE",
+  "initializationJsonPath": "{{scratch}}/log_entry_watcher_trace.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500",
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/log_entry_watcher_trace_persisted.json"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the watched file does not exist at server start (the last step deletes it again)"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/log_entry_watcher_trace.json",
+    "replace": true,
+    "content": "[\n  {\n    \"id\": \"one\",\n    \"httpRequest\": {\n      \"path\": \"/one\"\n    },\n    \"httpResponse\": {\n      \"body\": \"1\"\n    }\n  },\n  {\n    \"id\": \"two\",\n    \"httpRequest\": {\n      \"path\": \"/two\"\n    },\n    \"httpResponse\": {\n      \"body\": \"2\"\n    }\n  }\n]"
+   },
+   "note": "two expectations appear"
+  },
+  {
+   "readFile": "{{scratch}}/log_entry_watcher_trace_persisted.json",
+   "pollUntil": "\"/two\"[^/]*\\} \\]\\s*$",
+   "note": "waits for the watcher's first reload, persisted last (the watcher polls every 500 ms, a loaded host may take longer)"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/log_entry_watcher_trace.json",
+    "replace": true,
+    "content": "[\n  {\n    \"id\": \"one\",\n    \"httpRequest\": {\n      \"path\": \"/one\"\n    },\n    \"httpResponse\": {\n      \"body\": \"1\"\n    }\n  }\n]"
+   },
+   "note": "the file drops two"
+  },
+  {
+   "readFile": "{{scratch}}/log_entry_watcher_trace_persisted.json",
+   "pollUntil": "\"/one\"[^/]*\\} \\]\\s*$",
+   "note": "waits for the second reload: only /one persisted"
+  },
+  {
+   "note": "TRACE: the watcher's reloads, the dropped expectation removed, each change persisted (the reset's own persisting entry, which the oracle writes from another thread before or after the log is cleared, is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(resetting all expectations and request logs\\n-+\\n)[^\\n]* - persisting expectations\\n\\n  \\[\\]\\n\\n to\\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": "${1}"
+    },
+    {
+     "regex": "(?s)^(.*_persisted\\.json\\n)(\\n-+\\n.*|\\n)?$",
+     "replace": "${1}(the rest: this request)"
+    }
+   ]
+  },
+  {
+   "deleteFile": "{{scratch}}/log_entry_watcher_trace.json",
+   "note": "absent again for the next start"
+  }
+ ]
+}

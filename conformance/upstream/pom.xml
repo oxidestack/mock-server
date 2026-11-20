@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!--
+      MockServer's own black-box suites, unmodified, against a server process chosen by -Dtarget:
+      oracle-jvm (in-JVM, upstream's own setup), oracle-process (MockServer 9.2.0 jar), rs-process (mock-server).
+    -->
+    <groupId>io.github.oxidestack</groupId>
+    <artifactId>upstream-conformance</artifactId>
+    <version>0.1.0</version>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mockserver.version>9.2.0</mockserver.version>
+        <target>oracle-process</target>
+        <mockServerBin>${project.basedir}/../../target/release/mock-server</mockServerBin>
+        <upstreamNetty>${project.basedir}/../../upstream/mockserver/mockserver/mockserver-netty</upstreamNetty>
+        <classes></classes>
+        <!-- -partial for runs narrowed with -Dclasses, so they never overwrite a full tranche report -->
+        <reportSuffix></reportSuffix>
+        <runSkipped></runSkipped>
+        <methods></methods>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Upstream's own versions for the test dependencies of mockserver-netty. -->
+            <dependency>
+                <groupId>org.mock-server</groupId>
+                <artifactId>mockserver</artifactId>
+                <version>${mockserver.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-integration-testing</artifactId>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-netty</artifactId>
+            <version>${mockserver.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- The test-scope dependencies of mockserver-netty at the oracle's revision (oracle.env), for its category-A
+             classes (tranches T2-T5). mockserver-async is mockserver-netty's optional dependency; its tests use it and
+             the zstd-jni that kafka-clients brings at runtime. -->
+        <dependency><groupId>org.mock-server</groupId><artifactId>mockserver-async</artifactId><version>${mockserver.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>com.github.luben</groupId><artifactId>zstd-jni</artifactId><version>1.5.6-10</version><scope>test</scope></dependency>
+        <dependency><groupId>org.testcontainers</groupId><artifactId>testcontainers</artifactId><version>1.21.4</version><scope>test</scope></dependency>
+        <!-- PostgresThroughMockServerIntegrationTest's JDBC driver (BSD-2-Clause), as mockserver-netty's pom declares it -->
+        <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><version>42.7.14</version><scope>test</scope></dependency>
+        <dependency><groupId>org.mock-server</groupId><artifactId>mockserver-testing</artifactId><version>${mockserver.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>io.grpc</groupId><artifactId>grpc-netty-shaded</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>io.grpc</groupId><artifactId>grpc-stub</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>io.grpc</groupId><artifactId>grpc-protobuf</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.java-websocket</groupId><artifactId>Java-WebSocket</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp-sse</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>dnsjava</groupId><artifactId>dnsjava</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.mockito</groupId><artifactId>mockito-core</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.hamcrest</groupId><artifactId>hamcrest</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.ow2.asm</groupId><artifactId>asm</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>io.opentelemetry</groupId><artifactId>opentelemetry-sdk-testing</artifactId><scope>test</scope></dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <!-- Process targets: the launcher's process-backed MockServer and ClientAndServer (java-launcher/)
+                 shadow upstream's on the test classpath, their servers started by TargetLauncher (src/stand-ins).
+                 Separate source roots, because javac would otherwise compile them for oracle-jvm too, found through
+                 the sourcepath by upstream classes that reference them. The launcher's src/main/netty-api is left
+                 out: mockserver-netty's own LifeCycle stays in effect here. -->
+            <id>stand-ins</id>
+            <activation><property><name>target</name><value>!oracle-jvm</value></property></activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>stand-ins</id>
+                                <phase>generate-test-sources</phase>
+                                <goals><goal>add-test-source</goal></goals>
+                                <configuration>
+                                    <sources>
+                                        <source>${project.basedir}/../../java-launcher/src/main/java</source>
+                                        <source>${project.basedir}/src/stand-ins/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>stand-ins-resources</id>
+                                <phase>generate-test-resources</phase>
+                                <goals><goal>add-test-resource</goal></goals>
+                                <configuration>
+                                    <resources><resource><directory>${project.basedir}/src/stand-ins/resources</directory></resource></resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <!-- Tranche "examples" (ExamplesTest): upstream's examples/java, not a reactor module, with its own
+                 dependencies (Spring MVC, Jersey, Jetty, Google/Apache HTTP clients), which only this profile puts on
+                 the class path. Active whenever -Dtest names ExamplesTest (`make upstream-tests TEST=ExamplesTest`). -->
+            <id>examples</id>
+            <activation><property><name>test</name><value>ExamplesTest</value></property></activation>
+            <properties>
+                <upstreamExamples>${project.basedir}/../../upstream/mockserver/examples/java</upstreamExamples>
+                <examplesJetty.version>12.1.13</examplesJetty.version>
+                <examplesJersey.version>4.0.2</examplesJersey.version>
+                <examplesGoogleHttpClient.version>2.2.0</examplesGoogleHttpClient.version>
+                <examplesSpring.version>7.0.9</examplesSpring.version>
+            </properties>
+            <dependencyManagement>
+                <dependencies>
+                    <!-- examples/java/pom.xml's own conflict resolutions -->
+                    <dependency><groupId>jakarta.activation</groupId><artifactId>jakarta.activation-api</artifactId><version>2.1.4</version></dependency>
+                    <dependency><groupId>jakarta.validation</groupId><artifactId>jakarta.validation-api</artifactId><version>3.1.1</version></dependency>
+                    <dependency><groupId>org.apache.httpcomponents</groupId><artifactId>httpcore</artifactId><version>4.4.16</version></dependency>
+                    <dependency><groupId>org.yaml</groupId><artifactId>snakeyaml</artifactId><version>2.7</version></dependency>
+                    <dependency><groupId>org.springframework</groupId><artifactId>spring-aop</artifactId><version>${examplesSpring.version}</version></dependency>
+                    <dependency><groupId>org.springframework</groupId><artifactId>spring-expression</artifactId><version>${examplesSpring.version}</version></dependency>
+                    <dependency><groupId>org.springframework</groupId><artifactId>spring-webflux</artifactId><version>${examplesSpring.version}</version></dependency>
+                    <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-stdlib</artifactId><version>2.4.20</version></dependency>
+                    <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-stdlib-common</artifactId><version>2.4.20</version></dependency>
+                    <dependency><groupId>org.jetbrains.kotlin</groupId><artifactId>kotlin-stdlib-jdk8</artifactId><version>2.4.20</version></dependency>
+                    <dependency><groupId>io.grpc</groupId><artifactId>grpc-context</artifactId><version>1.84.0</version></dependency>
+                    <dependency><groupId>org.jetbrains</groupId><artifactId>annotations</artifactId><version>26.1.0</version></dependency>
+                    <dependency><groupId>io.projectreactor</groupId><artifactId>reactor-core</artifactId><version>3.8.7</version></dependency>
+                    <dependency><groupId>com.google.errorprone</groupId><artifactId>error_prone_annotations</artifactId><version>2.50.0</version></dependency>
+                    <dependency><groupId>com.google.j2objc</groupId><artifactId>j2objc-annotations</artifactId><version>3.1</version></dependency>
+                </dependencies>
+            </dependencyManagement>
+            <dependencies>
+                <!-- examples/java/pom.xml's dependencies; mockserver-netty and mockserver-client-java (above) stand in for
+                     their -no-dependencies shaded jars, so the ClientAndServer stand-in shadows upstream's as elsewhere -->
+                <dependency><groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><scope>test</scope></dependency>
+                <dependency><groupId>commons-io</groupId><artifactId>commons-io</artifactId><scope>test</scope></dependency>
+                <dependency><groupId>jakarta.servlet</groupId><artifactId>jakarta.servlet-api</artifactId><scope>test</scope></dependency>
+                <dependency><groupId>org.eclipse.jetty</groupId><artifactId>jetty-http</artifactId><version>${examplesJetty.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.eclipse.jetty</groupId><artifactId>jetty-server</artifactId><version>${examplesJetty.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.eclipse.jetty</groupId><artifactId>jetty-client</artifactId><version>${examplesJetty.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.eclipse.jetty</groupId><artifactId>jetty-util</artifactId><version>${examplesJetty.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.apache.httpcomponents</groupId><artifactId>httpclient</artifactId><scope>test</scope></dependency>
+                <dependency><groupId>io.netty</groupId><artifactId>netty-codec-socks</artifactId><scope>test</scope></dependency>
+                <dependency><groupId>io.netty</groupId><artifactId>netty-handler-proxy</artifactId><scope>test</scope></dependency>
+                <dependency><groupId>io.netty</groupId><artifactId>netty-tcnative-boringssl-static</artifactId><scope>test</scope></dependency>
+                <dependency><groupId>jakarta.ws.rs</groupId><artifactId>jakarta.ws.rs-api</artifactId><version>4.0.0</version><scope>test</scope></dependency>
+                <dependency><groupId>org.glassfish.jersey.core</groupId><artifactId>jersey-client</artifactId><version>${examplesJersey.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.glassfish.jersey.media</groupId><artifactId>jersey-media-json-jackson</artifactId><version>${examplesJersey.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.glassfish.jersey.connectors</groupId><artifactId>jersey-apache5-connector</artifactId><version>${examplesJersey.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.glassfish.jersey.inject</groupId><artifactId>jersey-hk2</artifactId><version>${examplesJersey.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>com.google.http-client</groupId><artifactId>google-http-client</artifactId><version>${examplesGoogleHttpClient.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>com.google.http-client</groupId><artifactId>google-http-client-jackson2</artifactId><version>${examplesGoogleHttpClient.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>com.squareup.okhttp3</groupId><artifactId>okhttp</artifactId><version>5.5.0</version><scope>test</scope></dependency>
+                <dependency><groupId>org.freemarker</groupId><artifactId>freemarker</artifactId><version>2.3.35</version><scope>test</scope></dependency>
+                <dependency><groupId>org.jsoup</groupId><artifactId>jsoup</artifactId><version>1.23.2</version><scope>test</scope></dependency>
+                <dependency><groupId>jakarta.annotation</groupId><artifactId>jakarta.annotation-api</artifactId><version>3.0.0</version><scope>test</scope></dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-webflux</artifactId>
+                    <version>4.1.1</version>
+                    <scope>test</scope>
+                    <exclusions>
+                        <exclusion><groupId>org.osgi</groupId><artifactId>org.osgi.core</artifactId></exclusion>
+                        <exclusion><groupId>ch.qos.logback</groupId><artifactId>logback-classic</artifactId></exclusion>
+                        <exclusion><groupId>jakarta.annotation</groupId><artifactId>jakarta.annotation-api</artifactId></exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency><groupId>org.springframework</groupId><artifactId>spring-core</artifactId><version>${examplesSpring.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.springframework</groupId><artifactId>spring-context</artifactId><version>${examplesSpring.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.springframework</groupId><artifactId>spring-context-support</artifactId><version>${examplesSpring.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.springframework</groupId><artifactId>spring-web</artifactId><version>${examplesSpring.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.springframework</groupId><artifactId>spring-webmvc</artifactId><version>${examplesSpring.version}</version><scope>test</scope></dependency>
+                <dependency><groupId>org.springframework</groupId><artifactId>spring-test</artifactId><version>${examplesSpring.version}</version><scope>test</scope></dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <!-- examples/java, main and test trees, unmodified -->
+                                <id>upstream-examples</id>
+                                <phase>generate-test-sources</phase>
+                                <goals><goal>add-test-source</goal><goal>add-test-resource</goal></goals>
+                                <configuration>
+                                    <sources>
+                                        <source>${upstreamExamples}/src/main/java</source>
+                                        <source>${upstreamExamples}/src/test/java</source>
+                                        <source>${project.basedir}/src/examples/java</source>
+                                    </sources>
+                                    <resources><resource><directory>${upstreamExamples}/src/main/resources</directory></resource></resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <!-- as upstream's parent pom compiles: Spring MVC binds @PathVariable by parameter name -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration><parameters>true</parameters></configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes combine.self="override"><include>conformance/upstream/ExamplesTest.java</include></includes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <!-- Per target: the oracle-jvm build compiles without the stand-ins, so the two never share classes. -->
+        <testOutputDirectory>${project.build.directory}/test-classes-${target}</testOutputDirectory>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <!-- mockserver-netty's own test tree, unmodified: the category-A classes of tranches T2-T5. -->
+                        <id>upstream-netty-tests</id>
+                        <phase>generate-test-sources</phase>
+                        <goals><goal>add-test-source</goal><goal>add-test-resource</goal></goals>
+                        <configuration>
+                            <sources><source>${upstreamNetty}/src/test/java</source></sources>
+                            <resources><resource><directory>${upstreamNetty}/src/test/resources</directory></resource></resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <compilerArgs><arg>-Xmaxerrs</arg><arg>2000</arg></compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <!-- The oracle as a separate process: MockServer's own runnable jar. -->
+                        <id>oracle-jar</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>copy</goal></goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.mock-server</groupId>
+                                    <artifactId>mockserver-netty</artifactId>
+                                    <version>${mockserver.version}</version>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <destFileName>mockserver-netty-jar-with-dependencies.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/oracle</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- The QUIC natives master's runnable jar leaves out (MockServer.requireQuicNative: without
+                             them a server with an http3Port refuses to start), as upstream's own test class path has
+                             them; on the oracle process's class path through oracle-quic/*. -->
+                        <id>oracle-quic-natives</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>copy</goal></goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem><groupId>io.netty</groupId><artifactId>netty-codec-native-quic</artifactId><classifier>osx-aarch_64</classifier></artifactItem>
+                                <artifactItem><groupId>io.netty</groupId><artifactId>netty-codec-native-quic</artifactId><classifier>osx-x86_64</classifier></artifactItem>
+                                <artifactItem><groupId>io.netty</groupId><artifactId>netty-codec-native-quic</artifactId><classifier>linux-x86_64</classifier></artifactItem>
+                                <artifactItem><groupId>io.netty</groupId><artifactId>netty-codec-native-quic</artifactId><classifier>linux-aarch_64</classifier></artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/oracle-quic</outputDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- Callback classes the suites name (class callbacks): on the oracle process's class path,
+                             as a deployment puts them in /libs. mock-server gets their Rust counterparts as a
+                             plugin (plugins/integration-testing). -->
+                        <id>callback-libs</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>copy</goal></goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.mock-server</groupId>
+                                    <artifactId>mockserver-integration-testing</artifactId>
+                                    <version>${mockserver.version}</version>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/callback-libs</outputDirectory>
+                            <!-- one file name whatever the version, so a re-pin never leaves the old jar on the class path -->
+                            <stripVersion>true</stripVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <!-- Resources the suites make the server load by path (OpenAPI specs, XSDs). -->
+                        <id>sut-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>unpack</goal></goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.mock-server</groupId>
+                                    <artifactId>mockserver-integration-testing</artifactId>
+                                    <version>${mockserver.version}</version>
+                                    <excludes>**/*.class</excludes>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.build.directory}/sut-cwd</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <!-- mockserver-netty's test resources (certificates, specs) that tests make the server load by
+                             classpath-relative path: on the oracle's classpath, and in rs-process's working directory. -->
+                        <id>sut-netty-resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>copy-resources</goal></goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/sut-cwd</outputDirectory>
+                            <resources><resource><directory>${upstreamNetty}/src/test/resources</directory></resource></resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <!-- The test JVM's working directory looks like upstream's module directory, so tests that read
+                             src/test/resources/... or ../mockserver-core/... relative to it find the files. -->
+                        <id>jvm-cwd</id>
+                        <phase>generate-test-resources</phase>
+                        <goals><goal>run</goal></goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/jvm-cwd/mockserver-netty"/>
+                                <symlink link="${project.build.directory}/jvm-cwd/mockserver-netty/src" resource="${upstreamNetty}/src" overwrite="true"/>
+                                <symlink link="${project.build.directory}/jvm-cwd/mockserver-core" resource="${upstreamNetty}/../mockserver-core" overwrite="true"/>
+                                <!-- the same layout around the server processes' working directory, sut-cwd -->
+                                <symlink link="${project.build.directory}/sut-cwd/src" resource="${upstreamNetty}/src" overwrite="true"/>
+                                <symlink link="${project.build.directory}/mockserver-core" resource="${upstreamNetty}/../mockserver-core" overwrite="true"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+                <configuration>
+                    <includes><include>conformance/upstream/Remote*Test.java</include><include>conformance/upstream/T?Test.java</include></includes>
+                    <reportsDirectory>${project.build.directory}/surefire-reports/${target}${reportSuffix}</reportsDirectory>
+                    <systemPropertyVariables>
+                        <target>${target}</target>
+                        <mockServerBin>${mockServerBin}</mockServerBin>
+                        <oracleJar>${project.build.directory}/oracle/mockserver-netty-jar-with-dependencies.jar</oracleJar>
+                        <sutCwd>${project.build.directory}/sut-cwd</sutCwd>
+                        <callbackLibs>${project.build.directory}/callback-libs/*${path.separator}${project.build.testOutputDirectory}</callbackLibs>
+                        <rsCallbackPlugins>${project.basedir}/../../target/release</rsCallbackPlugins>
+                        <skipsDir>${project.basedir}/src/test/resources/skips</skipsDir>
+                        <classes>${classes}</classes>
+                        <runSkipped>${runSkipped}</runSkipped>
+                        <methods>${methods}</methods>
+                        <logDir>${project.build.directory}/server-logs/${target}</logDir>
+                        <!-- Upstream's opt-in test port band (PortFactory, docs/operations/build-system.md).
+                             Ports a test picks with PortFactory.findFreePort() and then binds (PUT /mockserver/bind,
+                             new ClientAndServer(port)) come from explicit binds in this band, which macOS never hands
+                             out to bind(0), instead of from the ephemeral range every other process on the machine
+                             draws from. The same for every target; the stand-ins' own ports are retried instead. -->
+                        <mockserver.testPortRangeStart>20000</mockserver.testPortRangeStart>
+                        <mockserver.testPortRangeEnd>40000</mockserver.testPortRangeEnd>
+                    </systemPropertyVariables>
+                    <!-- mockserver-netty's mockserver.nettyLeakDetectorArgLine: master's classes assert, through
+                         NettyBufferLeaks, that the test JVM runs the build's paranoid leak detector. Here it tracks the
+                         test JVM's own (client) buffers; the server's are in its own process. -->
+                    <argLine>-Dio.netty.leakDetection.level=paranoid -Dio.netty.leakDetection.targetRecords=0 -Dio.netty.customResourceLeakDetector=org.mockserver.test.FailOnLeakResourceLeakDetector -Dmockserver.leakReportDir=${project.build.directory}/netty-leaks</argLine>
+                    <trimStackTrace>true</trimStackTrace>
+                    <workingDirectory>${project.build.directory}/jvm-cwd/mockserver-netty</workingDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

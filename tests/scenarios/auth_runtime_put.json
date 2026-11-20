@@ -1,0 +1,56 @@
+{
+ "source": "isolated because it PUTs configuration (controlPlaneJWTAuthenticationRequired, maxExpectations) that reset does not clear; on a server of its own because the oracle then denies every control-plane request, the PUT that would undo it included.",
+ "isolated": true,
+ "properties": {},
+ "steps": [
+  {
+   "note": "ControlPlaneAuthenticationRuntimePutTest: PUT turns control-plane JWT authentication on (the echo is covered by configuration_core_derived_and_guards)",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneJWTAuthenticationRequired": true
+   },
+   "mask": [
+    "(?s)^\\{.*\\}$"
+   ]
+  },
+  {
+   "note": "yet on the 8.0.0 image an unauthenticated retrieve still answers: the handler chain is built at startup",
+   "method": "PUT",
+   "path": "/mockserver/retrieve"
+  },
+  {
+   "note": "metrics stays as it was (404 without metricsEnabled)",
+   "method": "GET",
+   "path": "/mockserver/metrics"
+  },
+  {
+   "note": "http3status stays open",
+   "method": "GET",
+   "path": "/mockserver/http3status"
+  },
+  {
+   "note": "an unauthenticated further PUT is applied",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 4321
+   },
+   "mask": [
+    "(?s)^\\{.*\\}$"
+   ]
+  },
+  {
+   "note": "and so is switching it off again",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneJWTAuthenticationRequired": false,
+    "maxExpectations": 15000
+   },
+   "mask": [
+    "(?s)^\\{.*\\}$"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,437 @@
+{
+ "source": "hand-written: the template model objects (HttpRequestTemplateObject's JSON-RPC getters, CaseInsensitiveHeaderMap, HttpResponseTemplateObject) read through templates, as mockserver-core's model tests exercise them directly ()",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/rpc"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"id=[$!request.jsonRpcId] idIsNull=#if($request.jsonRpcId)false#{else}true#end method=[$!request.jsonRpcMethod] methodIsNull=#if($request.jsonRpcMethod)false#{else}true#end\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rpc-mustache"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"id=[{{request.jsonRpcId}}] method=[{{request.jsonRpcMethod}}]\"}"
+     }
+    }
+   ],
+   "note": "JSON-RPC templates (HttpRequestTemplateObjectJsonRpcTest)"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: valid request",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"id\": 1}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: not JSON-RPC",
+   "body": "{\"name\": \"value\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/rpc",
+   "note": "/rpc: no body"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: numeric id",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 42}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: string id",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"resources/read\", \"id\": \"abc\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: id missing",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"notifications/send\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: id JSON null",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"id\": null}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: not JSON",
+   "body": "this is not json",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: jsonrpc without method",
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: empty body",
+   "body": "",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc",
+   "note": "/rpc: with params",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 5, \"params\": {\"name\": \"calculator\"}}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: valid request",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"id\": 1}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: not JSON-RPC",
+   "body": "{\"name\": \"value\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: no body"
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: numeric id",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 42}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: string id",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"resources/read\", \"id\": \"abc\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: id missing",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"notifications/send\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: id JSON null",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"tools/list\", \"id\": null}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: not JSON",
+   "body": "this is not json",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: jsonrpc without method",
+   "body": "{\"jsonrpc\": \"2.0\", \"id\": 1}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: empty body",
+   "body": "",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/rpc-mustache",
+   "note": "/rpc-mustache: with params",
+   "body": "{\"jsonrpc\": \"2.0\", \"method\": \"tools/call\", \"id\": 5, \"params\": {\"name\": \"calculator\"}}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/headers"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"lower=$!request.headers.host[0] upper=$!request.headers.HOST[0] exact=$!request.headers.Host[0] get=$!request.headers.get('hOsT') absent=[$!request.headers.get('hos')] containsLower=$request.headers.containsKey('host') containsAbsent=$request.headers.containsKey('not-a-header') getOrDefault=$request.headers.getOrDefault('x-custom', ['fallback']) getOrDefaultAbsent=$request.headers.getOrDefault('not-a-header', ['fallback']) dup=$!request.headers.get('x-dup') DUP=$!request.headers.get('X-DUP') keys=$request.headers.keySet() size=$request.headers.size()\"}"
+    }
+   },
+   "note": "header map reads (CaseInsensitiveHeaderMapTest)"
+  },
+  {
+   "method": "GET",
+   "path": "/headers",
+   "headers": {
+    "Accept": "text/plain",
+    "x-custom": "value",
+    "X-Dup": "first",
+    "x-dup": "second"
+   },
+   "note": "header map: casing, order, same name in two casings"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/headers-mutated"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"removed=$request.headers.remove('X-CUSTOM') afterRemove=$request.headers.containsKey('x-custom') removedAgain=[$!request.headers.remove('x-custom')] #set($ignored = $request.headers.putIfAbsent('Added', ['v1']))added=$!request.headers.get('ADDED') #set($ignored = $request.headers.put('Added', ['v2']))replaced=$!request.headers.get('added') keys=$request.headers.keySet() #set($ignored = $request.headers.clear())cleared=$request.headers.isEmpty() host=[$!request.headers.get('host')]\"}"
+    }
+   },
+   "note": "header map mutations from a template"
+  },
+  {
+   "method": "GET",
+   "path": "/headers-mutated",
+   "headers": {
+    "x-custom": "value"
+   },
+   "note": "header map: remove, put, clear"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/headers-put-other-casing"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"#set($ignored = $request.headers.put('Added', ['v1']))#set($previous = $request.headers.put('added', ['v2']))previous=$previous merged=$!request.headers.get('Added') keys=$request.headers.keySet()\"}"
+    }
+   },
+   "note": "header map put with a second casing"
+  },
+  {
+   "method": "GET",
+   "path": "/headers-put-other-casing",
+   "note": "header map: put with another casing merges into the first-seen entry"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/headers-exact-key-first"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"#set($h = $request.headers)#set($ignored = $h.clear())#set($ignored = $h.put('Added', ['v1']))pia=[$!h.putIfAbsent('added', ['v2'])] keys=$h.keySet() exact=$h.get('added') other=$h.get('ADDED') contains=$h.containsKey('aDDed') #set($ignored = $h.remove('added'))afterExactRemove=$h.keySet() #set($ignored = $h.putAll({'ADDED': ['p']}))afterPutAll=$h.keySet() removedOther=$h.remove('added') left=$h.keySet() #set($h.Foo = ['s1'])#set($h.foo = ['s2'])#set($h['Bar'] = ['i1'])#set($h['BAR'] = ['i2'])foo=$h.get('FOO') bar=$h.bar values=#foreach($v in $h)$v;#end map=$h default=$h.getOrDefault('nope', ['d']) size=$h.size() class=$h.class.name\"}"
+    }
+   },
+   "note": "header map: bulk and default methods use the exact key; lookups try the exact key first"
+  },
+  {
+   "method": "GET",
+   "path": "/headers-exact-key-first",
+   "note": "header map: exact key first, merges through put and property set"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/headers-put-not-a-list"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"before #set($x = $request.headers.put('S', 'str'))after=$x\"}"
+    }
+   },
+   "note": "header map put with a value that is not a list"
+  },
+  {
+   "method": "GET",
+   "path": "/headers-put-not-a-list",
+   "note": "header map: put(String, List) through its bridge with a String value",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/headers-mustache"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\"statusCode\": 200, \"body\": \"lower={{request.headers.host.0}} upper={{request.headers.HOST.0}} dup={{request.headers.x-dup}}\"}"
+    }
+   },
+   "note": "header map reads in Mustache"
+  },
+  {
+   "method": "GET",
+   "path": "/headers-mustache",
+   "headers": {
+    "X-Dup": "first",
+    "x-dup": "second"
+   },
+   "note": "header map in Mustache"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/upstream"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "reasonPhrase": "OK",
+      "headers": {
+       "Content-Type": [
+        "application/json"
+       ],
+       "Accept": [
+        "text/html",
+        "application/xml"
+       ]
+      },
+      "cookies": {
+       "session": "abc123"
+      },
+      "body": "some_body"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/front"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/upstream",
+       "headers": {
+        "Host": [
+         "{{host}}"
+        ]
+       }
+      },
+      "responseTemplate": {
+       "templateType": "VELOCITY",
+       "template": "{\"statusCode\": 201, \"body\": \"status=$response.statusCode reason=$response.reasonPhrase contentType=$response.headers.get('Content-Type') accept=$response.headers.get('Accept') session=$response.cookies.session body=$response.body\"}"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/front-mustache"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/upstream",
+       "headers": {
+        "Host": [
+         "{{host}}"
+        ]
+       }
+      },
+      "responseTemplate": {
+       "templateType": "MUSTACHE",
+       "template": "{\"statusCode\": 201, \"body\": \"status={{response.statusCode}} reason={{response.reasonPhrase}} session={{response.cookies.session}} body={{response.body}}\"}"
+      }
+     }
+    }
+   ],
+   "note": "response template object (HttpResponseTemplateObjectTest)"
+  },
+  {
+   "method": "GET",
+   "path": "/front",
+   "note": "response object in Velocity"
+  },
+  {
+   "method": "GET",
+   "path": "/front-mustache",
+   "note": "response object in Mustache"
+  }
+ ]
+}

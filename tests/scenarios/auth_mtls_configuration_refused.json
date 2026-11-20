@@ -1,0 +1,93 @@
+{
+ "isolated": true,
+ "steps": [
+  {
+   "note": "9.2.0: control-plane mTLS settings are startup-only, so an update that would have left mTLS without a CA chain on the bundled CA (refused whole on 9.1.0) is accepted (200) and its mTLS setting ignored; maxExpectations still applies",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationRequired": true,
+    "maxExpectations": 7
+   }
+  },
+  {
+   "note": "a blank chain and a text boolean: accepted (200) and the startup-only mTLS settings ignored, as on 9.2.0",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationRequired": "true",
+    "controlPlaneTLSMutualAuthenticationCAChain": " "
+   }
+  },
+  {
+   "note": "the update's copy of the bundled CA certificate is accepted (200); the mTLS setting beside it is ignored",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationRequired": true,
+    "certificateAuthorityCertificate": "{{files}}/tls/fwd-ca.pem"
+   }
+  },
+  {
+   "note": "upstream #227: a control-plane CA chain holding the bundled CA was refused whole on 9.1.0; on 9.2.0 the chain is startup-only and the update is accepted (200)",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationRequired": true,
+    "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/tls/fwd-ca.pem"
+   }
+  },
+  {
+   "note": "one holding another certificate for the bundled CA's key, after a private CA, is accepted (200) the same way",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationRequired": true,
+    "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/tls/private-ca/attack/trusted-and-bundled-reissued.pem"
+   }
+  },
+  {
+   "note": "none of the control-plane mTLS settings sent so far is in force: the control plane is still open",
+   "method": "PUT",
+   "path": "/mockserver/clear"
+  },
+  {
+   "note": "mTLS left off is accepted (200)",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationRequired": false
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "note": "a chain holding the bundled CA with mTLS left off is accepted (200)",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/tls/fwd-ca.pem"
+   },
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>",
+     "reason": "the whole effective configuration, compared by the configuration scenarios"
+    }
+   ]
+  },
+  {
+   "note": "turning mTLS on over it is accepted too (200): the startup-only setting stays off",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneTLSMutualAuthenticationRequired": true
+   }
+  }
+ ]
+}

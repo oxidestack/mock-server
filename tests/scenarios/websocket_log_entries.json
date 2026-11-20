@@ -1,0 +1,53 @@
+{
+ "properties": {
+  "logLevel": "DEBUG"
+ },
+ "steps": [
+  {
+   "note": "a scripted WebSocket response of two messages",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "ws-log-1",
+    "httpRequest": {
+     "path": "/ws"
+    },
+    "httpWebSocketResponse": {
+     "messages": [
+      {
+       "text": "a"
+      },
+      {
+       "text": "b"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "the handshake, both messages and the close frame",
+   "tcp": [
+    "R0VUIC93cyBIVFRQLzEuMQ0KSG9zdDogd3MuZXhhbXBsZS5jb20NClVwZ3JhZGU6IHdlYnNvY2tldA0KQ29ubmVjdGlvbjogVXBncmFkZQ0KU2VjLVdlYlNvY2tldC1LZXk6IGRHaGxJSE5oYlhCc1pTQnViMjVqWlE9PQ0KU2VjLVdlYlNvY2tldC1WZXJzaW9uOiAxMw0KDQo="
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "each message sent is a DEBUG entry",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  }
+ ]
+}

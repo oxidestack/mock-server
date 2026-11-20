@@ -1,0 +1,104 @@
+{
+ "properties": {
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "forward",
+     "httpRequest": {
+      "path": "/nohost/forward"
+     },
+     "httpForward": {
+      "port": 1081
+     }
+    },
+    {
+     "id": "fwf",
+     "httpRequest": {
+      "path": "/nohost/fallback"
+     },
+     "httpForwardWithFallback": {
+      "httpForward": {
+       "port": 80
+      },
+      "fallbackResponse": {
+       "body": "fb"
+      }
+     }
+    },
+    {
+     "id": "forward-bad-port",
+     "httpRequest": {
+      "path": "/nohost/bad-port"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": 70000
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "httpForward without host",
+   "method": "GET",
+   "path": "/nohost/forward"
+  },
+  {
+   "note": "forward-with-fallback without host",
+   "method": "GET",
+   "path": "/nohost/fallback"
+  },
+  {
+   "note": "port out of range",
+   "method": "GET",
+   "path": "/nohost/bad-port"
+  },
+  {
+   "note": "log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\"host\" : \\[ \"localhost:<port>\" \\],\\s*\"content-length\" : \\[ \"0\" \\]|\"content-length\" : \\[ \"0\" \\],\\s*\"Host\" : \\[ \"(?:null:1081|localhost:70000|)\" \\]",
+     "replace": "<received request headers>"
+    }
+   ]
+  },
+  {
+   "note": "the same entries as LOG_ENTRIES: each unsendable forward's exception message a WARN entry at INFO level (upstream rewrites the forwarded request's Host while other threads log it: those header pairs are masked, in the request objects and in the message lines; a Java throwable, stack frames and all, is left out: docs/divergences.md)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "\\\\?\"host\\\\?\" : \\[\\s*\\\\?\"[^\"\\\\]*\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\]|\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"Host\\\\?\" : \\[\\s*\\\\?\"(?:null:1081|localhost:70000|)\\\\?\"\\s*\\]",
+     "replace": "<received request headers>"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

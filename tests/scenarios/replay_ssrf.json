@@ -1,0 +1,68 @@
+{
+ "properties": {
+  "forwardProxyBlockPrivateNetworks": "true"
+ },
+ "steps": [
+  {
+   "note": "a loopback Host refused by the SSRF policy",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/target",
+    "headers": {
+     "Host": ["{{host}}"]
+    }
+   }
+  },
+  {
+   "note": "socketAddress wins over Host",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/target",
+    "headers": {
+     "Host": ["example.com"]
+    },
+    "socketAddress": {
+     "host": "127.0.0.1",
+     "port": 80
+    }
+   }
+  },
+  {
+   "note": "the cloud metadata endpoint",
+   "method": "PUT",
+   "path": "/replay",
+   "body": {
+    "path": "/latest/meta-data",
+    "headers": {
+     "Host": ["169.254.169.254"]
+    }
+   }
+  },
+  {
+   "note": "a host that does not resolve",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/target",
+    "headers": {
+     "Host": ["no-such-host.invalid:8080"]
+    }
+   }
+  },
+  {
+   "note": "no target at all is not checked by the policy",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/target"
+   }
+  },
+  {
+   "note": "the refusals are logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON"
+  }
+ ]
+}

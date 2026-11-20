@@ -1,0 +1,63 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a scripted WebSocket response whose JavaScript template cannot render (no GraalJS)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "ws-template-failure",
+    "httpRequest": {
+     "path": "/ws"
+    },
+    "httpWebSocketResponse": {
+     "templateType": "JAVASCRIPT",
+     "messages": [
+      {
+       "text": "return 'a';"
+      },
+      {
+       "text": "b"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "the handshake, then the session is finished without a message",
+   "tcp": [
+    "R0VUIC93cyBIVFRQLzEuMQ0KSG9zdDogd3MuZXhhbXBsZS5jb20NClVwZ3JhZGU6IHdlYnNvY2tldA0KQ29ubmVjdGlvbjogVXBncmFkZQ0KU2VjLVdlYlNvY2tldC1LZXk6IGRHaGxJSE5oYlhCc1pTQnViMjVqWlE9PQ0KU2VjLVdlYlNvY2tldC1WZXJzaW9uOiAxMw0KDQo="
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "the failure to send message 1 is a WARN entry",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "note": "as text",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  }
+ ]
+}

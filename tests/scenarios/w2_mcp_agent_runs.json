@@ -1,0 +1,1291 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "OPENAI"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain with nothing recorded"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "OPENAI",
+      "toolName": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify with nothing recorded"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "diff_agent_runs",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "diff with nothing recorded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "note": "diffRuns empty"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "hi there",
+       "usage": {
+        "inputTokens": 10,
+        "outputTokens": 5
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/messages"
+     },
+     "httpLlmResponse": {
+      "provider": "ANTHROPIC",
+      "model": "claude-3-5-sonnet-20241022",
+      "completion": {
+       "text": "done",
+       "usage": {
+        "inputTokens": 40,
+        "outputTokens": 7
+       }
+      }
+     }
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "Be terse. key sk-abcdefghijklmnopqrstuv"
+     },
+     {
+      "role": "user",
+      "content": "hello"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "headers": {
+    "Host": [
+     "run-a.example"
+    ],
+    "x-agent-id": [
+     "agent-1"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "Be terse."
+     },
+     {
+      "role": "user",
+      "content": "hello"
+     },
+     {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+       {
+        "id": "call_abc123456",
+        "type": "function",
+        "function": {
+         "name": "get_weather",
+         "arguments": "{\"city\":\"Paris\"}"
+        }
+       }
+      ]
+     },
+     {
+      "role": "tool",
+      "tool_call_id": "call_abc123456",
+      "content": "sunny\n  and   warm"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "headers": {
+    "Host": [
+     "run-a.example"
+    ],
+    "x-agent-id": [
+     "agent-1"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "gpt-4o-mini",
+    "messages": [
+     {
+      "role": "system",
+      "content": "Be   terse."
+     },
+     {
+      "role": "user",
+      "content": "Hello there, this is a much longer message that goes past forty code points"
+     },
+     {
+      "role": "assistant",
+      "content": "hi",
+      "tool_calls": [
+       {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+         "name": "lookup",
+         "arguments": "{\"b\":1,\"a\":2}"
+        }
+       },
+       {
+        "id": "call_2",
+        "type": "function",
+        "function": {
+         "name": "get_weather",
+         "arguments": "{\"city\" : \"Paris\"}"
+        }
+       }
+      ]
+     },
+     {
+      "role": "tool",
+      "tool_call_id": "call_2",
+      "content": "rain"
+     },
+     {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "42"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "headers": {
+    "Host": [
+     "run-b.example"
+    ],
+    "x-agent-id": [
+     "agent-2"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v1/messages",
+   "body": {
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 100,
+    "system": "You are an agent.",
+    "messages": [
+     {
+      "role": "user",
+      "content": "find x"
+     },
+     {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "text",
+        "text": "searching"
+       },
+       {
+        "type": "tool_use",
+        "id": "toolu_01ABCDEFGH",
+        "name": "search",
+        "input": {
+         "q": "x"
+        }
+       }
+      ]
+     },
+     {
+      "role": "user",
+      "content": [
+       {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01ABCDEFGH",
+        "content": "found x"
+       }
+      ]
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    }
+   ],
+   "headers": {
+    "Host": [
+     "api.anthropic.com"
+    ]
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "OPENAI"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain openai"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/v1/chat/completions",
+      "isolationType": "header",
+      "isolationKey": "x-agent-id",
+      "isolationValue": "agent-1"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain isolated by header"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "AUTO",
+      "path": "/v1/messages"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain auto anthropic"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "ANTHROPIC"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain anthropic over all"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 18,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "GEMINI",
+      "path": "/v1/messages"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain gemini"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 19,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "COHERE"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain cohere"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 20,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "NOPE"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain unknown provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 21,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": " "
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain blank provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 22,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "openai"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain lowercase provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 23,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "AUTO",
+      "path": "/nothing"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain nothing matches"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 24,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "OPENAI",
+      "isolationType": "bogus",
+      "isolationKey": "x-agent-id",
+      "isolationValue": "agent-1"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain unknown isolation type"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 25,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "OPENAI",
+      "toolName": "get_weather"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call default"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 26,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "OPENAI",
+      "toolName": "lookup",
+      "argumentsRegex": "\"a\":\\s*2",
+      "atLeast": 1,
+      "atMost": 1
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call regex"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 27,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "OPENAI",
+      "toolName": "lookup",
+      "argumentsRegex": "zzz"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call regex miss"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "OPENAI",
+      "toolName": "lookup",
+      "atLeast": 2,
+      "atMost": 3
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call range miss"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 29,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "OPENAI",
+      "toolName": "lookup",
+      "atLeast": 3,
+      "atMost": 2
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call bad range"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 30,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "OPENAI",
+      "toolName": "lookup",
+      "argumentsRegex": "(["
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call bad regex"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 31,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "AUTO",
+      "toolName": "search",
+      "path": "/v1/messages",
+      "atLeast": "2"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call auto anthropic"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 32,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "OPENAI"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call missing name"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 33,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "toolName": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call missing provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 34,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "FOO",
+      "toolName": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call unknown provider"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 35,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_tool_call",
+     "arguments": {
+      "provider": "AUTO",
+      "toolName": "x",
+      "path": "/nope"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "tool call nothing recorded on path"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 36,
+    "method": "tools/call",
+    "params": {
+     "name": "diff_agent_runs",
+     "arguments": {
+      "before": {
+       "host": "run-a.example"
+      },
+      "after": {
+       "host": "run-b.example"
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "diff two hosts"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 37,
+    "method": "tools/call",
+    "params": {
+     "name": "diff_agent_runs",
+     "arguments": {
+      "before": {
+       "host": "run-a.example"
+      },
+      "after": {
+       "host": "run-b.example"
+      },
+      "normalization": {
+       "lowercase": true,
+       "dropBuiltInVolatileFields": 1,
+       "sortJsonKeys": "false",
+       "dropVolatileFields": "city"
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "diff normalized"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 38,
+    "method": "tools/call",
+    "params": {
+     "name": "diff_agent_runs",
+     "arguments": {
+      "before": {
+       "host": "run-a.example"
+      },
+      "normalization": {
+       "lowercase": "yes"
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "diff bad normalization"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 39,
+    "method": "tools/call",
+    "params": {
+     "name": "diff_agent_runs",
+     "arguments": {
+      "before": {
+       "provider": "OPENAI"
+      },
+      "after": {
+       "provider": "ANTHROPIC"
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "diff providers"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 40,
+    "method": "tools/call",
+    "params": {
+     "name": "diff_agent_runs",
+     "arguments": {
+      "before": {
+       "session": "host:run-b.example"
+      },
+      "after": {
+       "session": "run-b.example"
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "diff sessions"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": {
+    "before": {
+     "host": "run-a.example"
+    },
+    "after": {
+     "host": "run-b.example"
+    }
+   },
+   "note": "diffRuns two hosts"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": {
+    "before": {
+     "host": "run-b.example"
+    },
+    "after": {
+     "host": "run-a.example"
+    },
+    "normalization": {
+     "collapseWhitespace": false
+    }
+   },
+   "note": "diffRuns reversed no collapse"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": {
+    "before": {
+     "host": "api.anthropic.com"
+    },
+    "after": {
+     "host": "api.anthropic.com",
+     "provider": "anthropic"
+    }
+   },
+   "note": "diffRuns same run"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": "nope",
+   "note": "diffRuns not json"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": {
+    "normalization": {
+     "lowercase": 1.5
+    }
+   },
+   "note": "diffRuns bad boolean"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": {
+    "normalization": {
+     "dropVolatileFields": [
+      {}
+     ]
+    }
+   },
+   "note": "diffRuns bad field list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": [
+    1,
+    2
+   ],
+   "note": "diffRuns array body"
+  },
+  {
+   "method": "PUT",
+   "path": "/llm/diffRuns",
+   "body": {
+    "before": {
+     "provider": "GEMINI"
+    }
+   },
+   "note": "diffRuns legacy path"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": "nope",
+   "note": "diffRuns not json again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": {
+    "normalization": {
+     "lowercase": "x\"y",
+     "collapseWhitespace": true
+    }
+   },
+   "note": "diffRuns bad string boolean"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": {
+    "normalization": {
+     "dropVolatileFields": {}
+    }
+   },
+   "note": "diffRuns object field list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/llm/diffRuns",
+   "body": {
+    "normalization": {
+     "sortJsonKeys": [
+      true
+     ]
+    }
+   },
+   "note": "diffRuns array boolean"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 41,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_agent_run",
+     "arguments": {
+      "provider": "OPENAI",
+      "path": "/none"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "explain failure logged"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "error log entries"
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}]}
+]
+}

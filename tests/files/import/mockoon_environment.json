@@ -1,0 +1,98 @@
+{
+  "uuid": "env-1",
+  "lastMigration": 33,
+  "name": "Demo API",
+  "port": 3000,
+  "routes": [
+    {
+      "uuid": "route-user",
+      "type": "http",
+      "method": "get",
+      "endpoint": "users/:id",
+      "responses": [
+        {
+          "uuid": "r1",
+          "statusCode": 200,
+          "label": "ok",
+          "headers": [ { "key": "Content-Type", "value": "application/json" } ],
+          "body": "{\"id\":1}",
+          "latency": 150,
+          "default": true,
+          "rules": [],
+          "rulesOperator": "OR"
+        }
+      ]
+    },
+    {
+      "uuid": "route-search",
+      "type": "http",
+      "method": "get",
+      "endpoint": "search",
+      "responseMode": null,
+      "responses": [
+        {
+          "uuid": "s1",
+          "statusCode": 200,
+          "body": "filtered",
+          "rules": [ { "target": "query", "modifier": "q", "value": "book", "operator": "equals", "invert": false } ],
+          "rulesOperator": "AND",
+          "default": false
+        },
+        {
+          "uuid": "s2",
+          "statusCode": 404,
+          "body": "not found",
+          "rules": [],
+          "default": true
+        }
+      ]
+    },
+    {
+      "uuid": "route-seq",
+      "type": "http",
+      "method": "post",
+      "endpoint": "events",
+      "responseMode": "SEQUENTIAL",
+      "responses": [
+        { "uuid": "q1", "statusCode": 201, "body": "one" },
+        { "uuid": "q2", "statusCode": 202, "body": "two" }
+      ]
+    },
+    {
+      "uuid": "route-rand",
+      "type": "http",
+      "method": "get",
+      "endpoint": "dice",
+      "responseMode": "RANDOM",
+      "responses": [
+        { "uuid": "d1", "statusCode": 200, "body": "1" },
+        { "uuid": "d2", "statusCode": 200, "body": "6" }
+      ]
+    },
+    {
+      "uuid": "route-warn",
+      "type": "http",
+      "method": "get",
+      "endpoint": "warn",
+      "responses": [
+        {
+          "uuid": "w1",
+          "statusCode": 200,
+          "body": "x",
+          "rules": [
+            { "target": "cookie", "modifier": "sid", "value": "1", "operator": "equals" },
+            { "target": "body", "modifier": "", "value": "y", "operator": "null" }
+          ],
+          "default": true
+        }
+      ]
+    },
+    {
+      "uuid": "route-crud",
+      "type": "crud",
+      "method": "get",
+      "endpoint": "items",
+      "responses": [ { "uuid": "c1", "statusCode": 200 } ]
+    }
+  ]
+}

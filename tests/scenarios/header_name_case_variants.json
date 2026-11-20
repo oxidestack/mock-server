@@ -1,0 +1,23 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"note": "create: lower-case matcher with both values", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "case-variants-match-both", "httpRequest": {"path": "/match-both", "headers": {"x-a": ["1", "2"]}}, "httpResponse": {"body": "match-both"}}},
+  {"note": "create: upper-case matcher with the lower-case entry's value", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "case-variants-match-cross", "httpRequest": {"path": "/match-cross", "headers": {"X-A": ["2"]}}, "httpResponse": {"body": "match-cross"}}},
+  {"note": "create: lower-case matcher with the values reversed", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "case-variants-match-reversed", "httpRequest": {"path": "/match-reversed", "headers": {"x-a": ["2", "1"]}}, "httpResponse": {"body": "match-reversed"}}},
+  {"note": "create: velocity template over the headers", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "case-variants-velocity", "httpRequest": {"path": "/velocity"}, "httpResponseTemplate": {"templateType": "VELOCITY", "template": "{'statusCode': 200, 'body': \"#foreach($h in $request.headers.entrySet())#if($h.key.equalsIgnoreCase('x-a'))$h.key=$h.value;#end#end|$request.headers['x-a']|$request.headers['X-A']\"}"}}},
+  {"note": "create: mustache template over the headers", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "case-variants-mustache", "httpRequest": {"path": "/mustache"}, "httpResponseTemplate": {"templateType": "MUSTACHE", "template": "{'statusCode': 200, 'body': '{{#request.headers.entrySet}}{{ key }};{{/request.headers.entrySet}}|{{ request.headers.x-a }}|{{ request.headers.X-A }}'}"}}},
+  {"note": "create: forward target", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "case-variants-target", "httpRequest": {"path": "/target"}, "httpResponse": {"body": "target"}}},
+  {"note": "create: forward with an override", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "case-variants-forward", "httpRequest": {"path": "/forward"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}}},
+  {"note": "request: lower-case matcher with both values", "tcp": [{"text": "GET /match-both HTTP/1.1\r\nHost: {{host}}\r\nX-A: 1\r\nx-a: 2\r\nconnection: close\r\n\r\n"}], "text": true},
+  {"note": "request: upper-case matcher with the lower-case entry's value", "tcp": [{"text": "GET /match-cross HTTP/1.1\r\nHost: {{host}}\r\nX-A: 1\r\nx-a: 2\r\nconnection: close\r\n\r\n"}], "text": true},
+  {"note": "request: lower-case matcher with the values reversed", "tcp": [{"text": "GET /match-reversed HTTP/1.1\r\nHost: {{host}}\r\nX-A: 1\r\nx-a: 2\r\nconnection: close\r\n\r\n"}], "text": true},
+  {"note": "request: velocity", "tcp": [{"text": "GET /velocity HTTP/1.1\r\nHost: {{host}}\r\nX-A: 1\r\nx-a: 2\r\nX-A: 3\r\nconnection: close\r\n\r\n"}], "text": true},
+  {"note": "request: mustache", "tcp": [{"text": "GET /mustache HTTP/1.1\r\nHost: {{host}}\r\nX-A: 1\r\nx-a: 2\r\nX-A: 3\r\nconnection: close\r\n\r\n"}], "text": true},
+  {"note": "request: forward", "tcp": [{"text": "GET /forward HTTP/1.1\r\nHost: {{host}}\r\nX-A: 1\r\nx-a: 2\r\nX-A: 3\r\nconnection: close\r\n\r\n"}], "text": true},
+  {"note": "request: no match", "tcp": [{"text": "GET /none HTTP/1.1\r\nHost: {{host}}\r\nX-A: 1\r\nx-a: 2\r\nconnection: close\r\n\r\n"}], "text": true},
+  {"note": "recorded requests", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"},
+  {"note": "recorded requests as java", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS&format=JAVA", "body": {"path": "/forward"}},
+  {"note": "recorded exchanges", "method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON", "body": {"path": "/match-cross"}},
+  {"note": "verify: upper-case name, lower-case entry's value", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/none", "headers": {"X-A": ["2"]}}, "times": {"atLeast": 1, "atMost": 1}}},
+  {"note": "verify: fails, to show the request as the failure prints it", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/none", "headers": {"x-a": ["3"]}}, "times": {"atLeast": 1}}},
+  {"note": "log", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/none"}}
+]}

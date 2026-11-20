@@ -1,0 +1,64 @@
+{
+ "source": "a configured CA with a dstu4145-explicit-even-x962 key (DSTU 4145 on explicit parameters over GF(2^176), a field of even degree) (tests/files/x509/tostring/ca-forms): X9.62 ECParameters (the same field, a = 1, the base point uncompressed); only the public key is compressed, so the certificate entry prints one of two texts and the key entry one; socketConnectionTimeoutInMillis bounds the first handshake, whose certificate generation took over the default 20 s on a loaded machine",
+ "properties": {
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false",
+  "socketConnectionTimeoutInMillis": "120000",
+  "certificateAuthorityCertificate": "{{files}}/x509/tostring/ca-forms/dstu4145-explicit-even-x962.pem",
+  "certificateAuthorityPrivateKey": "{{files}}/x509/tostring/ca-forms/dstu4145-explicit-even-x962-key.pem"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "first inbound TLS connection: the server's context loads the bundled CA and logs the certificates in use",
+   "tcp": [
+    {
+     "text": "GET /ca/debug HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "DEBUG: the X509 entry with the certificate's toString, the key path, the CA and leaf serials (the leaf's is random)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]",
+     "reason": "Netty's random channel id and the container's addresses"
+    },
+    {
+     "regex": "((?:Public) Key \\[)(?:6c:b2:21:f6:21:3e:0f:92:4b:f0:22:bb:a8:12:5f:f8:2c:e9:c3:ee|b6:a0:5e:98:99:f1:48:51:aa:1d:da:04:7a:12:be:6a:63:64:b6:76)(\\]\\n +X: [0-9a-f]+\\n +Y: )(?:4ee618ce79a075b55dec7e9eb336c3cc9df6919e945c|d5f0eef6e23c5cabd076560876cac2001870d606c8aa)\\n",
+     "replace": "${1}<P or -P>${2}<P or -P>\n",
+     "reason": "over a field of even degree the two roots of DSTU4145PointEncoder's quadratic have the same trace, so solveQuadraticEquation's random t picks the point or its negative each time a compressed point is decoded; the alternatives are every text BouncyCastle 1.85 printed for this key (tests/files/x509/tostring/ca-forms)"
+    },
+    {
+     "regex": "(and certificate serial:\\n\\n  )\\d+",
+     "replace": "${1}<random>"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - created new X509\\n.*?\\n-{36}\\n",
+     "replace": "\n",
+     "reason": "the leaf BouncyCastle prints is random (key, serial, dates, signature)"
+    },
+    {
+     "regex": "(?s)^(.*subject:\\n\\n  [^\\n]*CN=localhost\\n\\n-+\\n).*$",
+     "replace": "${1}(the rest: the request served over TLS)"
+    }
+   ]
+  }
+ ]
+}

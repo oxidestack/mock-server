@@ -1,0 +1,63 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 280",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/hello\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 201,\n    \"body\" : \"hello\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "A CONNECT sent over TLS. The 8.0.0 oracle serves only HTTP/1.1 inside the outer TLS (RelayConnectHandler: an SslHandler is already in the pipeline, so configurePipelines without detection); upstream fix 40939d794 defers detection on every CONNECT, so the snapshot classifies the decrypted first bytes as it does in a cleartext tunnel: a nested TLS record is terminated, the h2c preface is served as HTTP/2. The tunnelled bytes follow the CONNECT after a second (chunkMillis): the oracle opens its loopback to itself before it answers 200, and bytes that arrive while it does so are lost, so a 200 ms gap raced against a cold oracle."
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 201 Created\r\nconnection: close\r\ncontent-length: 5\r\n\r\nhello",
+      "closed": true,
+      "note": "plaintext HTTP/1.1 inside a CONNECT over TLS: matched"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 502 Bad Gateway\r\nconnection: close\r\ncontent-length: 149\r\n\r\nupstream host name could not be resolved: check it is spelled correctly and resolves where MockServer runs (its DNS, hosts file or container network)",
+      "closed": true,
+      "note": "plaintext HTTP/1.1 inside a CONNECT over TLS: unmatched, so proxied to the unresolvable target: 502"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\n\u0000\u0000\f\u0004\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0000\u0000\u0000d\u0000\u0006\u0000\u0004\u0000\u0000\u0000\u0000\u0000\u0004\u0001\u0000\u0000\u0000\u0000\u0000\u0000\r\u0001$\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u000fH\u0003201\\\u00015\u0000\u0000\u0005\u0000\u0001\u0000\u0000\u0000\u0001hello",
+      "closed": false,
+      "note": "h2c prior knowledge inside a CONNECT over TLS: the preface, an empty SETTINGS and a HEADERS frame (GET /hello, END_STREAM) on stream 1"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\n\u0015\u0003\u0003\u0000\u0002\u00022",
+      "closed": true,
+      "note": "a malformed TLS ClientHello inside a CONNECT over TLS: 8.0.0 parses it as HTTP (/bad-request, proxied: 502); after the fix it is a TLS record, refused with a decode_error alert"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\n\u0016\u0003\u0003<server flight>",
+      "closed": false,
+      "note": "a TLS 1.2 ClientHello inside a CONNECT over TLS: after the fix the nested handshake is answered with the server's flight"
+    },
+    {
+      "status": 202,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "the HTTP/1.1 and (after the fix) the h2c request reached the data plane"
+    }
+  ]
+}

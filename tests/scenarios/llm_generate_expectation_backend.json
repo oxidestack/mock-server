@@ -1,0 +1,367 @@
+{
+ "source": "hand-written: PUT /mockserver/generateExpectation with a reachable LLM backend (the scenario's peer answers OpenAI chat completions): StubGenerationPromptBuilder, LlmCompletionService (cache) and the parsed suggestions; at most four backend calls per scenario: 8.0.0 blocks the Netty worker thread that handles the request on the call, so on a kept-alive connection every fifth call's channel lands on that same event loop and waits out llmRequestTimeoutMillis",
+ "peer": true,
+ "properties": {
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "5000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "fenced",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "Path: /orders\\n",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"```json\\n[\\n  {\\n    \\\"httpRequest\\\": {\\n      \\\"method\\\": \\\"POST\\\",\\n      \\\"path\\\": \\\"/orders\\\"\\n    },\\n    \\\"httpResponse\\\": {\\n      \\\"statusCode\\\": 201,\\n      \\\"body\\\": {\\n        \\\"id\\\": 1\\n      }\\n    }\\n  },\\n  {\\n    \\\"httpRequest\\\": {\\n      \\\"method\\\": \\\"GET\\\",\\n      \\\"path\\\": \\\"/orders/1\\\"\\n    },\\n    \\\"httpResponse\\\": {\\n      \\\"statusCode\\\": 200,\\n      \\\"body\\\": \\\"order\\\"\\n    }\\n  }\\n]\\n```\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "single",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "Path: /single",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"httpRequest\\\": {\\\"method\\\": \\\"GET\\\", \\\"path\\\": \\\"/orders/1\\\"}, \\\"httpResponse\\\": {\\\"statusCode\\\": 200, \\\"body\\\": \\\"order\\\"}}\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "prose",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "Path: /prose",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"Sure! Here is an expectation for you.\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "invalid",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "Path: /invalid",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"[{\\\"httpRequest\\\": {\\\"path\\\": \\\"/x\\\"}, \\\"httpResponse\\\": {\\\"statusCode\\\": \\\"abc\\\"}}]\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "emptyArray",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "Path: /none",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"[]\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "blank",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "Path: /blank",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"   \"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "failing",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "Path: /failing",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 500,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"error\":\"boom\"}"
+     }
+    },
+    {
+     "id": "openapi",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "Path: /spec",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"specUrlOrPayload\\\": \\\"{{files}}/openapi/openapi_petstore_example.json\\\"}\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    }
+   ],
+   "mask": [
+    "\"rawBytes\" : \"[^\"]*\""
+   ],
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "context",
+    "httpRequest": {
+     "method": "PATCH",
+     "path": "/existing"
+    },
+    "httpResponse": {
+     "statusCode": 202
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "note": "the first suggestion only (limit defaults to 1), confidence 0.75, no explanation; the prompt lists the active expectations",
+   "body": {
+    "request": {
+     "method": "POST",
+     "path": "/orders",
+     "queryStringParameters": {
+      "page": [
+       "1"
+      ]
+     },
+     "headers": {
+      "X-Trace": [
+       "abc"
+      ]
+     },
+     "body": "{\"item\":\"book\"}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "note": "same prompt: answered from the service's cache, limit 5 keeps both",
+   "body": {
+    "request": {
+     "method": "POST",
+     "path": "/orders",
+     "queryStringParameters": {
+      "page": [
+       "1"
+      ]
+     },
+     "headers": {
+      "X-Trace": [
+       "abc"
+      ]
+     },
+     "body": "{\"item\":\"book\"}"
+    },
+    "limit": 5
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "note": "a single object; limit 0 reads as 1",
+   "body": {
+    "request": {
+     "path": "/single"
+    },
+    "limit": 0
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "note": "not JSON: the template stub at 0.75",
+   "body": {
+    "request": {
+     "method": "DELETE",
+     "path": "/prose"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "note": "an invalid expectation: the template stub at 0.75",
+   "body": {
+    "request": {
+     "method": "GET",
+     "path": "/invalid"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "note": "preview false adds the (cached) suggestions",
+   "body": {
+    "request": {
+     "method": "POST",
+     "path": "/orders",
+     "queryStringParameters": {
+      "page": [
+       "1"
+      ]
+     },
+     "headers": {
+      "X-Trace": [
+       "abc"
+      ]
+     },
+     "body": "{\"item\":\"book\"}"
+    },
+    "limit": 5,
+    "preview": false
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the generated entries",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "\"Host\" : \\[ \"[^\"]*\" \\]",
+     "replace": "\"Host\" : [ \"<peer>\" ]"
+    },
+    {
+     "regex": "\"host\" : \"[^\"]*\"",
+     "replace": "\"host\" : \"<host>\""
+    },
+    {
+     "regex": "\"port\" : (<port>|\\d+)",
+     "replace": "\"port\" : <port>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "what the backend was sent: one call per distinct prompt",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "\"Host\" : \\[ \"[^\"]*\" \\]",
+     "replace": "\"Host\" : [ \"<peer>\" ]"
+    },
+    {
+     "regex": "\"host\" : \"[^\"]*\"",
+     "replace": "\"host\" : \"<host>\""
+    },
+    {
+     "regex": "\"port\" : (<port>|\\d+)",
+     "replace": "\"port\" : <port>"
+    }
+   ],
+   "node": "peer"
+  }
+ ]
+}

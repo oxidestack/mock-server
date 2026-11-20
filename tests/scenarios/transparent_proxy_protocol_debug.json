@@ -1,0 +1,103 @@
+{
+ "properties": {
+  "transparentProxyEnabled": "true",
+  "logLevel": "DEBUG"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "ProxyProtocolOriginalDestinationHandlerTest: PROXY protocol headers in transparent-proxy mode. The PROXY protocol handler sits before the PortUnificationHandler (b765b8271), so what follows a header is classified as any connection's first bytes are; the header's destination is where unmatched requests would go"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/behind-proxy"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "answered"
+    }
+   },
+   "note": "answers the request that comes without a header"
+  },
+  {
+   "tcp": [
+    {
+     "text": "PROXY TCP4 192.168.1.1 127.0.0.1 56324 {{deadport}}\r\nGET /behind-proxy HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "note": "ProxyProtocolOriginalDestinationHandlerTest.shouldParseValidProxyV1Tcp4Header (a refusing address in place of the test's 10.0.0.1:80): the request after the header matches the expectation",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PROXY TCP6 ::1 ::1 56324 {{deadport}}\r\nGET /behind-proxy HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "note": "ProxyProtocolOriginalDestinationHandlerTest.shouldParseValidProxyV1Tcp6Header",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /behind-proxy HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "note": "ProxyProtocolOriginalDestinationHandlerTest.shouldPassThroughNonProxyTraffic",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PROXY UNKNOWN\r\nGET /behind-proxy HTTP/1.1\r\nHost: example.com\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "note": "ProxyProtocolOriginalDestinationHandlerTest.shouldHandleProxyUnknown",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "hex": "0d0a0d0a000d0a515549540a2111000cc0a801017f000001dc04{{deadporthex}}474554202f626568696e642d70726f787920485454502f312e310d0a486f73743a206578616d706c652e636f6d0d0a436f6e6e656374696f6e3a20636c6f73650d0a0d0a"
+    }
+   ],
+   "note": "ProxyProtocolOriginalDestinationHandlerTest.shouldParseValidProxyV2Inet (a refusing address in place of the test's 10.0.0.1:80)",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "hex": "0d0a0d0a000d0a515549540a20000000474554202f626568696e642d70726f787920485454502f312e310d0a486f73743a206578616d706c652e636f6d0d0a436f6e6e656374696f6e3a20636c6f73650d0a0d0a"
+    }
+   ],
+   "note": "ProxyProtocolOriginalDestinationHandlerTest.shouldHandleProxyV2LocalCommandWithoutDestination",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "hex": "0d0a0d0a000d0a515549540a213100d8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000474554202f626568696e642d70726f787920485454502f312e310d0a486f73743a206578616d706c652e636f6d0d0a436f6e6e656374696f6e3a20636c6f73650d0a0d0a"
+    }
+   ],
+   "note": "ProxyProtocolOriginalDestinationHandlerTest.shouldConsumeProxyV2UnixFamilyWithoutDestination",
+   "text": true
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "note": "the log entries the headers produced",
+   "mask": [
+    "\\[id: 0x[0-9a-f]+[^\\]]*\\]",
+    "(?s)\\n\\s+at .*?(?=\\n\\n|\\n[^\\s]|$)"
+   ]
+  }
+ ]
+}

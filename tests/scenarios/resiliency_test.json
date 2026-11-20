@@ -1,0 +1,649 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    }
+   }
+  },
+  {
+   "note": "4xx is handled; every createItem mutation",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test API\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/items\": {\n      \"post\": {\n        \"operationId\": \"createItem\",\n        \"parameters\": [\n          {\n            \"name\": \"tenant\",\n            \"in\": \"query\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\",\n              \"default\": \"default-tenant\"\n            }\n          }\n        ],\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"required\": [\n                  \"name\",\n                  \"quantity\"\n                ],\n                \"properties\": {\n                  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3,\n                    \"maxLength\": 50\n                  },\n                  \"quantity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000\n                  },\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"enabled\": {\n                    \"type\": \"boolean\"\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Created\"\n          },\n          \"400\": {\n            \"description\": \"Bad request\"\n          }\n        }\n      }\n    },\n    \"/items/{itemId}\": {\n      \"get\": {\n        \"operationId\": \"getItem\",\n        \"parameters\": [\n          {\n            \"name\": \"itemId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          },\n          \"404\": {\n            \"description\": \"Not found\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://localhost:{{port}}",
+      "operationId": "createItem"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 422
+    }
+   }
+  },
+  {
+   "note": "422 is handled",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test API\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/items\": {\n      \"post\": {\n        \"operationId\": \"createItem\",\n        \"parameters\": [\n          {\n            \"name\": \"tenant\",\n            \"in\": \"query\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\",\n              \"default\": \"default-tenant\"\n            }\n          }\n        ],\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"required\": [\n                  \"name\",\n                  \"quantity\"\n                ],\n                \"properties\": {\n                  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3,\n                    \"maxLength\": 50\n                  },\n                  \"quantity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000\n                  },\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"enabled\": {\n                    \"type\": \"boolean\"\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Created\"\n          },\n          \"400\": {\n            \"description\": \"Bad request\"\n          }\n        }\n      }\n    },\n    \"/items/{itemId}\": {\n      \"get\": {\n        \"operationId\": \"getItem\",\n        \"parameters\": [\n          {\n            \"name\": \"itemId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          },\n          \"404\": {\n            \"description\": \"Not found\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://localhost:{{port}}",
+      "operationId": "createItem"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    }
+   }
+  },
+  {
+   "note": "5xx is unexpected",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test API\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/items\": {\n      \"post\": {\n        \"operationId\": \"createItem\",\n        \"parameters\": [\n          {\n            \"name\": \"tenant\",\n            \"in\": \"query\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\",\n              \"default\": \"default-tenant\"\n            }\n          }\n        ],\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"required\": [\n                  \"name\",\n                  \"quantity\"\n                ],\n                \"properties\": {\n                  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3,\n                    \"maxLength\": 50\n                  },\n                  \"quantity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000\n                  },\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"enabled\": {\n                    \"type\": \"boolean\"\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Created\"\n          },\n          \"400\": {\n            \"description\": \"Bad request\"\n          }\n        }\n      }\n    },\n    \"/items/{itemId}\": {\n      \"get\": {\n        \"operationId\": \"getItem\",\n        \"parameters\": [\n          {\n            \"name\": \"itemId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          },\n          \"404\": {\n            \"description\": \"Not found\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://localhost:{{port}}",
+      "operationId": "createItem"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "2xx is unexpected",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test API\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/items\": {\n      \"post\": {\n        \"operationId\": \"createItem\",\n        \"parameters\": [\n          {\n            \"name\": \"tenant\",\n            \"in\": \"query\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\",\n              \"default\": \"default-tenant\"\n            }\n          }\n        ],\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"required\": [\n                  \"name\",\n                  \"quantity\"\n                ],\n                \"properties\": {\n                  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3,\n                    \"maxLength\": 50\n                  },\n                  \"quantity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000\n                  },\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"enabled\": {\n                    \"type\": \"boolean\"\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Created\"\n          },\n          \"400\": {\n            \"description\": \"Bad request\"\n          }\n        }\n      }\n    },\n    \"/items/{itemId}\": {\n      \"get\": {\n        \"operationId\": \"getItem\",\n        \"parameters\": [\n          {\n            \"name\": \"itemId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          },\n          \"404\": {\n            \"description\": \"Not found\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://localhost:{{port}}",
+      "operationId": "createItem"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 500
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "alternating 500 and 400: summary counts",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test API\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/items\": {\n      \"post\": {\n        \"operationId\": \"createItem\",\n        \"parameters\": [\n          {\n            \"name\": \"tenant\",\n            \"in\": \"query\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\",\n              \"default\": \"default-tenant\"\n            }\n          }\n        ],\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"required\": [\n                  \"name\",\n                  \"quantity\"\n                ],\n                \"properties\": {\n                  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3,\n                    \"maxLength\": 50\n                  },\n                  \"quantity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000\n                  },\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"enabled\": {\n                    \"type\": \"boolean\"\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Created\"\n          },\n          \"400\": {\n            \"description\": \"Bad request\"\n          }\n        }\n      }\n    },\n    \"/items/{itemId}\": {\n      \"get\": {\n        \"operationId\": \"getItem\",\n        \"parameters\": [\n          {\n            \"name\": \"itemId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          },\n          \"404\": {\n            \"description\": \"Not found\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://localhost:{{port}}",
+      "operationId": "createItem"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/items"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/items.*"
+    },
+    "httpResponse": {
+     "statusCode": 400
+    }
+   }
+  },
+  {
+   "note": "per-operation summaries",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test API\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/items\": {\n      \"post\": {\n        \"operationId\": \"createItem\",\n        \"parameters\": [\n          {\n            \"name\": \"tenant\",\n            \"in\": \"query\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\",\n              \"default\": \"default-tenant\"\n            }\n          }\n        ],\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"required\": [\n                  \"name\",\n                  \"quantity\"\n                ],\n                \"properties\": {\n                  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3,\n                    \"maxLength\": 50\n                  },\n                  \"quantity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000\n                  },\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"enabled\": {\n                    \"type\": \"boolean\"\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Created\"\n          },\n          \"400\": {\n            \"description\": \"Bad request\"\n          }\n        }\n      }\n    },\n    \"/items/{itemId}\": {\n      \"get\": {\n        \"operationId\": \"getItem\",\n        \"parameters\": [\n          {\n            \"name\": \"itemId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          },\n          \"404\": {\n            \"description\": \"Not found\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://localhost:{{port}}"
+     }
+    }
+   }
+  },
+  {
+   "note": "filter by operationId; omitted path parameter",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test API\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/items\": {\n      \"post\": {\n        \"operationId\": \"createItem\",\n        \"parameters\": [\n          {\n            \"name\": \"tenant\",\n            \"in\": \"query\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\",\n              \"default\": \"default-tenant\"\n            }\n          }\n        ],\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"required\": [\n                  \"name\",\n                  \"quantity\"\n                ],\n                \"properties\": {\n                  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3,\n                    \"maxLength\": 50\n                  },\n                  \"quantity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000\n                  },\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"enabled\": {\n                    \"type\": \"boolean\"\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Created\"\n          },\n          \"400\": {\n            \"description\": \"Bad request\"\n          }\n        }\n      }\n    },\n    \"/items/{itemId}\": {\n      \"get\": {\n        \"operationId\": \"getItem\",\n        \"parameters\": [\n          {\n            \"name\": \"itemId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          },\n          \"404\": {\n            \"description\": \"Not found\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://localhost:{{port}}",
+      "operationId": "getItem"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/status"
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "no parameters and no body: no mutations",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 18,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/status\": {\n      \"get\": {\n        \"operationId\": \"getStatus\",\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://localhost:{{port}}"
+     }
+    }
+   }
+  },
+  {
+   "note": "connection error is unexpected",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 19,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"Test API\",\n    \"version\": \"1.0\"\n  },\n  \"paths\": {\n    \"/items\": {\n      \"post\": {\n        \"operationId\": \"createItem\",\n        \"parameters\": [\n          {\n            \"name\": \"tenant\",\n            \"in\": \"query\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\",\n              \"default\": \"default-tenant\"\n            }\n          }\n        ],\n        \"requestBody\": {\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"type\": \"object\",\n                \"required\": [\n                  \"name\",\n                  \"quantity\"\n                ],\n                \"properties\": {\n                  \"name\": {\n                    \"type\": \"string\",\n                    \"minLength\": 3,\n                    \"maxLength\": 50\n                  },\n                  \"quantity\": {\n                    \"type\": \"integer\",\n                    \"minimum\": 1,\n                    \"maximum\": 1000\n                  },\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"enabled\": {\n                    \"type\": \"boolean\"\n                  }\n                }\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Created\"\n          },\n          \"400\": {\n            \"description\": \"Bad request\"\n          }\n        }\n      }\n    },\n    \"/items/{itemId}\": {\n      \"get\": {\n        \"operationId\": \"getItem\",\n        \"parameters\": [\n          {\n            \"name\": \"itemId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          },\n          \"404\": {\n            \"description\": \"Not found\"\n          }\n        }\n      }\n    }\n  }\n}",
+      "baseUrl": "http://127.0.0.1:{{deadport}}",
+      "operationId": "createItem"
+     }
+    }
+   }
+  }
+ ]
+}

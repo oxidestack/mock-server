@@ -1,0 +1,264 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/api/health"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "Content-Type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"status\":\"ok\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/api/users"
+     },
+     "httpResponse": {
+      "statusCode": 201,
+      "headers": {
+       "Content-Type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\":1}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/proxy/health"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/api/health",
+       "headers": {
+        "Host": [
+         "127.0.0.1:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/proxy/users"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/api/users",
+       "headers": {
+        "Host": [
+         "127.0.0.1:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ],
+   "note": "target and forward expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/proxy/health",
+   "note": "forward health, records GET /api/health"
+  },
+  {
+   "method": "POST",
+   "path": "/proxy/users",
+   "body": "{\"name\":\"ada\"}",
+   "note": "forward users, records POST /api/users"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectations_from_recorded_traffic",
+     "arguments": {
+      "preview": true
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    {
+     "regex": "(response-time-ms[\\\\\"]+ ?: ?\\[ ?[\\\\\"]+)\\d+",
+     "replace": "${1}<ms>"
+    }
+   ],
+   "compare": "json",
+   "note": "preview: does not create"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "(response-time-ms[\\\\\"]+ ?: ?\\[ ?[\\\\\"]+)\\d+",
+     "replace": "${1}<ms>"
+    }
+   ],
+   "compare": "json",
+   "note": "preview created nothing"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectations_from_recorded_traffic",
+     "arguments": {
+      "method": "GET"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    {
+     "regex": "(response-time-ms[\\\\\"]+ ?: ?\\[ ?[\\\\\"]+)\\d+",
+     "replace": "${1}<ms>"
+    }
+   ],
+   "compare": "json",
+   "note": "filter by method: creates only the GET one"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectations_from_recorded_traffic",
+     "arguments": {
+      "path": "/proxy/users"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    {
+     "regex": "(response-time-ms[\\\\\"]+ ?: ?\\[ ?[\\\\\"]+)\\d+",
+     "replace": "${1}<ms>"
+    }
+   ],
+   "compare": "json",
+   "note": "filter by path: creates only the POST one"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "(response-time-ms[\\\\\"]+ ?: ?\\[ ?[\\\\\"]+)\\d+",
+     "replace": "${1}<ms>"
+    }
+   ],
+   "compare": "json",
+   "note": "both filtered calls together created exactly one expectation each, unlimited times/ttl"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectations_from_recorded_traffic",
+     "arguments": {
+      "method": "DELETE"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    {
+     "regex": "(response-time-ms[\\\\\"]+ ?: ?\\[ ?[\\\\\"]+)\\d+",
+     "replace": "${1}<ms>"
+    }
+   ],
+   "compare": "json",
+   "note": "filter matches nothing"
+  }
+ ]
+}

@@ -1,0 +1,56 @@
+{
+  "note": "no key source is the working directory (new File(\"\").getAbsolutePath()), which is a directory",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "propertyFile": "mockserver.controlPlaneJWTAuthenticationRequired=true\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "exception building JWT validator for:\n\n\n\njava.io.FileNotFoundException: ",
+      "control plane authentication is enabled but the authentication handler could not be created - denying all control plane requests until the configuration is corrected\njava.lang.NullPointerException: Cannot invoke \"org.mockserver.authentication.jwt.JWTValidator.withExpectedAudience(String)\" because \"this.jwtValidator\" is null"
+    ],
+    "stdoutOccurrences": {
+      "exception building JWT validator for:": 1,
+      "authentication handler could not be created": 1
+    },
+    "stdoutContains": [
+      " (Is a directory)\n"
+    ]
+  }
+}

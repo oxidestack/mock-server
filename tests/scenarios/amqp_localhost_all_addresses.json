@@ -1,0 +1,127 @@
+{
+ "note": "the oracle's amqp-client resolves localhost to every address (DnsRecordIpAddressResolver, getAllByName), shuffles them and runs the whole connect (TCP, TLS, AMQP handshake) on each, throwing the last failure: two TLS handshake failures for amqps://localhost, one per family (compared unordered), and two binary requests for plain amqp://localhost",
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "settleMillis": 3000,
+ "steps": [
+  {
+   "note": "AMQP over TLS to this server's own port by name: the client trusts nothing of MockServer's, on every address",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Addresses",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqps://localhost:{{port}}"
+    }
+   },
+   "maxMillis": 120000
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "the log: a handshake failure per address",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^  /(127\\.0\\.0\\.1|\\[?0:0:0:0:0:0:0:1\\]?):[0-9]+$",
+     "replace": "  /<client address>:<client port>",
+     "reason": "the client's address and ephemeral port; which family the shuffle tried first"
+    },
+    {
+     "regex": "\"content-length\" : \\[ \"[0-9]+\" \\]",
+     "replace": "\"content-length\" : [ \"<length>\" ]",
+     "reason": "the load's body names the server's port, whose digit count differs"
+    }
+   ],
+   "compare": "unordered"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "plain AMQP to this server's own port by name: the protocol header reaches the server once per address",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Addresses",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://localhost:{{port}}"
+    }
+   },
+   "maxMillis": 120000
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "the log: the binary requests, one per address",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^  /(127\\.0\\.0\\.1|\\[?0:0:0:0:0:0:0:1\\]?):[0-9]+$",
+     "replace": "  /<client address>:<client port>",
+     "reason": "the client's address and ephemeral port; which family the shuffle tried first"
+    },
+    {
+     "regex": "\"content-length\" : \\[ \"[0-9]+\" \\]",
+     "replace": "\"content-length\" : [ \"<length>\" ]",
+     "reason": "the load's body names the server's port, whose digit count differs"
+    }
+   ],
+   "compare": "unordered"
+  }
+ ]
+}

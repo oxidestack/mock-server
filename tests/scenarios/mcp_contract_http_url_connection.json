@@ -1,0 +1,352 @@
+{
+ "settleMillis": 3000,
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "PATCH",
+      "path": "/p"
+     },
+     "httpResponse": {
+      "body": "PATCH /p"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/g"
+     },
+     "httpResponse": {
+      "body": "GET /g"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/g"
+     },
+     "httpResponse": {
+      "body": "POST /g"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/n"
+     },
+     "httpResponse": {
+      "body": "GET /n"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "PUT",
+      "path": "/u"
+     },
+     "httpResponse": {
+      "body": "PUT /u"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "DELETE",
+      "path": "/d"
+     },
+     "httpResponse": {
+      "body": "DELETE /d"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "OPTIONS",
+      "path": "/o"
+     },
+     "httpResponse": {
+      "body": "OPTIONS /o"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "TRACE",
+      "path": "/t"
+     },
+     "httpResponse": {
+      "body": "TRACE /t"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/t"
+     },
+     "httpResponse": {
+      "body": "POST /t"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "PATCH",
+      "path": "/rp"
+     },
+     "httpResponse": {
+      "body": "PATCH /rp"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/mcp"
+     },
+     "httpResponse": {
+      "body": "POST /mcp"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/slow"
+     },
+     "httpResponse": {
+      "body": "late",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 11000
+      }
+     }
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Methods\", \"version\": \"1\"}, \"paths\": {\"/p\": {\"patch\": {\"operationId\": \"patchIt\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/g\": {\"get\": {\"operationId\": \"getWithBody\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/n\": {\"get\": {\"operationId\": \"getNoBody\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/u\": {\"put\": {\"operationId\": \"putIt\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/d\": {\"delete\": {\"operationId\": \"deleteWithBody\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/o\": {\"options\": {\"operationId\": \"optionsWithBody\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/t\": {\"trace\": {\"operationId\": \"traceWithBody\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "HttpURLConnection: PATCH refused, a GET with a body sent as POST, TRACE refuses a body",
+   "compare": "json"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/[pgnudot]"
+   },
+   "note": "what was sent: methods and bodies",
+   "compare": "json"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "run_resiliency_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/rp\": {\"patch\": {\"operationId\": \"patchR\", \"parameters\": [{\"name\": \"q\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "resiliency: PATCH refused",
+   "compare": "json"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Slow\", \"version\": \"1\"}, \"paths\": {\"/slow\": {\"get\": {\"operationId\": \"slow\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{deadport}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "connection refused: the JDK's text"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Slow\", \"version\": \"1\"}, \"paths\": {\"/slow\": {\"get\": {\"operationId\": \"slow\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://no-such-host-392.invalid"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "unknown host: the JDK's text is the host",
+   "maxMillis": 30000
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "http://127.0.0.1:{{deadport}}/mcp"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "MCP contract test, connection refused"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "http://no-such-host-392.invalid/mcp"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "MCP contract test, unknown host",
+   "maxMillis": 30000
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "run_mcp_contract_test",
+     "arguments": {
+      "targetUrl": "http://127.0.0.1:{{port}}/slow"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "MCP contract test, read timeout after 10 s",
+   "maxMillis": 30000
+  }
+ ]
+}

@@ -1,0 +1,13 @@
+# Cases of upstream's expected_tests.manifest that run.sh does not run against mock-server: case<TAB>reason.
+# Each tests MockServer's JVM packaging, not behaviour a client sees; where the behaviour behind it is product
+# behaviour, the reason names the counterpart (a case under cases/ or a Rust test). docs/divergences.md lists them too.
+docker_compose_jvm_options	JAVA_TOOL_OPTIONS=-Xmx256m must appear in the JVM's startup banner; a Rust binary has no JVM options (the server-works half is every other case)
+docker_compose_libs_classpath	compiles a Java ExpectationInitializer against the fat jar and loads it from /libs; counterpart: cases/docker_compose_libs_plugin (the same initializer as a WASM callback plugin in /libs, MOCKSERVER_INITIALIZATION_CLASS)
+docker_compose_war_tomcat	deploys upstream's mockserver-war into Tomcat; mock-server ships no servlet WAR
+docker_arm64_build_gate	cross-builds upstream's docker/Dockerfile (a Java fat jar) for linux/arm64; counterpart: cases/docker_arm64_build_gate_rs (the same buildx build of our Dockerfile)
+docker_variant_smoke_root	builds and boots upstream's docker/root Dockerfile variant around the Java fat jar
+docker_variant_smoke_snapshot	builds and boots upstream's docker/snapshot Dockerfile variant around the Java fat jar
+docker_variant_smoke_local	builds and boots upstream's docker/local Dockerfile variant around the Java fat jar
+docker_variant_smoke_graaljs	builds and boots upstream's docker/graaljs Dockerfile variant (GraalJS on the JVM)
+docker_variant_smoke_root-snapshot	builds and boots upstream's docker/root-snapshot Dockerfile variant around the Java fat jar
+docker_compose_metrics	asserts the JVM gauges (jvm_memory_used_bytes, JvmMetricsCollector) in Prometheus; mock-server has no JVM and does not imitate jvm_* series; counterpart: cases/docker_compose_metrics_rs (the same Prometheus scrape and OTLP export, with the process_* series that stand in for the JVM gauges)

@@ -1,0 +1,152 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a null string in a response body fails BodyWithContentTypeDTODeserializer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/response-string"
+    },
+    "httpResponse": {
+     "body": {
+      "type": "STRING",
+      "string": null
+     }
+    }
+   }
+  },
+  {
+   "note": "response body: json, xml, base64Bytes, regex, any case, read before type PARAMETERS; joined",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/good"}, "httpResponse": {"body": "good"}},
+    {"httpRequest": {"path": "/r1"}, "httpResponse": {"body": {"type": "JSON", "json": null}}},
+    {"httpRequest": {"path": "/r2"}, "httpResponse": {"body": {"type": "XML", "xml": null}}},
+    {"httpRequest": {"path": "/r3"}, "httpResponse": {"body": {"type": "BINARY", "base64Bytes": null}}},
+    {"httpRequest": {"path": "/r4"}, "httpResponse": {"body": {"regex": null}}},
+    {"httpRequest": {"path": "/r5"}, "httpResponse": {"body": {"type": "STRING", "STRING": null}}},
+    {"httpRequest": {"path": "/r6"}, "httpResponse": {"body": {"string": null, "type": "PARAMETERS"}}}
+   ]
+  },
+  {
+   "note": "response body: after type PARAMETERS the value fields are not read; fuzzy and moduleName are never read",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/response-params"}, "httpResponse": {"body": {"type": "PARAMETERS", "string": "x", "regex": null}}},
+    {"httpRequest": {"path": "/response-fuzzy"}, "httpResponse": {"body": {"type": "STRING", "fuzzy": null}}},
+    {"httpRequest": {"path": "/response-module"}, "httpResponse": {"body": {"type": "STRING", "moduleName": null}}}
+   ]
+  },
+  {
+   "note": "a null payload in a request override body fails BodyDTODeserializer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/override-string"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "body": {
+       "type": "STRING",
+       "string": null
+      }
+     }
+    }
+   }
+  },
+  {
+   "note": "request override: json, null before PARAMETERS; and a response override",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/o1"}, "httpOverrideForwardedRequest": {"requestOverride": {"body": {"type": "JSON", "json": null}}}},
+    {"httpRequest": {"path": "/o2"}, "httpOverrideForwardedRequest": {"requestOverride": {"body": {"string": null, "type": "PARAMETERS"}}}},
+    {"httpRequest": {"path": "/o3"}, "httpOverrideForwardedRequest": {"responseOverride": {"body": {"type": "STRING", "string": null}}}}
+   ]
+  },
+  {
+   "note": "request override: after type PARAMETERS a null value is not read",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/override-params"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "body": {
+       "type": "PARAMETERS",
+       "string": null
+      }
+     }
+    }
+   }
+  },
+  {
+   "note": "bodyAllOf children with a null payload are accepted, each in its own way",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/all-string", "body": {"type": "ALL_OF", "bodyAllOf": [{"type": "STRING", "string": null}]}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-bare-string", "body": {"bodyAllOf": [{"string": null}]}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-regex", "body": {"bodyAllOf": [{"type": "REGEX", "regex": null}]}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-json", "body": {"bodyAllOf": [{"type": "JSON", "json": null}]}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-xml", "body": {"bodyAllOf": [{"type": "XML", "xml": null}]}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-json-path", "body": {"bodyAllOf": [{"type": "JSON_PATH", "jsonPath": null}]}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-xpath", "body": {"bodyAllOf": [{"type": "XPATH", "xpath": null}]}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-binary", "body": {"bodyAllOf": [{"type": "BINARY", "base64Bytes": null}]}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-fuzzy", "body": {"bodyAllOf": [{"type": "FUZZY", "fuzzy": null}]}}, "httpResponse": {}}
+   ]
+  },
+  {
+   "note": "a bodyAllOf child with a null json schema",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/all-schema", "body": {"bodyAllOf": [{"type": "JSON_SCHEMA", "jsonSchema": null}]}}, "httpResponse": {}}
+  },
+  {
+   "note": "a bodyAllOf child with an illegal json schema",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/all-schema-text", "body": {"bodyAllOf": [{"type": "JSON_SCHEMA", "jsonSchema": "nope"}]}}, "httpResponse": {}}
+  },
+  {
+   "note": "a json schema body without its schema",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {"httpRequest": {"path": "/absent-schema", "body": {"type": "JSON_SCHEMA"}}, "httpResponse": {}}
+  },
+  {
+   "note": "regex, jsonPath and xpath bodies without their value read it as empty; an XML component logs no rawBytes",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/absent-regex", "body": {"type": "REGEX"}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/absent-json-path", "body": {"type": "JSON_PATH", "not": true}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/absent-xpath", "body": {"type": "XPATH"}}, "httpResponse": {}},
+    {"httpRequest": {"path": "/all-xml-value", "body": {"bodyAllOf": [{"type": "XML", "xml": "<a/>"}]}}, "httpResponse": {}}
+   ]
+  },
+  {
+   "note": "what was added",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "what was logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  }
+ ]
+}

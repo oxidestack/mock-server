@@ -1,0 +1,726 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmcodec-AnthropicCodecStreamingTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c9cc7f09e80b",
+   "note": "shouldSplitTextIntoWholeWordsWhenSubwordStreamingDisabled (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "text": "Hello world",
+      "streaming": true,
+      "streamingPhysics": {
+       "subwordStreaming": false
+      }
+     }
+    }
+   },
+   "note": "shouldSplitTextIntoWholeWordsWhenSubwordStreamingDisabled (llmcodec): encodeStreaming",
+   "case": "c9cc7f09e80b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldSplitTextIntoWholeWordsWhenSubwordStreamingDisabled (llmcodec): echo",
+   "case": "c9cc7f09e80b"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldSplitTextIntoWholeWordsWhenSubwordStreamingDisabled (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "c9cc7f09e80b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8b9b3ad6eae0",
+   "note": "shouldIncludeUsageInMessageDelta (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "text": "Hello",
+      "usage": {
+       "inputTokens": 10,
+       "outputTokens": 5
+      },
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldIncludeUsageInMessageDelta (llmcodec): encodeStreaming",
+   "case": "8b9b3ad6eae0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldIncludeUsageInMessageDelta (llmcodec): echo",
+   "case": "8b9b3ad6eae0"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldIncludeUsageInMessageDelta (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "8b9b3ad6eae0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "103ab32bb3a4",
+   "note": "shouldProduceTextAndToolCallEvents (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "stopReason": "tool_use",
+      "text": "Checking.",
+      "toolCalls": [
+       {
+        "arguments": "{}",
+        "name": "check"
+       }
+      ],
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldProduceTextAndToolCallEvents (llmcodec): encodeStreaming",
+   "case": "103ab32bb3a4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceTextAndToolCallEvents (llmcodec): echo",
+   "case": "103ab32bb3a4"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceTextAndToolCallEvents (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "103ab32bb3a4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "0c3b5de9be93",
+   "note": "shouldIncludeCorrectTextInDeltas (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "text": "Hello world",
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldIncludeCorrectTextInDeltas (llmcodec): encodeStreaming",
+   "case": "0c3b5de9be93"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldIncludeCorrectTextInDeltas (llmcodec): echo",
+   "case": "0c3b5de9be93"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldIncludeCorrectTextInDeltas (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "0c3b5de9be93"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "45445a858cf2",
+   "note": "shouldProduceCorrectToolCallEvents (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "toolCalls": [
+       {
+        "arguments": "{\"q\":\"test\"}",
+        "name": "search"
+       }
+      ],
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldProduceCorrectToolCallEvents (llmcodec): encodeStreaming",
+   "case": "45445a858cf2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceCorrectToolCallEvents (llmcodec): echo",
+   "case": "45445a858cf2"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceCorrectToolCallEvents (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "45445a858cf2"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2e0486467ce3",
+   "note": "shouldProduceCorrectEventSequenceForTextOnly (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "claude-sonnet-4-20250514",
+     "completion": {
+      "text": "Hello world",
+      "usage": {
+       "inputTokens": 10,
+       "outputTokens": 5
+      },
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldProduceCorrectEventSequenceForTextOnly (llmcodec): encodeStreaming",
+   "case": "2e0486467ce3"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceCorrectEventSequenceForTextOnly (llmcodec): echo",
+   "case": "2e0486467ce3"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceCorrectEventSequenceForTextOnly (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "2e0486467ce3"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "bc6a9205f2b7",
+   "note": "shouldIncludeMessageIdInStart (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "text": "test",
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldIncludeMessageIdInStart (llmcodec): encodeStreaming",
+   "case": "bc6a9205f2b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldIncludeMessageIdInStart (llmcodec): echo",
+   "case": "bc6a9205f2b7"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldIncludeMessageIdInStart (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "bc6a9205f2b7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "964e56c6f0f4",
+   "note": "shouldProduceCorrectStopReasonInMessageDelta (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "stopReason": "max_tokens",
+      "text": "Hello",
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldProduceCorrectStopReasonInMessageDelta (llmcodec): encodeStreaming",
+   "case": "964e56c6f0f4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldProduceCorrectStopReasonInMessageDelta (llmcodec): echo",
+   "case": "964e56c6f0f4"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldProduceCorrectStopReasonInMessageDelta (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "964e56c6f0f4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b007d2ecbf49",
+   "note": "shouldIncludeInputTokensInMessageStart (llmcodec): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-llm",
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpLlmResponse": {
+     "provider": "ANTHROPIC",
+     "model": "test-model",
+     "completion": {
+      "text": "Hello",
+      "usage": {
+       "inputTokens": 42,
+       "outputTokens": 8
+      },
+      "streaming": true
+     }
+    }
+   },
+   "note": "shouldIncludeInputTokensInMessageStart (llmcodec): encodeStreaming",
+   "case": "b007d2ecbf49"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldIncludeInputTokensInMessageStart (llmcodec): echo",
+   "case": "b007d2ecbf49"
+  },
+  {
+   "method": "POST",
+   "path": "/harvested",
+   "note": "shouldIncludeInputTokensInMessageStart (llmcodec): request",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk|modr)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"completed_at\":\\d+",
+     "replace": "\"completed_at\":<time>"
+    },
+    {
+     "regex": "\"index\":<port>",
+     "replace": "\"index\":1080"
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <n>"
+    }
+   ],
+   "case": "b007d2ecbf49"
+  }
+ ]
+}

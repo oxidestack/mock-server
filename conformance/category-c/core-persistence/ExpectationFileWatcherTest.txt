@@ -1,0 +1,11 @@
+# org.mockserver.persistence.ExpectationFileWatcherTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldDetectModifiedInitialiserJsonInWorkingDirectoryThatDoesNotInitiallyExist  http:file_watcher_absent_start  # the watched file is absent at start, appears, and is loaded
+shouldDetectModifiedInitialiserJsonOnAdd  http:file_watcher_reload  # step "add: three expectations appear in the file"
+shouldDetectModifiedInitialiserJsonOnAddWithGlob  rust:tests/initialization.rs::watcher_reloads_glob_matched_files_only  # `{One,Two}` brace alternatives; the files exist empty at start, then are written
+shouldDetectModifiedInitialiserJsonOnPartialDeletion  http:file_watcher_reload  # step "partial deletion and an added one"
+shouldDetectModifiedInitialiserJsonOnCompleteDeletion  http:file_watcher_reload  # step "complete deletion"
+shouldDetectModifiedInitialiserJsonOnUpdateFileChanged  http:file_watcher_reload  # step "update: the same id with a new definition"
+shouldKeepTheLastEntryForARepeatedIdOnLoadAndOnEveryReload  gap  # 9.1.0 init-file id repeats are not matched yet
+shouldLogLintWarningsForTheExpectationsAReloadLoads  http:init_lint_reload  # step "the reload's one lint WARN names the file and the problem"

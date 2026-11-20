@@ -1,0 +1,40 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.dynamicallyCreateCertificateAuthorityCertificate=true",
+    "-Dmockserver.directoryToSaveDynamicSSLCertificate={{scratch}}"
+  ],
+  "files": {
+    "CertificateAuthorityCertificate.pem": "-----BEGIN CERTIFICATE-----\nnot a real certificate\n-----END CERTIFICATE-----\n"
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 3,
+      "label": "t"
+    }
+  ],
+  "timeoutSecs": 240,
+  "expect": {
+    "running": true,
+    "tls": {
+      "t": "refused"
+    },
+    "stdoutContains": [
+      "exception while generating private key and X509 certificate",
+      "does not contain a valid PEM-encoded X.509 certificate; refusing to overwrite"
+    ],
+    "fileContent": {
+      "{{scratch}}/CertificateAuthorityCertificate.pem": "-----BEGIN CERTIFICATE-----\nnot a real certificate\n-----END CERTIFICATE-----\n"
+    }
+  }
+}

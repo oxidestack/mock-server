@@ -1,0 +1,32 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\", \"secure\": true}, \"httpResponseTemplate\": {\"templateType\": \"MUSTACHE\", \"template\": \"{ \\\"statusCode\\\": 200, \\\"body\\\": \\\"chain={{request.clientCertificateChain}}\\\" }\"}}, {\"httpRequest\": {\"path\": \"/forwarded\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target\", \"secure\": true, \"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTPS\"}}}}]"
+  },
+  {
+   "note": "default config: no mTLS trust, so the server's certificate request names no issuers; the forwarding client still presents the server's own leaf and the CA",
+   "method": "GET",
+   "path": "/forwarded",
+   "mask": [
+    "serialNumber&quot; : &quot;\\d{15,}"
+   ]
+  },
+  {
+   "note": "the same over HTTP/2",
+   "method": "GET",
+   "path": "/forwarded",
+   "h2": true,
+   "mask": [
+    "serialNumber&quot; : &quot;\\d{15,}"
+   ]
+  },
+  {
+   "note": "REQUESTS keeps no clientCertificateChain",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": "{\"path\": \"/target\"}"
+  }
+ ]
+}

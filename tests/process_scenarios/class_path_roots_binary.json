@@ -1,0 +1,170 @@
+{
+  "note": "MOCK_SERVER_CLASS_PATH (mockServer.classPath) lists class path roots, directories and jars in order, as java.class.path does for the in-JVM server: OpenAPI specs, file bodies, template files and initializer JSON (glob included) resolve on it before the working directory, as FileReader.openStreamToFileFromClassPathOrPath and ClasspathHelper.loadFileFromClasspath do. XML schema bodies by path (XmlSchemaValidator, includes resolved next to the resource, directory and jar), the dashboard's org/mockserver/dashboard resources (DashboardHandler) and loadScenarioInitializationJsonPath (HttpState.preloadLoadScenarios) too",
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.initializationJsonPath=init/*.json",
+    "-Dmockserver.loadScenarioInitializationJsonPath=load/preload.json"
+  ],
+  "env": {
+    "MOCK_SERVER_CLASS_PATH": "{{scratch}}/missing:{{scratch}}/classes:{{scratch}}/lib/resources.jar:{{scratch}}/lib/schemas.jar:{{scratch}}/later"
+  },
+  "files": {
+    "lib/resources.jar": {
+      "from": "classpath/resources.jar"
+    },
+    "bodies/hello.txt": "hello from the working directory",
+    "classes/bodies/hello.txt": "hello from a class path directory",
+    "later/bodies/hello.txt": "hello from a later root",
+    "classes/specs/dir-spec.json": "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"dir\",\"version\":\"1\"},\"paths\":{\"/dir-spec\":{\"get\":{\"operationId\":\"dirSpec\",\"responses\":{\"200\":{\"description\":\"ok\",\"content\":{\"text/plain\":{\"example\":\"dir spec example\"}}}}}}}}",
+    "classes/templates/answer.vm": "{\"statusCode\": 200, \"body\": \"template answered $request.path\"}",
+    "classes/init/expectations.json": "[{\"httpRequest\": {\"path\": \"/from-initializer\"}, \"httpResponse\": {\"body\": \"initialized from the class path\"}}]",
+    "lib/schemas.jar": {
+      "from": "classpath/schemas.jar"
+    },
+    "classes/schemas/order.xsd": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:include schemaLocation=\"common.xsd\"/><xs:element name=\"order\" type=\"orderType\"/></xs:schema>",
+    "classes/schemas/common.xsd": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:complexType name=\"orderType\"><xs:sequence><xs:element name=\"id\" type=\"xs:int\"/></xs:sequence></xs:complexType></xs:schema>",
+    "classes/org/mockserver/dashboard/class-path-fixture.txt": "a dashboard resource from the class path",
+    "classes/load/preload.json": "{\"name\": \"class-path-load\", \"steps\": [{\"request\": {\"method\": \"POST\", \"path\": \"/y\"}}], \"profile\": {\"stages\": [{\"vus\": 2, \"durationMillis\": 200}]}}"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/from-initializer",
+        "expectStatus": 200,
+        "expectBodyContains": "initialized from the class path"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/openapi",
+        "body": "{\"specUrlOrPayload\": \"specs/dir-spec.json\"}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/dir-spec",
+        "expectStatus": 200,
+        "expectBodyContains": "dir spec example"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/openapi",
+        "body": "{\"specUrlOrPayload\": \"jarred/spec.json\"}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/jar-spec",
+        "expectStatus": 200,
+        "expectBodyContains": "jar spec example"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "body": "[{\"httpRequest\": {\"path\": \"/dir-body\"}, \"httpResponse\": {\"body\": {\"type\": \"FILE\", \"filePath\": \"bodies/hello.txt\", \"contentType\": \"text/plain\"}}}, {\"httpRequest\": {\"path\": \"/jar-body\"}, \"httpResponse\": {\"body\": {\"type\": \"FILE\", \"filePath\": \"jarred/hello.txt\", \"contentType\": \"text/plain\"}}}, {\"httpRequest\": {\"path\": \"/template\"}, \"httpResponseTemplate\": {\"templateType\": \"VELOCITY\", \"templateFile\": \"templates/answer.vm\"}}]",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/dir-body",
+        "expectStatus": 200,
+        "expectBodyContains": "hello from a class path directory"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/jar-body",
+        "expectStatus": 200,
+        "expectBodyContains": "hello from a jar"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/template",
+        "expectStatus": 200,
+        "expectBodyContains": "template answered /template"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "body": "[{\"httpRequest\": {\"path\": \"/xsd-dir\", \"body\": {\"type\": \"XML_SCHEMA\", \"xmlSchema\": \"schemas/order.xsd\"}}, \"httpResponse\": {\"body\": \"directory schema matched\"}}, {\"httpRequest\": {\"path\": \"/xsd-jar\", \"body\": {\"type\": \"XML_SCHEMA\", \"xmlSchema\": \"jarred/schemas/invoice.xsd\"}}, \"httpResponse\": {\"body\": \"jar schema matched\"}}]",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "POST",
+        "path": "/xsd-dir",
+        "body": "<order><id>7</id></order>",
+        "expectStatus": 200,
+        "expectBodyContains": "directory schema matched"
+      }
+    },
+    {
+      "http": {
+        "method": "POST",
+        "path": "/xsd-dir",
+        "body": "<order><id>seven</id></order>",
+        "expectStatus": 404
+      }
+    },
+    {
+      "http": {
+        "method": "POST",
+        "path": "/xsd-jar",
+        "body": "<invoice><total>12</total></invoice>",
+        "expectStatus": 200,
+        "expectBodyContains": "jar schema matched"
+      }
+    },
+    {
+      "http": {
+        "method": "POST",
+        "path": "/xsd-jar",
+        "body": "<invoice><total>twelve</total></invoice>",
+        "expectStatus": 404
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/dashboard/class-path-fixture.txt",
+        "expectStatus": 200,
+        "expectBodyContains": "a dashboard resource from the class path"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/loadScenario",
+        "expectStatus": 200,
+        "expectBodyContains": "class-path-load"
+      }
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true
+  }
+}

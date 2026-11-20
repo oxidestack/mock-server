@@ -1,0 +1,447 @@
+{
+ "settleMillis": 3000,
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/r302"
+     },
+     "httpResponse": {
+      "statusCode": 302,
+      "headers": {
+       "Location": [
+        "/final"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/r301"
+     },
+     "httpResponse": {
+      "statusCode": 301,
+      "headers": {
+       "Location": [
+        "http://{{host}}/final"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/r303"
+     },
+     "httpResponse": {
+      "statusCode": 303,
+      "headers": {
+       "Location": [
+        "/final"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/r307"
+     },
+     "httpResponse": {
+      "statusCode": 307,
+      "headers": {
+       "Location": [
+        "/final"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/r308"
+     },
+     "httpResponse": {
+      "statusCode": 308,
+      "headers": {
+       "Location": [
+        "/final"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rnoloc"
+     },
+     "httpResponse": {
+      "statusCode": 302
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rhttps"
+     },
+     "httpResponse": {
+      "statusCode": 302,
+      "headers": {
+       "Location": [
+        "https://{{host}}/final"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rloop"
+     },
+     "httpResponse": {
+      "statusCode": 302,
+      "headers": {
+       "Location": [
+        "/rloop"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rp302"
+     },
+     "httpResponse": {
+      "statusCode": 302,
+      "headers": {
+       "Location": [
+        "/final"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/rp307"
+     },
+     "httpResponse": {
+      "statusCode": 307,
+      "headers": {
+       "Location": [
+        "/final"
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/final"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "{\"ok\":true}"
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/r302\": {\"get\": {\"operationId\": \"op2\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\"}}}}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a redirect /r302"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/r301\": {\"get\": {\"operationId\": \"op3\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\"}}}}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a redirect /r301"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/r303\": {\"get\": {\"operationId\": \"op4\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\"}}}}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a redirect /r303"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/r307\": {\"get\": {\"operationId\": \"op5\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\"}}}}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a redirect /r307"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/r308\": {\"get\": {\"operationId\": \"op6\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\"}}}}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a redirect /r308"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/rnoloc\": {\"get\": {\"operationId\": \"op7\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\"}}}}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a redirect /rnoloc"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/rhttps\": {\"get\": {\"operationId\": \"op8\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\"}}}}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a redirect /rhttps"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 9,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/rloop\": {\"get\": {\"operationId\": \"op9\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\"}}}}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a redirect /rloop"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 10,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/rp302\": {\"post\": {\"operationId\": \"op10\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a POST redirect /rp302"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"R\", \"version\": \"1\"}, \"paths\": {\"/rp307\": {\"post\": {\"operationId\": \"op11\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"example\": \"rex\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+      "baseUrl": "http://{{host}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "contract test follows a POST redirect /rp307"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/(final|rloop|rp.*)"
+   },
+   "note": "what the redirects sent",
+   "compare": "json"
+  }
+ ]
+}

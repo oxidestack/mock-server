@@ -1,0 +1,84 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/upload",
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 403,
+     "body": "forbidden"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/upload",
+   "body": "some body",
+   "note": "answered from the headers"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/upload"
+   },
+   "note": "logged",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/b",
+     "respondBeforeBody": true,
+     "body": "oops"
+    },
+    "httpResponse": {}
+   },
+   "note": "with a body matcher"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/b",
+     "respondBeforeBody": true
+    },
+    "httpForward": {
+     "host": "localhost",
+     "port": "{{deadport}}"
+    }
+   },
+   "note": "with a forward"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/b",
+     "respondBeforeBody": true
+    },
+    "httpError": {
+     "dropConnection": true
+    }
+   },
+   "note": "with an error",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  }
+ ]
+}

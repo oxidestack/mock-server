@@ -1,0 +1,110 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "ws": "first",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket",
+        "x-client-registration-id: registry-first"
+      ]
+    },
+    {
+      "ws": "first",
+      "type": "org.mockserver.serialization.model.WebSocketClientIdDTO",
+      "body": "{\"clientId\":\"registry-first\"}",
+      "note": "the client id message"
+    },
+    {
+      "ws": "second",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket",
+        "x-client-registration-id: registry-second"
+      ],
+      "note": "one client more than maxWebSocketExpectations"
+    },
+    {
+      "ws": "second",
+      "type": "org.mockserver.serialization.model.WebSocketClientIdDTO",
+      "body": "{\"clientId\":\"registry-second\"}",
+      "note": "the client id message"
+    },
+    {
+      "ws": "first",
+      "closed": true,
+      "note": "the eldest client was evicted and its channel closed"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 294",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/registry-second\"\n  },\n  \"httpResponseObjectCallback\" : {\n    \"clientId\" : \"registry-second\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "async": "second",
+      "note": "answered by the second client"
+    },
+    {
+      "ws": "second",
+      "type": "org.mockserver.model.HttpRequest",
+      "body": "{\n  \"method\" : \"GET\",\n  \"path\" : \"/registry-second\",\n  \"headers\" : {\n    \"host\" : [ \"localhost:<port>\" ],\n    \"content-length\" : [ \"0\" ],\n    \"WebSocketCorrelationId\" : [ \"<masked>\" ]\n  },\n  \"keepAlive\" : true,\n  \"secure\" : false,\n  \"protocol\" : \"HTTP_1_1\",\n  \"localAddress\" : \"<address>\",\n  \"remoteAddress\" : \"<address>\"\n}",
+      "note": "the request handed to the callback client"
+    },
+    {
+      "ws": "second",
+      "sent": true
+    },
+    {
+      "status": 202,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 22"
+      ],
+      "body": "from the second client"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 292",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/registry-first\"\n  },\n  \"httpResponseObjectCallback\" : {\n    \"clientId\" : \"registry-first\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0"
+      ],
+      "body": "",
+      "note": "the evicted client is no longer registered"
+    },
+    {
+      "ws": "second",
+      "closed": true
+    }
+  ]
+}

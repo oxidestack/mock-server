@@ -1,0 +1,45 @@
+{
+  "consumer": { "name": "web" },
+  "provider": { "name": "users-api" },
+  "interactions": [
+    {
+      "description": "get user 1",
+      "providerStates": [ { "name": "user 1 exists", "params": { "id": 1 } }, { "name": "second state" } ],
+      "request": {
+        "method": "get",
+        "path": "/users/1",
+        "query": { "fields": ["name", "email"], "page": "2", "q": "x" },
+        "headers": { "Accept": "application/json", "X-Trace": ["a", "b"], "Authorization": "Bearer secret" }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json; charset=utf-8", "X-Multi": ["1", "2"] },
+        "body": { "id": 1, "name": "Alice", "password": "p", "score": 1.50 }
+      },
+      "matchingRules": {
+        "request": {
+          "path": { "matchers": [ { "match": "regex", "regex": "/users/[0-9]+" } ] },
+          "query": { "$.page[0]": { "matchers": [ { "match": "type" } ] }, "$.query[0]": { "matchers": [ { "match": "regex", "regex": "zz" } ] } },
+          "header": { "$['X-Trace'][0]": { "matchers": [ { "match": "include", "value": "a.b" } ] }, "Accept": { "match": "equality" } }
+        }
+      }
+    },
+    {
+      "providerState": "no users",
+      "request": { "method": "POST", "path": "/users", "body": { "name": "Bob", "token": "t" } },
+      "response": { "status": 201, "body": "created" }
+    },
+    {
+      "description": "",
+      "request": { "method": "PUT", "path": "/text", "body": "plain" },
+      "response": { "status": 204 }
+    },
+    {
+      "description": "no response",
+      "request": { "path": "/nothing" }
+    },
+    {
+      "description": "skipped, no request"
+    }
+  ]
+}

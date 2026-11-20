@@ -1,0 +1,33 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.dynamicallyCreateCertificateAuthorityCertificate=true",
+    "-Dmockserver.directoryToSaveDynamicSSLCertificate={{scratch}}"
+  ],
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 3,
+      "label": "t"
+    }
+  ],
+  "timeoutSecs": 240,
+  "expect": {
+    "running": true,
+    "tls": {
+      "t": "served"
+    },
+    "stdoutNotContains": [
+      "bundled default Certificate Authority"
+    ]
+  }
+}

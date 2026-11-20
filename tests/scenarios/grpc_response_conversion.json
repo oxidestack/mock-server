@@ -1,0 +1,1201 @@
+{
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "expectation: ok with grpc-status 0",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status": [
+       "0"
+      ]
+     },
+     "body": {
+      "greeting": "Hello World"
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: converted, grpc-status a trailer",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: ok with grpc-status 0",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status": [
+       "0"
+      ]
+     },
+     "body": {
+      "greeting": "Hello World"
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "http/1.1: converted, grpc-status a trailer",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: explicit routing headers",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "x-grpc-service": [
+       "com.example.grpc.GreetingService"
+      ],
+      "x-grpc-method": [
+       "Greeting"
+      ]
+     },
+     "body": {
+      "greeting": "explicit wins"
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: routing headers do not leak",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: grpc-status-name NOT_FOUND",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "NOT_FOUND"
+      ],
+      "grpc-message": [
+       "no such greeting"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: status name mapped into trailers",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: grpc-status-name NOT_FOUND",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "NOT_FOUND"
+      ],
+      "grpc-message": [
+       "no such greeting"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "http/1.1: status name mapped into trailers",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: grpc-status 7",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status": [
+       "7"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: numeric status honoured",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: grpc-status 42",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status": [
+       "42"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: unmapped numeric status verbatim",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: NOT_FOUND with a user trailer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "NOT_FOUND"
+      ]
+     },
+     "trailers": {
+      "x-mock-checksum": [
+       "a1b2c3"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: no trailers-only while a user trailer remains",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "h2: unmatched is UNIMPLEMENTED",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "http/1.1: unmatched is UNIMPLEMENTED",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: 503 with RESOURCE_EXHAUSTED",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 503,
+     "headers": {
+      "grpc-status-name": [
+       "RESOURCE_EXHAUSTED"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: explicit status over the HTTP status",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: 503 without a gRPC status",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 503
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: HTTP 503 without a gRPC status",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "h2: health check, one frame",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAA=",
+   "trailers": true
+  },
+  {
+   "note": "grpc-web: health check",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "note": "expectation: ok for grpc-web",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "Hello Web"
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: status in the body",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: ok for grpc-web over h2",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "Hello Web"
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web over h2: status in the body",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: PERMISSION_DENIED for grpc-web",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "denied"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: non-OK status in the trailer frame",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: grpc-web message \"quota 50% exceeded\"",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "quota 50% exceeded"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: message encoded once: \"quota 50% exceeded\"",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: grpc-web message \"invalid escape %41 in pattern\"",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "invalid escape %41 in pattern"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: message encoded once: \"invalid escape %41 in pattern\"",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: grpc-web message \"paiement refus\\u00e9 \\u2014 solde insuffisant\"",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "paiement refusé — solde insuffisant"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: message encoded once: \"paiement refus\\u00e9 \\u2014 solde insuffisant\"",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: grpc-web message \"service unavailable \\ud83d\\udeab retry later\"",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "service unavailable 🚫 retry later"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: message encoded once: \"service unavailable \\ud83d\\udeab retry later\"",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: grpc-web message \"validation failed:\\r\\n - name is required\"",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "validation failed:\r\n - name is required"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: message encoded once: \"validation failed:\\r\\n - name is required\"",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: grpc-web message \"denied\\r\\ngrpc-status: 0\"",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "denied\r\ngrpc-status: 0"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: message encoded once: \"denied\\r\\ngrpc-status: 0\"",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: grpc-web-text message",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "RESOURCE_EXHAUSTED"
+      ],
+      "grpc-message": [
+       "quota 50% exceeded — café 🚫"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web-text: message encoded once",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "trailers": true,
+   "body": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: native message \"quota 50% exceeded\"",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "quota 50% exceeded"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: grpc-message \"quota 50% exceeded\"",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: native message \"validation failed:\\r\\n - name is required\"",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "PERMISSION_DENIED"
+      ],
+      "grpc-message": [
+       "validation failed:\r\n - name is required"
+      ]
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: grpc-message \"validation failed:\\r\\n - name is required\"",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "expectation: slow",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "too late"
+     },
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1500
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: deadline exceeded, trailers-only",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "grpc-timeout": "100m"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true,
+   "maxMillis": 5000
+  },
+  {
+   "note": "expectation: slow",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "too late"
+     },
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1500
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "http/1.1: deadline exceeded as a trailer",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "grpc-timeout": "100m"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "maxMillis": 5000
+  },
+  {
+   "note": "expectation: slow",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "too late"
+     },
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1500
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web: deadline exceeded in the body",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web",
+    "grpc-timeout": "100m"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "maxMillis": 5000
+  },
+  {
+   "note": "expectation: slow",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "too late"
+     },
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1500
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "grpc-web-text: deadline exceeded in the body",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text",
+    "grpc-timeout": "100m"
+   },
+   "trailers": true,
+   "body": "AAAAAAcKBVdvcmxk",
+   "maxMillis": 5000
+  },
+  {
+   "note": "let the late responses go",
+   "method": "GET",
+   "path": "/mockserver/status",
+   "sleepMillis": 1600
+  },
+  {
+   "note": "expectation: matches the marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-mockserver-grpc-deadline-response": [
+       "true"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "marker survived"
+     }
+    },
+    "priority": 10
+   }
+  },
+  {
+   "note": "expectation: fallback",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "marker stripped"
+     }
+    }
+   }
+  },
+  {
+   "note": "h2: client deadline marker stripped",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-mockserver-grpc-deadline-response": "true"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "http/1.1: client deadline marker stripped",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "x-mockserver-grpc-deadline-response": "true"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBVdvcmxk"
+  },
+  {
+   "note": "expectation: plain request matches the marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain",
+     "headers": {
+      "x-mockserver-grpc-deadline-response": [
+       "true"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "marker survived"
+    },
+    "priority": 10
+   }
+  },
+  {
+   "note": "expectation: plain fallback",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "marker stripped"
+    }
+   }
+  },
+  {
+   "note": "non-gRPC request: deadline marker",
+   "method": "GET",
+   "path": "/plain",
+   "headers": {
+    "x-mockserver-grpc-deadline-response": "true"
+   }
+  },
+  {
+   "note": "chaos: always UNAVAILABLE",
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatusCode": "UNAVAILABLE"
+    }
+   }
+  },
+  {
+   "note": "chaos: a non-gRPC request to the same path is unaffected",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"name\": \"World\"}"
+  },
+  {
+   "note": "chaos: a gRPC call faults",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "chaos: probability zero",
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "errorProbability": 0.0,
+     "errorStatusCode": "UNAVAILABLE"
+    }
+   }
+  },
+  {
+   "note": "expectation: ok under chaos",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status": [
+       "0"
+      ]
+     },
+     "body": {
+      "greeting": "Hello World"
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "chaos: probability zero passes through",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "chaos: clear",
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "clear": true
+   }
+  },
+  {
+   "note": "reset",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "expectation: ok after reset",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status": [
+       "0"
+      ]
+     },
+     "body": {
+      "greeting": "Hello World"
+     }
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   }
+  },
+  {
+   "note": "h2: descriptors survive a reset",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  },
+  {
+   "note": "clear descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  },
+  {
+   "note": "h2: after clearing descriptors",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBVdvcmxk",
+   "trailers": true
+  }
+ ]
+}

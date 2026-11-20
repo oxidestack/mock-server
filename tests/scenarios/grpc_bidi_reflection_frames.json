@@ -1,0 +1,240 @@
+{
+ "source": "GrpcBidiReflectionHandler feeds IncrementalGrpcFrameDecoder; split frames and its error paths on the reflection stream",
+ "properties": {
+  "grpcBidiStreamingEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "a request split inside its prefix",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAA",
+    "AAI6AA=="
+   ]
+  },
+  {
+   "note": "a request split inside its payload, then a second request",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAABAaDmc=",
+    "cmVldGluZy5wcm90bwAAAAACOgA="
+   ]
+  },
+  {
+   "note": "one byte per DATA frame",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AA==",
+    "AA==",
+    "AA==",
+    "AA==",
+    "Ag==",
+    "Og==",
+    "AA=="
+   ]
+  },
+  {
+   "note": "a partial request left when the stream ends",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAAAI6AAAAAAAQGg4="
+   ]
+  },
+  {
+   "note": "reserved flag bits set",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AgAAAAI6AA=="
+   ]
+  },
+  {
+   "note": "reserved flag on the second request of a DATA frame",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAAAI6AIAAAAACOgA="
+   ]
+  },
+  {
+   "note": "reserved flag after an answered request, then more requests",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AAAAAAI6AA==",
+    "BAAAAAI6AA==",
+    "AAAAAAI6AA=="
+   ]
+  },
+  {
+   "note": "length over the 4 MiB maximum, prefix only",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AABAAAE="
+   ]
+  },
+  {
+   "note": "length exactly the maximum, prefix only",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AABAAAA="
+   ]
+  },
+  {
+   "note": "negative length",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AP////8="
+   ]
+  },
+  {
+   "note": "gzip-flagged request, no grpc-encoding",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AQAAABYfiwgAAAAAAAITs2IAAIbMcGQCAAAA"
+   ]
+  },
+  {
+   "note": "gzip-flagged request split inside its gzip body",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AQAAABYfiwgA",
+    "AAAAAAITs2IAAIbMcGQCAAAA"
+   ]
+  },
+  {
+   "note": "gzip flag on bytes that are not gzip",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AQAAAAI6AA=="
+   ]
+  },
+  {
+   "note": "gzip flag on an empty payload",
+   "h2": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "binaryBody": true,
+   "dataFrames": [
+    "AQAAAAA="
+   ]
+  },
+  {
+   "note": "clear descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  }
+ ]
+}

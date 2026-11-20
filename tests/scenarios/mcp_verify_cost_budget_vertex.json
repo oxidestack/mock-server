@@ -1,0 +1,151 @@
+{
+ "source": "hand-written: verify_cost_budget of 9.1.0 (#44) over imported Gemini traffic: the model read from a native Gemini path when the body names none, a call sent to a Vertex AI host priced at Vertex AI's rates",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\": {\"method\": \"POST\", \"path\": \"/v1/projects/p/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent\", \"headers\": {\"Host\": [\"us-central1-aiplatform.googleapis.com\"]}, \"body\": \"{\\\"contents\\\": [{\\\"role\\\": \\\"user\\\", \\\"parts\\\": [{\\\"text\\\": \\\"hi\\\"}]}]}\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\\"candidates\\\": [{\\\"content\\\": {\\\"role\\\": \\\"model\\\", \\\"parts\\\": [{\\\"text\\\": \\\"ok\\\"}]}, \\\"finishReason\\\": \\\"STOP\\\"}], \\\"usageMetadata\\\": {\\\"promptTokenCount\\\": 100000, \\\"candidatesTokenCount\\\": 50000, \\\"totalTokenCount\\\": 150000}}\"}}\n{\"httpRequest\": {\"method\": \"POST\", \"path\": \"/v1beta/models/gemini-2.0-flash:generateContent\", \"headers\": {\"Host\": [\"generativelanguage.googleapis.com\"]}, \"body\": \"{\\\"contents\\\": [{\\\"role\\\": \\\"user\\\", \\\"parts\\\": [{\\\"text\\\": \\\"hi\\\"}]}]}\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\\"candidates\\\": [{\\\"content\\\": {\\\"role\\\": \\\"model\\\", \\\"parts\\\": [{\\\"text\\\": \\\"ok\\\"}]}, \\\"finishReason\\\": \\\"STOP\\\"}], \\\"usageMetadata\\\": {\\\"promptTokenCount\\\": 100000, \\\"candidatesTokenCount\\\": 50000, \\\"totalTokenCount\\\": 150000}}\"}}\n{\"httpRequest\": {\"method\": \"POST\", \"path\": \"/v1/projects/p/locations/europe-west4/publishers/google/models/gemini-2.0-flash:streamGenerateContent?alt=sse\", \"headers\": {\"Host\": [\"europe-west4-aiplatform.googleapis.com:443\"]}, \"body\": \"{\\\"contents\\\": [{\\\"role\\\": \\\"user\\\", \\\"parts\\\": [{\\\"text\\\": \\\"hi\\\"}]}]}\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\\"candidates\\\": [{\\\"content\\\": {\\\"role\\\": \\\"model\\\", \\\"parts\\\": [{\\\"text\\\": \\\"ok\\\"}]}, \\\"finishReason\\\": \\\"STOP\\\"}], \\\"usageMetadata\\\": {\\\"promptTokenCount\\\": 200000, \\\"candidatesTokenCount\\\": 0, \\\"totalTokenCount\\\": 200000}}\"}}\n{\"httpRequest\": {\"method\": \"POST\", \"path\": \"/v1/projects/p/locations/global/publishers/google/models/gemini-2.0-flash:generateContent\", \"headers\": {\"Host\": [\"aiplatform.googleapis.com\"]}, \"body\": \"{\\\"model\\\": \\\"gemini-2.5-pro\\\", \\\"contents\\\": []}\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\\"candidates\\\": [{\\\"content\\\": {\\\"role\\\": \\\"model\\\", \\\"parts\\\": [{\\\"text\\\": \\\"ok\\\"}]}, \\\"finishReason\\\": \\\"STOP\\\"}], \\\"usageMetadata\\\": {\\\"promptTokenCount\\\": 1000, \\\"candidatesTokenCount\\\": 1000, \\\"totalTokenCount\\\": 2000}}\"}}\n{\"httpRequest\": {\"method\": \"POST\", \"path\": \"/v1/projects/p/locations/global/publishers/google/models/gemini-2.0-flash-lite:generateContent\", \"headers\": {\"Host\": [\"AIPLATFORM.GOOGLEAPIS.COM\"]}, \"body\": \"{\\\"model\\\": 7, \\\"contents\\\": []}\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\\"candidates\\\": [{\\\"content\\\": {\\\"role\\\": \\\"model\\\", \\\"parts\\\": [{\\\"text\\\": \\\"ok\\\"}]}, \\\"finishReason\\\": \\\"STOP\\\"}], \\\"usageMetadata\\\": {\\\"promptTokenCount\\\": 1000000, \\\"candidatesTokenCount\\\": 0, \\\"totalTokenCount\\\": 1000000}}\"}}\n{\"httpRequest\": {\"method\": \"POST\", \"path\": \"/v1/projects/p/locations/global/publishers/google/models/gemini-9-ultra:generateContent\", \"headers\": {\"Host\": [\"aiplatform.googleapis.com\"]}, \"body\": \"{\\\"contents\\\": [{\\\"role\\\": \\\"user\\\", \\\"parts\\\": [{\\\"text\\\": \\\"hi\\\"}]}]}\"}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\\"candidates\\\": [{\\\"content\\\": {\\\"role\\\": \\\"model\\\", \\\"parts\\\": [{\\\"text\\\": \\\"ok\\\"}]}, \\\"finishReason\\\": \\\"STOP\\\"}], \\\"usageMetadata\\\": {\\\"promptTokenCount\\\": 10, \\\"candidatesTokenCount\\\": 10, \\\"totalTokenCount\\\": 20}}\"}}",
+   "note": "Gemini traffic on Vertex AI hosts (regional, with port, global, upper case) and on the Gemini API host"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "GEMINI",
+      "maxCostUsd": 1
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "model from the path when the body names none; Vertex AI hosts at Vertex AI rates; a body model wins; a non-text body model falls back to the path; an unknown model unpriceable"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "GEMINI",
+      "maxCostUsd": 0.1,
+      "model": "gemini-2.0-flash"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "a model override still priced at the host's rates"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "GEMINI",
+      "maxCostUsd": 0.04,
+      "path": "/v1/projects/p/locations/us-central1/publishers/google/models/gemini-2.0-flash:generateContent"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "the path filter keeps the regional Vertex AI call"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "GEMINI",
+      "maxCostUsd": 1,
+      "path": "/v1beta/models/gemini-2.0-flash:generateContent"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "the Gemini API call at Gemini API rates"
+  }
+ ]
+}

@@ -1,0 +1,60 @@
+{
+ "source": "9.2.0 Http1PipeliningGate: during a delayed close (closeSocket with closeSocketDelay) a request sent without pipelining is answered as it would be without the gate, then the connection closes when the delay ends (upstream Http1PipeliningClosingAndStopIntegrationTest.shouldAnswerARequestSentWithoutPipeliningDuringADelayedClose).",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/closing"
+     },
+     "httpResponse": {
+      "body": "closing",
+      "connectionOptions": {
+       "closeSocket": true,
+       "keepAliveOverride": true,
+       "closeSocketDelay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1000
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fast"
+     },
+     "httpResponse": {
+      "body": "fast"
+     }
+    }
+   ]
+  },
+  {
+   "note": "the closing request, then, once its response is out, a second request on the same connection",
+   "text": true,
+   "chunkMillis": 300,
+   "tcp": [
+    {
+     "text": "GET /closing HTTP/1.1\r\nHost: {{host}}\r\n\r\n"
+    },
+    {
+     "text": "GET /fast HTTP/1.1\r\nHost: {{host}}\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "the second request was received",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/fast"
+   }
+  }
+ ]
+}

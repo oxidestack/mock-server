@@ -1,0 +1,28 @@
+{
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/later"}, "timeout": 3000}, "async": "later", "note": "waits for /later"},
+    {"sleepMillis": 500},
+    {"method": "GET", "path": "/later", "note": "arrives during the wait"},
+    {"await": "later", "note": "202: found once it arrived"},
+    {"method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/later"}, "timeout": 3000}, "note": "already passing: answers at once"},
+    {"method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpRequests": [{"path": "/first"}, {"path": "/second"}], "timeout": 3000}, "async": "sequence", "note": "waits for the sequence"},
+    {"sleepMillis": 300},
+    {"method": "GET", "path": "/first"},
+    {"method": "GET", "path": "/second"},
+    {"await": "sequence", "note": "202: the sequence completed during the wait"},
+    {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/served"}, "httpResponse": {"statusCode": 201}}},
+    {"method": "PUT", "path": "/mockserver/verify", "body": {"httpResponse": {"statusCode": 201}, "timeout": 3000}, "async": "response", "note": "waits for a 201"},
+    {"sleepMillis": 300},
+    {"method": "GET", "path": "/served"},
+    {"await": "response", "note": "202: the response was recorded during the wait"},
+    {"method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/never"}, "timeout": 1000}, "async": "never", "note": "waits until the deadline"},
+    {"sleepMillis": 300},
+    {"method": "GET", "path": "/arrived", "note": "arrives during the wait, does not match"},
+    {"await": "never", "note": "406 after the deadline; the summary counts the request that arrived"},
+    {"method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpRequests": [{"path": "/first"}, {"path": "/missing"}], "timeout": 1000}, "async": "neverSequence", "note": "a sequence waiting until the deadline"},
+    {"sleepMillis": 300},
+    {"method": "GET", "path": "/arrived-too"},
+    {"await": "neverSequence", "note": "406; one request arrived after it started"},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "note": "one outcome per verification, none per retry"}
+  ]
+}

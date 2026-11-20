@@ -1,0 +1,71 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "body": "{\"id\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"httpRequest\": {\"path\": \"/a\"}, \"httpResponse\": {\"body\": \"x\"}, \"times\": {\"remainingTimes\": 1, \"unlimited\": false}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "body": "{\"id\": \"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\", \"httpRequest\": {\"path\": \"/b\"}, \"httpResponse\": {\"body\": \"x\"}, \"times\": {\"unlimited\": true}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "body": "{\"id\": \"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\", \"httpRequest\": {\"path\": \"/b2\"}, \"httpResponse\": {\"body\": \"y\"}, \"times\": {\"unlimited\": true}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/a",
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/a"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "body": "{\"path\":\"/b2\"}",
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/a\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"x\"\n    },\n    \"id\" : \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"remainingTimes\" : 1\n    }\n  }\n\n with id:\n\n  aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\n",
+      "creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/b\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"x\"\n    },\n    \"id\" : \"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\n",
+      "updated expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/b2\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"y\"\n    },\n    \"id\" : \"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\n",
+      "removed expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/a\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"x\"\n    },\n    \"id\" : \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"remainingTimes\" : 0\n    }\n  }\n\n with id:\n\n  aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\n",
+      "removed expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/b2\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"y\"\n    },\n    \"id\" : \"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\n"
+    ]
+  }
+}

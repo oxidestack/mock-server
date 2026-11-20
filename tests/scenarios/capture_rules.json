@@ -1,0 +1,110 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/order/mustache/step1"
+    },
+    "capture": {
+     "source": "jsonPath",
+     "expression": "$.id",
+     "into": "orderIdMustache"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "{\"step\": 1}"
+    }
+   },
+   "note": "capture rule (upstream shouldCaptureRequestValueAndReuseItInMustacheResponseTemplate)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/order/mustache/step3"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n     \"statusCode\": 200,\n     \"body\": \"orderId={{#scenario.get}}orderIdMustache{{/scenario.get}}\"\n}\n"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/order/mustache/step1",
+   "body": "{\"id\": \"ORDER-MUSTACHE\"}",
+   "note": "supplies the id"
+  },
+  {
+   "method": "POST",
+   "path": "/order/mustache/step3",
+   "note": "reads it back"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/order/velocity/step1"
+    },
+    "capture": [
+     {
+      "source": "jsonPath",
+      "expression": "$.id",
+      "into": "orderIdVelocity"
+     },
+     {
+      "source": "header",
+      "expression": "x-trace",
+      "into": "traceVelocity"
+     }
+    ],
+    "httpResponse": {
+     "statusCode": 200
+    }
+   },
+   "note": "capture rules as an array"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/order/velocity/step3"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"orderId=$scenario.get('orderIdVelocity') trace=$scenario.get('traceVelocity')\"}"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/order/velocity/step1",
+   "headers": {
+    "x-trace": "t-1"
+   },
+   "body": "{\"id\": \"ORDER-VELOCITY\"}"
+  },
+  {
+   "method": "POST",
+   "path": "/order/velocity/step3",
+   "note": "velocity reads both"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/order/velocity/step1"
+   },
+   "note": "capture rules echoed"
+  }
+ ]
+}

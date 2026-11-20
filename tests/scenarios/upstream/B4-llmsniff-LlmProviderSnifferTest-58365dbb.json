@@ -1,0 +1,44 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmsniff-LlmProviderSnifferTest-58365dbb (conformance/harvest)",
+ "properties": {
+  "llmBaseUrl": "http://my-ollama-host:11434/v1"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f9c87b0d989e",
+   "note": "detectsOllamaViaConfiguredBaseUrlWithPath (llmsniff): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/\",\"headers\":{\"Host\":[\"my-ollama-host\"]}},\"httpResponse\":{\"statusCode\":200}}\n",
+   "note": "detectsOllamaViaConfiguredBaseUrlWithPath (llmsniff): import",
+   "mask": [
+    {
+     "regex": "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+     "replace": "\"x-mockserver-response-time-ms\" : [ \"<n>\" ]"
+    }
+   ],
+   "case": "f9c87b0d989e"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "detectsOllamaViaConfiguredBaseUrlWithPath (llmsniff): json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "f9c87b0d989e"
+  }
+ ]
+}

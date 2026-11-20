@@ -1,0 +1,32 @@
+{
+ "source": "hand-written: a declarative rateLimit's 429 counts as mock_server_http_chaos_injected{fault_type=\"rateLimit\"} in writeResponseActionResponse and writeForwardActionResponse (HttpActionHandler.java:2407, :2709), not on the SSE path",
+ "properties": {"metricsEnabled": "true", "chaosAutoHaltEnabled": "true", "chaosAutoHaltErrorThreshold": "1"},
+ "steps": [
+  {"note": "no chaos series before any fault", "method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_(http_chaos_injected|chaos_auto_halt)_).*\\n", "replace": ""}, "content-length: \\d+"]},
+  {"method": "PUT", "path": "/mockserver/serviceChaos", "body": {"host": "svc.test", "chaos": {"errorStatus": 503}}, "note": "an active service profile, which auto-halt needs to fire (never hit)"},
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/mock"}, "httpResponse": {"body": "mock"}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "upstream"}},
+    {"httpRequest": {"path": "/fwd"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/lat"}, "httpResponse": {"body": "late"}, "chaos": {"latency": {"timeUnit": "MILLISECONDS", "value": 5}}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/err"}, "httpResponse": {"body": "never"}, "chaos": {"errorStatus": 503, "errorProbability": 1.0}},
+    {"httpRequest": {"path": "/sse"}, "httpSseResponse": {"events": [{"data": "one"}]}, "rateLimit": {"limit": 1, "windowMillis": 600000}}
+   ],
+   "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]
+  },
+  {"method": "GET", "path": "/mock"},
+  {"method": "GET", "path": "/mock", "note": "over the limit: rateLimit counted", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <masked>"}, {"regex": "retry-after: \\d+", "replace": "retry-after: <masked>"}]},
+  {"method": "GET", "path": "/fwd"},
+  {"method": "GET", "path": "/fwd", "note": "forward over the limit: rateLimit counted", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <masked>"}, {"regex": "retry-after: \\d+", "replace": "retry-after: <masked>"}]},
+  {"method": "GET", "path": "/lat"},
+  {"method": "GET", "path": "/lat", "note": "over the limit with chaos latency: rateLimit and latency counted", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <masked>"}, {"regex": "retry-after: \\d+", "replace": "retry-after: <masked>"}]},
+  {"method": "GET", "path": "/sse"},
+  {"method": "GET", "path": "/sse", "note": "SSE over the limit: not counted", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <masked>"}, {"regex": "retry-after: \\d+", "replace": "retry-after: <masked>"}]},
+  {"note": "chaos series after: rateLimit is not destructive, so auto-halt (threshold 1) has not fired", "method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_(http_chaos_injected|chaos_auto_halt)_).*\\n", "replace": ""}, "content-length: \\d+"]},
+  {"method": "GET", "path": "/err", "note": "a destructive error: auto-halt fires at threshold 1"},
+  {"note": "auto-halt fired on the error", "method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_(http_chaos_injected|chaos_auto_halt)_).*\\n", "replace": ""}, "content-length: \\d+"]}
+ ]
+}

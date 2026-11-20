@@ -1,0 +1,257 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "specUrlOrPayload:\n  openapi: 3.0.0\n  info:\n    title: yaml body\n    version: 1.0\n  paths:\n    /pets:\n      get:\n        operationId: listPets\n        responses:\n          \"200\":\n            description: ok\n            content:\n              application/json:\n                example: {id: 1, name: rex, tags: [a, b], weight: 1.5, alive: yes}\n      post:\n        operationId: createPet\n        responses:\n          \"201\":\n            description: created\noperationsAndResponses:\n  listPets: \"200\"\n",
+   "note": "a YAML body under application/yaml is converted to JSON (HttpState YamlToJsonConverter)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "note": "the expectations created from YAML"
+  },
+  {
+   "method": "GET",
+   "path": "/pets",
+   "note": "listPets answers its YAML example"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "text/yaml"
+   },
+   "body": "- specUrlOrPayload: |\n    openapi: 3.0.0\n    info: {title: inline, version: \"1\"}\n    paths:\n      /cats:\n        get:\n          operationId: listCats\n          responses:\n            \"200\": {description: ok, content: {text/plain: {example: meow}}}\n",
+   "note": "text/yaml, a top-level YAML sequence, the spec itself a YAML string"
+  },
+  {
+   "method": "GET",
+   "path": "/cats",
+   "note": "listCats"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/x-yaml; charset=utf-8"
+   },
+   "body": "specUrlOrPayload: 5\noperationsAndResponses: {x: 200}\nfoo: \"\"\nbar:\n",
+   "note": "application/x-yaml with parameters; schema errors name the converted JSON (plain empty scalar is null)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "APPLICATION/YAML"
+   },
+   "body": "a: 1\na: 2",
+   "note": "the media type is compared case-insensitively; duplicate keys keep the last"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "key: [unclosed",
+   "note": "malformed YAML: SnakeYAML's message wrapped by YamlToJsonConverter"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "a: b\n  c: d: e",
+   "note": "mapping values are not allowed here"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "specUrlOrPayload: 'unterminated",
+   "note": "unterminated quoted scalar"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "# just a comment",
+   "note": "a comment-only document reads as a missing node, written as null"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "~",
+   "note": "a YAML null"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "[]",
+   "note": "an empty YAML sequence"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "",
+   "note": "an empty body is not converted"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "just a string",
+   "note": "a YAML scalar"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "---\nspecUrlOrPayload: 5\n---\nfoo: 1",
+   "note": "only the first document is read"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/vnd.foo+yaml"
+   },
+   "body": "specUrlOrPayload: 5",
+   "note": "other YAML-ish media types are not converted"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "text/x-yaml"
+   },
+   "body": "specUrlOrPayload: 5",
+   "note": "text/x-yaml is not converted either"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "specUrlOrPayload: 5",
+   "note": "JSON content type: YAML fails as JSON"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "   ",
+   "note": "a blank YAML body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "text/plain"
+   },
+   "body": "   ",
+   "note": "a blank text/plain body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "   ",
+   "note": "a blank JSON body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "  # c",
+   "note": "an indented comment"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "---",
+   "note": "an empty document"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "...",
+   "note": "a document end marker alone"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "[ ]",
+   "note": "an empty JSON array is rejected too (deserializeArray, allowEmpty false)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "- specUrlOrPayload: 5\n- foo: 1",
+   "note": "every item is validated; two errors are listed together"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "headers": {
+    "content-type": "application/yaml"
+   },
+   "body": "- specUrlOrPayload: |\n    openapi: 3.0.0\n    info: {title: inline, version: \"1\"}\n    paths:\n      /cats:\n        get:\n          operationId: listCats\n          responses:\n            \"200\": {description: ok, content: {text/plain: {example: meow}}}\n- foo: 1\n",
+   "note": "a valid item followed by an invalid one: nothing is added"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "note": "no expectations from the rejected array"
+  }
+ ]
+}

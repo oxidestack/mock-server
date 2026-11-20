@@ -1,0 +1,232 @@
+{
+ "source": "hand-written (cases from upstream's HttpActionHandlerStreamedLlmUsageTest, 9.1.0): whole forwarded GEMINI responses accounted by HttpActionHandler.emitForwardGenAiSpan (accountableOperation, isPolledCompletion, the provider clients' parseCompletionResponse), forwarded to this server's own mocks",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "GEMINI"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-embed",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1beta/models/gemini-embedding-001:embedContent",
+      "headers": {
+       "x-case": [
+        "embed"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"embedding\":{\"values\":[-0.022374554,-0.004560777]},\"usageMetadata\":{\"promptTokenCount\":7,\"promptTokenDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":7}]}}"
+     }
+    },
+    {
+     "id": "forward-embed",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/embed"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1beta/models/gemini-embedding-001:embedContent",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "embed"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-embed-v1",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/models/gemini-embedding-001:embedContent",
+      "headers": {
+       "x-case": [
+        "embed-v1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"embedding\":{\"values\":[-0.022374554,-0.004560777]},\"usageMetadata\":{\"promptTokenCount\":7,\"promptTokenDetails\":[{\"modality\":\"TEXT\",\"tokenCount\":7}]}}"
+     }
+    },
+    {
+     "id": "forward-embed-v1",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/embed-v1"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/models/gemini-embedding-001:embedContent",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "embed-v1"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-predict",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/projects/my-project/locations/us-central1/publishers/google/models/text-embedding-005:predict",
+      "headers": {
+       "x-case": [
+        "predict"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"predictions\":[{\"embeddings\":{\"statistics\":{\"truncated\":false,\"token_count\":4},\"values\":[0.01,-0.02]}},{\"embeddings\":{\"statistics\":{\"truncated\":false,\"token_count\":1},\"values\":[0.03,0.04]}}]}"
+     }
+    },
+    {
+     "id": "forward-predict",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/predict"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/projects/my-project/locations/us-central1/publishers/google/models/text-embedding-005:predict",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "predict"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-generate",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1beta/models/gemini-2.5-flash:generateContent",
+      "headers": {
+       "x-case": [
+        "generate"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"candidates\":[{\"content\":{\"parts\":[{\"text\":\"Hello\"}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"promptTokenCount\":8,\"candidatesTokenCount\":12,\"totalTokenCount\":20},\"modelVersion\":\"gemini-2.5-flash\",\"responseId\":\"mAitaLmkHPPlz7IPvtfUqQ4\"}"
+     }
+    },
+    {
+     "id": "forward-generate",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/generate"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1beta/models/gemini-2.5-flash:generateContent",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "generate"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "on /v1beta, not an LLM-looking path for the configured provider: not counted",
+   "method": "POST",
+   "path": "/client/embed",
+   "body": "{\"content\":{\"parts\":[{\"text\":\"What is the meaning of life?\"}]}}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "Gemini embeddings name no model: the one in the path, 7 in",
+   "method": "POST",
+   "path": "/client/embed-v1",
+   "body": "{\"content\":{\"parts\":[{\"text\":\"What is the meaning of life?\"}]}}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "Vertex AI predicted embeddings: 5 in from predictions[].embeddings.statistics.token_count",
+   "method": "POST",
+   "path": "/client/predict",
+   "body": "{\"instances\":[{\"task_type\":\"RETRIEVAL_DOCUMENT\",\"content\":\"What is life?\"},{\"content\":\"Hello\"}]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "generateContent: 8 in, 12 out",
+   "method": "POST",
+   "path": "/client/generate",
+   "body": "{\"contents\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

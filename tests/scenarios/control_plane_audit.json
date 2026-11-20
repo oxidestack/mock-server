@@ -1,0 +1,148 @@
+{
+ "properties": {
+  "controlPlaneAuditEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/audit",
+   "note": "empty before any mutation",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   },
+   "note": "mutation, anonymous"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbGljZSJ9.x"
+   },
+   "body": {
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   },
+   "note": "unverified JWT sub is the principal"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=log",
+   "headers": {
+    "authorization": "bearer eyJhbGciOiJub25lIn0.eyJzdWIiOjF9.x"
+   },
+   "body": {
+    "path": "/a"
+   },
+   "note": "non-text sub falls back to anonymous; path keeps query"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "read PUT not audited"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "note": "GET not audited"
+  },
+  {
+   "method": "PUT",
+   "path": "/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   },
+   "note": "legacy alias"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/nosuchop",
+   "note": "unknown op"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/audit",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/audit?limit=2",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/audit?limit=x",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/audit?limit=-1",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "body": {
+    "path": "/no-such"
+   },
+   "note": "audit log entries",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/audit",
+   "note": "reset clears the store, then records itself?",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  }
+ ]
+}

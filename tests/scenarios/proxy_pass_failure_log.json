@@ -1,0 +1,33 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/pp/",
+      "targetUri": "http://{{deadhost}}/base/"
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "method": "GET",
+   "path": "/pp/x",
+   "note": "the target refuses the connection: an empty 502"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "handleProxyPass: `proxy pass forwarding failed for <targetUri>: ` and the cause's toString"
+  }
+ ]
+}

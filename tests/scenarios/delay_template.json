@@ -1,0 +1,199 @@
+{
+ "source": "hand-written: DelayTemplateResolverTest's cases as templated delays (observable as elapsed time, minMillis). A delay template rendered without a request (shouldFallBackWhenRequestIsNull) has no wire form.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/static"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "delayed",
+      "delay": {
+       "timeUnit": "SECONDS",
+       "value": 1
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/uniform"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "delayed",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "distribution": {
+        "type": "UNIFORM",
+        "min": 100,
+        "max": 200
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/velocity-length"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "delayed",
+      "delay": {
+       "templateType": "VELOCITY",
+       "template": "#set($d = $request.body.length() * 100)$d"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/mustache"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "delayed",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "250"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/decimal"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "delayed",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "250.9"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/non-numeric"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "delayed",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 700,
+       "templateType": "MUSTACHE",
+       "template": "not-a-number"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/blank"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "delayed",
+      "delay": {
+       "templateType": "MUSTACHE",
+       "template": "   "
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/negative"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "delayed",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 500,
+       "templateType": "MUSTACHE",
+       "template": "-100"
+      }
+     }
+    }
+   ],
+   "note": "expectations with delays"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "note": "delays as stored"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "a JavaScript delay template is refused",
+   "body": {
+    "httpRequest": {
+     "path": "/javascript"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 900,
+      "templateType": "JAVASCRIPT",
+      "template": "42"
+     }
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/static",
+   "note": "static delay unchanged (shouldReturnStaticDelayUnchanged)",
+   "body": "anything",
+   "minMillis": 1000
+  },
+  {
+   "method": "POST",
+   "path": "/uniform",
+   "note": "distribution delay unchanged (shouldReturnDistributionDelayUnchanged)",
+   "body": "anything",
+   "minMillis": 100
+  },
+  {
+   "method": "POST",
+   "path": "/velocity-length",
+   "note": "Velocity: 100 ms per body character (shouldComputeDelayFromRequestBodyLengthWithVelocity, scaled)",
+   "body": "12345",
+   "minMillis": 500
+  },
+  {
+   "method": "POST",
+   "path": "/mustache",
+   "note": "Mustache constant (shouldComputeDelayWithMustache)",
+   "body": "ignored",
+   "minMillis": 250
+  },
+  {
+   "method": "GET",
+   "path": "/decimal",
+   "note": "decimal truncated (shouldTruncateDecimalRenderedValue)",
+   "minMillis": 250
+  },
+  {
+   "method": "GET",
+   "path": "/non-numeric",
+   "note": "non-numeric falls back to the static value (shouldFallBackToStaticValueWhenTemplateRendersNonNumeric)",
+   "minMillis": 700
+  },
+  {
+   "method": "GET",
+   "path": "/blank",
+   "note": "blank without a static value is no delay (shouldFallBackToZeroWhenTemplateRendersBlankAndNoStaticValue)"
+  },
+  {
+   "method": "GET",
+   "path": "/negative",
+   "note": "negative falls back to the static value (shouldFallBackToStaticValueWhenTemplateRendersNegative)",
+   "minMillis": 500
+  }
+ ]
+}

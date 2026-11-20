@@ -1,0 +1,20 @@
+{"source": "NoProxyHostsUtilsTest. noProxyHosts gates only the proxying of an unmatched request by its Host header (attemptToProxyIfNoMatchingExpectation); a listed host answers 404, any other is attempted (and fails, 502, as nothing answers)",
+ "properties": {"noProxyHosts": " Exact.invalid , *.internal.invalid ,,::2,127.0.0.2"},
+ "steps": [
+  {"note": "exact", "method": "GET", "path": "/unmatched", "headers": {"Host": "exact.invalid"}},
+  {"note": "case-insensitive", "method": "GET", "path": "/unmatched", "headers": {"Host": "EXACT.INVALID"}},
+  {"note": "port stripped", "method": "GET", "path": "/unmatched", "headers": {"Host": "exact.invalid:8080"}},
+  {"note": "not listed", "method": "GET", "path": "/unmatched", "headers": {"Host": "other.invalid"}},
+  {"note": "wildcard, one level", "method": "GET", "path": "/unmatched", "headers": {"Host": "api.internal.invalid"}},
+  {"note": "wildcard, two levels", "method": "GET", "path": "/unmatched", "headers": {"Host": "deep.api.internal.invalid"}},
+  {"note": "wildcard matches the parent domain", "method": "GET", "path": "/unmatched", "headers": {"Host": "internal.invalid"}},
+  {"note": "wildcard needs the dot", "method": "GET", "path": "/unmatched", "headers": {"Host": "xinternal.invalid"}},
+  {"note": "wildcard, other domain", "method": "GET", "path": "/unmatched", "headers": {"Host": "example.invalid"}},
+  {"note": "IPv6 in brackets with a port", "method": "GET", "path": "/unmatched", "headers": {"Host": "[::2]:8080"}},
+  {"note": "IPv6 in brackets", "method": "GET", "path": "/unmatched", "headers": {"Host": "[::2]"}},
+  {"note": "IPv6 without brackets", "method": "GET", "path": "/unmatched", "headers": {"Host": "::2"}},
+  {"note": "IPv6 not listed", "method": "GET", "path": "/unmatched", "headers": {"Host": "[::1]:{{deadport}}"}},
+  {"note": "IPv4", "method": "GET", "path": "/unmatched", "headers": {"Host": "127.0.0.2"}},
+  {"note": "IPv4 with a port", "method": "GET", "path": "/unmatched", "headers": {"Host": "127.0.0.2:8080"}},
+  {"note": "IPv4 not listed", "method": "GET", "path": "/unmatched", "headers": {"Host": "127.0.0.1:{{deadport}}"}}
+]}

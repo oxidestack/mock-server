@@ -1,0 +1,11 @@
+# org.mockserver.persistence.ExpectationFileSystemPersistenceTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldPersistExpectationsToJsonOnAdd  http:persistence_file_content  # step "on add: three expectations, written in order"
+shouldPersistExpectationsToJsonOnRemove  http:persistence_file_content  # step "on remove: clear one by path"
+shouldPersistExpectationsToJsonOnUpdate  http:persistence_file_content  # step "on update: the same id with a new definition keeps its place"
+shouldPersistExpectationsToJsonOnUpdateAll  http:persistence_file_content  # step "on update of all: the API PUT of an array"
+shouldPersistExpectationsToJsonOnUpdateAllFromFileWatcher  http:persistence_file_watcher_roundtrip  # the persisted file is also the watched initialisation file; an external edit is reloaded and not written back over
+shouldPersistExpectationsWithFiniteTimeToLiveIncludingEndDate  http:persistence_end_date
+shouldBackUpTheLoadedFileBeforeTheFirstSaveWouldDropItsInvalidExpectations  http:persistence_invalid_entries_backup  # the persisted file is the watched initialisation file; an edit with an invalid entry, then the first save: the WARN, the backup's content, one backup only
+shouldNotBackUpALoadedFileWhoseExpectationsAllLoaded  http:persistence_invalid_entries_no_backup  # step "no backup beside the persisted file"

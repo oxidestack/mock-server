@@ -1,0 +1,918 @@
+{
+ "steps": [
+  {
+   "note": "create: upstream headers and body",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v1"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n     \"statusCode\": 200,\n     \"headers\": [ { \"name\": \"name\", \"values\": [ \"$!request.headers['name'][0]\" ] } ],\n     \"body\": \"$!request.body\"\n}\n"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v1",
+   "note": "request: upstream headers and body",
+   "headers": {
+    "name": "value"
+   },
+   "body": "some_request_body"
+  },
+  {
+   "note": "create: method path",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v2"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$request.method $request.path\"}"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v2",
+   "note": "request: method path"
+  },
+  {
+   "note": "create: headers map access",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v3"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$request.headers.host[0]|$request.headers['Host'][0]|$request.headers.HOST\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v3",
+   "note": "request: headers map access",
+   "headers": {
+    "Host": "mock-server.com"
+   }
+  },
+  {
+   "note": "create: query parameters",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v4"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$request.queryStringParameters.a[0]-$request.queryStringParameters['b']\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v4?a=1&b=2&b=3",
+   "note": "request: query parameters"
+  },
+  {
+   "note": "create: cookies",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v5"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$request.cookies.c1 $request.cookies\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v5",
+   "note": "request: cookies",
+   "headers": {
+    "Cookie": "c1=v1; c2=v2"
+   }
+  },
+  {
+   "note": "create: body string",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v6"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$request.body\"}"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v6",
+   "note": "request: body string",
+   "body": "plain text"
+  },
+  {
+   "note": "create: missing quiet",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v7"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"[$!request.headers.nope]\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v7",
+   "note": "request: missing quiet"
+  },
+  {
+   "note": "create: missing loud",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v8"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"[$request.headers.nope]\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v8",
+   "note": "request: missing loud"
+  },
+  {
+   "note": "create: request toString, its length without digits: the host port and the socket addresses differ per environment",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v9"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#set($r = $request.toString().replaceAll('[0-9]', ''))$r.length()\"}"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v9",
+   "note": "request: request toString",
+   "body": "x"
+  },
+  {
+   "note": "create: foreach headers",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v10"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#foreach($h in $request.headers.entrySet())#if($h.key == 'x-a')$h.key=$h.value #end#end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v10",
+   "note": "request: foreach headers",
+   "headers": {
+    "x-a": "1"
+   }
+  },
+  {
+   "note": "create: json parse body",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v11"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#set($j = $json.parse($request.body))$j.name/$j.items.size()/$j.items[1]/$j.nested.k\"}"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v11",
+   "note": "request: json parse body",
+   "body": "{\"name\":\"n\",\"items\":[1,2,3],\"nested\":{\"k\":true}}"
+  },
+  {
+   "note": "create: jsonPath tool",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v12"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$jsonPath.find('$.a')|$jsonPath.jsonPath('$.b[0]')|[$jsonPath.find('$.missing')]\"}"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v12",
+   "note": "request: jsonPath tool",
+   "body": "{\"a\":\"x\",\"b\":[5,6]}"
+  },
+  {
+   "note": "create: xPath tool",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v13"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$xPath.find('/r/a')|$xPath.xPath('count(/r/*)')|[$xPath.find('/nope')]\"}"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v13",
+   "note": "request: xPath tool",
+   "body": "<r><a>t</a><b/></r>"
+  },
+  {
+   "note": "create: esc tool",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v14"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$esc.html('<a>&')|$esc.url('a b&c')|$esc.xml(\\\"'\\\")|$esc.java('tab\\\\t')|$esc.d$esc.h\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v14",
+   "note": "request: esc tool"
+  },
+  {
+   "note": "create: display tool",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v15"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$display.list(['a','b','c'])|$display.truncate('abcdefghijklmnopqrstuvwxyz0123456789')|$display.capitalize('word')|$display.alt($nothing, 'dflt')|$display.plural(2, 'box')\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v15",
+   "note": "request: display tool"
+  },
+  {
+   "note": "create: collection tool",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v16"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$collection.sort(['b','a','C'])|$collection.split('x, y ,z')|$collection.sort([3,1,2])\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v16",
+   "note": "request: collection tool"
+  },
+  {
+   "note": "create: directives",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v17"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#set($list = [1..3])#foreach($i in $list)$i#if($foreach.hasNext),#end#end#if($list.size() > 2) big#else small#end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v17",
+   "note": "request: directives"
+  },
+  {
+   "note": "create: macro",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v18"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#macro(twice $x)$x$x#end#twice('ab')\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v18",
+   "note": "request: macro"
+  },
+  {
+   "note": "create: math operators",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v19"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#set($a = 7)#set($b = 2)$math.class$a / $b = #set($c = $a / $b)$c, #set($d = $a % $b)$d\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v19",
+   "note": "request: math operators"
+  },
+  {
+   "note": "create: string methods",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v20"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$request.path.toUpperCase().substring(1)|$request.path.length()|$request.path.replace('v', 'w')\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v20",
+   "note": "request: string methods"
+  },
+  {
+   "note": "create: strings helper",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v21"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$strings.capitalize('abc')|$strings.trim('  x  ')\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v21",
+   "note": "request: strings helper"
+  },
+  {
+   "note": "create: uuid function",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v22"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$uuid\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v22",
+   "note": "request: uuid function"
+  },
+  {
+   "note": "create: now function",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v23"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#if($now.length() > 10)ok#end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v23",
+   "note": "request: now function"
+  },
+  {
+   "note": "create: rand int",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v24"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#if($rand_int.length() == 1)one digit#end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v24",
+   "note": "request: rand int"
+  },
+  {
+   "note": "create: ifnull directive",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v25"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#ifnull($missing)was null#end#ifnull($request)not null#end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v25",
+   "note": "request: ifnull directive"
+  },
+  {
+   "note": "create: evaluate",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v26"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#set($t = '#set($x = 5)$x')#evaluate($t)\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v26",
+   "note": "request: evaluate"
+  },
+  {
+   "note": "create: define",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v27"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#define($blk)inside $request.method#end$blk\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v27",
+   "note": "request: define"
+  },
+  {
+   "note": "create: break",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v28"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#foreach($i in [1..5])#if($i == 3)#break#end$i#end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v28",
+   "note": "request: break"
+  },
+  {
+   "note": "create: status and headers from template",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v29"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': #if($request.method == 'POST')201#else 202#end, 'headers': {'X-Echo': ['$request.path']}, 'body': 'ok'}"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/v29",
+   "note": "request: status and headers from template"
+  },
+  {
+   "note": "create: status from query",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v30"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': $request.queryStringParameters.code[0], 'body': 'coded'}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v30?code=418",
+   "note": "request: status from query"
+  },
+  {
+   "note": "create: parse error",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v31"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': '#if('}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v31",
+   "note": "request: parse error"
+  },
+  {
+   "note": "create: method exception",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v32"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': '$request.path.substring(99)'}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v32",
+   "note": "request: method exception",
+   "mask": [
+    {"regex": " at t\\d+\\[line ", "replace": " at t<n>[line ", "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"}
+   ]
+  },
+  {
+   "note": "create: invalid output",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v33"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "not json at all $request.path"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v33",
+   "note": "request: invalid output"
+  },
+  {
+   "note": "create: invalid response field",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v34"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 'abc'}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v34",
+   "note": "request: invalid response field"
+  },
+  {
+   "note": "create: empty template",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v35"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": ""
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v35",
+   "note": "request: empty template"
+  },
+  {
+   "note": "create: json body object output",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v36"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': {'type': 'JSON', 'json': {'path': '$request.path', 'n': 1}}}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v36",
+   "note": "request: json body object output"
+  },
+  {
+   "note": "create: velocity comments",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v37"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"a## line comment\nb#* block *#c\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v37",
+   "note": "request: velocity comments"
+  },
+  {
+   "note": "create: escaped reference",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v38"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"\\\\$request.path and \\\\#if\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v38",
+   "note": "request: escaped reference"
+  },
+  {
+   "note": "create: range and map literals",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v39"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#set($m = {'k': 'v', 'n': 2})$m.k$m.n$m.size()\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v39",
+   "note": "request: range and map literals"
+  },
+  {
+   "note": "create: foreach index",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v40"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#foreach($x in ['a','b'])$foreach.index:$foreach.count:$x #end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v40",
+   "note": "request: foreach index"
+  },
+  {
+   "note": "create: comparison",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v41"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#if('a' < 'b')lt#end #if(1 == 1.0)eq#end #if($request.method == 'GET')get#end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v41",
+   "note": "request: comparison"
+  },
+  {
+   "note": "create: number tool format",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v42"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$number.format('#0.00', 3.14159)|$number.integer(3.7)\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v42",
+   "note": "request: number tool format"
+  },
+  {
+   "note": "create: math tool",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v43"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$math.add(1, 2)|$math.div(7, 2)|$math.max(1, 5, 3)|$math.round(2.5)|$math.toNumber('12')\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v43",
+   "note": "request: math tool"
+  },
+  {
+   "note": "create: date tool",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v44"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"#if($date.year > 2000)year ok#end\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v44",
+   "note": "request: date tool"
+  },
+  {
+   "note": "create: calc helper",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v45"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$calc\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v45",
+   "note": "request: calc helper"
+  },
+  {
+   "note": "create: path parameters",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/pp/{id}"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'statusCode': 200, 'body': \"$request.pathParameters\"}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pp/42",
+   "note": "request: path parameters"
+  },
+  {
+   "note": "create: forward template",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/v47"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{'path': '/nowhere', 'headers': {'Host': ['{{deadhost}}']}, 'method': '$request.method'}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v47",
+   "note": "request: forward template"
+  }
+ ]
+}

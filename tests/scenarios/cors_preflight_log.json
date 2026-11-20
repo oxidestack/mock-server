@@ -1,0 +1,10 @@
+{"properties": {"enableCORSForAllResponses": "true"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"method": "OPTIONS", "path": "/matched"}, "httpResponse": {"statusCode": 204}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=log"},
+  {"note": "data-plane preflight", "method": "OPTIONS", "path": "/somewhere", "headers": {"Origin": "http://example.com", "Access-Control-Request-Method": "PUT"}},
+  {"note": "control-plane preflight", "method": "OPTIONS", "path": "/mockserver/expectation", "headers": {"Origin": "http://example.com", "Access-Control-Request-Method": "PUT"}},
+  {"note": "the preflight entries", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS"},
+  {"note": "a log clear by request leaves entries no request is attached to", "method": "PUT", "path": "/mockserver/clear?type=log", "body": {"path": "/somewhere"}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS"}
+]}

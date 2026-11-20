@@ -1,0 +1,256 @@
+{
+ "steps": [
+  {
+   "note": "no unmatched",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/orders",
+      "headers": {
+       "x-key": [
+        "abc"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/orders/"
+     },
+     "httpResponse": {
+      "body": "list"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/users",
+      "queryStringParameters": {
+       "page": [
+        "1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "users"
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/orders"
+  },
+  {
+   "method": "POST",
+   "path": "/orders",
+   "headers": {
+    "X-Key": [
+     "abd"
+    ]
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/users"
+  },
+  {
+   "method": "GET",
+   "path": "/orders/"
+  },
+  {
+   "note": "explain",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "explain limit 1",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "explain bad body",
+   "method": "PUT",
+   "path": "/explainUnmatched",
+   "body": "not json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize"
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "note": "explain tool limit",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_unmatched_requests",
+     "arguments": {
+      "limit": 0
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ]
+  },
+  {
+   "note": "expectations resource",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "resources/read",
+    "params": {
+     "uri": "mockserver://expectations"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ]
+  },
+  {
+   "note": "requests resource",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "resources/read",
+    "params": {
+     "uri": "mockserver://requests"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ]
+  },
+  {
+   "note": "configuration resource",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "resources/read",
+    "params": {
+     "uri": "mockserver://configuration"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ]
+  }
+ ]
+}

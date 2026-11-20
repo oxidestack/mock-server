@@ -1,0 +1,103 @@
+{
+ "isolated": true,
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/mode",
+   "note": "default"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=simulate",
+   "note": "simulate, lower case"
+  },
+  {
+   "method": "GET",
+   "path": "/mode",
+   "note": "bare alias"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched",
+   "headers": {
+    "Host": "{{deadhost}}"
+   },
+   "note": "8.0.0: simulate still proxies a foreign Host (the mode never reaches the data plane): bad gateway"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=CAPTURE",
+   "note": "capture"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/mode",
+   "note": "capture round-trips"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=SPY"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/mode",
+   "note": "spy"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode",
+   "note": "no mode"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=%20",
+   "note": "blank mode"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=bogus",
+   "note": "unknown mode"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=CAPTURE"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "attemptToProxyIfNoMatchingExpectation": false
+   },
+   "note": "the flag changed underneath",
+   "mask": [
+    {
+     "regex": "(?s)^\\{.*\\}$",
+     "replace": "<configuration>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <configuration>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/mode",
+   "note": "8.0.0: the mode last set (the flag a PUT /configuration changes is not the one HttpState reads)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/mode",
+   "note": "after reset (which keeps the configuration)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/mode?mode=SPY",
+   "note": "back to the default"
+  }
+ ]
+}

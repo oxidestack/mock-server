@@ -1,0 +1,73 @@
+{
+ "source": "Netty's direct-memory limit (io.netty.maxDirectMemory) on a request body, probed on the 9.2.0 oracle: the body is read in 64 KiB buffers that the aggregator keeps until the request is whole. 6.2 MB passed and 7 MB failed every time; 6.4-6.8 MB came out either way, so the scenario keeps clear of the band.",
+ "properties": {
+  "logLevel": "DEBUG"
+ },
+ "jvmOptions": [
+  "-Dio.netty.maxDirectMemory=8388608"
+ ],
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/dm/echo"
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "a 4 MB body against an 8 MiB limit is read in full",
+   "method": "POST",
+   "path": "/dm/echo",
+   "body": "{{repeat:4000000:a}}",
+   "maxMillis": 30000
+  },
+  {
+   "note": "a 9 MB body is cut",
+   "method": "POST",
+   "path": "/dm/echo",
+   "body": "{{repeat:9000000:a}}",
+   "maxMillis": 30000
+  },
+  {
+   "note": "what it logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "mask": [
+    {
+     "regex": "id: 0x[0-9a-f]{8}",
+     "replace": "id: 0x<id>",
+     "reason": "Netty's random channel id"
+    },
+    {
+     "regex": "L:/[^ \\]\"]+",
+     "replace": "L:/<local>",
+     "reason": "the oracle sits behind Docker's network, an address of its own"
+    },
+    {
+     "regex": "R:[^ \\]\"]*/[^\\]\"]+",
+     "replace": "R:<remote>",
+     "reason": "the peer's address and port"
+    },
+    {
+     "regex": "used: \\d+",
+     "replace": "used: <used>",
+     "reason": "what the pool holds at the failure depends on the sizes the socket's reads came in"
+    },
+    {
+     "regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+",
+     "replace": "/<peer>",
+     "reason": "the client's address as the oracle sees it (Docker's gateway)"
+    }
+   ]
+  }
+ ]
+}

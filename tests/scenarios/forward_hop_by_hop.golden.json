@@ -1,0 +1,124 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpForward\" : {\n    \"host\" : \"localhost\",\n    \"port\" : <port>,\n    \"scheme\" : \"HTTP\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/target/fwd\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n} ]"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/target.*\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"body\" : \"from target\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/target/ovr\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/ovr/.*\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/target/override\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/override\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/target/legacy\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/legacy\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardTemplate\" : {\n    \"template\" : \"{'path': '/target/template', 'headers': {'Host': ['localhost:<port>'], 'X-From-Template': ['yes']}}\",\n    \"templateType\" : \"VELOCITY\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/template\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "every request hop-by-hop header is dropped, the ordinary ones kept"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "a Connection header is dropped as well"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "the names are matched case-insensitively"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "only hop-by-hop headers: the filtered list is empty, so upstream keeps the original ones"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "requestOverride forward"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "legacy httpRequest override forward"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "template forward"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"headers\" : {\n    \"some-other-header\" : [ \"kept\" ],\n    \"trailer\" : [ \"Expires\" ],\n    \"te\" : [ \"trailers\" ],\n    \"content-length\" : [ \"0\" ],\n    \"keep-alive\" : [ \"timeout=5\" ],\n    \"upgrade\" : [ \"foo/1\" ],\n    \"proxy-connection\" : [ \"keep-alive\" ],\n    \"proxy-authenticate\" : [ \"Basic\" ],\n    \"Host\" : [ \"localhost:<port>\" ],\n    \"proxy-authorization\" : [ \"Basic dXNlcjpwYXNz\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/fwd\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"some-other-header\" : [ \"kept\" ],\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/fwd\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"some-other-header\" : [ \"kept\" ],\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/ovr\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"x-plain\" : [ \"kept\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/ovr\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/ovr\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"some-other-header\" : [ \"kept\" ],\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/override\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"some-other-header\" : [ \"kept\" ],\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/legacy\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"X-From-Template\" : [ \"yes\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/template\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n} ]",
+      "note": "what the target saw"
+    }
+  ]
+}

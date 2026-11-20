@@ -1,0 +1,13 @@
+{
+  "properties": {"logLevelOverrides": "{\"MATCHING\":\"ERROR\",\"RECEIVED_REQUEST\":\"WARN\"}"},
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "dashboard-overrides", "httpRequest": {"path": "/dash/overridden"}, "httpResponse": {"statusCode": 200, "body": "overridden"}}},
+    {"method": "GET", "path": "/dash/overridden"},
+    {"method": "GET", "path": "/dash/unmatched"},
+    {"wsOpen": "ui", "path": "/_mockserver_ui_websocket", "note": "the dashboard socket"},
+    {"wsDrain": "ui", "note": "the first frame, which the oracle sends late or not at all"},
+    {"wsSend": "ui", "text": "{}", "note": "an empty matcher"},
+    {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"], "note": "RECEIVED_REQUEST (WARN) and the MATCHING category (ERROR) hidden, recordedRequests gone with them"},
+    {"wsClose": "ui"}
+  ]
+}

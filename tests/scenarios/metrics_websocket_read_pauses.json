@@ -1,0 +1,33 @@
+{"source": "WebSocketReplySender.pauseReadsIfTooManyPending stops reading a mocked WebSocket once more than 128 delayed reply sets are pending on it, resumes at 64, and counts each pause in mock_server_websocket_read_pauses_total (Scheduler.recordWebSocketReadPause; MetricsTest#countsWebSocketReadPausesAndWebSocketReplyRejections)",
+ "properties": {"metricsEnabled": "true"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+   {"httpRequest": {"path": "/ws-pause"}, "httpWebSocketResponse": {"matchers": [
+    {"frameType": "TEXT", "textMatcher": "x", "responses": [{"text": "r", "delay": {"timeUnit": "MILLISECONDS", "value": 2000}}]}
+   ]}}
+  ], "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]},
+  {"wsOpen": "w", "path": "/ws-pause"},
+  {"note": "128 pending reply sets: not more than 128, no pause", "wsSend": "w", "text": "x", "repeat": 128},
+  {"sleepMillis": 700},
+  {"note": "no pause yet", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_websocket_read_pauses)[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "the 128 replies, all after their delay", "wsDrain": "w", "waitMillis": 3500},
+  {"note": "140 pending reply sets: the 129th pauses reads", "wsSend": "w", "text": "x", "repeat": 140},
+  {"sleepMillis": 700},
+  {"note": "one pause", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_websocket_read_pauses)[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "the sets drain and reads resume", "wsDrain": "w", "waitMillis": 3500},
+  {"note": "resumed: the connection still answers, and pauses again past 128", "wsSend": "w", "text": "x", "repeat": 130},
+  {"sleepMillis": 700},
+  {"note": "a second pause", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_websocket_read_pauses)[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "the third batch's replies arrive", "wsRead": "w", "waitMillis": 4000},
+  {"wsClose": "w"}
+ ]
+}

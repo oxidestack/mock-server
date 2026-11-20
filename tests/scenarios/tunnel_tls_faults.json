@@ -1,0 +1,151 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "A TLS handshake that fails inside a CONNECT or SOCKS tunnel is caught by UpstreamProxyRelayHandler.exceptionCaught, whatever the failure: one WARN 'SSL or decoder fault caught by upstream relay handler -> closing pipeline <channel>'. On SOCKS the 8.0.0 oracle sometimes also logs a port unification fault for its loopback connection (SNI mocked.example.test); that racy entry is masked away."
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:443 HTTP/1.1\r\nHost: mocked.example.test:443\r\n\r\n"
+    },
+    {
+     "hex": "16030100050100000100"
+    }
+   ],
+   "text": true,
+   "note": "cleartext CONNECT, then a ClientHello too short to decode: decode_error alert"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/.*"
+   },
+   "note": "logs after: cleartext CONNECT, malformed ClientHello",
+   "mask": [
+    {
+     "regex": "------------------------------------\\n<timestamp> - SSL or decoder fault caught by port unification handler -> closing pipeline \\[[^\\]]*\\] \\(SNI: mocked\\.example\\.test\\)\\n",
+     "replace": ""
+    },
+    "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:443 HTTP/1.1\r\nHost: mocked.example.test:443\r\n\r\n"
+    },
+    {
+     "hex": "16030100c8010000c403034b5d6018f849742b54334809caf9af41888b6535e35c077f9353c8cc7e6087b000001ec02cc030c02bc02fcca9cca8c024c028c023c027009f009e006b006700ff0100007d0000001800160000136d6f636b65642e6578616d706c652e74657374000b000403000102000a000c000a001d0017001e00190018002300000010000b000908687474702f312e310016000000170000000d002a0028040305030603080708080809080a080b080408050806040105010601030303010302040205020602"
+    },
+    {
+     "hex": "1503030002022e"
+    }
+   ],
+   "text": true,
+   "chunkMillis": 500,
+   "mask": [
+    {
+     "regex": "(?s)\r\n\r\n.+",
+     "replace": "\r\n\r\n<server flight>"
+    }
+   ],
+   "note": "cleartext CONNECT, then a TLS 1.2 ClientHello and, after the server's flight, a fatal certificate_unknown alert (a client that does not trust the CA)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/.*"
+   },
+   "note": "logs after: cleartext CONNECT, client rejects the certificate",
+   "mask": [
+    {
+     "regex": "------------------------------------\\n<timestamp> - SSL or decoder fault caught by port unification handler -> closing pipeline \\[[^\\]]*\\] \\(SNI: mocked\\.example\\.test\\)\\n",
+     "replace": ""
+    },
+    "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "tcp": [
+    {
+     "hex": "050100"
+    },
+    {
+     "hex": "05010003136d6f636b65642e6578616d706c652e7465737401bb"
+    },
+    {
+     "hex": "16030100050100000100"
+    }
+   ],
+   "chunkMillis": 300,
+   "note": "SOCKS5 CONNECT, then a ClientHello too short to decode"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/.*"
+   },
+   "note": "logs after: SOCKS5, malformed ClientHello",
+   "mask": [
+    {
+     "regex": "------------------------------------\\n<timestamp> - SSL or decoder fault caught by port unification handler -> closing pipeline \\[[^\\]]*\\] \\(SNI: mocked\\.example\\.test\\)\\n",
+     "replace": ""
+    },
+    "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "tcp": [
+    {
+     "hex": "050100"
+    },
+    {
+     "hex": "05010003136d6f636b65642e6578616d706c652e7465737401bb"
+    },
+    {
+     "hex": "16030100c8010000c403034b5d6018f849742b54334809caf9af41888b6535e35c077f9353c8cc7e6087b000001ec02cc030c02bc02fcca9cca8c024c028c023c027009f009e006b006700ff0100007d0000001800160000136d6f636b65642e6578616d706c652e74657374000b000403000102000a000c000a001d0017001e00190018002300000010000b000908687474702f312e310016000000170000000d002a0028040305030603080708080809080a080b080408050806040105010601030303010302040205020602"
+    },
+    {
+     "hex": "1503030002022e"
+    }
+   ],
+   "chunkMillis": 500,
+   "mask": [
+    "(?<=^.{40}).+"
+   ],
+   "note": "SOCKS5 CONNECT, then a TLS 1.2 ClientHello and a fatal certificate_unknown alert"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/.*"
+   },
+   "note": "logs after: SOCKS5, client rejects the certificate",
+   "mask": [
+    {
+     "regex": "------------------------------------\\n<timestamp> - SSL or decoder fault caught by port unification handler -> closing pipeline \\[[^\\]]*\\] \\(SNI: mocked\\.example\\.test\\)\\n",
+     "replace": ""
+    },
+    "\\[id: 0x[0-9a-f]+, L:[^\\]]*\\]"
+   ]
+  }
+ ]
+}

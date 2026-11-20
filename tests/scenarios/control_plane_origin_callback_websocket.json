@@ -1,0 +1,60 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "note": "a foreign origin: a raw 403 before the upgrade",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: {{host}}\r\nOrigin: https://attacker.example\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "Origin: null is refused",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: {{host}}\r\nOrigin: null\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "a same-host name on another port is not same-host",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: mockserver:8443\r\nOrigin: http://mockserver:8444\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "a same-host page on a public name is refused (DNS rebinding)",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: evil.example.com:8443\r\nOrigin: http://evil.example.com:8443\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "a loopback origin upgrades",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: {{host}}\r\nOrigin: http://localhost:3000\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\nX-CLIENT-REGISTRATION-ID: 0786-loopback\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "a same-host page on a single-label name upgrades",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: mockserver:8443\r\nOrigin: http://mockserver:8443\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\nX-CLIENT-REGISTRATION-ID: 0786-same-host\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "the callback rejections in the log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

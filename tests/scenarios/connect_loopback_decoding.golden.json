@@ -1,0 +1,52 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 1876",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/t/gzip\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"content-type\" : [ \"text/plain\" ],\n      \"content-encoding\" : [ \"gzip\" ]\n    },\n    \"body\" : {\n      \"type\" : \"BINARY\",\n      \"base64Bytes\" : \"H4sIAAAAAAACE8tIzcnJV0ivyixQKMkoyi9NzwDSqQolpXl5qTkAVEvxfR0AAAA=\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/t/deflate\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"content-type\" : [ \"text/plain\" ],\n      \"content-encoding\" : [ \"deflate\" ]\n    },\n    \"body\" : {\n      \"type\" : \"BINARY\",\n      \"base64Bytes\" : \"eJzLSM3JyVdISU3LSSxJVSjJKMovTc8A0kB2aV5eag4AyS0MQg==\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/t/zstd\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"content-type\" : [ \"text/plain\" ],\n      \"content-encoding\" : [ \"zstd\" ]\n    },\n    \"body\" : {\n      \"type\" : \"BINARY\",\n      \"base64Bytes\" : \"KLUv/QBY2QAAeyJoZWxsbyI6IndvcmxkIiwibiI6MTIzNDV9\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/t/list\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"content-type\" : [ \"text/plain\" ],\n      \"content-encoding\" : [ \"gzip, br\" ]\n    },\n    \"body\" : {\n      \"type\" : \"BINARY\",\n      \"base64Bytes\" : \"H4sIAAAAAAACE8tIzcnJV0ivyixQKMkoyi9NzwDSqQolpXl5qTkAVEvxfR0AAAA=\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "RelayConnectHandler's loopback leg (configureHttp1LoopbackPipeline / configureHttp2LoopbackPipeline): a response MockServer writes into a CONNECT tunnel is read back through BoundedZstdHttpContentDecompressor (HTTP/2: BoundedZstdDecompressorFrameListener) and an aggregator, so the client gets it decoded, without its Content-Encoding, with the decoded content-length. zstd: the image cannot load zstd-jni's natives (502); upstream's runnable jar decodes it (docs/divergences.md). Port: tests/upstream/zstd_coding.rs"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 200 OK\r\ncontent-type: text/plain\r\nconnection: close\r\ncontent-length: 29\r\n\r\nhello gzip through the tunnel",
+      "closed": true,
+      "note": "gzip through a cleartext CONNECT: decoded by the loopback"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 200 OK\r\ncontent-type: text/plain\r\nconnection: close\r\ncontent-length: 32\r\n\r\nhello deflate through the tunnel",
+      "closed": true,
+      "note": "deflate through a cleartext CONNECT: decoded by the loopback"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 200 OK\r\ncontent-encoding: gzip, br\r\ncontent-type: text/plain\r\nconnection: close\r\ncontent-length: 47\r\n\r\n\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0002\u0013�H���WH��,P(�(�/M�\u0000ҩ\n%�yy�9\u0000TK�}\u001d\u0000\u0000\u0000",
+      "closed": true,
+      "note": "a coding list is never decoded: relayed as written"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\nHTTP/1.1 200 OK\r\ncontent-type: text/plain\r\nconnection: close\r\ncontent-length: 27\r\n\r\n{\"hello\":\"world\",\"n\":12345}",
+      "closed": true,
+      "note": "zstd through a cleartext CONNECT: decoded by the loopback"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\n\u0000\u0000\f\u0004\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0000\u0000\u0000d\u0000\u0006\u0000\u0004\u0000\u0000\u0000\u0000\u0000\u0004\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0016\u0001$\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u000f�_\ntext/plain\\\u000229\u0000\u0000\u001d\u0000\u0001\u0000\u0000\u0000\u0001hello gzip through the tunnel",
+      "closed": false,
+      "note": "h2c gzip through a cleartext CONNECT: decoded by the loopback's frame listener"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\n\u0000\u0000\f\u0004\u0000\u0000\u0000\u0000\u0000\u0000\u0003\u0000\u0000\u0000d\u0000\u0006\u0000\u0004\u0000\u0000\u0000\u0000\u0000\u0004\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0016\u0001$\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u000f�_\ntext/plain\\\u000227\u0000\u0000\u001b\u0000\u0001\u0000\u0000\u0000\u0001{\"hello\":\"world\",\"n\":12345}",
+      "closed": false,
+      "note": "h2c zstd through a cleartext CONNECT"
+    }
+  ]
+}

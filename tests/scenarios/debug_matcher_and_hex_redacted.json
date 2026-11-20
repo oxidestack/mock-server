@@ -1,0 +1,94 @@
+{
+ "source": "under redactSecretsInLog, upstream c76143e4a (adopted after 8.0.0) logs the request value of RegexStringMatcher's DEBUG `matcher{}would match{}if matcher was used for control plane` and the bytes of NettyHttpClient's DEBUG `sending bytes hex{}to{}` as SensitiveLogValue, shown as the placeholder; 8.0.0 prints both in full. The steps marked \"diverge\" check our fixed answer; the goldens keep 8.0.0's.",
+ "peer": true,
+ "properties": {
+  "logLevel": "DEBUG",
+  "redactSecretsInLog": "true",
+  "proxyRemoteHost": "{{peerhost}}",
+  "proxyRemotePort": "{{peerport}}"
+ },
+ "steps": [
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": "CQgHBgUEAwIBAA=="
+    },
+    "binaryResponse": {
+     "binaryData": "AQIDBA=="
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "secret-header",
+     "httpRequest": {
+      "path": "/secret",
+      "headers": {
+       "Authorization": [
+        "Bearer REQ-SECRET-999"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "secret"
+     }
+    },
+    {
+     "id": "catch-all",
+     "priority": -10,
+     "httpRequest": {},
+     "httpResponse": {
+      "body": "catch-all"
+     }
+    }
+   ]
+  },
+  {
+   "note": "the credential, read as a regex, would match the expectation's",
+   "method": "GET",
+   "path": "/secret",
+   "headers": {
+    "Authorization": "Bearer REQ-SECRET-.*"
+   }
+  },
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "note": "a binary request, forwarded to the peer"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS: neither the request's credential nor the forwarded bytes",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [{"regex": "\\d+\\.\\d+\\.\\d+\\.\\d+:<port>", "replace": "<peer>:<port>", "reason": "the binary forward's upstream is the peer, whose address is its container's when recorded and loopback on replay"}]
+  },
+  {
+   "note": "LOG_ENTRIES: the arguments are masked too",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": ["\"epochTime\" : \\d+", {"regex": "\\d+\\.\\d+\\.\\d+\\.\\d+:<port>", "replace": "<peer>:<port>", "reason": "the binary forward's upstream is the peer, whose address is its container's when recorded and loopback on replay"}]
+  }
+ ]
+}

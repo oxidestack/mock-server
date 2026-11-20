@@ -1,0 +1,61 @@
+{
+ "properties": {
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/private-ca/ca-cert.pem",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/tls/private-ca/dirname-client-cert.pem;{{files}}/tls/private-ca/dirname-client-key.pem"
+ },
+ "steps": [
+  {
+   "note": "secure requests to /t... answer from the expectations below; plain ones are forwarded over TLS to this server, presenting a leaf whose subject alternative names are a DNS name and two directory names",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/t-nomatch\", \"secure\": true, \"clientCertificate\": {\"subject\": \"no such name\"}}, \"httpResponse\": {\"body\": \"unexpected\"}}, {\"httpRequest\": {\"path\": \"/t.*\", \"secure\": false}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTPS\"}}, {\"httpRequest\": {\"path\": \"/t-dns\", \"secure\": true, \"clientCertificate\": {\"subject\": \"dns.example\"}}, \"httpResponse\": {\"body\": \"dns name\"}}, {\"httpRequest\": {\"path\": \"/t-regex\", \"secure\": true, \"clientCertificate\": {\"subject\": \".*second dir.*\"}}, \"httpResponse\": {\"body\": \"regex over a directory name\"}}, {\"httpRequest\": {\"path\": \"/t-first\", \"secure\": true, \"clientCertificate\": {\"subject\": \"1.2.840.113549.1.9.1=#160f646972406578616d706c652e636f6d,CN=Dir\\\\=Name\\\\;x,OU=Unit\\\\+Plus,O=Acme\\\\, Inc,ST=England,C=GB\"}}, \"httpResponse\": {\"body\": \"first directory name, RFC 2253 with an e-mail attribute as hex\"}}, {\"httpRequest\": {\"path\": \"/t-second\", \"secure\": true, \"clientCertificate\": {\"subject\": \"CN=second dir,1.2.3.4=#0c06637573746f6d,L=Leeds,STREET=1 Main St,2.5.4.5=#13053132333435,UID=user1,DC=com,DC=example\"}}, \"httpResponse\": {\"body\": \"second directory name\"}}, {\"httpRequest\": {\"path\": \"/t-not\", \"secure\": true, \"clientCertificate\": {\"subject\": \"!dns.example\"}}, \"httpResponse\": {\"body\": \"unexpected: a negation must hold for every candidate\"}}]"
+  },
+  {
+   "note": "no candidate matches: the hint (the first-created of the closest expectations) lists the candidates",
+   "method": "GET",
+   "path": "/t-nomatch"
+  },
+  {
+   "note": "the DNS name",
+   "method": "GET",
+   "path": "/t-dns"
+  },
+  {
+   "note": "a regex over the second directory name",
+   "method": "GET",
+   "path": "/t-regex"
+  },
+  {
+   "note": "the first directory name exactly, as X500Principal.getName() prints it",
+   "method": "GET",
+   "path": "/t-first"
+  },
+  {
+   "note": "the second directory name exactly, unknown attribute types as DER hex",
+   "method": "GET",
+   "path": "/t-second"
+  },
+  {
+   "note": "a negated subject fails when any candidate equals it",
+   "method": "GET",
+   "path": "/t-not"
+  },
+  {
+   "note": "verification failure: the closest recorded request is the first, plain, one",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/t-nomatch",
+     "secure": true,
+     "clientCertificate": {
+      "subject": "no such name"
+     }
+    },
+    "times": {
+     "atLeast": 2
+    }
+   }
+  }
+ ]
+}

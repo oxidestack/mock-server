@@ -1,0 +1,63 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a WebSocket response whose handshake answer is delayed 4 s",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "ws-handshake-failure",
+    "httpRequest": {
+     "path": "/ws"
+    },
+    "httpWebSocketResponse": {
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 4000
+     },
+     "messages": [
+      {
+       "text": "a"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "the upgrade; the client reads for 2 s and closes before the 101 is written",
+   "tcp": [
+    "R0VUIC93cyBIVFRQLzEuMQ0KSG9zdDogd3MuZXhhbXBsZS5jb20NClVwZ3JhZGU6IHdlYnNvY2tldA0KQ29ubmVjdGlvbjogVXBncmFkZQ0KU2VjLVdlYlNvY2tldC1LZXk6IGRHaGxJSE5oYlhCc1pTQnViMjVqWlE9PQ0KU2VjLVdlYlNvY2tldC1WZXJzaW9uOiAxMw0KDQo="
+   ]
+  },
+  {
+   "sleepMillis": 3500
+  },
+  {
+   "note": "writing the 101 to the closed channel fails: a WARN entry",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "note": "as text",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=%20%20localhost%20",
+   "note": "a bare host, trimmed: port 80"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=localhost:",
+   "note": "a trailing colon: port 80"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=https://localhost",
+   "note": "https without a port: 443"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=[::1]:{{deadport}}",
+   "note": "a bracketed IPv6 host"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=localhost:{{deadport}}",
+   "note": "host:port"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=:::",
+   "note": "only colons"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=localhost:99999999999",
+   "note": "a port beyond int"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=http://a%20b:1",
+   "note": "an illegal character in the authority"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=HTTP://localhost:{{deadport}}/some/path?q=1",
+   "note": "a URL's path and query are ignored"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched",
+   "note": "forwarded to the dead remote"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "one INFO entry per arm"
+  }
+ ]
+}

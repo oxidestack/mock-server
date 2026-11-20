@@ -1,0 +1,261 @@
+{
+ "properties": {
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/persistence_file_content.json"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "on add: three expectations, written in order"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "one",
+    "httpRequest": {
+     "path": "/simpleFirst"
+    },
+    "httpResponse": {
+     "body": "some first response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "two",
+    "httpRequest": {
+     "path": "/simpleSecond"
+    },
+    "httpResponse": {
+     "body": "some second response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "three",
+    "httpRequest": {
+     "path": "/simpleThird"
+    },
+    "httpResponse": {
+     "body": "some third response"
+    }
+   }
+  },
+  {
+   "readFile": "{{scratch}}/persistence_file_content.json",
+   "pollUntil": "simpleThird"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "on remove: clear one by path"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "one",
+    "httpRequest": {
+     "path": "/simpleFirst"
+    },
+    "httpResponse": {
+     "body": "some first response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "two",
+    "httpRequest": {
+     "path": "/simpleSecond"
+    },
+    "httpResponse": {
+     "body": "some second response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "three",
+    "httpRequest": {
+     "path": "/simpleThird"
+    },
+    "httpResponse": {
+     "body": "some third response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/simpleSecond"
+   }
+  },
+  {
+   "readFile": "{{scratch}}/persistence_file_content.json",
+   "pollUntil": "^(?![\\s\\S]*simpleSecond)[\\s\\S]*simpleThird"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "on update: the same id with a new definition keeps its place"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "one",
+    "httpRequest": {
+     "path": "/simpleFirst"
+    },
+    "httpResponse": {
+     "body": "some first response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "two",
+    "httpRequest": {
+     "path": "/simpleSecond"
+    },
+    "httpResponse": {
+     "body": "some second response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "three",
+    "httpRequest": {
+     "path": "/simpleThird"
+    },
+    "httpResponse": {
+     "body": "some third response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "two",
+    "httpRequest": {
+     "path": "/simpleSecondUpdated"
+    },
+    "httpResponse": {
+     "body": "some second updated response"
+    }
+   }
+  },
+  {
+   "readFile": "{{scratch}}/persistence_file_content.json",
+   "pollUntil": "simpleSecondUpdated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "on update of all: the API PUT of an array"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "one",
+    "httpRequest": {
+     "path": "/simpleFirst"
+    },
+    "httpResponse": {
+     "body": "some first response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "two",
+    "httpRequest": {
+     "path": "/simpleSecond"
+    },
+    "httpResponse": {
+     "body": "some second response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "three",
+    "httpRequest": {
+     "path": "/simpleThird"
+    },
+    "httpResponse": {
+     "body": "some third response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "one",
+     "httpRequest": {
+      "path": "/simpleFirst"
+     },
+     "httpResponse": {
+      "body": "some first response"
+     }
+    },
+    {
+     "id": "two",
+     "httpRequest": {
+      "path": "/simpleSecondUpdated"
+     },
+     "httpResponse": {
+      "body": "some second updated response"
+     }
+    },
+    {
+     "id": "four",
+     "httpRequest": {
+      "path": "/simpleFourth"
+     },
+     "httpResponse": {
+      "body": "some fourth response"
+     }
+    }
+   ]
+  },
+  {
+   "readFile": "{{scratch}}/persistence_file_content.json",
+   "pollUntil": "simpleFourth"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset empties the persisted file"
+  },
+  {
+   "readFile": "{{scratch}}/persistence_file_content.json"
+  }
+ ]
+}

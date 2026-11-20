@@ -1,0 +1,30 @@
+{
+  "note": "LifeCycle starts the extensions before createServerBootstrap's control-plane mTLS refusal, so an unresolvable extension wins over an unusable mTLS configuration",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_EXTENSIONS": "com.acme.Missing",
+    "MOCKSERVER_CONTROL_PLANE_TLS_MUTUAL_AUTHENTICATION_REQUIRED": "true"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 120,
+  "expect": {
+    "running": false,
+    "exitCode": 1,
+    "stdoutInOrder": [
+      "[ERROR] exception while starting:{}\norg.mockserver.extension.ExtensionException: extension class com.acme.Missing could not be loaded, check it is on the classpath: java.lang.ClassNotFoundException: com.acme.Missing"
+    ],
+    "stdoutNotContains": [
+      "started on port"
+    ],
+    "stderrNotContains": [
+      "exception while starting"
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "0"
+  ],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_PROPERTY_FILE": "{{files}}/properties/json/syntax_control_character_between_tokens.json"
+  },
+  "readiness": {
+    "logContains": "exception loading JSON property file",
+    "settleMillis": 3000
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "[ERROR] exception loading JSON property file [{{files}}/properties/json/syntax_control_character_between_tokens.json]",
+      "shaded_package.com.fasterxml.jackson.core.JsonParseException: Illegal character ((CTRL-CHAR, code 1)): only regular white space (\\r, \\n, \\t) is allowed between tokens\n at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 3]"
+    ],
+    "stdoutNotContains": [
+      "Reading properties from property file"
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "defaults: only the host name check can be lowered"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyTLSX509CertificatesTrustManagerType": "ANY",
+    "tlsMutualAuthenticationRequired": false,
+    "forwardProxyTLSHostnameVerificationEnabled": false,
+    "certificateAuthorityPrivateKey": "zzz"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "raising is not lowering"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyTLSX509CertificatesTrustManagerType": "JVM",
+    "tlsMutualAuthenticationRequired": true
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "then ANY and false again: still the startup values, so no warning"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "forwardProxyTLSX509CertificatesTrustManagerType": "ANY",
+    "tlsMutualAuthenticationRequired": false
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

@@ -1,0 +1,590 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyBase64": "CvgDCg5ncmVldGluZy5wcm90bxIQY29tLmV4YW1wbGUuZ3JwYyIiCgxIZWxsb1JlcXVlc3QSEgoEbmFtZRgBIAEoCVIEbmFtZSIrCg1IZWxsb1Jlc3BvbnNlEhoKCGdyZWV0aW5nGAEgASgJUghncmVldGluZzLWAgoPR3JlZXRpbmdTZXJ2aWNlEksKCEdyZWV0aW5nEh4uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1JlcXVlc3QaHy5jb20uZXhhbXBsZS5ncnBjLkhlbGxvUmVzcG9uc2USUgoNTGlzdEdyZWV0aW5ncxIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlMAESVQoQQ29sbGVjdEdyZWV0aW5ncxIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlKAESSwoEQ2hhdBIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlKAEwAUIiChBjb20uZXhhbXBsZS5ncnBjQg5HcmVldGluZ1Byb3Rvc2IGcHJvdG8z",
+   "note": "upload"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "body": "{\"greeting\":\"hi\"}"
+    }
+   },
+   "note": "expectation",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "no chaos",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatusCode": "unavailable",
+     "errorMessage": "down 50% now",
+     "customTrailers": {
+      "x-a": "1",
+      "x-b": "two"
+     }
+    }
+   },
+   "note": "error with trailers"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "error with trailers",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "errorProbability": 1.0
+    }
+   },
+   "note": "default status"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "default status",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "omitGrpcStatus": true
+    }
+   },
+   "note": "omit status"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "omit status",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "corruptGrpcStatus": true,
+     "errorMessage": "bad"
+    }
+   },
+   "note": "corrupt status"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "corrupt status",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "customTrailers": {
+      "x-n": null,
+      "x-e": ""
+     }
+    }
+   },
+   "note": "null trailer"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "null trailer",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "abortAfterMessages": 2
+    }
+   },
+   "note": "abort after 2"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "one message passes",
+   "trailers": true
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAMKAUEAAAAAAwoBQgAAAAADCgFD",
+   "note": "three messages abort",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "errorStatusCode": "INTERNAL",
+     "latencyMs": 50
+    }
+   },
+   "note": "status without probability"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "status without probability passes",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "latencyMs": 300,
+     "errorProbability": 1.0,
+     "errorStatusCode": "DEADLINE_EXCEEDED"
+    }
+   },
+   "note": "latency"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "delayed fault",
+   "trailers": true,
+   "minMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "clear": true
+   },
+   "note": "clear"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "errorProbability": 1.0,
+     "succeedFirst": 1,
+     "failRequestCount": 1
+    }
+   },
+   "note": "count window"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "window 1 passes",
+   "trailers": true
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "window 2 fails",
+   "trailers": true
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "window 3 passes",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "quotaName": "w2gc",
+     "quotaLimit": 1,
+     "quotaWindowMillis": 600000
+    }
+   },
+   "note": "quota"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "quota 1 passes",
+   "trailers": true
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "quota 2 exhausted",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "",
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatusCode": "NOT_FOUND"
+    }
+   },
+   "note": "global"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.Other/Call",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "global fallback on another service",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "service": "com.example.grpc.GreetingService",
+    "chaos": {
+     "errorProbability": 1.0,
+     "customTrailers": {
+      "x-a": "1"
+     }
+    }
+   },
+   "note": "web"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web+proto",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "grpc-web fault",
+   "trailers": true
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text",
+    "te": "trailers"
+   },
+   "bodyBase64": "QUFBQUFBY0tCVUZzYVdObA==",
+   "note": "grpc-web-text fault",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpcChaos",
+   "body": {
+    "clear": true
+   },
+   "note": "clear again"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "after clear",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "note": "faulted calls are not recorded",
+   "mask": [
+    "\"(timestamp|id|correlationId)\" : \"[^\"]+\"",
+    "\"(remoteAddress|localAddress)\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "headers": {
+      "x-u": [
+       "1"
+      ]
+     },
+     "body": "{\"greeting\":\"hello there\"}"
+    },
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1.0
+    }
+   },
+   "note": "expectation chaos 503",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "expectation chaos 503 call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset expectation chaos 503"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "headers": {
+      "x-u": [
+       "1"
+      ]
+     },
+     "body": "{\"greeting\":\"hello there\"}"
+    },
+    "chaos": {
+     "errorStatus": 429,
+     "retryAfter": "5",
+     "errorProbability": 1.0
+    }
+   },
+   "note": "expectation chaos 429",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "expectation chaos 429 call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset expectation chaos 429"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "headers": {
+      "x-u": [
+       "1"
+      ]
+     },
+     "body": "{\"greeting\":\"hello there\"}"
+    },
+    "chaos": {
+     "truncateBodyAtFraction": 0.5
+    }
+   },
+   "note": "expectation chaos truncate",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "expectation chaos truncate call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset expectation chaos truncate"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "headers": {
+      "x-u": [
+       "1"
+      ]
+     },
+     "body": "{\"greeting\":\"hello there\"}"
+    },
+    "chaos": {
+     "malformedBody": true
+    }
+   },
+   "note": "expectation chaos malformed",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "expectation chaos malformed call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset expectation chaos malformed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear",
+   "note": "clear descriptors"
+  }
+ ],
+ "properties": {
+  "grpcBidiStreamingEnabled": "false"
+ }
+}

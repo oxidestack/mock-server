@@ -1,0 +1,157 @@
+{
+ "source": "PUT /mockserver/graphql error wording (graphql-java's parser and schema checks) and synthesis edge cases",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query { this is not valid sdl }"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query { a: String b }"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query { a: }"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query { a: String"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query a: String }"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "typo Query { a: String }"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query { a(x: ): String }"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query { a: Foo b: Bar }"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query { a: String } { x } fragment f on Query { a }"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query {\n a: String\n}\n\ntype B {\n c: Foo\n}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "type Query {\n  a: String\n  b: \n}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "{}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "{\"__schema\":{\"queryType\":{\"name\":\"Q\"},\"mutationType\":{\"name\":\"M\"},\"types\":[{\"kind\":\"OBJECT\",\"name\":\"Q\",\"interfaces\":[],\"fields\":[{\"name\":\"n\",\"args\":[],\"type\":{\"kind\":\"NON_NULL\",\"ofType\":{\"kind\":\"LIST\",\"ofType\":{\"kind\":\"SCALAR\",\"name\":\"Int\"}}}}]},{\"kind\":\"OBJECT\",\"name\":\"M\",\"interfaces\":[],\"fields\":[{\"name\":\"m\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"Boolean\"}}]}]}}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/graphql?path=/gql",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "schema { query: Root mutation: Mut } type Root { a: [String!]! e: E u: U } extend type Root { b: Int } interface I { x: Int } union U = Root | B type B implements I { x: Int } input In { a: Int = 3 } directive @d(a: Int) on FIELD_DEFINITION \"\"\"desc\"\"\" enum E { A @deprecated B } type Mut { set(v: In): B } scalar Long"
+  },
+  {
+   "method": "POST",
+   "path": "/gql",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "body": "{\"query\":\"query Q($v: Int = 1) { a e u b x: __typename }\"}"
+  },
+  {
+   "method": "POST",
+   "path": "/gql",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "body": "{\"query\":\"mutation { set(v: {a: 2}) { x __typename } }\"}"
+  },
+  {
+   "method": "POST",
+   "path": "/gql",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "body": "{\"query\":\"{ a \"}"
+  },
+  {
+   "method": "POST",
+   "path": "/gql",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "body": "{\"query\":\"subscription { a }\"}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

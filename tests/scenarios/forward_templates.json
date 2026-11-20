@@ -1,0 +1,75 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/somePath"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "x-seen": [
+        "target"
+       ]
+      },
+      "body": "reached"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/echo-velocity"
+     },
+     "httpForwardTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\n    'path' : \"/somePath\",\n    'headers' : [ {\n        'name' : \"Host\",\n        'values' : [ \"localhost:{{port}}\" ]\n    }, {\n        'name' : \"x-test\",\n        'values' : [ \"$!request.headers['x-test'][0]\" ]\n    } ],\n    'body': \"{'name': 'value'}\"\n}",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 10
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/echo-mustache"
+     },
+     "httpForwardTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\n    'path' : \"/somePath\",\n    'headers' : [ {\n        'name' : \"Host\",\n        'values' : [ \"localhost:{{port}}\" ]\n    }, {\n        'name' : \"x-test\",\n        'values' : [ \"{{ request.headers.x-test.0 }}\" ]\n    } ],\n    'body': \"{'name': 'value'}\"\n}"
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/echo-velocity",
+   "headers": {
+    "x-test": "test_headers_and_body"
+   },
+   "body": "an_example_body_http",
+   "note": "velocity forward template with single-quoted keys (upstream shouldForwardTemplateInVelocity)"
+  },
+  {
+   "method": "POST",
+   "path": "/echo-mustache",
+   "headers": {
+    "x-test": "test_headers_and_body"
+   },
+   "body": "an_example_body_http",
+   "note": "mustache forward template"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/somePath"
+   },
+   "note": "what the target received",
+   "mask": [
+    "\"(local|remote)Address\" : \"[^\"]*\""
+   ]
+  }
+ ]
+}

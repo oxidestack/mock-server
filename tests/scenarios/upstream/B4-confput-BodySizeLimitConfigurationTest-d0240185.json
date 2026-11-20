@@ -1,0 +1,57 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) confput-BodySizeLimitConfigurationTest-d0240185 (conformance/harvest)",
+ "properties": {
+  "maxRequestBodySize": "0"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e766450e584b",
+   "note": "shouldReadZeroOrLessAsOneByteFromAConfigurationInstance (confput): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxRequestBodySize": 0
+   },
+   "note": "shouldReadZeroOrLessAsOneByteFromAConfigurationInstance (confput): configuration.maxRequestBodySize(0): read back as 1 in Java",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n(?:.*?\\n)?  \"maxRequestBodySize\" : (\\{\\n.*?\\n  \\}|[^\\n]*?),?\\n.*\\z",
+     "replace": "\"maxRequestBodySize\" : ${1}"
+    },
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration, which has no maxRequestBodySize member>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ],
+   "case": "e766450e584b"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "shouldReadZeroOrLessAsOneByteFromAConfigurationInstance (confput): the value as read at startup",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n(?:.*?\\n)?  \"maxRequestBodySize\" : (\\{\\n.*?\\n  \\}|[^\\n]*?),?\\n.*\\z",
+     "replace": "\"maxRequestBodySize\" : ${1}"
+    },
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration, which has no maxRequestBodySize member>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ],
+   "case": "e766450e584b"
+  }
+ ]
+}

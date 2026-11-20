@@ -1,0 +1,38 @@
+{
+  "note": "the mock-server properties (callbackPlugins, blobStoreModules) are honoured, so the startup key check does not call them unrecognised, as environment variables or system properties; a typo of one still warns. Binary only: the oracle does not know these keys and rightly warns",
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.callbackPlugins={{scratch}}/libs",
+    "-Dmockserver.blobStoreModules=s3"
+  ],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_CALLBACK_PLUGINS": "{{scratch}}/libs",
+    "MOCKSERVER_BLOB_STORE_MODULES": "s3",
+    "MOCKSERVER_CALLBACK_PLUGIN": "{{scratch}}/libs"
+  },
+  "files": {
+    "libs/README.txt": "not a plugin"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "[WARN] unrecognised MockServer configuration environment variable [MOCKSERVER_CALLBACK_PLUGIN] - it is not a known configuration property and will be ignored (check for a typo)"
+    ],
+    "stdoutNotContains": [
+      "[MOCKSERVER_CALLBACK_PLUGINS]",
+      "[MOCKSERVER_BLOB_STORE_MODULES]",
+      "[mockserver.callbackPlugins]",
+      "[mockserver.blobStoreModules]"
+    ],
+    "stdoutOccurrences": {
+      "unrecognised MockServer configuration": 1
+    }
+  }
+}

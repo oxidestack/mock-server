@@ -1,0 +1,217 @@
+{
+ "source": "HttpRequestTemplateObject's WARN entries when the formData field cap or the parts cap applies (9.2.0)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/cv"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"form=$request.formData.size() a=$request.formData.a.size() parts=$request.parts.size()\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/cm"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    \"statusCode\": 200,\n    \"body\": \"a={{request.formData.a.0}} p={{request.parts.p.0.body}}\"\n}"
+    }
+   }
+  },
+  {
+   "note": "999 & separators: under the field cap, no warning",
+   "method": "POST",
+   "path": "/cv",
+   "headers": {
+    "Content-Type": "application/x-www-form-urlencoded"
+   },
+   "body": "{{repeat:999:a=1&}}a=1"
+  },
+  {
+   "note": "1000 & separators: the field cap's warning",
+   "method": "POST",
+   "path": "/cv",
+   "headers": {
+    "Content-Type": "application/x-www-form-urlencoded"
+   },
+   "body": "{{repeat:1000:a=1&}}a=1"
+  },
+  {
+   "note": "100 parts: no warning",
+   "method": "POST",
+   "path": "/cv",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=b"
+   },
+   "body": "{{repeat:100:--b\r\nContent-Disposition: form-data; name=\"p\"\r\n\r\nx\r\n}}--b--\r\n"
+  },
+  {
+   "note": "101 parts: the part cap's warning, parts empty",
+   "method": "POST",
+   "path": "/cv",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=b"
+   },
+   "body": "{{repeat:101:--b\r\nContent-Disposition: form-data; name=\"p\"\r\n\r\nx\r\n}}--b--\r\n"
+  },
+  {
+   "note": "999 & separators: under the field cap, no warning",
+   "method": "POST",
+   "path": "/cm",
+   "headers": {
+    "Content-Type": "application/x-www-form-urlencoded"
+   },
+   "body": "{{repeat:999:a=1&}}a=1"
+  },
+  {
+   "note": "1000 & separators: the field cap's warning",
+   "method": "POST",
+   "path": "/cm",
+   "headers": {
+    "Content-Type": "application/x-www-form-urlencoded"
+   },
+   "body": "{{repeat:1000:a=1&}}a=1"
+  },
+  {
+   "note": "100 parts: no warning",
+   "method": "POST",
+   "path": "/cm",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=b"
+   },
+   "body": "{{repeat:100:--b\r\nContent-Disposition: form-data; name=\"p\"\r\n\r\nx\r\n}}--b--\r\n"
+  },
+  {
+   "note": "101 parts: the part cap's warning, parts empty",
+   "method": "POST",
+   "path": "/cm",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=b"
+   },
+   "body": "{{repeat:101:--b\r\nContent-Disposition: form-data; name=\"p\"\r\n\r\nx\r\n}}--b--\r\n"
+  },
+  {
+   "note": "dry run: the field cap's warning",
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\n    'statusCode': 200,\n    'body': \"form=$request.formData.size() a=$request.formData.a.size() parts=$request.parts.size()\"\n}",
+    "request": {
+     "method": "POST",
+     "path": "/d",
+     "headers": {
+      "Content-Type": [
+       "application/x-www-form-urlencoded"
+      ]
+     },
+     "body": "{{repeat:1000:a=1&}}a=1"
+    }
+   },
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "note": "dry run: the part cap's warning",
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\n    'statusCode': 200,\n    'body': \"form=$request.formData.size() a=$request.formData.a.size() parts=$request.parts.size()\"\n}",
+    "request": {
+     "method": "POST",
+     "path": "/d",
+     "headers": {
+      "Content-Type": [
+       "multipart/form-data; boundary=b"
+      ]
+     },
+     "body": "{{repeat:101:--b\r\nContent-Disposition: form-data; name=\"p\"\r\n\r\nx\r\n}}--b--\r\n"
+    }
+   },
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "note": "dry run: the field cap's warning",
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "MUSTACHE",
+    "template": "{\n    \"statusCode\": 200,\n    \"body\": \"a={{request.formData.a.0}} p={{request.parts.p.0.body}}\"\n}",
+    "request": {
+     "method": "POST",
+     "path": "/d",
+     "headers": {
+      "Content-Type": [
+       "application/x-www-form-urlencoded"
+      ]
+     },
+     "body": "{{repeat:1000:a=1&}}a=1"
+    }
+   },
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "note": "dry run: the part cap's warning",
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "MUSTACHE",
+    "template": "{\n    \"statusCode\": 200,\n    \"body\": \"a={{request.formData.a.0}} p={{request.parts.p.0.body}}\"\n}",
+    "request": {
+     "method": "POST",
+     "path": "/d",
+     "headers": {
+      "Content-Type": [
+       "multipart/form-data; boundary=b"
+      ]
+     },
+     "body": "{{repeat:101:--b\r\nContent-Disposition: form-data; name=\"p\"\r\n\r\nx\r\n}}--b--\r\n"
+    }
+   },
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "note": "the WARN entries, after the request they are about",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}",
+    {
+     "regex": "(a=1&){2,}",
+     "replace": "<a=1& repeated>",
+     "reason": "keeps the golden small: the repeated form fields of the logged bodies"
+    },
+    {
+     "regex": "(--b\\\\r\\\\nContent-Disposition: form-data; name=\\\\\"p\\\\\"\\\\r\\\\n\\\\r\\\\nx\\\\r\\\\n){2,}",
+     "replace": "<part repeated>",
+     "reason": "keeps the golden small: the repeated parts of the logged bodies"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,24 @@
+{
+  "note": "Upstream #230: tlsMutualAuthenticationAllowBundledCa=true lets data-plane mTLS trust the bundled CA, with a WARN at startup",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "propertyFile": "mockserver.tlsMutualAuthenticationRequired=true\nmockserver.tlsMutualAuthenticationAllowBundledCa=true\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "timeoutSecs": 90,
+  "afterReady": [
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "[WARN] tlsMutualAuthenticationAllowBundledCa is enabled, so mTLS trusts client certificates signed by the default CA bundled with MockServer"
+    ]
+  }
+}

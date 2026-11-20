@@ -1,0 +1,265 @@
+{
+ "source": "at TRACE, a control-plane filter's matcher logs `created request matcher{}for open api definition{}` for each OpenAPI definition it first meets (its own MatcherBuilder caches them), and an OpenAPI filter's matcher logs it once as it is built; the log and the expectations each cache their filter matchers.",
+ "properties": {
+  "logLevel": "TRACE"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "o",
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+     "operationId": "getAbc"
+    },
+    "httpResponse": {
+     "body": "o"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "o2",
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+    },
+    "httpResponse": {
+     "body": "o2"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "p",
+    "httpRequest": {
+     "path": "/p"
+    },
+    "httpResponse": {
+     "body": "p"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "unfiltered: the empty filter's matcher meets both definitions, each once; its entries land after this answer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "the same cached matcher: nothing new; the last retrieval's two entries show"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/abc"
+   },
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "a new filter: two entries"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/abc"
+   },
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "cached: none"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "id": "p"
+   },
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "an expectation id filters by its definition: two entries"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "binaryData": "AAE="
+   },
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "a binary filter never meets an OpenAPI definition"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "id": "p"
+   },
+   "note": "by id: no matcher; an OpenAPI filter meeting an HTTP definition logs its match differences, not covered here"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+    "operationId": "getAbc"
+   },
+   "note": "an OpenAPI filter: its own matcher, then its one operation's matcher meeting each definition"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+   },
+   "note": "another OpenAPI filter: its matcher is created; requests are no definitions"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "the expectations' own matcher cache: the empty filter meets both"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/q1"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/q1"
+   },
+   "note": "cached: none"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "id": "o"
+   },
+   "note": "an id lists by id: no matcher"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+    },
+    "times": {
+     "atLeast": 0
+    }
+   },
+   "note": "a verification drops an OpenAPI definition: none"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "every entry before the clears"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": {
+    "path": "/c1"
+   },
+   "note": "the log's filter matcher meets both"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": {
+    "path": "/abc"
+   },
+   "note": "cached by the retrieval above: none"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "path": "/c2"
+   },
+   "note": "the expectations' filter matcher meets both"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/c3"
+   },
+   "note": "both caches: four"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "every entry so far"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "note": "clearing everything builds no matcher"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ]
+  }
+ ]
+}

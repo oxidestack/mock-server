@@ -1,0 +1,158 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_COMPACT_LOG_FORMAT": "true"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"id\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"httpRequest\": {\"path\": \"/a\"}, \"httpResponse\": {\"body\": \"x\"}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/a",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/nomatch",
+        "ownHost": true,
+        "expectStatus": 404
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/verify",
+        "ownHost": true,
+        "body": "{\"httpRequest\": {\"path\": \"/a\"}, \"times\": {\"atLeast\": 1}}",
+        "expectStatus": 202
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/verify",
+        "ownHost": true,
+        "body": "{\"httpRequest\": {\"path\": \"/zzz\"}, \"times\": {\"atLeast\": 1}}",
+        "expectStatus": 406
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/verifySequence",
+        "ownHost": true,
+        "body": "{\"httpRequests\": [{\"path\": \"/a\"}, {\"path\": \"/nomatch\"}]}",
+        "expectStatus": 202
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve?type=REQUESTS",
+        "ownHost": true,
+        "body": "{\"path\": \"/a\"}",
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve?type=LOGS",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear?type=LOG",
+        "ownHost": true,
+        "body": "{\"path\": \"/a\"}",
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "body": "{\"path\": \"/a\"}",
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/reset",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      " and system properties: [ ",
+      " ] and command line options: [ serverPort=",
+      " containing PEM -----BEGIN CERTIFICATE----- MIIDqDCCApCgAwIBAgIEPhwe6TANBgkqhkiG9w0BAQsFADBiMRswGQYDVQQDDBJ3 d3cubW9ja3NlcnZlci5jb20x...\n",
+      "[INFO] logger level is INFO, change using:\n -"
+    ],
+    "stdoutNotContains": [
+      "AsyncAPI control-plane reset"
+    ],
+    "stdoutInOrder": [
+      "[INFO] using environment variables: [",
+      " creating expectation: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa with id: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\n",
+      " received request: GET /a\n",
+      " request: GET /a matched expectation: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\n",
+      " returning response: response for request: GET /a for action: response from expectation: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\n",
+      " received request: GET /nomatch\n",
+      " request: GET /nomatch didn't match expectation \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\": aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa because: method matched path didn't match: string or regex match failed expected: /a found: /nomatch\n",
+      " closest expectation: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa matched 9/10 fields for request: GET /nomatch\n",
+      " no expectation for: GET /nomatch returning response: 404\n",
+      " verifying requests that match: { \"httpRequest\" : { \"path\" : \"/a\" }, \"times\" : { \"atLeast\" : 1 } }\n",
+      "[INFO] request: /a found at least once\n",
+      " verifying requests that match: { \"httpRequest\" : { \"path\" : \"/zzz\" }, \"times\" : { \"atLeast\" : 1 } }\n",
+      "[INFO] request not found at least once, expected: /zzz but was: [{ \"method\" : \"GET\", \"path\" : \"/a\", \"headers\" : {",
+      " verifying sequence that match: { \"httpRequests\" : [ { \"path\" : \"/a\" }, { \"path\" : \"/nomatch\" } ] }\n",
+      "[INFO] request sequence found: [{ \"path\" : \"/a\" }, { \"path\" : \"/nomatch\" }]\n",
+      " retrieved requests in json that match: /a\n",
+      " retrieved 1 active expectations in json that match: request\n",
+      " retrieved logs that match: request\n",
+      "[INFO] cleared logs that match: /a\n",
+      " removed expectation: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa with id: aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\n",
+      " cleared expectations that match: /a\n",
+      " resetting all expectations and request logs\n"
+    ]
+  }
+}

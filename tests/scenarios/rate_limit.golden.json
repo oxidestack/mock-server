@@ -1,0 +1,133 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/window\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"ok\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"rateLimit\" : {\n    \"limit\" : 2,\n    \"windowMillis\" : 60000\n  },\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/bucket\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"ok\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"rateLimit\" : {\n    \"algorithm\" : \"token_bucket\",\n    \"burst\" : 1,\n    \"errorStatus\" : 503,\n    \"refillPerSecond\" : 0.001,\n    \"retryAfter\" : \"7\"\n  },\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/template\"\n  },\n  \"httpResponseTemplate\" : {\n    \"template\" : \"{\\\"statusCode\\\": 200, \\\"body\\\": \\\"templated\\\"}\",\n    \"templateType\" : \"VELOCITY\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"rateLimit\" : {\n    \"algorithm\" : \"fixed_window\",\n    \"limit\" : 1,\n    \"windowMillis\" : 60000\n  },\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 2"
+      ],
+      "body": "ok",
+      "note": "1"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 2"
+      ],
+      "body": "ok",
+      "note": "2"
+    },
+    {
+      "status": 429,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json",
+        "retry-after: <about 60>",
+        "x-ratelimit-limit: 2",
+        "x-ratelimit-remaining: 0",
+        "x-ratelimit-reset: <epoch>"
+      ],
+      "body": "{\"error\":{\"type\":\"rate_limit_exceeded\",\"message\":\"request rate limit exceeded\"}}",
+      "note": "over the window limit"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 2"
+      ],
+      "body": "ok",
+      "note": "bucket 1"
+    },
+    {
+      "status": 503,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json",
+        "retry-after: 7",
+        "x-ratelimit-limit: 1",
+        "x-ratelimit-remaining: 0",
+        "x-ratelimit-reset: <epoch>"
+      ],
+      "body": "{\"error\":{\"type\":\"rate_limit_exceeded\",\"message\":\"request rate limit exceeded\"}}",
+      "note": "bucket empty"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 9"
+      ],
+      "body": "templated",
+      "note": "template 1"
+    },
+    {
+      "status": 429,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json",
+        "retry-after: <about 60>",
+        "x-ratelimit-limit: 1",
+        "x-ratelimit-remaining: 0",
+        "x-ratelimit-reset: <epoch>"
+      ],
+      "body": "{\"error\":{\"type\":\"rate_limit_exceeded\",\"message\":\"request rate limit exceeded\"}}",
+      "note": "template over"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 468",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "incorrect expectation json format for:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/bad\"\n    },\n    \"httpResponse\" : { },\n    \"rateLimit\" : {\n      \"limit\" : 0,\n      \"windowMillis\" : 10\n    }\n  }\n\n schema validation errors:\n\n  1 error:\n   - $.rateLimit.limit: must have a minimum value of 1\n  \n  OpenAPI Specification: https://app.swaggerhub.com/apis/jamesdbloom/mock-server-openapi/9.2.x\n  Documentation: https://mock-server.com/mock_server/creating_expectations.html",
+      "note": "limit 0"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 500",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "incorrect expectation json format for:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/bad\"\n    },\n    \"httpResponse\" : { },\n    \"rateLimit\" : {\n      \"algorithm\" : \"sliding\"\n    }\n  }\n\n schema validation errors:\n\n  1 error:\n   - $.rateLimit.algorithm: does not have a value in the enumeration [\"fixed_window\", \"token_bucket\"]\n  \n  OpenAPI Specification: https://app.swaggerhub.com/apis/jamesdbloom/mock-server-openapi/9.2.x\n  Documentation: https://mock-server.com/mock_server/creating_expectations.html",
+      "note": "unknown algorithm"
+    }
+  ]
+}

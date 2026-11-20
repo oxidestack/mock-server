@@ -1,0 +1,14 @@
+groups:
+  - name: mockserver
+    rules:
+      - record: mockserver:heap_used:max5m
+        expr: max_over_time(jvm_memory_used_bytes{area="heap", job="mockserver"}[5m])
+      - alert: MockServerHeapNearlyFull
+        expr: |
+          jvm_memory_used_bytes{area="heap", job="mockserver"}
+            / jvm_memory_max_bytes{area="heap", job="mockserver"} > 0.9
+        for: 5m
+        labels:
+          severity: warning
+      - alert: MockServerUnmatched
+        expr: rate(mock_server_expectations_not_matched_total[5m]) > 1

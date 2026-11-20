@@ -1,0 +1,129 @@
+{
+ "note": "T1.9: fan-in fails closed. Two peers (one with blanks around it, one with a trailing slash), neither reachable: a retrieve of REQUESTS or REQUEST_RESPONSES is 502 naming the peers, a count verify is a failure naming them, and what does not fan in is untouched.",
+ "properties": {
+  "clusterVerifyFanIn": "true",
+  "clusterVerifyFanInPeers": " http://{{deadhost}} , ,http://127.0.0.1:{{deadport}}/"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "api",
+    "httpRequest": {
+     "path": "/api"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "note": "the peer's own query never fans out, so it is served",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&fanInLocalOnly=true",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=CURL",
+   "body": {
+    "path": "/api"
+   }
+  },
+  {
+   "note": "LOG_ENTRIES of REQUESTS does not fan in",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/api"
+   },
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/api"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "response-aware verify is node-local, so it passes",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/api"
+    },
+    "httpResponse": {
+     "body": "x"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "expectationId verify is node-local",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "expectationId": {
+     "id": "api"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/api"
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS"
+  }
+ ]
+}

@@ -1,0 +1,88 @@
+{
+ "properties": {
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"target-503\", \"httpRequest\": {\"path\": \"/fb/503\", \"headers\": {\"connection\": [\"keep-alive\"]}}, \"httpResponse\": {\"statusCode\": 503, \"body\": \"down\"}, \"priority\": 20}, {\"id\": \"fwd-503\", \"httpRequest\": {\"path\": \"/fb/503\"}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"statusCode\": 203, \"body\": \"fallback for 503\"}}}, {\"id\": \"fwd-refused\", \"httpRequest\": {\"path\": \"/fb/refused\"}, \"priority\": 10, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{deadport}}}, \"fallbackResponse\": {\"statusCode\": 203, \"body\": \"fallback for refused\"}}}, {\"id\": \"target-pets\", \"httpRequest\": {\"method\": \"GET\", \"path\": \"/pets\", \"headers\": {\"connection\": [\"keep-alive\"]}}, \"httpResponse\": {\"statusCode\": 200, \"headers\": {\"content-type\": [\"application/json\"]}, \"body\": \"{\\\"not\\\":\\\"an array\\\"}\"}, \"priority\": 20}, {\"id\": \"fv-bad-response\", \"httpRequest\": {\"method\": \"GET\", \"path\": \"/pets\"}, \"priority\": 10, \"httpForwardValidateAction\": {\"specUrlOrPayload\": \"{\\\"openapi\\\":\\\"3.0.0\\\",\\\"info\\\":{\\\"version\\\":\\\"1.0.0\\\",\\\"title\\\":\\\"Pets\\\"},\\\"paths\\\":{\\\"/pets\\\":{\\\"get\\\":{\\\"operationId\\\":\\\"listPets\\\",\\\"parameters\\\":[{\\\"name\\\":\\\"limit\\\",\\\"in\\\":\\\"query\\\",\\\"schema\\\":{\\\"type\\\":\\\"integer\\\"}}],\\\"responses\\\":{\\\"200\\\":{\\\"description\\\":\\\"pets\\\",\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}}}}},\\\"post\\\":{\\\"operationId\\\":\\\"createPets\\\",\\\"requestBody\\\":{\\\"required\\\":true,\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}},\\\"responses\\\":{\\\"201\\\":{\\\"description\\\":\\\"created\\\"}}}}},\\\"components\\\":{\\\"schemas\\\":{\\\"Pet\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"id\\\",\\\"name\\\"],\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"integer\\\"},\\\"name\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\", \"host\": \"localhost\", \"port\": {{port}}}}, {\"id\": \"fv-bad-request\", \"httpRequest\": {\"method\": \"POST\", \"path\": \"/pets\"}, \"priority\": 10, \"httpForwardValidateAction\": {\"specUrlOrPayload\": \"{\\\"openapi\\\":\\\"3.0.0\\\",\\\"info\\\":{\\\"version\\\":\\\"1.0.0\\\",\\\"title\\\":\\\"Pets\\\"},\\\"paths\\\":{\\\"/pets\\\":{\\\"get\\\":{\\\"operationId\\\":\\\"listPets\\\",\\\"parameters\\\":[{\\\"name\\\":\\\"limit\\\",\\\"in\\\":\\\"query\\\",\\\"schema\\\":{\\\"type\\\":\\\"integer\\\"}}],\\\"responses\\\":{\\\"200\\\":{\\\"description\\\":\\\"pets\\\",\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}}}}},\\\"post\\\":{\\\"operationId\\\":\\\"createPets\\\",\\\"requestBody\\\":{\\\"required\\\":true,\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}},\\\"responses\\\":{\\\"201\\\":{\\\"description\\\":\\\"created\\\"}}}}},\\\"components\\\":{\\\"schemas\\\":{\\\"Pet\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"id\\\",\\\"name\\\"],\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"integer\\\"},\\\"name\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\", \"host\": \"localhost\", \"port\": {{port}}}}]"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "upstream 503: fallback",
+   "method": "GET",
+   "path": "/fb/503"
+  },
+  {
+   "note": "refused: fallback",
+   "method": "GET",
+   "path": "/fb/refused"
+  },
+  {
+   "note": "invalid response: 502",
+   "method": "GET",
+   "path": "/pets"
+  },
+  {
+   "note": "invalid request: 400",
+   "method": "POST",
+   "path": "/pets",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"id\":\"x\"}"
+  },
+  {
+   "note": "entries (upstream rewrites the forwarded request's Host while other threads log it: those header pairs are masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "\\\\?\"host\\\\?\" : \\[\\s*\\\\?\"[^\"\\\\]*\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\]|\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"Host\\\\?\" : \\[\\s*\\\\?\"(?:localhost:<port>|<deadhost>)\\\\?\"\\s*\\]",
+     "replace": "<received request headers>"
+    }
+   ]
+  },
+  {
+   "note": "request-response entries",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "\\\\?\"host\\\\?\" : \\[\\s*\\\\?\"[^\"\\\\]*\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\]|\\\\?\"content-length\\\\?\" : \\[\\s*\\\\?\"0\\\\?\"\\s*\\],(?:\",)?\\s*\"?\\s*\\\\?\"Host\\\\?\" : \\[\\s*\\\\?\"(?:localhost:<port>|<deadhost>)\\\\?\"\\s*\\]",
+     "replace": "<received request headers>"
+    }
+   ]
+  }
+ ]
+}

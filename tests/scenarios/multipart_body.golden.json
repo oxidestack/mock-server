@@ -1,0 +1,58 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/mp\",\n    \"body\" : {\n      \"type\" : \"MULTIPART\",\n      \"fields\" : {\n        \"title\" : [ \"report\" ]\n      },\n      \"filenames\" : {\n        \"upload\" : [ \"a.csv\" ]\n      },\n      \"partContentTypes\" : {\n        \"upload\" : [ \"text/csv\" ],\n        \"raw\" : [ \"application/octet-stream\" ]\n      }\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"multipart\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/mp2\",\n    \"body\" : {\n      \"type\" : \"MULTIPART\",\n      \"fields\" : {\n        \"title\" : [ \"other\" ]\n      }\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"mp2\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/mp3\",\n    \"body\" : {\n      \"type\" : \"MULTIPART\",\n      \"fields\" : {\n        \"upload\" : [ \"x,y\\n1,2\" ]\n      }\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"file content\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 9"
+      ],
+      "body": "multipart",
+      "note": "all match"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: path did not match (  string or regex match failed expected:     /mp    found:     /mp2 )"
+      ],
+      "body": "",
+      "note": "field differs"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 12"
+      ],
+      "body": "file content",
+      "note": "file content as field"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0"
+      ],
+      "body": "",
+      "note": "not multipart"
+    }
+  ]
+}

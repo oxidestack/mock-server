@@ -1,0 +1,130 @@
+{
+ "source": "hand-written (cases from upstream's HttpActionHandlerStreamedLlmUsageTest, 9.1.0): whole forwarded VOYAGE responses accounted by HttpActionHandler.emitForwardGenAiSpan (accountableOperation, isPolledCompletion, the provider clients' parseCompletionResponse), forwarded to this server's own mocks",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "VOYAGE"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-embed",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/embeddings",
+      "headers": {
+       "x-case": [
+        "embed"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[-0.013,0.024],\"index\":0}],\"model\":\"voyage-3.5\",\"usage\":{\"total_tokens\":4}}"
+     }
+    },
+    {
+     "id": "forward-embed",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/embed"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/embeddings",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "embed"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-rerank",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/rerank",
+      "headers": {
+       "x-case": [
+        "rerank"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"object\":\"list\",\"data\":[{\"relevance_score\":0.4375,\"index\":0},{\"relevance_score\":0.421875,\"index\":1}],\"model\":\"rerank-2.5\",\"usage\":{\"total_tokens\":26}}"
+     }
+    },
+    {
+     "id": "forward-rerank",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/rerank"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/rerank",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "rerank"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "Voyage embeddings: 4 in",
+   "method": "POST",
+   "path": "/client/embed",
+   "body": "{\"model\":\"voyage-3.5\",\"input\":[\"Sample text 1\"]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "Voyage rerank: 26 in",
+   "method": "POST",
+   "path": "/client/rerank",
+   "body": "{\"model\":\"rerank-2.5\",\"query\":\"Sample query\",\"documents\":[\"Sample document 1\",\"Sample document 2\"]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

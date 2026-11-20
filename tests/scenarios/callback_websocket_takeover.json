@@ -1,0 +1,80 @@
+{
+ "steps": [
+  {
+   "note": "registered; this socket is never read, so it answers no ping",
+   "wsOpen": "first",
+   "headers": {
+    "X-CLIENT-REGISTRATION-ID": "takeover-client"
+   }
+  },
+  {
+   "wsRead": "first"
+  },
+  {
+   "note": "the same id from a second connection: the first is pinged and, silent for 2 s, replaced",
+   "wsOpen": "second",
+   "headers": {
+    "X-CLIENT-REGISTRATION-ID": "takeover-client"
+   }
+  },
+  {
+   "wsRead": "second"
+  },
+  {
+   "note": "the replaced connection got the ping and is then closed",
+   "wsRead": "first",
+   "waitMillis": 5000
+  },
+  {
+   "note": "the successor is still registered: the replaced connection's close did not unregister it",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/takeover-callback"
+    },
+    "httpResponseObjectCallback": {
+     "clientId": "takeover-client"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/takeover-callback",
+   "async": "callback"
+  },
+  {
+   "wsRead": "second",
+   "capture": {
+    "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+    "as": "correlation"
+   },
+   "mask": [
+    "(?<=\"WebSocketCorrelationId\" : \\[ \")[^\"]+",
+    "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+   ],
+   "note": "the request handed to the successor"
+  },
+  {
+   "wsSend": "second",
+   "envelope": {
+    "type": "org.mockserver.model.HttpResponse",
+    "value": {
+     "statusCode": 202,
+     "headers": {
+      "WebSocketCorrelationId": [
+       "{{capture:correlation}}"
+      ]
+     },
+     "body": "from the successor"
+    }
+   }
+  },
+  {
+   "wsClose": "second"
+  },
+  {
+   "await": "callback"
+  }
+ ]
+}

@@ -1,0 +1,80 @@
+{
+ "source": "GraphQLMatcher.operationNameMatches runs a regex operationName through MatchingTimeoutExecutor.matchesWithRegexTimeout; a catastrophic `(.*a){25}` against a 40-character operationName passes regexMatchingTimeoutMillis (here 300), logs the WARN `graphql operationName regex evaluation timed out after {}ms for pattern:{}— treating as non-match`, and the request does not match. A short operationName fails within the budget; a normal regex still matches.",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "catastrophic",
+     "httpRequest": {
+      "path": "/graphql",
+      "body": {
+       "type": "GRAPHQL",
+       "query": "query Q { a }",
+       "operationName": "(.*a){25}"
+      }
+     },
+     "httpResponse": {
+      "body": "catastrophic"
+     }
+    },
+    {
+     "id": "normal",
+     "httpRequest": {
+      "path": "/graphql",
+      "body": {
+       "type": "GRAPHQL",
+       "query": "query Q { a }",
+       "operationName": "Ok[0-9]+"
+      }
+     },
+     "httpResponse": {
+      "body": "normal"
+     }
+    }
+   ]
+  },
+  {
+   "note": "Java backtracking passes the 300 ms budget: no match",
+   "method": "POST",
+   "path": "/graphql",
+   "body": {
+    "query": "query Q { a }",
+    "operationName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+   }
+  },
+  {
+   "note": "a short operationName fails within the budget: no timeout entry",
+   "method": "POST",
+   "path": "/graphql",
+   "body": {
+    "query": "query Q { a }",
+    "operationName": "ab"
+   }
+  },
+  {
+   "note": "a normal regex is unaffected",
+   "method": "POST",
+   "path": "/graphql",
+   "body": {
+    "query": "query Q { a }",
+    "operationName": "Ok12"
+   }
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

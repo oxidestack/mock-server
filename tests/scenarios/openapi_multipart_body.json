@@ -1,0 +1,49 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"upload\", \"version\": \"1\"}, \"paths\": {\"/upload\": {\"post\": {\"operationId\": \"upload\", \"requestBody\": {\"required\": true, \"content\": {\"multipart/form-data\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\"}, \"note\": {\"type\": \"string\"}}}}}}, \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+     "operationId": "upload"
+    },
+    "httpResponse": {
+     "body": "uploaded"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/upload",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=b0undary"
+   },
+   "body": "--b0undary\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\na\r\n--b0undary\r\nContent-Disposition: form-data; name=\"note\"\r\n\r\nn\r\n--b0undary--\r\n",
+   "note": "the required field is present: the operation's MultipartBody matcher matches"
+  },
+  {
+   "method": "POST",
+   "path": "/upload",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=b0undary"
+   },
+   "body": "--b0undary\r\nContent-Disposition: form-data; name=\"note\"\r\n\r\nn\r\n--b0undary--\r\n",
+   "note": "the required field is missing: no match"
+  },
+  {
+   "method": "POST",
+   "path": "/upload",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "name=a",
+   "note": "not multipart: no match"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "the expectation as the oracle echoes it"
+  }
+ ]
+}

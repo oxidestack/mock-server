@@ -1,0 +1,293 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "sa",
+    "httpRequest": {
+     "method": "GET",
+     "path": "/a"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "a"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "sb",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/b"
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "b"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "sc",
+    "httpRequest": {
+     "path": "/c"
+    },
+    "httpResponse": {
+     "statusCode": 202
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/b",
+   "body": "one"
+  },
+  {
+   "method": "GET",
+   "path": "/a",
+   "queryStringParameters": {
+    "q": [
+     "1"
+    ]
+   },
+   "headers": {
+    "X-One": "1"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/c"
+  },
+  {
+   "method": "POST",
+   "path": "/b",
+   "body": "two"
+  },
+  {
+   "method": "PUT",
+   "path": "/long/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  },
+  {
+   "note": "many fields differ, in field order",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "method": "DELETE",
+     "path": "/a",
+     "queryStringParameters": {
+      "q": [
+       "2"
+      ]
+     },
+     "headers": {
+      "X-One": [
+       "2"
+      ]
+     },
+     "cookies": {
+      "k": "v"
+     },
+     "body": "nope",
+     "secure": true,
+     "keepAlive": false
+    }
+   }
+  },
+  {
+   "note": "long path truncated",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/long/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy"
+    }
+   }
+  },
+  {
+   "note": "found too often: no block",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/b"
+    },
+    "times": {
+     "atMost": 1
+    }
+   }
+  },
+  {
+   "note": "by expectation id",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "expectationId": {
+     "id": "sb"
+    },
+    "times": {
+     "atLeast": 3
+    }
+   }
+  },
+  {
+   "note": "with a timeout",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/missing"
+    },
+    "timeout": 1
+   }
+  },
+  {
+   "note": "response with a timeout",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpResponse": {
+     "statusCode": 418
+    },
+    "timeout": 1
+   }
+  },
+  {
+   "note": "response count by request",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/b"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "X-R": [
+       "1"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "note": "id sequence: matched before",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "expectationIds": [
+     {
+      "id": "sa"
+     },
+     {
+      "id": "sb"
+     },
+     {
+      "id": "sa"
+     }
+    ]
+   }
+  },
+  {
+   "note": "id sequence: other ids' requests not counted",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "expectationIds": [
+     {
+      "id": "sc"
+     },
+     {
+      "id": "sa"
+     }
+    ]
+   }
+  },
+  {
+   "note": "request sequence: matched before",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/c"
+     },
+     {
+      "path": "/a"
+     }
+    ]
+   }
+  },
+  {
+   "note": "request sequence: first step",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "method": "PUT",
+      "path": "/a"
+     }
+    ]
+   }
+  },
+  {
+   "note": "request sequence with a timeout",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/zzz"
+     }
+    ],
+    "timeout": 1
+   }
+  },
+  {
+   "note": "response sequence: request and response differ",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/b"
+     },
+     {
+      "method": "PUT",
+      "path": "/c"
+     }
+    ],
+    "httpResponses": [
+     {
+      "statusCode": 201
+     },
+     {
+      "statusCode": 500
+     }
+    ]
+   }
+  },
+  {
+   "note": "response sequence: only responses",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpResponses": [
+     {
+      "statusCode": 202
+     },
+     {
+      "statusCode": 200
+     }
+    ]
+   }
+  }
+ ]
+}

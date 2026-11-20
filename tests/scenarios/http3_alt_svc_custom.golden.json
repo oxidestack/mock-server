@@ -1,0 +1,71 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19443\"; ma=3600",
+        "connection: keep-alive",
+        "content-length: 626",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/user-alt-svc\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"alt-svc\" : [ \"h3=\\\":9443\\\"; ma=60\" ]\n    },\n    \"body\" : \"x\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/plain\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"y\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "alt-svc: h3=\":19443\"; ma=3600",
+        "connection: keep-alive",
+        "content-length: 1"
+      ],
+      "body": "y",
+      "note": "AltSvcHeaderHandlerTest: the configured port and max age"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "alt-svc: h3=\":9443\"; ma=60",
+        "connection: keep-alive",
+        "content-length: 1"
+      ],
+      "body": "x",
+      "note": "a user-set Alt-Svc is not clobbered"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "alt-svc: h3=\":19443\"; ma=3600",
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: path did not match (  string or regex match failed expected:     /user-alt-svc    found:     /not-matched )"
+      ],
+      "body": "",
+      "note": "a 404 carries it too"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19443\"; ma=3600",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"artifactId\" : \"mockserver-core\",\n  \"gitHash\" : \"789142c1\",\n  \"groupId\" : \"org.mock-server\",\n  \"ports\" : [ <port> ],\n  \"version\" : \"9.2.0\"\n}",
+      "note": "control plane responses carry it as well"
+    }
+  ]
+}

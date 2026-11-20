@@ -1,0 +1,125 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/plain"
+     },
+     "httpResponse": {
+      "body": "plain"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/explicit"
+     },
+     "httpResponse": {
+      "headers": {
+       "X-Instance": [
+        "mine"
+       ]
+      },
+      "body": "explicit"
+     }
+    }
+   ],
+   "note": "before any defaultResponseHeaders"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "defaultResponseHeaders": "X-Instance=1"
+   },
+   "note": "the answer to the PUT that sets them carries the headers in force when the request arrived: none",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status",
+   "note": "a later control-plane answer carries them"
+  },
+  {
+   "method": "GET",
+   "path": "/plain",
+   "note": "a mocked response carries them"
+  },
+  {
+   "method": "GET",
+   "path": "/explicit",
+   "note": "a header the expectation sets wins"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "defaultResponseHeaders": "X-Other=2",
+    "corsMaxAgeInSeconds": 7
+   },
+   "note": "changing them: this answer carries the old X-Instance, while its CORS headers already use the new corsMaxAgeInSeconds",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/plain",
+   "note": "the new value from the next request on"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "other control-plane answers carry them too"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "defaultResponseHeaders": "",
+    "corsMaxAgeInSeconds": 0
+   },
+   "note": "clearing them: this answer still carries X-Other",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status",
+   "note": "none after clearing"
+  },
+  {
+   "method": "GET",
+   "path": "/plain"
+  }
+ ]
+}

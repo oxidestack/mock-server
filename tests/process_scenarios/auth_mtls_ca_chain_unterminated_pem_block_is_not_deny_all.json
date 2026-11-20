@@ -1,0 +1,54 @@
+{
+  "note": "a PEM block cut off before its footer ends the data (Pem.readPEM's EOFException), after a whole certificate",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "ca.pem": "-----BEGIN CERTIFICATE-----\nMIICjTCCAfagAwIBAgIUWNEBEw/5zssru4niMq05gTuDJ6owDQYJKoZIhvcNAQEL\nBQAwMjELMAkGA1UEBhMCR0IxEzARBgNVBAoMCk1vY2tTZXJ2ZXIxDjAMBgNVBAMM\nBXJzIGNhMB4XDTI2MTAwNzA3NDY1OVoXDTM2MTAwNDA3NDY1OVowMjELMAkGA1UE\nBhMCR0IxEzARBgNVBAoMCk1vY2tTZXJ2ZXIxDjAMBgNVBAMMBXJzIGNhMIGfMA0G\nCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDME0NrWhjbdu9clmuxylVv1k4HK31iCjkW\nk5M8Vammc+8yue9MaPbACPsLqvOHK1/+e82BcIb/3z+m+N0g6UehcY/4gZbCbZc2\n1jCA66526fgQLCr+3Sl9OLNCVFfx52+gl/CjNzENni+R53cmndfb59nsX3G4Vw82\nttHJXxBRJwIDAQABo4GfMIGcMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYDVR0PAQH/\nBAQDAgGGMCAGA1UdJQEB/wQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAgBgNVHQ4B\nAf8EFgQUpiljWcXfqN/wrP6eig9vj+BXLYwwMgYDVR0RAQH/BCgwJoIJbG9jYWxo\nb3N0hwR/AAABgQVhQGIuY4YMaHR0cDovL3gueS96MA0GCSqGSIb3DQEBCwUAA4GB\nAL86H3VBvvu/DaCsOfkhSM+NmjCpfw29+n56j6jXiLTHE8GTLLMFcpOU3Mnp1LlG\nOtZ7XTo9pp4IzhT5+JCa8DWkORMN25NrXGIItPjyKBUqqOOrdDifuE1GLIozIXku\nDiuyJJwkCTqcMYcu9I9eH5f0MItrjMOT5m7NUygXPPDg\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\nMIIB/DCCAaKgAwIBAgIUNmKjRQN4yL1z7FCntIvMcun1siQwCgYIKoZIzj0EAwIwEjEQMA4GA1UEAwwHZWMgbGVhZjAeFw0yNjEwMDcwNzQ2NTlaFw0zNjEwMDQwNzQ2NTlaMBIxEDAOBgNVBAMMB2VjIGxlYWYwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATdO8/E"
+  },
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{scratch}}/ca.pem\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates found"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "authentication handler could not be created": 0
+    }
+  }
+}

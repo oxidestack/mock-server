@@ -1,0 +1,60 @@
+{
+ "steps": [
+  {
+   "note": "a breakpoint on both phases for a client that is not connected",
+   "method": "PUT",
+   "path": "/mockserver/breakpoint/matcher",
+   "body": {
+    "httpRequest": {
+     "path": "/held"
+    },
+    "phases": [
+     "REQUEST",
+     "RESPONSE"
+    ],
+    "clientId": "nobody"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "held-1",
+    "httpRequest": {
+     "path": "/held"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "note": "goes on unheld",
+   "method": "GET",
+   "path": "/held"
+  },
+  {
+   "note": "each phase's dispatch fails: the registry's line, then the dispatcher's",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(X-MockServer-RequestTimestamp\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

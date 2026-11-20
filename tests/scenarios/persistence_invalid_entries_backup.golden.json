@@ -1,0 +1,105 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "deleted": true,
+      "note": "no reset: the first save is the one under test. The backups of earlier runs are removed"
+    },
+    {
+      "wrote": true,
+      "note": "an edit of the persisted file, which is also the watched initialisation file: one valid expectation, one invalid"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 13"
+      ],
+      "body": "kept response",
+      "note": "the reload skips the invalid entry and loads the other"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation kept: path did not match (  string or regex match failed expected:     /kept    found:     /broken )"
+      ],
+      "body": "",
+      "note": "the invalid entry is not loaded"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 234",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/added\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"added response\"\n  },\n  \"id\" : \"added\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "the first save would drop the invalid entry from the file"
+    },
+    {
+      "fileContent": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/kept\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"kept response\"\n  },\n  \"id\" : \"kept\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/added\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"added response\"\n  },\n  \"id\" : \"added\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "saved: the loaded expectations only"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - skipping an invalid expectation in JSON initialization file:\n\n  {{root}}/target/scratch/persistence_invalid_entries_backup.json\n\n which is:\n\n  expectation 2 of 2 (id \"broken\") for path \"/broken\"\n\n the other expectations in the file are loaded; it failed validation with:\n\n  incorrect expectation json format for:\n  \n    {\n      \"id\" : \"broken\",\n      \"httpRequest\" : {\n        \"path\" : \"/broken\"\n      },\n      \"httpResponse\" : {\n        \"statusCode\" : \"not a number\"\n      }\n    }\n  \n   schema validation errors:\n  \n    1 error:\n     - $.httpResponse.statusCode: string found, integer expected\n    \n    OpenAPI Specification: https://app.swaggerhub.com/apis/jamesdbloom/mock-server-openapi/9.2.x\n    Documentation: https://mock-server.com/mock_server/creating_expectations.html\n\n------------------------------------\n<timestamp> - persisted expectations {{root}}/target/scratch/persistence_invalid_entries_backup.json held expectations that could not be loaded, which saving would remove; the original was copied to {{root}}/target/scratch/persistence_invalid_entries_backup.json.invalid-entries-<yyyyMMdd-HHmmss>.bak - fix them there and copy them back",
+      "note": "the WARN of the skipped entry on the reload, and the WARN naming the backup before the first save"
+    },
+    {
+      "fileContent": "[ {\n  \"id\" : \"kept\",\n  \"httpRequest\" : {\n    \"path\" : \"/kept\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"kept response\"\n  }\n}, {\n  \"id\" : \"broken\",\n  \"httpRequest\" : {\n    \"path\" : \"/broken\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : \"not a number\"\n  }\n} ]",
+      "note": "the backup is the document as it was before the save, invalid entry included"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 237",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/second\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"second response\"\n  },\n  \"id\" : \"second\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "a later save backs up nothing more"
+    },
+    {
+      "fileContent": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/kept\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"kept response\"\n  },\n  \"id\" : \"kept\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/added\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"added response\"\n  },\n  \"id\" : \"added\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/second\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"second response\"\n  },\n  \"id\" : \"second\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "files": [
+        "persistence_invalid_entries_backup.json",
+        "persistence_invalid_entries_backup.json.invalid-entries-<yyyyMMdd-HHmmss>.bak"
+      ],
+      "note": "the persisted file and one backup"
+    },
+    {
+      "wrote": true,
+      "note": "the next run starts from a file without these expectations, so that the reload of the edit above is what loads them"
+    }
+  ]
+}

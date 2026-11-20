@@ -1,0 +1,1468 @@
+{
+ "source": "the MCP diagnosis tools, prompts and actionable expectation errors of 9.1.0. Own server (\"properties\"): diagnose_config reports the startup configuration; the five entries the oracle image fills from its own environment are masked, with the counts that include them.",
+ "properties": {
+  "maxExpectations": "4242",
+  "maxExpectatons": "1"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "exp-orders",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/orders/1"
+     },
+     "httpResponse": {
+      "body": "order 1"
+     }
+    },
+    {
+     "id": "exp-fwd",
+     "httpRequest": {
+      "path": "/fwd-dead"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    }
+   ]
+  },
+  {
+   "note": "unmatched",
+   "method": "GET",
+   "path": "/orders/2"
+  },
+  {
+   "note": "failed forward",
+   "method": "GET",
+   "path": "/fwd-dead"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "note": "prompts/list",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "prompts/list"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "prompt debug_unmatched_request",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "prompts/get",
+    "params": {
+     "name": "debug_unmatched_request",
+     "arguments": {
+      "method": "GET",
+      "path": "/orders/2"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "prompt why_did_verify_fail",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "prompts/get",
+    "params": {
+     "name": "why_did_verify_fail",
+     "arguments": {
+      "method": "GET",
+      "path": "/orders/2"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "prompt fix_my_expectation",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "prompts/get",
+    "params": {
+     "name": "fix_my_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/orders/2"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "prompt why_forward_failed",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "prompts/get",
+    "params": {
+     "name": "why_forward_failed",
+     "arguments": {
+      "method": "GET",
+      "path": "/orders/2"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "prompt create_mock_from_description",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "prompts/get",
+    "params": {
+     "name": "create_mock_from_description",
+     "arguments": {
+      "description": "GET /pets returns {{method}} a list"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "prompt missing both arguments",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "prompts/get",
+    "params": {
+     "name": "why_forward_failed"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "prompt null argument",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 18,
+    "method": "prompts/get",
+    "params": {
+     "name": "fix_my_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": null
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "prompt arguments not an object",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 19,
+    "method": "prompts/get",
+    "params": {
+     "name": "create_mock_from_description",
+     "arguments": "x"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "diagnose_config default",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 20,
+    "method": "tools/call",
+    "params": {
+     "name": "diagnose_config",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    {
+     "regex": "properties[^\\[]{0,8}\\[[^\\]]*\\]",
+     "replace": "properties <image-env>"
+    },
+    "\"count[^0-9]{1,8}\\d+",
+    "explicitlySetCount[^0-9]{1,8}\\d+"
+   ]
+  },
+  {
+   "note": "diagnose_config by name",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 21,
+    "method": "tools/call",
+    "params": {
+     "name": "diagnose_config",
+     "arguments": {
+      "name": "MOCKSERVER_MAX_EXPECTATIONS"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "explicitlySetCount[^0-9]{1,8}\\d+"
+   ]
+  },
+  {
+   "note": "diagnose_config typo",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 22,
+    "method": "tools/call",
+    "params": {
+     "name": "diagnose_config",
+     "arguments": {
+      "name": "logLevle"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "explicitlySetCount[^0-9]{1,8}\\d+"
+   ]
+  },
+  {
+   "note": "diagnose_config nothing",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 23,
+    "method": "tools/call",
+    "params": {
+     "name": "diagnose_config",
+     "arguments": {
+      "name": "zzzzzz"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "explicitlySetCount[^0-9]{1,8}\\d+"
+   ]
+  },
+  {
+   "note": "explain_forward_failure",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 24,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_forward_failure",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "explain_forward_failure limit 0",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 25,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_forward_failure",
+     "arguments": {
+      "limit": 0
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "explain_forward_failure blank id",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 26,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_forward_failure",
+     "arguments": {
+      "correlationId": " "
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "explain_forward_failure numeric id",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 27,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_forward_failure",
+     "arguments": {
+      "correlationId": 5
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "explain_forward_failure unknown id",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_forward_failure",
+     "arguments": {
+      "correlationId": "no-such-id"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "test_template velocity",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 29,
+    "method": "tools/call",
+    "params": {
+     "name": "test_template",
+     "arguments": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"$request.path\"}",
+      "request": {
+       "path": "/a"
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "durationMillis[^0-9]{1,8}\\d+"
+   ]
+  },
+  {
+   "note": "test_template mustache forward",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 30,
+    "method": "tools/call",
+    "params": {
+     "name": "test_template",
+     "arguments": {
+      "templateType": "MUSTACHE",
+      "actionType": "FORWARD_TEMPLATE",
+      "template": "{\"path\": \"{{ request.path }}\", \"headers\": {\"Host\": [\"x\"]}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "durationMillis[^0-9]{1,8}\\d+"
+   ]
+  },
+  {
+   "note": "test_template missing template",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 31,
+    "method": "tools/call",
+    "params": {
+     "name": "test_template",
+     "arguments": {
+      "templateType": "VELOCITY"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "test_template bad engine",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 32,
+    "method": "tools/call",
+    "params": {
+     "name": "test_template",
+     "arguments": {
+      "templateType": "FREEMARKER",
+      "template": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "lint_expectations stored",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 33,
+    "method": "tools/call",
+    "params": {
+     "name": "lint_expectations",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "lint_expectations given",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 34,
+    "method": "tools/call",
+    "params": {
+     "name": "lint_expectations",
+     "arguments": {
+      "expectations": [
+       {
+        "httpRequest": {
+         "path": "orders"
+        },
+        "httpResponse": {},
+        "times": {
+         "remainingTimes": 0
+        }
+       },
+       {
+        "httpRequest": {
+         "method": "GTE",
+         "path": "/x?a=1"
+        },
+        "httpResponse": {}
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "lint_expectations maxIssues 1",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 35,
+    "method": "tools/call",
+    "params": {
+     "name": "lint_expectations",
+     "arguments": {
+      "maxIssues": 1,
+      "expectations": [
+       {
+        "httpRequest": {
+         "path": "orders"
+        },
+        "httpResponse": {},
+        "times": {
+         "remainingTimes": 0
+        }
+       },
+       {
+        "httpRequest": {
+         "method": "GTE",
+         "path": "/x?a=1"
+        },
+        "httpResponse": {}
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "lint_expectations maxIssues 0",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 36,
+    "method": "tools/call",
+    "params": {
+     "name": "lint_expectations",
+     "arguments": {
+      "maxIssues": 0
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "lint_expectations bad expectations",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 37,
+    "method": "tools/call",
+    "params": {
+     "name": "lint_expectations",
+     "arguments": {
+      "expectations": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "suggest_expectation_fix",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 38,
+    "method": "tools/call",
+    "params": {
+     "name": "suggest_expectation_fix",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "suggest_expectation_fix for one",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 39,
+    "method": "tools/call",
+    "params": {
+     "name": "suggest_expectation_fix",
+     "arguments": {
+      "expectationId": "exp-orders",
+      "limit": 20
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "suggest_expectation_fix for other",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 40,
+    "method": "tools/call",
+    "params": {
+     "name": "suggest_expectation_fix",
+     "arguments": {
+      "expectationId": "exp-none"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "suggest_expectation_fix limit 21",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 41,
+    "method": "tools/call",
+    "params": {
+     "name": "suggest_expectation_fix",
+     "arguments": {
+      "limit": 21
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "suggest_expectation_fix numeric id",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 42,
+    "method": "tools/call",
+    "params": {
+     "name": "suggest_expectation_fix",
+     "arguments": {
+      "expectationId": 7
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation unknown",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 43,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/c1",
+      "body": "x",
+      "Status_Code": 201,
+      "foo": 1,
+      "_meta": {}
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation chaos not object",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 44,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/c2",
+      "chaos": 5
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation chaos unknown",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 45,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/c2",
+      "chaos": {
+       "errorstatus": 503,
+       "bogus": 1
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation method number",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 46,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": 5,
+      "path": "/c3"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation path object",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 47,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": {
+       "x": 1
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation headers not object",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 48,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/c4",
+      "responseHeaders": [
+       "a"
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation header object",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 49,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/c4",
+      "responseHeaders": {
+       "X-A": {
+        "b": 1
+       }
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation header empty array",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 50,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/c4",
+      "responseHeaders": {
+       "X-A": []
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "create_expectation header arrays",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 51,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/c5",
+      "responseHeaders": {
+       "X-A": [
+        "1",
+        "2"
+       ],
+       "X-N": 7,
+       "X-B": true
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "header arrays served",
+   "method": "GET",
+   "path": "/c5"
+  },
+  {
+   "note": "raw_expectation string",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 52,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_expectation",
+     "arguments": {
+      "expectation": "x"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "raw_expectation empty array",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 53,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_expectation",
+     "arguments": {
+      "expectation": []
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "raw_expectation invalid",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 54,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_expectation",
+     "arguments": {
+      "expectation": {
+       "httpRequest": {
+        "path": 5
+       },
+       "httpResponse": {
+        "statusCode": "x"
+       }
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "raw_expectation invalid array",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 55,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_expectation",
+     "arguments": {
+      "expectation": [
+       {
+        "httpRequest": {
+         "path": "/r1"
+        },
+        "httpResponse": {}
+       },
+       "x",
+       {
+        "httpRequest": {
+         "method": 1
+        },
+        "times": {
+         "remainingTimes": "a"
+        }
+       }
+      ]
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "raw_expectation valid",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 56,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_expectation",
+     "arguments": {
+      "expectation": {
+       "id": "exp-raw",
+       "httpRequest": {
+        "path": "/r2"
+       },
+       "httpResponse": {
+        "body": "raw"
+       }
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+"
+   ],
+   "compare": "json"
+  }
+ ]
+}

@@ -1,0 +1,50 @@
+{
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a control-plane upload over TLS cut short: its Authorization and Cookie never reach the log",
+      "tls": true,
+      "tcp": [
+        {
+          "text": "PUT /mockserver/expectation HTTP/1.1\r\nHost: {{host}}\r\nAuthorization: Basic YWRtaW46czNjcmV0\r\nCookie: session=s3cret\r\nContent-Type: application/json\r\nContent-Length: 100000\r\n\r\n[{\"httpRequest\":"
+        }
+      ],
+      "chunkMillis": 50
+    },
+    {
+      "note": "the same, an absolute-form target",
+      "tls": true,
+      "tcp": [
+        {
+          "text": "PUT http://{{host}}/mockserver/expectation HTTP/1.1\r\nHost: {{host}}\r\nAuthorization: Basic YWRtaW46czNjcmV0\r\nContent-Type: application/json\r\nContent-Length: 100000\r\n\r\n[{\"httpRequest\":"
+        }
+      ],
+      "chunkMillis": 50
+    },
+    {
+      "note": "a data-plane upload cut short in the clear, chunked",
+      "tcp": [
+        {
+          "text": "POST /upload?part=1 HTTP/1.1\r\nHost: {{host}}\r\nTransfer-Encoding: chunked\r\nX-Upload: first\r\n\r\n4\r\nabcd\r\n"
+        }
+      ],
+      "chunkMillis": 50
+    },
+    {
+      "note": "the entry is written once the server has read the client's close, after it on the oracle too, so a retrieve sent at once can miss it",
+      "sleepMillis": 1000
+    },
+    {
+      "note": "the cut-short entries",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        "\"epochTime\" : \\d+",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    }
+  ]
+}

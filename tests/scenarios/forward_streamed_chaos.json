@@ -1,0 +1,129 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/up"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "Content-Type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"upstream\":true}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fe/err"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     "chaos": {
+      "errorStatus": 503,
+      "retryAfter": "7",
+      "errorProbability": 1.0
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fe/drop"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     "chaos": {
+      "dropConnectionProbability": 1.0
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fe/slow"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     "chaos": {
+      "latency": {
+       "timeUnit": "MILLISECONDS",
+       "value": 600
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/fe/err",
+   "headers": {
+    "accept": "text/event-stream"
+   },
+   "note": "streamed forward: an injected error replaces the stream"
+  },
+  {
+   "method": "GET",
+   "path": "/fe/err",
+   "note": "buffered forward: the same error"
+  },
+  {
+   "method": "GET",
+   "path": "/fe/slow",
+   "headers": {
+    "accept": "text/event-stream"
+   },
+   "minMillis": 600,
+   "note": "streamed forward: chaos latency before the head"
+  },
+  {
+   "method": "GET",
+   "path": "/fe/slow",
+   "minMillis": 600,
+   "note": "buffered forward: the same latency"
+  },
+  {
+   "tcp": [
+    "R0VUIC9mZS9kcm9wIEhUVFAvMS4xDQpIb3N0OiBsb2NhbGhvc3Q6MTA4MA0KQWNjZXB0OiB0ZXh0L2V2ZW50LXN0cmVhbQ0KDQo="
+   ],
+   "text": true,
+   "note": "streamed forward: the connection is dropped"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/fe/err"
+   },
+   "mask": [
+    "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]"
+   ],
+   "note": "the replaced streamed exchange is logged as the error"
+  }
+ ]
+}

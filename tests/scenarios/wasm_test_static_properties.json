@@ -1,0 +1,105 @@
+{
+ "source": "POST /mockserver/wasm/test builds new WasmRuntime(bytes), whose wasmMaxMemoryPages and wasmExecutionTimeoutMillis come from the static ConfigurationProperties (the startup values), while the WASM body matcher reads the live Configuration a PUT /mockserver/configuration changes",
+ "isolated": true,
+ "properties": {
+  "wasmEnabled": "true",
+  "wasmMaxMemoryPages": "4",
+  "wasmExecutionTimeoutMillis": "1500"
+ },
+ "steps": [
+  {
+   "note": "startup values: 4 pages, growing by 10 fails",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/memory-grow.wasm}}",
+    "request": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "note": "raise both limits at runtime",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "wasmMaxMemoryPages": 256,
+    "wasmExecutionTimeoutMillis": 60000
+   }
+  },
+  {
+   "note": "the dry run keeps the startup page cap",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/memory-grow.wasm}}",
+    "request": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "note": "the dry run keeps the startup budget: a looping module fails closed after 1500 ms, not 60 s",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "minMillis": 1500,
+   "body": {
+    "module": "{{base64:wasm/units/match-loop.wasm}}",
+    "request": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "note": "the body matcher reads the live configuration",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=memory-grow-408",
+   "bodyFile": "wasm/units/memory-grow.wasm"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/grow",
+     "body": {
+      "type": "WASM",
+      "moduleName": "memory-grow-408"
+     }
+    },
+    "httpResponse": {
+     "body": "grew by 10 pages"
+    }
+   }
+  },
+  {
+   "note": "8.0.0's body matcher reads HttpState's copy of the configuration, which a PUT of /mockserver/configuration does not reach; with one configuration (adopted upstream fix) it grows",
+   "method": "POST",
+   "path": "/grow",
+   "body": "x"
+  },
+  {
+   "note": "lower the page cap at runtime: the dry run keeps the startup cap of 4, the body matcher follows",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "wasmMaxMemoryPages": 8
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/grow",
+   "body": "x"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/memory-grow.wasm}}",
+    "request": {
+     "body": "x"
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,209 @@
+{
+ "source": "hand-written: llmSemanticMatchingEnabled with a reachable LLM backend (the scenario's peer judges yes/no): a semanticMatchAgainst predicate is decided by SemanticPromptMatcher",
+ "peer": true,
+ "properties": {
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "5000",
+  "llmSemanticMatchingEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "yes",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "MESSAGE<<<I want my money back",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"  Yes, it does.\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "no",
+     "priority": -1,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"no\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    }
+   ],
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "refund",
+     "priority": 5,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "conversationPredicates": {
+       "semanticMatchAgainst": "the user asks for a refund"
+      },
+      "completion": {
+       "text": "Refund issued."
+      }
+     }
+    },
+    {
+     "id": "fallback",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "statusCode": 418,
+      "body": "no semantic match"
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "be kind"
+     },
+     {
+      "role": "user",
+      "content": "I want my money back please"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "be kind"
+     },
+     {
+      "role": "user",
+      "content": "What is the weather today?"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "system",
+      "content": "be kind"
+     },
+     {
+      "role": "user",
+      "content": "I want my money back please"
+     }
+    ]
+   },
+   "note": "same prompt again: the cached verdict",
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": []
+   },
+   "note": "no messages: the matcher fails before the predicate"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "the judge prompts",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "\"Host\" : \\[ \"[^\"]*\" \\]",
+     "replace": "\"Host\" : [ \"<peer>\" ]"
+    },
+    {
+     "regex": "\"host\" : \"[^\"]*\"",
+     "replace": "\"host\" : \"<host>\""
+    },
+    {
+     "regex": "\"port\" : (<port>|\\d+)",
+     "replace": "\"port\" : <port>"
+    }
+   ],
+   "node": "peer"
+  }
+ ]
+}

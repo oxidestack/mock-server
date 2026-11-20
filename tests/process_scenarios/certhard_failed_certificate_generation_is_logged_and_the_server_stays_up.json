@@ -1,0 +1,42 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.dynamicallyCreateCertificateAuthorityCertificate=true",
+    "-Dmockserver.directoryToSaveDynamicSSLCertificate={{scratch}}",
+    "-Dmockserver.sslCertificateDomainName=#zz"
+  ],
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 3,
+      "label": "t"
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/status",
+        "expectStatus": 200
+      }
+    }
+  ],
+  "timeoutSecs": 240,
+  "expect": {
+    "running": true,
+    "tls": {
+      "t": "refused"
+    },
+    "stdoutContains": [
+      "exception while generating private key and X509 certificate",
+      "SSL or decoder fault caught by port unification handler"
+    ]
+  }
+}

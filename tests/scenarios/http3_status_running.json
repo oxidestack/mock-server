@@ -1,0 +1,61 @@
+{
+ "properties": {
+  "http3Port": "19443"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "note": "running (the oracle's container has no QUIC support, so its listener never starts: status masked)",
+   "mask": [
+    {
+     "regex": "^\\{.*\\}$",
+     "replace": "<status>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <status length>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status",
+   "note": "the UDP port is not a bound port"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/own"
+     },
+     "httpResponse": {
+      "headers": {
+       "Alt-Svc": [
+        "h2=\":443\""
+       ]
+      },
+      "body": "own"
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/own",
+   "note": "a response with its own Alt-Svc keeps it"
+  },
+  {
+   "method": "GET",
+   "path": "/nothing",
+   "note": "404s advertise too"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/mcp",
+   "note": "MCP responses are not decorated"
+  }
+ ]
+}

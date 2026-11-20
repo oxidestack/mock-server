@@ -1,0 +1,94 @@
+{
+ "source": "at TRACE, `HttpRequestsPropertiesMatcher.apply` logs `created request matcher{}for open api definition{}` when an OpenAPI expectation's matcher is built or its definition changes, never for an equal definition or an HTTP matcher updated into an OpenAPI expectation.",
+ "properties": {
+  "logLevel": "TRACE"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "openapi",
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+     "operationId": "getAbc"
+    },
+    "httpResponse": {
+     "body": "one"
+    }
+   },
+   "note": "a new OpenAPI expectation: its matcher is created"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "openapi",
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}",
+     "operationId": "getAbc"
+    },
+    "httpResponse": {
+     "body": "two"
+    }
+   },
+   "note": "the same definition, another response: updated, the matcher kept"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "openapi",
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+    },
+    "httpResponse": {
+     "body": "three"
+    }
+   },
+   "note": "another definition: the matcher is created again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "plain",
+    "httpRequest": {
+     "path": "/x"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "plain",
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"u\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+    },
+    "httpResponse": {
+     "body": "y"
+    }
+   },
+   "note": "an HTTP expectation updated into an OpenAPI one keeps its HTTP matcher: nothing is created"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "the reset's own entries and every expectation entry in order"
+  }
+ ]
+}

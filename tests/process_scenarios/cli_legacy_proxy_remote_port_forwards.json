@@ -1,0 +1,48 @@
+{
+  "note": "MainTest.shouldStartMockServerWithRemotePort: -proxyRemotePort alone forwards an unmatched request to localhost. The server forwards to itself; the expectation matches only the forwarded copy, which carries MockServer's x-forwarded-by loop marker",
+  "target": "both",
+  "pickPort": true,
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-proxyRemotePort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "SERVER_PORT": "",
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "timeoutSecs": 90,
+  "afterReady": [
+    {
+      "awaitAnswerMillis": 20000
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"httpRequest\": {\"path\": \"/forwarded\", \"headers\": {\"x-forwarded-by\": [\"MockServer_.*\"]}}, \"httpResponse\": {\"body\": \"port_forwarded_response\"}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/forwarded",
+        "ownHost": true,
+        "expectStatus": 200,
+        "expectBodyContains": "port_forwarded_response"
+      }
+    }
+  ],
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "proxyRemotePort="
+    ]
+  }
+}

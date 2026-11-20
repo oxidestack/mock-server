@@ -1,0 +1,155 @@
+{
+  "properties": {
+    "maxHeaderSize": "32768",
+    "logLevel": "WARN"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/limit"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/upload"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[^\"]+\""
+      ]
+    },
+    {
+      "note": "a header list of exactly maxHeaderSize (RFC 9113 6.5.2 sizes) is served",
+      "h2raw": {
+        "method": "GET",
+        "path": "/limit",
+        "authority": "localhost",
+        "decode": true,
+        "headers": [
+          [
+            "x-filler",
+            "{{repeat:32549:a}}"
+          ]
+        ]
+      }
+    },
+    {
+      "note": "one byte over is answered 431 and its stream reset with PROTOCOL_ERROR; the next stream is served",
+      "h2raw": {
+        "method": "POST",
+        "path": "/limit",
+        "authority": "localhost",
+        "decode": true,
+        "open": true,
+        "headers": [
+          [
+            "x-filler",
+            "{{repeat:32549:a}}"
+          ]
+        ],
+        "streams": [
+          {
+            "method": "GET",
+            "path": "/limit"
+          }
+        ]
+      }
+    },
+    {
+      "note": "a header block more than a quarter over maxHeaderSize closes the connection with GOAWAY PROTOCOL_ERROR",
+      "h2raw": {
+        "method": "GET",
+        "path": "/limit",
+        "authority": "localhost",
+        "decode": true,
+        "headers": [
+          [
+            "x-filler",
+            "{{repeat:98304:a}}"
+          ]
+        ]
+      }
+    },
+    {
+      "note": "trailers of exactly maxHeaderSize are served",
+      "h2raw": {
+        "method": "POST",
+        "path": "/upload",
+        "authority": "localhost",
+        "decode": true,
+        "body": "request body",
+        "trailers": [
+          [
+            "x-trailer",
+            "{{repeat:32727:a}}"
+          ]
+        ]
+      }
+    },
+    {
+      "note": "trailers one byte over reset the stream on a direct connection, no 431; the next stream is served",
+      "h2raw": {
+        "method": "POST",
+        "path": "/upload",
+        "authority": "localhost",
+        "decode": true,
+        "body": "request body",
+        "trailers": [
+          [
+            "x-trailer",
+            "{{repeat:32728:a}}"
+          ]
+        ],
+        "streams": [
+          {
+            "method": "GET",
+            "path": "/upload"
+          }
+        ]
+      }
+    },
+    {
+      "note": "neither refused request was dispatched",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+      "body": {
+        "path": "/upload"
+      },
+      "mask": [
+        {
+          "regex": "a{100,}",
+          "replace": "a...",
+          "reason": "the filler values"
+        }
+      ]
+    },
+    {
+      "note": "one WARN for each refusal",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "from:\n\n  /[^\n]+",
+          "replace": "from:\n\n  <client>",
+          "reason": "the client's address seen from inside the oracle's container"
+        },
+        {
+          "regex": "a{100,}",
+          "replace": "a...",
+          "reason": "the filler values, thousands of bytes each"
+        }
+      ]
+    }
+  ]
+}

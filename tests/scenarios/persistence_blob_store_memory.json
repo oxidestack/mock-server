@@ -1,0 +1,37 @@
+{
+ "properties": {
+  "proxySetupLogging": "false",
+  "blobStoreType": "memory",
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/persistence_blob_store_memory.json"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "note": "blobStoreType=memory is not the FilesystemBlobStore: the persisted document goes to the in-memory blob store, the file stays as created",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "memory-blob-1",
+    "httpRequest": {
+     "path": "/memory-blob"
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   }
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "the file stays as created at startup (empty)",
+   "readFile": "{{scratch}}/persistence_blob_store_memory.json"
+  },
+  {
+   "note": "startup entries: the restore from the in-memory store found nothing",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

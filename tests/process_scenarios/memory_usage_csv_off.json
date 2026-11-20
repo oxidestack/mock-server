@@ -1,0 +1,53 @@
+{
+  "note": "Port of MemoryMonitoringTest.shouldNotWriteAnyFileWhenOutputMemoryUsageCsvDisabled: with memoryUsageCsvDirectory set but outputMemoryUsageCsv off (its default), no memoryUsage_<date>.csv is written: not the header at startup (memory_usage_csv shows it is written then when on), nor a row after expectations are added.",
+  "target": "both",
+  "pickPort": true,
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_OUTPUT_MEMORY_USAGE_CSV": "false",
+    "MOCKSERVER_MEMORY_USAGE_CSV_DIRECTORY": "{{scratch}}"
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 2000
+  },
+  "timeoutSecs": 60,
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "body": "{\"httpRequest\": {\"path\": \"/csv-off1\"}, \"httpResponse\": {\"statusCode\": 200}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "body": "{\"httpRequest\": {\"path\": \"/csv-off2\"}, \"httpResponse\": {\"statusCode\": 200}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/csv-off1",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 1000
+    }
+  ],
+  "expect": {
+    "running": true,
+    "absentFiles": [
+      "{{scratch}}/memoryUsage_*.csv"
+    ]
+  }
+}

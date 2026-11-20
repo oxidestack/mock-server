@@ -1,0 +1,370 @@
+{
+ "quic": true,
+ "properties": {
+  "http3Port": "19485",
+  "grpcBidiStreamingEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "pollUntil": "\"enabled\" ?: ?true",
+   "note": "wait for the HTTP/3 server"
+  },
+  {
+   "h3": true,
+   "method": "GET",
+   "path": "/warm-up",
+   "note": "lets the oracle's startup logging finish"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the oracle may log its startup entries after the opening reset: reset again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc",
+   "note": "descriptors"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": \"late\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1500
+       }
+      }
+     ]
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "server stream: one message then a slow one"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "grpc-timeout": "300m"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "server stream: deadline mid-stream"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "server stream: no grpc-timeout"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "note": "clear expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"late\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1500
+       }
+      }
+     ]
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "server stream: a slow first message"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "grpc-timeout": "200m"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "server stream: deadline before any message"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "note": "clear expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": \"late\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1500
+       }
+      }
+     ]
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "bidi: one message then a slow one"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "grpc-timeout": "300m"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "bidi: deadline mid-stream"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "note": "clear expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"late\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1500
+       }
+      }
+     ]
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "bidi: a slow first message"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "grpc-timeout": "200m"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "bidi: deadline before any message"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "note": "clear expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"first\"}"
+      },
+      {
+       "json": "{\"greeting\": \"late\"}",
+       "delay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 1500
+       }
+      }
+     ]
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "bidi again"
+  },
+  {
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "grpc-timeout": "300m"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "bidi over HTTP/2: deadline mid-stream",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "note": "clear expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "httpResponse": {
+     "body": {
+      "greeting": "plain"
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "a plain response on the bidi method"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "a bidi method answered by a plain response over HTTP/3"
+  },
+  {
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "a bidi method answered by a plain response over HTTP/2",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "note": "clear expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "body": {
+      "greeting": "hi"
+     },
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 800
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "unary: a delayed response"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "grpc-timeout": "200m"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "maxMillis": 5000,
+   "binaryBody": true,
+   "note": "unary: grpc-timeout shorter than the delay"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(\"totalTimeInMillis\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ],
+   "note": "what the oracle logged"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear",
+   "note": "clear descriptors"
+  }
+ ]
+}

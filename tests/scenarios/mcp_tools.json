@@ -1,0 +1,433 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "note": "tools/list",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/list"
+   },
+   "mask": [
+    {
+     "regex": "http://localhost:(1080|<port>|\\d+)/mockserver/mcp",
+     "replace": "http://localhost:1080/mockserver/mcp"
+    },
+    "content-length: .*"
+   ]
+  },
+  {
+   "note": "get_status",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "get_status",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "\"ports\" ?: ?\\[ ?(\\d+|<port>) ?\\]",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "record without path",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {}
+    }
+   }
+  },
+  {
+   "note": "record outside",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/etc/x.json"
+     }
+    }
+   },
+   "mask": [
+    {
+     "regex": "working directory \\([^)]*\\)",
+     "replace": "working directory (<cwd>)"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "record missing dir",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/no-such-dir-msrs/x.json"
+     }
+    }
+   }
+  },
+  {
+   "note": "record nothing yet",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-mcp-fixture.json"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/api/answer"
+     },
+     "httpResponse": {
+      "headers": {
+       "x-up": [
+        "1"
+       ],
+       "Set-Cookie": [
+        "a=b"
+       ]
+      },
+      "body": "it is sunny"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/api/events"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "event: a\ndata: {\"token\":\"t1\",\"x\":1}\n\ndata: two\n\n"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/p/.*"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      },
+      "requestModifier": {
+       "path": {
+        "regex": "^/p",
+        "substitution": ""
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/p/api/answer",
+   "headers": {
+    "Authorization": [
+     "Bearer secret"
+    ],
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": "{\"request_id\":\"r1\",\"q\":\"weather\",\"token\":\"t\"}"
+  },
+  {
+   "method": "GET",
+   "path": "/p/api/events"
+  },
+  {
+   "note": "record filtered",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-mcp-fixture.json",
+      "requestPath": "/p/api/answer",
+      "redactBodyFields": [
+       "token"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "note": "record all",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-mcp-fixture.json",
+      "redactBodyFields": [
+       "token"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "load without path",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {}
+    }
+   }
+  },
+  {
+   "note": "load missing",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-missing.json"
+     }
+    }
+   }
+  },
+  {
+   "note": "load outside",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/etc/passwd"
+     }
+    }
+   },
+   "mask": [
+    {
+     "regex": "working directory \\([^)]*\\)",
+     "replace": "working directory (<cwd>)"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "load strict normalised",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-mcp-fixture.json",
+      "normalizeRequestBodyFields": [
+       "REQUEST_ID"
+      ],
+      "strict": true
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "active",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "mask": [
+    "\"(x-mockserver-response-time-ms)\" : \\[ \"\\d+\" \\]"
+   ]
+  },
+  {
+   "note": "cassettes",
+   "method": "GET",
+   "path": "/mockserver/cassettes",
+   "mask": [
+    "\"lastUsed\" : \\d+"
+   ]
+  },
+  {
+   "note": "unmatched path hits guard",
+   "method": "GET",
+   "path": "/p/api/events-other"
+  },
+  {
+   "note": "reset tool",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "reset",
+     "arguments": {}
+    }
+   }
+  },
+  {
+   "note": "reset cleared",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  }
+ ]
+}

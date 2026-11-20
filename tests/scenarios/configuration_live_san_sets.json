@@ -1,0 +1,112 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "seeds only, in the set's order"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "headers": {
+    "Host": "foo.example"
+   },
+   "note": "a request's Host name joins the domain set"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "headers": {
+    "Host": "Bar.Example:1234"
+   },
+   "note": "lower-cased, port stripped"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "headers": {
+    "Host": "10.1.2.3:80"
+   },
+   "note": "an IP joins the IP set"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "headers": {
+    "Host": "bad_name.example"
+   },
+   "note": "an invalid name is dropped"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "headers": {
+    "Host": "foo.example"
+   },
+   "note": "a repeated name adds nothing"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "sslSubjectAlternativeNameDomains": [
+     "a.example",
+     "b.example"
+    ],
+    "sslSubjectAlternativeNameIps": [
+     "192.168.0.1"
+    ]
+   },
+   "note": "an update replaces both sets"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "headers": {
+    "Host": "c.example"
+   },
+   "note": "names discovered after the update join the new set"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxSubjectAlternativeNames": 3
+   },
+   "note": "a cap on discovered names"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "headers": {
+    "Host": "d.example"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "headers": {
+    "Host": "e.example"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  }
+ ]
+}

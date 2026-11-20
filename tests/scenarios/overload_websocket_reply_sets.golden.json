@@ -1,0 +1,75 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 860",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/ws-replies\"\n  },\n  \"httpWebSocketResponse\" : {\n    \"matchers\" : [ {\n      \"frameType\" : \"TEXT\",\n      \"responses\" : [ {\n        \"text\" : \"now\"\n      }, {\n        \"delay\" : {\n          \"timeUnit\" : \"MILLISECONDS\",\n          \"value\" : 2000\n        },\n        \"text\" : \"later\"\n      } ],\n      \"textMatcher\" : \"ping\"\n    } ]\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/delayed\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"delayed\",\n    \"delay\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 300\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "ws": "w",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket"
+      ]
+    },
+    {
+      "ws": "w",
+      "sent": true,
+      "note": "the first reply set is admitted: one delayed frame fills the budget of 1"
+    },
+    {
+      "ws": "w",
+      "body": "now"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 7"
+      ],
+      "body": "delayed",
+      "note": "a delayed response has a budget of its own"
+    },
+    {
+      "ws": "w",
+      "sent": true,
+      "note": "the second set is refused whole: the WebSocket is closed with 1013, before the first set's delayed frame"
+    },
+    {
+      "ws": "w",
+      "closed": true,
+      "code": 1013,
+      "reason": "Try Again Later"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - resetting all expectations and request logs\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ws-replies\"\n    },\n    \"httpWebSocketResponse\" : {\n      \"matchers\" : [ {\n        \"frameType\" : \"TEXT\",\n        \"responses\" : [ {\n          \"text\" : \"now\"\n        }, {\n          \"delay\" : {\n            \"timeUnit\" : \"MILLISECONDS\",\n            \"value\" : 2000\n          },\n          \"text\" : \"later\"\n        } ],\n        \"textMatcher\" : \"ping\"\n      } ]\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/delayed\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"delayed\",\n      \"delay\" : {\n        \"timeUnit\" : \"MILLISECONDS\",\n        \"value\" : 300\n      }\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-replies\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-replies\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ws-replies\"\n    },\n    \"httpWebSocketResponse\" : {\n      \"matchers\" : [ {\n        \"frameType\" : \"TEXT\",\n        \"responses\" : [ {\n          \"text\" : \"now\"\n        }, {\n          \"delay\" : {\n            \"timeUnit\" : \"MILLISECONDS\",\n            \"value\" : 2000\n          },\n          \"text\" : \"later\"\n        } ],\n        \"textMatcher\" : \"ping\"\n      } ]\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning WebSocket response for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-replies\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n for action:\n\n  {\n    \"matchers\" : [ {\n      \"frameType\" : \"TEXT\",\n      \"responses\" : [ {\n        \"text\" : \"now\"\n      }, {\n        \"delay\" : {\n          \"timeUnit\" : \"MILLISECONDS\",\n          \"value\" : 2000\n        },\n        \"text\" : \"later\"\n      } ],\n      \"textMatcher\" : \"ping\"\n    } ]\n  }\n\n from expectation:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/delayed\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/delayed\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n didn't match expectation \"<uuid>\":\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ws-replies\"\n    },\n    \"httpWebSocketResponse\" : {\n      \"matchers\" : [ {\n        \"frameType\" : \"TEXT\",\n        \"responses\" : [ {\n          \"text\" : \"now\"\n        }, {\n          \"delay\" : {\n            \"timeUnit\" : \"MILLISECONDS\",\n            \"value\" : 2000\n          },\n          \"text\" : \"later\"\n        } ],\n        \"textMatcher\" : \"ping\"\n      } ]\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n because:\n\n  method matched\n  path didn't match: \n  \n    string or regex match failed expected:\n  \n      /ws-replies\n  \n     found:\n  \n      /delayed\n\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/delayed\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/delayed\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"delayed\",\n      \"delay\" : {\n        \"timeUnit\" : \"MILLISECONDS\",\n        \"value\" : 300\n      }\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"body\" : \"delayed\",\n    \"delay\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 300\n    },\n    \"timing\" : {\n      \"injectedDelayMillis\" : 300,\n      \"totalTimeInMillis\" : <masked>\n    }\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/delayed\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n for action:\n\n  {\n    \"body\" : \"delayed\",\n    \"delay\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 300\n    }\n  }\n\n from expectation:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - overloaded:\n\n  1\n\n task(s) that were:\n\n  WebSocket reply frames waiting for their delays\n\n exceeded:\n\n  maxPendingDelayedResponses\n\n which has a limit of:\n\n  1\n\n so they were:\n\n  refused a whole reply set at a time, closing the WebSocket with 1013 Try Again Later\n\n in total since startup:\n\n  1\n\n raise that property or reduce the request rate; this is logged at most every 10 seconds per reason\n"
+    }
+  ]
+}

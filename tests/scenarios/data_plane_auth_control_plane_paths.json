@@ -1,0 +1,207 @@
+{
+ "source": "upstream 6dcc66b58, DataPlaneAuthenticationControlPlanePathIntegrationTest. With dataPlaneAuthenticationRequired, DataPlaneAuthenticationGate exempts only a CORS preflight for a control-plane route; every other request that reaches expectation matching, whatever its path, needs credentials.",
+ "properties": {
+  "dataPlaneAuthenticationRequired": "true",
+  "dataPlaneBearerAuthenticationToken": "bearer-token-123",
+  "livenessHttpGetPath": "/liveness/probe",
+  "attemptToProxyIfNoMatchingExpectation": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {},
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "catch-all-body"
+    }
+   },
+   "note": "a catch-all expectation"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserverfoo",
+   "note": "a path only sharing the control-plane prefix is gated"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserverfoo/bar",
+   "note": "likewise"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserverfoo",
+   "headers": {
+    "Authorization": "Bearer bearer-token-123"
+   },
+   "note": "served by the catch-all with credentials"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/nope",
+   "note": "an unrouted control-plane path is gated"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver",
+   "note": "the bare prefix is gated"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "note": "a control-plane path with a method the control plane does not serve is gated"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/nope",
+   "headers": {
+    "Authorization": "Bearer bearer-token-123"
+   },
+   "note": "served by the catch-all with credentials"
+  },
+  {
+   "method": "POST",
+   "path": "/liveness/probe",
+   "note": "the liveness path with a method the probe does not serve is gated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status",
+   "note": "the control plane is not gated"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/ready",
+   "note": "readiness is not gated"
+  },
+  {
+   "method": "GET",
+   "path": "/liveness/probe",
+   "note": "the liveness probe is not gated"
+  },
+  {
+   "method": "OPTIONS",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "Origin": "http://localhost",
+    "Access-Control-Request-Method": "PUT"
+   },
+   "note": "a control-plane CORS preflight is not gated"
+  },
+  {
+   "method": "OPTIONS",
+   "path": "/mockserverfoo",
+   "headers": {
+    "Origin": "http://localhost",
+    "Access-Control-Request-Method": "GET"
+   },
+   "note": "a data-plane CORS preflight is gated"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserverfoo",
+   "note": "a path only sharing the control-plane prefix is gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "POST",
+   "path": "/mockserverfoo/bar",
+   "note": "likewise (h2)",
+   "h2": true
+  },
+  {
+   "method": "GET",
+   "path": "/mockserverfoo",
+   "headers": {
+    "authorization": "Bearer bearer-token-123"
+   },
+   "note": "served by the catch-all with credentials (h2)",
+   "h2": true
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/nope",
+   "note": "an unrouted control-plane path is gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver",
+   "note": "the bare prefix is gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status",
+   "note": "a control-plane path with a method the control plane does not serve is gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/nope",
+   "headers": {
+    "authorization": "Bearer bearer-token-123"
+   },
+   "note": "served by the catch-all with credentials (h2)",
+   "h2": true
+  },
+  {
+   "method": "POST",
+   "path": "/liveness/probe",
+   "note": "the liveness path with a method the probe does not serve is gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status",
+   "note": "the control plane is not gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/ready",
+   "note": "readiness is not gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "GET",
+   "path": "/liveness/probe",
+   "note": "the liveness probe is not gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "OPTIONS",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "origin": "http://localhost",
+    "access-control-request-method": "PUT"
+   },
+   "note": "a control-plane CORS preflight is not gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "OPTIONS",
+   "path": "/mockserverfoo",
+   "headers": {
+    "origin": "http://localhost",
+    "access-control-request-method": "GET"
+   },
+   "note": "a data-plane CORS preflight is gated (h2)",
+   "h2": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "refused requests are not recorded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "each refusal is logged",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+   ]
+  }
+ ]
+}

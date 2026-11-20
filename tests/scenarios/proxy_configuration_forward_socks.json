@@ -1,0 +1,10 @@
+{"source": "ProxyConfigurationTest / NoProxyHostsUtilsTest. forwardSocksProxy is a refusing address; since 9.1.0 a target on noProxyHosts bypasses it too",
+ "properties": {"forwardSocksProxy": "{{deadhost}}", "noProxyHosts": "localhost"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "from target"}},
+    {"httpRequest": {"path": "/override"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ]},
+  {"note": "a target on noProxyHosts bypasses the SOCKS proxy", "method": "GET", "path": "/override"},
+  {"note": "the target was reached", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "body": {"path": "/target"}}
+]}

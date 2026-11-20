@@ -1,0 +1,399 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/hook/.*"
+     },
+     "httpResponse": {
+      "statusCode": 202,
+      "body": "hooked"
+     }
+    },
+    {
+     "id": "after",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/orders"
+     },
+     "httpResponse": {
+      "statusCode": 201,
+      "body": "created"
+     },
+     "afterActions": [
+      {
+       "httpRequest": {
+        "method": "POST",
+        "path": "/hook/after/{$request.body#/id}",
+        "headers": {
+         "Host": [
+          "localhost:{{port}}"
+         ]
+        },
+        "body": "order {$request.body#/id} via {$request.method} {$request.query.q} {$request.header.X-Trace} {$url} {$response.x}"
+       }
+      }
+     ]
+    },
+    {
+     "id": "before",
+     "httpRequest": {
+      "path": "/before"
+     },
+     "httpResponse": {
+      "body": "after the webhook"
+     },
+     "beforeActions": [
+      {
+       "httpRequest": {
+        "method": "POST",
+        "path": "/hook/before",
+        "headers": {
+         "Host": [
+          "localhost:{{port}}"
+         ]
+        },
+        "body": "blocking"
+       }
+      },
+      {
+       "httpRequest": {
+        "method": "POST",
+        "path": "/hook/before-async",
+        "headers": {
+         "Host": [
+          "localhost:{{port}}"
+         ]
+        }
+       },
+       "blocking": false
+      }
+     ]
+    },
+    {
+     "id": "before-fail",
+     "httpRequest": {
+      "path": "/before-fail"
+     },
+     "httpResponse": {
+      "body": "never"
+     },
+     "beforeActions": [
+      {
+       "httpRequest": {
+        "method": "GET",
+        "path": "/x",
+        "headers": {
+         "Host": [
+          "{{deadhost}}"
+         ]
+        }
+       },
+       "failurePolicy": "FAIL_FAST"
+      }
+     ]
+    },
+    {
+     "id": "before-best",
+     "httpRequest": {
+      "path": "/before-best"
+     },
+     "httpResponse": {
+      "body": "served anyway"
+     },
+     "beforeActions": [
+      {
+       "httpRequest": {
+        "method": "GET",
+        "path": "/x",
+        "headers": {
+         "Host": [
+          "{{deadhost}}"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "id": "steps",
+     "httpRequest": {
+      "path": "/steps"
+     },
+     "steps": [
+      {
+       "httpRequest": {
+        "method": "POST",
+        "path": "/hook/step1",
+        "headers": {
+         "Host": [
+          "localhost:{{port}}"
+         ]
+        }
+       }
+      },
+      {
+       "httpResponse": {
+        "body": "from the responder"
+       },
+       "responder": true
+      },
+      {
+       "httpRequest": {
+        "method": "POST",
+        "path": "/hook/step3",
+        "headers": {
+         "Host": [
+          "localhost:{{port}}"
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"localhost:(18999|1)\"",
+     "replace": "\"<deadhost>\""
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/orders?q=search",
+   "headers": {
+    "X-Trace": "t1"
+   },
+   "body": {
+    "id": 42
+   },
+   "note": "after action fires"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/hook/after/42"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "pollUntil": "^$",
+   "note": "the after action has arrived before the next request (an after action is asynchronous)"
+  },
+  {
+   "method": "GET",
+   "path": "/before",
+   "note": "blocking before action"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/hook/before-async"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "pollUntil": "^$",
+   "note": "the non-blocking before action has arrived before the next request"
+  },
+  {
+   "method": "GET",
+   "path": "/before-fail",
+   "note": "fail fast",
+   "mask": [
+    {
+     "regex": "localhost/127\\.0\\.0\\.1:\\d+",
+     "replace": "<deadhost>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies with the address>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/before-best",
+   "note": "best effort"
+  },
+  {
+   "method": "GET",
+   "path": "/steps",
+   "note": "steps"
+  },
+  {
+   "sleepMillis": 1000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/hook/.*"
+   },
+   "note": "webhook traffic",
+   "pollUntil": "/hook/step3",
+   "compare": "json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"content-length\" : \\[ \"5\\d\" \\]",
+     "replace": "\"content-length\" : [ \"<varies with the port>\" ]"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "steps": [
+     {
+      "httpResponse": {
+       "body": "a"
+      }
+     }
+    ]
+   },
+   "note": "no responder"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "steps": [
+     {
+      "httpResponse": {
+       "body": "a"
+      },
+      "responder": true
+     },
+     {
+      "httpResponse": {
+       "body": "b"
+      },
+      "responder": true
+     }
+    ]
+   },
+   "note": "two responders"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {
+     "body": "x"
+    },
+    "steps": [
+     {
+      "httpResponse": {
+       "body": "a"
+      },
+      "responder": true
+     }
+    ]
+   },
+   "note": "steps with a top-level action"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "steps": [
+     {
+      "httpRequest": {
+       "path": "/w"
+      },
+      "responder": true
+     }
+    ]
+   },
+   "note": "webhook responder"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "steps": [
+     {
+      "responder": true
+     }
+    ]
+   },
+   "note": "step without target"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "beforeActions": [
+     {
+      "httpRequest": {
+       "path": "/w"
+      }
+     }
+    ],
+    "steps": [
+     {
+      "httpResponse": {
+       "body": "a"
+      },
+      "responder": true
+     }
+    ]
+   },
+   "note": "steps with before actions"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "steps": [
+     {
+      "httpError": {
+       "dropConnection": true
+      },
+      "responder": true
+     },
+     {
+      "httpRequest": {
+       "path": "/w"
+      }
+     }
+    ]
+   },
+   "note": "error with other steps"
+  }
+ ]
+}

@@ -1,0 +1,437 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/fa"
+    },
+    "httpForward": {
+     "host": "negcache-fwd-a.invalid",
+     "port": 80
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/fa",
+   "note": "a failed forward: the lookup fails and the JVM caches the failure"
+  },
+  {
+   "method": "GET",
+   "path": "/pe",
+   "headers": {
+    "Host": "negcache-proxy-e.invalid"
+   },
+   "note": "an unmatched request proxied to a host that does not resolve"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "tcp://negcache-mqtt-d.invalid:1883"
+    }
+   },
+   "note": "a failed MQTT connect (Paho resolves through InetAddress)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "method": "GET",
+    "path": "/r",
+    "headers": {
+     "Host": [
+      "negcache-replay-g.invalid"
+     ]
+    }
+   },
+   "note": "a replay to a host that does not resolve"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the log goes, the JVM's lookup cache stays"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://negcache-fwd-a.invalid"
+    }
+   },
+   "note": "AMQP of the forward's host within 10 s: answered from the cache, the host alone"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://negcache-proxy-e.invalid"
+    }
+   },
+   "note": "AMQP of the proxied host: cached"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://negcache-mqtt-d.invalid"
+    }
+   },
+   "note": "AMQP of the MQTT broker's host: cached"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://negcache-replay-g.invalid"
+    }
+   },
+   "note": "AMQP of the replayed host: cached"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://negcache-fwd-b.invalid"
+    }
+   },
+   "note": "AMQP first: a fresh lookup, with the resolver's text"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://negcache-proxy-f.invalid"
+    }
+   },
+   "note": "AMQP first"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://negcache-replay-h.invalid"
+    }
+   },
+   "note": "AMQP first"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqp://negcache-mqtt-c.invalid"
+    }
+   },
+   "note": "AMQP first"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/fb"
+    },
+    "httpForward": {
+     "host": "negcache-fwd-b.invalid",
+     "port": 80
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/fb",
+   "note": "a forward to a host AMQP failed to resolve: cached"
+  },
+  {
+   "method": "GET",
+   "path": "/pf",
+   "headers": {
+    "Host": "negcache-proxy-f.invalid"
+   },
+   "note": "a proxied request to a host AMQP failed to resolve: cached"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "method": "GET",
+    "path": "/r",
+    "headers": {
+     "Host": [
+      "negcache-replay-h.invalid"
+     ]
+    }
+   },
+   "note": "a replay to a host AMQP failed to resolve: cached"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Errors"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "mqttBrokerUrl": "tcp://negcache-mqtt-c.invalid:1883"
+    }
+   },
+   "note": "an MQTT connect to a host AMQP failed to resolve: cached"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "the forward's and the proxy's failures carry the host alone; request headers are masked: 8.0.0 renders a received-request entry after a fast-failing forward has already set Host on the same request object, a race",
+   "mask": [
+    "\"headers\" : \\{[^}]*\\}"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+{
+ "source": "GET /mockserver/config with all four source tiers. maxExpectations is set in all three real tiers (system property wins), maxHeaderSize in the file and the environment (file wins), maxWebSocketExpectations and the quoted corsAllowOrigin only in the environment, maxSocketTimeout (escapes and quotes) and the blank logLevel only in the properties file; a blank file value falls through to the environment (logLevel); a blank environment variable is (default). Everything else is (default). The five entries the oracle's Docker image fills from its own environment are masked to one token.",
+ "properties": {
+  "maxExpectations": "1111"
+ },
+ "env": {
+  "MOCKSERVER_MAX_EXPECTATIONS": "3333",
+  "MOCKSERVER_MAX_HEADER_SIZE": "30000",
+  "MOCKSERVER_MAX_WEB_SOCKET_EXPECTATIONS": "600",
+  "MOCKSERVER_CORS_ALLOW_ORIGIN": "\"https://a.example\"",
+  "MOCKSERVER_LOG_LEVEL": "WARN",
+  "MOCKSERVER_LOG_LEVEL_OVERRIDES": "   "
+ },
+ "propertiesFile": [
+  "# a comment",
+  "mockserver.maxExpectations=2222",
+  "mockserver.maxHeaderSize = 20000",
+  "mockserver.maxSocketTimeout=\"\\\"quoted\\\"\"",
+  "mockserver.logLevel=",
+  "mockserver.notARealProperty=ignored"
+ ],
+ "steps": [
+  {
+   "note": "system property > properties file > environment variable > default, with the source of each",
+   "method": "GET",
+   "path": "/mockserver/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  }
+ ]
+}

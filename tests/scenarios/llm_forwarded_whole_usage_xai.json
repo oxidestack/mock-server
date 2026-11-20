@@ -1,0 +1,172 @@
+{
+ "source": "hand-written (cases from upstream's HttpActionHandlerStreamedLlmUsageTest, 9.1.0): whole forwarded XAI responses accounted by HttpActionHandler.emitForwardGenAiSpan (accountableOperation, isPolledCompletion, the provider clients' parseCompletionResponse), forwarded to this server's own mocks",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "XAI"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-deferred",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "headers": {
+       "x-case": [
+        "deferred"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"request_id\":\"f15c114e-f47d-40ca-8d5c-8c23d656eeb6\"}"
+     }
+    },
+    {
+     "id": "forward-deferred",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/deferred"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "deferred"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-deferred-pending",
+     "priority": 10,
+     "httpRequest": {
+      "method": "GET",
+      "path": "/v1/chat/deferred-completion/f15c114e-f47d-40ca-8d5c-8c23d656eeb6",
+      "headers": {
+       "x-case": [
+        "deferred-pending"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 202
+     }
+    },
+    {
+     "id": "forward-deferred-pending",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/client/deferred-pending"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/deferred-completion/f15c114e-f47d-40ca-8d5c-8c23d656eeb6",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "deferred-pending"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-deferred-done",
+     "priority": 10,
+     "httpRequest": {
+      "method": "GET",
+      "path": "/v1/chat/deferred-completion/f15c114e-f47d-40ca-8d5c-8c23d656eeb6",
+      "headers": {
+       "x-case": [
+        "deferred-done"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\":\"a3d1008e-4544-40d4-d075-11527e794e4a\",\"object\":\"chat.completion\",\"created\":1743770624,\"model\":\"grok-4-0709\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"303\",\"refusal\":null},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":14,\"completion_tokens\":3,\"total_tokens\":17},\"system_fingerprint\":\"fp_156d35dcaa\"}"
+     }
+    },
+    {
+     "id": "forward-deferred-done",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/client/deferred-done"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/deferred-completion/f15c114e-f47d-40ca-8d5c-8c23d656eeb6",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "deferred-done"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "a deferred completion is requested",
+   "method": "POST",
+   "path": "/client/deferred",
+   "body": "{\"model\":\"grok-4\",\"messages\":[{\"role\":\"user\",\"content\":\"What is 101*3?\"}],\"deferred\":true}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "fetched before it is ready: 202, nothing counted",
+   "method": "GET",
+   "path": "/client/deferred-pending"
+  },
+  {
+   "note": "fetched when done: 14 in, 3 out",
+   "method": "GET",
+   "path": "/client/deferred-done"
+  },
+  {
+   "note": "fetched again: once only",
+   "method": "GET",
+   "path": "/client/deferred-done"
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

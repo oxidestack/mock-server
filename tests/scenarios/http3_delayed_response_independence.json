@@ -1,0 +1,86 @@
+{
+ "source": "upstream #81, 67ebbd0cd, Http3DelayedResponseIndependenceIntegrationTest: a delayed HTTP/3 response is waited out off the QUIC event loop, so a request on another stream of the same connection is answered meanwhile: the step's deadline ends the delayed stream unanswered while the other has its response",
+ "quic": true,
+ "properties": {
+  "http3Port": "19762"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/slow"
+     },
+     "httpResponse": {
+      "body": "slow",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 4000
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fast"
+     },
+     "httpResponse": {
+      "body": "fast"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/slow-sse"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "late",
+        "delay": {
+         "timeUnit": "MILLISECONDS",
+         "value": 4000
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h3": true,
+   "streams": [
+    {
+     "method": "GET",
+     "path": "/slow"
+    },
+    {
+     "method": "GET",
+     "path": "/fast"
+    }
+   ],
+   "maxMillis": 2000,
+   "note": "two streams on one connection, the delayed one first: the other is answered before the delay is over"
+  },
+  {
+   "h3": true,
+   "streams": [
+    {
+     "method": "GET",
+     "path": "/slow-sse"
+    },
+    {
+     "method": "GET",
+     "path": "/fast"
+    }
+   ],
+   "maxMillis": 2000,
+   "note": "an SSE event's delay holds up no other stream"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "all four requests were received"
+  }
+ ]
+}

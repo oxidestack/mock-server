@@ -1,0 +1,1344 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-03-26"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/invalid-times",
+      "statusCode": 200,
+      "times": "not-a-number"
+     }
+    }
+   },
+   "note": "McpToolRegistryTest.shouldRejectNonNumericTimes",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/float-times",
+      "statusCode": 200,
+      "times": 3.5
+     }
+    }
+   },
+   "note": "shouldRejectFloatTimes",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/negative-times",
+      "statusCode": 200,
+      "times": -1
+     }
+    }
+   },
+   "note": "shouldRejectNegativeTimes",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 5,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/zero-times",
+      "statusCode": 200,
+      "times": 0
+     }
+    }
+   },
+   "note": "shouldAcceptZeroTimes",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 6,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/limited",
+      "statusCode": 200,
+      "times": 5
+     }
+    }
+   },
+   "note": "shouldCreateExpectationWithTimes",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 7,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_request",
+     "arguments": {
+      "method": "GET",
+      "path": "/test",
+      "atMost": 3.5
+     }
+    }
+   },
+   "note": "shouldRejectNonIntegerAtMost",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 8,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_request",
+     "arguments": {
+      "method": "GET",
+      "path": "/test",
+      "atLeast": "abc"
+     }
+    }
+   },
+   "note": "shouldRejectNonIntegerAtLeast",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 9,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_request",
+     "arguments": {
+      "method": "GET",
+      "path": "/test",
+      "atLeast": 5,
+      "atMost": 2
+     }
+    }
+   },
+   "note": "shouldRejectAtMostLessThanAtLeast",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 10,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_request",
+     "arguments": {
+      "method": "GET",
+      "path": "/not-called",
+      "atLeast": 0,
+      "atMost": 0
+     }
+    }
+   },
+   "note": "shouldVerifyZeroRequests",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_request",
+     "arguments": {
+      "method": "GET",
+      "path": "/not-called",
+      "atLeast": 1
+     }
+    }
+   },
+   "note": "shouldVerifyRequestNotFound",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_request_sequence",
+     "arguments": {
+      "requests": []
+     }
+    }
+   },
+   "note": "shouldVerifyRequestSequence",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_request_sequence",
+     "arguments": {
+      "requests": [
+       "not-an-object"
+      ]
+     }
+    }
+   },
+   "note": "shouldRejectNonObjectElementsInRequestSequence",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_expectation",
+     "arguments": {
+      "expectation": "not valid json"
+     }
+    }
+   },
+   "note": "shouldNotExposeExceptionDetailsInErrorMessages",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/chaos-test",
+      "statusCode": 200,
+      "responseBody": "ok",
+      "chaos": {
+       "errorStatus": 503,
+       "errorProbability": 0.5,
+       "retryAfter": "30",
+       "latency": {
+        "timeUnit": "MILLISECONDS",
+        "value": 200
+       },
+       "seed": 42,
+       "succeedFirst": 3,
+       "failRequestCount": 5,
+       "truncateBodyAtFraction": 0.25,
+       "malformedBody": true,
+       "slowResponseChunkSize": 8,
+       "slowResponseChunkDelay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 250
+       },
+       "quotaName": "acct-mcp",
+       "quotaLimit": 4,
+       "quotaWindowMillis": 60000,
+       "quotaErrorStatus": 429,
+       "degradationRampMillis": 30000
+      }
+     }
+    }
+   },
+   "note": "shouldCreateExpectationWithChaos",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_retrieve",
+     "arguments": {
+      "type": "ACTIVE_EXPECTATIONS",
+      "format": "JSON"
+     }
+    }
+   },
+   "note": "the chaos profile is persisted",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "POST",
+      "path": "/chaos-partial",
+      "statusCode": 200,
+      "chaos": {
+       "errorStatus": 500,
+       "errorProbability": 1.0
+      }
+     }
+    }
+   },
+   "note": "shouldCreateExpectationWithPartialChaos",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 18,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/chaos-bad-unit",
+      "statusCode": 200,
+      "chaos": {
+       "errorStatus": 503,
+       "errorProbability": 0.5,
+       "latency": {
+        "timeUnit": "FORTNIGHTS",
+        "value": 200
+       }
+      }
+     }
+    }
+   },
+   "note": "shouldRejectInvalidChaosLatencyTimeUnit",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 19,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/ttl-int",
+      "statusCode": 200,
+      "timeToLive": 60
+     }
+    }
+   },
+   "note": "shouldRejectNonTextualTimeToLive",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 20,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/ttl-bool",
+      "statusCode": 200,
+      "timeToLive": true
+     }
+    }
+   },
+   "note": "shouldRejectBooleanTimeToLive",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 21,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/ttl-valid",
+      "statusCode": 200,
+      "timeToLive": "60 SECONDS"
+     }
+    }
+   },
+   "note": "shouldAcceptValidTimeToLive",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 22,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/good-status-100",
+      "statusCode": 100
+     }
+    }
+   },
+   "note": "shouldAcceptValidStatusCodeBoundary 100",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 23,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/good-status-999",
+      "statusCode": 999
+     }
+    }
+   },
+   "note": "shouldAcceptValidStatusCodeBoundary 999",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 24,
+    "method": "tools/call",
+    "params": {
+     "name": "create_forward_expectation",
+     "arguments": {
+      "path": "/proxy2",
+      "host": "example.com",
+      "port": 65535
+     }
+    }
+   },
+   "note": "shouldAcceptValidPortBoundaries (65535; a literal port 1 is banned by the scenario port rule)",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 25,
+    "method": "tools/call",
+    "params": {
+     "name": "create_forward_expectation",
+     "arguments": {
+      "path": "/proxy",
+      "host": "example.com",
+      "scheme": "FTP"
+     }
+    }
+   },
+   "note": "shouldRejectInvalidSchemeForForwardExpectation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 26,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/filter-keep",
+      "statusCode": 200,
+      "responseBody": "keep"
+     }
+    }
+   },
+   "note": "listing fixture",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 27,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/filter-drop",
+      "statusCode": 200,
+      "responseBody": "drop"
+     }
+    }
+   },
+   "note": "listing fixture",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 28,
+    "method": "tools/call",
+    "params": {
+     "name": "list_expectations",
+     "arguments": {
+      "path": "/filter-keep"
+     }
+    }
+   },
+   "note": "shouldListActiveExpectationsFilteredByPath",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 29,
+    "method": "tools/call",
+    "params": {
+     "name": "debug_request_mismatch",
+     "arguments": {
+      "method": "GET",
+      "path": "/wrong-path"
+     }
+    }
+   },
+   "note": "shouldDebugRequestMismatchWithRankedResultsAndRemediation",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 30,
+    "method": "tools/call",
+    "params": {
+     "name": "list_mock_tools",
+     "arguments": {}
+    }
+   },
+   "note": "shouldGenerateMcpToolsFromMockExpectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 31,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_unmatched_requests",
+     "arguments": {
+      "limit": 5
+     }
+    }
+   },
+   "note": "shouldExplainUnmatchedRequestsWithLimit",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 32,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_unmatched_requests",
+     "arguments": {
+      "limit": 0
+     }
+    }
+   },
+   "note": "shouldRejectInvalidLimitForExplainUnmatched",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 33,
+    "method": "tools/call",
+    "params": {
+     "name": "explain_unmatched_requests",
+     "arguments": {
+      "limit": 101
+     }
+    }
+   },
+   "note": "shouldRejectLimitAboveMaxForExplainUnmatched",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 34,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_retrieve",
+     "arguments": {
+      "type": "REQUESTS",
+      "format": "JSON"
+     }
+    }
+   },
+   "note": "shouldAcceptAllValidRawRetrieveTypes REQUESTS",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 35,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_retrieve",
+     "arguments": {
+      "type": "REQUEST_RESPONSES",
+      "format": "JSON"
+     }
+    }
+   },
+   "note": "shouldAcceptAllValidRawRetrieveTypes REQUEST_RESPONSES",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 36,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_retrieve",
+     "arguments": {
+      "type": "RECORDED_EXPECTATIONS",
+      "format": "JSON"
+     }
+    }
+   },
+   "note": "shouldAcceptAllValidRawRetrieveTypes RECORDED_EXPECTATIONS",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 37,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_retrieve",
+     "arguments": {
+      "type": "ACTIVE_EXPECTATIONS",
+      "format": "JSON"
+     }
+    }
+   },
+   "note": "shouldAcceptAllValidRawRetrieveTypes ACTIVE_EXPECTATIONS",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 38,
+    "method": "tools/call",
+    "params": {
+     "name": "clear_expectations",
+     "arguments": {
+      "type": "ALL"
+     }
+    }
+   },
+   "note": "shouldAcceptValidClearTypes / shouldRejectInvalidClearType ALL",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 39,
+    "method": "tools/call",
+    "params": {
+     "name": "clear_expectations",
+     "arguments": {
+      "type": "LOG"
+     }
+    }
+   },
+   "note": "shouldAcceptValidClearTypes / shouldRejectInvalidClearType LOG",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 40,
+    "method": "tools/call",
+    "params": {
+     "name": "clear_expectations",
+     "arguments": {
+      "type": "EXPECTATIONS"
+     }
+    }
+   },
+   "note": "shouldAcceptValidClearTypes / shouldRejectInvalidClearType EXPECTATIONS",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 41,
+    "method": "tools/call",
+    "params": {
+     "name": "clear_expectations",
+     "arguments": {
+      "type": "INVALID"
+     }
+    }
+   },
+   "note": "shouldAcceptValidClearTypes / shouldRejectInvalidClearType INVALID",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 42,
+    "method": "tools/call",
+    "params": {
+     "name": "clear_expectations",
+     "arguments": {
+      "method": "POST",
+      "path": "/remove",
+      "type": "EXPECTATIONS"
+     }
+    }
+   },
+   "note": "shouldHandleClearWithFilter",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 43,
+    "method": "tools/call",
+    "params": {
+     "name": "reset",
+     "arguments": {}
+    }
+   },
+   "note": "shouldReset",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 44,
+    "method": "tools/call",
+    "params": {
+     "name": "raw_retrieve",
+     "arguments": {
+      "type": "LOGS",
+      "format": "JSON"
+     }
+    }
+   },
+   "note": "shouldAcceptAllValidRawRetrieveTypes LOGS, after a reset (the zero-times removal and MCP endDate lines are follow-ups)",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\"(ports|timestamp)\" ?: ?[^,}]+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

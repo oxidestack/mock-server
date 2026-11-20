@@ -1,0 +1,80 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": ""
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 654",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpLlmResponse\" : {\n    \"provider\" : \"OPENAI\",\n    \"model\" : \"m\",\n    \"completion\" : {\n      \"text\" : \"regex matched\"\n    },\n    \"conversationPredicates\" : {\n      \"latestMessageMatches\" : \"(.*a){12}x|c\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/v1/chat/completions\"\n  },\n  \"id\" : \"redos\",\n  \"priority\" : 1,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/v1/chat/completions\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"fallback\"\n  },\n  \"id\" : \"fallback\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>"
+      ],
+      "body": "fallback",
+      "note": "Java backtracking outlives the 300 ms budget at the first start position: the predicate fails, the fallback answers"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":\"<id>\",\"object\":\"chat.completion\",\"created\":<time>,\"model\":\"m\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"regex matched\"},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":0,\"completion_tokens\":0,\"total_tokens\":0}}",
+      "note": "a short message settles within the budget; find() reaches the c"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <masked>"
+      ],
+      "body": "fallback",
+      "note": "no c and no a: no match within the budget"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - resetting all expectations and request logs\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpLlmResponse\" : {\n      \"completion\" : {\n        \"text\" : \"regex matched\"\n      },\n      \"conversationPredicates\" : {\n        \"latestMessageMatches\" : \"(.*a){12}x|c\"\n      },\n      \"model\" : \"m\",\n      \"provider\" : \"OPENAI\"\n    },\n    \"httpRequest\" : {\n      \"path\" : \"/v1/chat/completions\"\n    },\n    \"id\" : \"redos\",\n    \"priority\" : 1,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  redos\n\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/v1/chat/completions\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"fallback\"\n    },\n    \"id\" : \"fallback\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  fallback\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"82\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac\\\"}]}\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"82\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac\\\"}]}\"\n  }\n\n matched expectation:\n\n  {\n    \"httpLlmResponse\" : {\n      \"completion\" : {\n        \"text\" : \"regex matched\"\n      },\n      \"conversationPredicates\" : {\n        \"latestMessageMatches\" : \"(.*a){12}x|c\"\n      },\n      \"model\" : \"m\",\n      \"provider\" : \"OPENAI\"\n    },\n    \"httpRequest\" : {\n      \"path\" : \"/v1/chat/completions\"\n    },\n    \"id\" : \"redos\",\n    \"priority\" : 1,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"82\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac\\\"}]}\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/v1/chat/completions\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"fallback\"\n    },\n    \"id\" : \"fallback\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"body\" : \"fallback\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"82\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac\\\"}]}\"\n  }\n\n for action:\n\n  {\n    \"body\" : \"fallback\"\n  }\n\n from expectation:\n\n  fallback\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"45\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"ac\\\"}]}\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"45\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"ac\\\"}]}\"\n  }\n\n matched expectation:\n\n  {\n    \"httpLlmResponse\" : {\n      \"completion\" : {\n        \"text\" : \"regex matched\"\n      },\n      \"conversationPredicates\" : {\n        \"latestMessageMatches\" : \"(.*a){12}x|c\"\n      },\n      \"model\" : \"m\",\n      \"provider\" : \"OPENAI\"\n    },\n    \"httpRequest\" : {\n      \"path\" : \"/v1/chat/completions\"\n    },\n    \"id\" : \"redos\",\n    \"priority\" : 1,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning LLM response for request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"45\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"ac\\\"}]}\"\n  }\n\n for action:\n\n  {\n    \"completion\" : {\n      \"text\" : \"regex matched\"\n    },\n    \"conversationPredicates\" : {\n      \"latestMessageMatches\" : \"(.*a){12}x|c\"\n    },\n    \"model\" : \"m\",\n    \"provider\" : \"OPENAI\"\n  }\n\n from expectation:\n\n  redos\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"body\" : \"{\\\"id\\\":\\\"chatcmpl-<id>\\\",\\\"object\\\":\\\"chat.completion\\\",\\\"created\\\\\":<time>,\\\"model\\\":\\\"m\\\",\\\"choices\\\":[{\\\"index\\\":0,\\\"message\\\":{\\\"role\\\":\\\"assistant\\\",\\\"content\\\":\\\"regex matched\\\"},\\\"logprobs\\\":null,\\\"finish_reason\\\":\\\"stop\\\"}],\\\"usage\\\":{\\\"prompt_tokens\\\":0,\\\"completion_tokens\\\":0,\\\"total_tokens\\\":0}}\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"45\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"ac\\\"}]}\"\n  }\n\n for action:\n\n  {\n    \"completion\" : {\n      \"text\" : \"regex matched\"\n    },\n    \"conversationPredicates\" : {\n      \"latestMessageMatches\" : \"(.*a){12}x|c\"\n    },\n    \"model\" : \"m\",\n    \"provider\" : \"OPENAI\"\n  }\n\n from expectation:\n\n  redos\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"46\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"zzz\\\"}]}\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"46\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"zzz\\\"}]}\"\n  }\n\n matched expectation:\n\n  {\n    \"httpLlmResponse\" : {\n      \"completion\" : {\n        \"text\" : \"regex matched\"\n      },\n      \"conversationPredicates\" : {\n        \"latestMessageMatches\" : \"(.*a){12}x|c\"\n      },\n      \"model\" : \"m\",\n      \"provider\" : \"OPENAI\"\n    },\n    \"httpRequest\" : {\n      \"path\" : \"/v1/chat/completions\"\n    },\n    \"id\" : \"redos\",\n    \"priority\" : 1,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"46\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"zzz\\\"}]}\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/v1/chat/completions\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"fallback\"\n    },\n    \"id\" : \"fallback\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"body\" : \"fallback\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"POST\",\n    \"path\" : \"/v1/chat/completions\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"46\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"{\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"zzz\\\"}]}\"\n  }\n\n for action:\n\n  {\n    \"body\" : \"fallback\"\n  }\n\n from expectation:\n\n  fallback\n\n"
+    }
+  ]
+}

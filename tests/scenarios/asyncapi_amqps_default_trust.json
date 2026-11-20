@@ -1,0 +1,66 @@
+{
+ "note": "an amqps:// URI makes the oracle's amqp-client (shaded 5.x, ConnectionFactory.setUri -> useSslProtocol()) use the JVM default SSL context: the image's cacerts and nothing else (the image sets no javax.net.ssl.trustStore; KeyStoreFactory, which sets one, is unreachable from the server), with hostname verification. Dialing this server's own port, whose leaf MockServer's CA signs, the client refuses the certificate: the server logs the client's certificate_unknown alert and the load fails as an unexpected error. An IP literal: the client resolves a host name to all its addresses (DnsRecordIpAddressResolver), shuffles them and tries each, and localhost's ::1 reaches only a dual-stack listener (follow-up of 0715). The oracle cannot then write the log as LOG_ENTRIES, the JSSE cause chain failing Jackson (asyncapi_tls_untrusted_log_entries)",
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "settleMillis": 3000,
+ "steps": [
+  {
+   "note": "AMQP over TLS to this server's own port by IP: the client does not trust MockServer's CA",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Trust",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "amqpUri": "amqps://127.0.0.1:{{port}}"
+    }
+   },
+   "maxMillis": 120000
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "the log: the server's handshake failure (the client's certificate_unknown alert) and the load's unexpected exception (the two race: the server's event loop logs the alert while the client's failure ends the load, in either order)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^  /127\\.0\\.0\\.1:[0-9]+$",
+     "replace": "  /127.0.0.1:<client port>",
+     "reason": "the client's ephemeral port"
+    },
+    {
+     "regex": "\"content-length\" : \\[ \"[0-9]+\" \\]",
+     "replace": "\"content-length\" : [ \"<length>\" ]",
+     "reason": "the load's body names the server's port, whose digit count differs between the oracle and replay"
+    }
+   ],
+   "compare": "unordered"
+  }
+ ]
+}

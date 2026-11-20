@@ -1,0 +1,128 @@
+{
+ "steps": [
+  {
+   "note": "no descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  },
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "expectation: a gRPC answer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "headers": {
+      "grpc-status": [
+       "0"
+      ]
+     },
+     "body": {
+      "greeting": "hello"
+     }
+    }
+   }
+  },
+  {
+   "note": "h2: raw frame bytes are not base64",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text",
+    "te": "trailers"
+   },
+   "binaryBody": true,
+   "h2": true,
+   "trailers": true,
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "note": "HTTP/1.1: raw frame bytes are not base64",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "binaryBody": true,
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "note": "HTTP/1.1: base64 with a space",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "binaryBody": true,
+   "body": "AAAA AAA="
+  },
+  {
+   "note": "HTTP/1.1: base64 with a line break",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "binaryBody": true,
+   "body": "AAAAAAA=\r\n"
+  },
+  {
+   "note": "HTTP/1.1: base64 without padding",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "binaryBody": true,
+   "body": "AAAAAAA"
+  },
+  {
+   "note": "HTTP/1.1: URL-safe alphabet",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "binaryBody": true,
+   "body": "AAAAAAcKBVdvcmxk_-"
+  },
+  {
+   "note": "HTTP/1.1: data after padding",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "binaryBody": true,
+   "body": "AAAAAAA=AAAA"
+  },
+  {
+   "note": "HTTP/1.1: a valid body still answers",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "binaryBody": true,
+   "body": "AAAAAAA="
+  },
+  {
+   "note": "HTTP/1.1 text+proto: raw bytes",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text+proto"
+   },
+   "binaryBody": true,
+   "bodyBase64": "AAAAAAA="
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+# org.mockserver.state.StateBackendFactoryTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldCreateDefaultInMemoryBackend  rust:src/state_backend/mod.rs::defaults_to_memory
+shouldReportNoCustomFactoryByDefault  n/a  # StateBackendFactory.register is an embedding API (a Java lambda); Server::start_with_state_backend is its Rust counterpart, used by tests/upstream/cluster_fanin.rs
+shouldRegisterCustomFactory  n/a  # as shouldReportNoCustomFactoryByDefault
+shouldResetToDefault  n/a  # as shouldReportNoCustomFactoryByDefault
+shouldResetToDefaultWhenRegisteringNull  n/a  # as shouldReportNoCustomFactoryByDefault
+shouldThrowWhenInfinispanConfiguredButModuleAbsent  n/a  # mock-server always ships the infinispan backend (rust:src/state_backend/mod.rs::infinispan_local_mode_resolves): the module cannot be absent
+shouldCreateInMemoryBackendWhenStateBackendIsMemory  rust:src/state_backend/mod.rs::cluster_enabled_with_memory_backend_is_ignored_like_upstream
+shouldCreateInMemoryBackendWhenStateBackendIsDefault  rust:src/state_backend/mod.rs::defaults_to_memory
+shouldCreateFilesystemBlobStoreWhenBlobStoreTypeIsFilesystem  rust:src/blob/mod.rs::filesystem_and_memory_need_no_module
+shouldCreateInMemoryBlobStoreWhenBlobStoreTypeIsMemory  rust:src/blob/mod.rs::filesystem_and_memory_need_no_module, http:persistence_blob_store_memory
+shouldDefaultToFilesystemBlobStore  rust:src/blob/mod.rs::filesystem_and_memory_need_no_module, http:persistence_file_content
+shouldThrowWhenCloudBlobStoreConfiguredButModuleAbsent  process:blob_store_type_s3_without_module, rust:src/blob/mod.rs::a_cloud_type_without_its_module_is_not_on_the_classpath
+shouldWarnWhenClusteredAndDynamicCertificateAuthorityEnabled  n/a  # the warning is a console-only slf4j LOG.warn (StateBackendFactory.warnIfClusteredWithDynamicCertificateAuthority), not an event-log entry; console output need not match the oracle, and mock-server prints none
+shouldNotWarnWhenClusteredWithSharedCertificateAuthority  n/a  # as shouldWarnWhenClusteredAndDynamicCertificateAuthorityEnabled
+shouldNotWarnWhenSingleNodeWithDynamicCertificateAuthority  n/a  # as shouldWarnWhenClusteredAndDynamicCertificateAuthorityEnabled
+shouldThrowWhenBlobStoreTypeIsUnrecognised  process:blob_store_type_unrecognised, rust:src/blob/mod.rs::an_unknown_type_is_not_recognised

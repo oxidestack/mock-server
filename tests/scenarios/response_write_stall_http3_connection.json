@@ -1,0 +1,83 @@
+{
+ "source": "Http3ConnectionWriteStallWatcher times the request streams of one QUIC connection together: holderBytes is half the smaller of the client's initial_max_data and initial_max_stream_data_bidi_local (Http3StreamWriteStallHandler.holderBytes, from the peer's transport parameters), so a stream sent less than that, here one waiting on connection credit a stalled stream holds, is spared when the holder is reset and completes once the credit comes back; only the holder is reset and counted",
+ "quic": true,
+ "properties": {
+  "http3Port": "19495",
+  "metricsEnabled": "true",
+  "responseWriteStallTimeoutMillis": "2500"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/stall"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"#foreach($i in [1..2000])aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#end\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/small"
+     },
+     "httpResponse": {
+      "body": "served"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "one connection granted 96 KiB (holderBytes 48 KiB) and nothing more for 4.9 s: a 200 KB response takes all of it and is reset at the check 3 s later (checks every second from its first wait); a small response on a second stream, 50 ms behind it and so also overdue there, waits on that credit, is spared for 2.5 s at the reset, and is served whole once credit returns (at the reset for quinn, which frees what a reset stream held; at the end of the stall for aioquic)",
+   "h3": true,
+   "streams": [
+    {
+     "method": "GET",
+     "path": "/stall"
+    },
+    {
+     "method": "GET",
+     "path": "/small"
+    }
+   ],
+   "stallMillis": 4900
+  },
+  {
+   "note": "one HTTP/3 stream reset, the holder",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_response_write_stalls)[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "one WARN, for the holder's stream",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "a{100,}",
+     "replace": "a…",
+     "reason": "the response body, 200 KB"
+    },
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, ",
+     "replace": "[id: <channel id>, ",
+     "reason": "the stream channel's id, Netty's DefaultChannelId, random"
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

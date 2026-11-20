@@ -1,0 +1,122 @@
+{
+ "source": "CircularConcurrentLinkedDequeTest.shouldNotEvictWhenMaxSizeGrown, the maxExpectations counterpart: a server started with small maxLogEntries and maxExpectations, both raised through PUT /mockserver/configuration. Raising evicts nothing; the later adds show which bound is in force afterwards (configuration_put_no_resize is the shrinking direction). ringBufferSize is set because its default follows maxLogEntries (four slots here), and a ring that small makes the oracle report ring-full DROPPED events by timing.",
+ "properties": {
+  "maxLogEntries": "4",
+  "maxExpectations": "2",
+  "ringBufferSize": "1024"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "raise-a",
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "body": "a"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "raise-b",
+    "httpRequest": {
+     "path": "/b"
+    },
+    "httpResponse": {
+     "body": "b"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/a"
+  },
+  {
+   "method": "GET",
+   "path": "/b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "what the small log holds before the raise"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 10,
+    "maxLogEntries": 100
+   },
+   "note": "both bounds raised",
+   "mask": [
+    {
+     "regex": "(\"(?:(?:actionHandler|clientNioEventLoop|nioEventLoop|webSocketClientEventLoop)ThreadCount|maxOpenAiResponsesSizeInBytes|maxEventLogSizeInBytes)\" : )\\d+",
+     "replace": "${1}0",
+     "reason": "derived from the processors and memory of the machine that runs the server"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "the raise evicts nothing"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "raise-c",
+    "httpRequest": {
+     "path": "/c"
+    },
+    "httpResponse": {
+     "body": "c"
+    }
+   },
+   "note": "a third expectation, over the old bound"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "method": "GET",
+   "path": "/a"
+  },
+  {
+   "method": "GET",
+   "path": "/c"
+  },
+  {
+   "method": "GET",
+   "path": "/b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "more requests than the old bound"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/nothing"
+    },
+    "times": {
+     "atMost": 0
+    }
+   },
+   "note": "whether the log evicted anything"
+  }
+ ]
+}

@@ -1,0 +1,505 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: chaos, capture, side actions"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 1361",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"afterActions\" : [ {\n    \"delay\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 10\n    },\n    \"httpRequest\" : {\n      \"path\" : \"/hook/after\"\n    }\n  } ],\n  \"beforeActions\" : [ {\n    \"blocking\" : true,\n    \"failurePolicy\" : \"BEST_EFFORT\",\n    \"httpRequest\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/hook/before\"\n    },\n    \"timeout\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"value\" : 2\n    }\n  } ],\n  \"capture\" : [ {\n    \"expression\" : \"$.id\",\n    \"into\" : \"orderId\",\n    \"source\" : \"jsonPath\"\n  }, {\n    \"expression\" : \"X-Trace\",\n    \"into\" : \"trace\",\n    \"source\" : \"header\"\n  } ],\n  \"chaos\" : {\n    \"errorProbability\" : 0.25,\n    \"errorStatus\" : 503,\n    \"latency\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 5\n    },\n    \"malformedBody\" : true,\n    \"outageAfterMillis\" : 1000,\n    \"quotaLimit\" : 3,\n    \"quotaName\" : \"q\",\n    \"quotaWindowMillis\" : 60000,\n    \"retryAfter\" : \"5\",\n    \"seed\" : 42,\n    \"succeedFirst\" : 1\n  },\n  \"crossProtocolScenarios\" : [ {\n    \"matchPattern\" : \"/chaos\",\n    \"scenarioName\" : \"Flow\",\n    \"targetState\" : \"Connected\",\n    \"trigger\" : \"HTTP_REQUEST\"\n  } ],\n  \"httpRequest\" : {\n    \"path\" : \"/chaos\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"ok\"\n  },\n  \"id\" : \"chaos\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: chaos, capture, side actions"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.when(\n        request()\n                .withPath(\"/chaos\"),\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        0\n)\n.withId(\"chaos\")\n.withChaos(\n        HttpChaosProfile.httpChaosProfile()\n                .withErrorStatus(503)\n                .withRetryAfter(\"5\")\n                .withErrorProbability(0.25)\n                .withLatency(new Delay(TimeUnit.MILLISECONDS, 5))\n                .withSeed(42L)\n                .withSucceedFirst(1)\n                .withOutageAfterMillis(1000L)\n                .withMalformedBody(true)\n                .withQuotaName(\"q\")\n                .withQuotaLimit(3)\n                .withQuotaWindowMillis(60000L)\n)\n.withCapture(\n        CaptureRule.captureRule()\n                .withSource(org.mockserver.model.CaptureRule.Source.jsonPath)\n                .withExpression(\"$.id\")\n                .withInto(\"orderId\"),\n        CaptureRule.captureRule()\n                .withSource(org.mockserver.model.CaptureRule.Source.header)\n                .withExpression(\"X-Trace\")\n                .withInto(\"trace\")\n)\n.withCrossProtocolScenarios(java.util.Arrays.asList(\n        CrossProtocolScenario.crossProtocolScenario()\n                .withTrigger(org.mockserver.model.CrossProtocolTrigger.HTTP_REQUEST)\n                .withScenarioName(\"Flow\")\n                .withTargetState(\"Connected\")\n                .withMatchPattern(\"/chaos\")\n))\n.withBeforeActions(\n        AfterAction.afterAction()\n                .withHttpRequest(\n                        request()\n                                .withMethod(\"POST\")\n                                .withPath(\"/hook/before\")\n                )\n                .withBlocking(true)\n                .withTimeout(new Delay(TimeUnit.SECONDS, 2))\n                .withFailurePolicy(org.mockserver.model.FailurePolicy.BEST_EFFORT)\n)\n.withAfterActions(\n        AfterAction.afterAction()\n                .withHttpRequest(\n                        request()\n                                .withPath(\"/hook/after\")\n                )\n                .withDelay(new Delay(TimeUnit.MILLISECONDS, 10))\n)\n.respond(\n        response()\n                .withStatusCode(200)\n                .withBody(\"ok\")\n);\n\n",
+      "note": "java: chaos, capture, side actions"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: rate limit"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 438",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/rate\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"limited\"\n  },\n  \"id\" : \"rate\",\n  \"priority\" : 0,\n  \"rateLimit\" : {\n    \"algorithm\" : \"token_bucket\",\n    \"burst\" : 2,\n    \"errorStatus\" : 429,\n    \"limit\" : 5,\n    \"name\" : \"r\",\n    \"refillPerSecond\" : 1.5,\n    \"retryAfter\" : \"1\",\n    \"windowMillis\" : 1000\n  },\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: rate limit"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.upsert(\n        new org.mockserver.mock.Expectation(\n                request()\n                        .withPath(\"/rate\"),\n                Times.unlimited(),\n                TimeToLive.unlimited(),\n                0\n        )\n        .withId(\"rate\")\n        .withRateLimit(\n                RateLimit.rateLimit()\n                        .withName(\"r\")\n                        .withAlgorithm(org.mockserver.model.RateLimit.Algorithm.TOKEN_BUCKET)\n                        .withLimit(5)\n                        .withWindowMillis(1000L)\n                        .withBurst(2L)\n                        .withRefillPerSecond(1.5)\n                        .withErrorStatus(429)\n                        .withRetryAfter(\"1\")\n        )\n        .thenRespond(\n                response()\n                        .withBody(\"limited\")\n        )\n);\n\n",
+      "note": "java: rate limit"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: sse"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 535",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/sse\"\n  },\n  \"httpSseResponse\" : {\n    \"closeConnection\" : true,\n    \"events\" : [ {\n      \"data\" : \"hello\",\n      \"delay\" : {\n        \"timeUnit\" : \"MILLISECONDS\",\n        \"value\" : 1\n      },\n      \"event\" : \"message\",\n      \"id\" : \"1\",\n      \"retry\" : 1000\n    }, {\n      \"data\" : \"bye\"\n    } ],\n    \"headers\" : {\n      \"X-A\" : [ \"1\" ]\n    },\n    \"statusCode\" : 200\n  },\n  \"id\" : \"sse\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: sse"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.when(\n        request()\n                .withPath(\"/sse\"),\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        0\n)\n.withId(\"sse\")\n.respondWithSse(\n        HttpSseResponse.sseResponse()\n                .withStatusCode(200)\n                .withHeaders(new Headers(\n                        new Header(\"X-A\", \"1\")\n                ))\n                .withEvents(\n                        SseEvent.sseEvent()\n                                .withEvent(\"message\")\n                                .withData(\"hello\")\n                                .withId(\"1\")\n                                .withRetry(1000)\n                                .withDelay(new Delay(TimeUnit.MILLISECONDS, 1)),\n                        SseEvent.sseEvent()\n                                .withData(\"bye\")\n                )\n                .withCloseConnection(true)\n);\n\n",
+      "note": "java: sse"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: websocket"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 567",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/ws\"\n  },\n  \"httpWebSocketResponse\" : {\n    \"closeConnection\" : false,\n    \"matchers\" : [ {\n      \"frameType\" : \"TEXT\",\n      \"responses\" : [ {\n        \"text\" : \"pong\"\n      } ],\n      \"textMatcher\" : \"ping\"\n    }, {\n      \"frameType\" : \"BINARY\"\n    }, {\n      \"frameType\" : \"ANY\"\n    } ],\n    \"messages\" : [ {\n      \"text\" : \"hi\"\n    }, {\n      \"binary\" : \"AAEC\"\n    } ],\n    \"subprotocol\" : \"chat\"\n  },\n  \"id\" : \"ws\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: websocket"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.when(\n        request()\n                .withPath(\"/ws\"),\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        0\n)\n.withId(\"ws\")\n.respondWithWebSocket(\n        HttpWebSocketResponse.webSocketResponse()\n                .withSubprotocol(\"chat\")\n                .withMessages(\n                        WebSocketMessage.webSocketMessage()\n                                .withText(\"hi\"),\n                        WebSocketMessage.webSocketMessage()\n                                .withBinary(java.util.Base64.getDecoder().decode(\"AAEC\"))\n                )\n                .withMatchers(\n                        WebSocketMessageMatcher.webSocketMessageMatcher()\n                                .withTextMatcher(NottableString.string(\"ping\", false))\n                                .withFrameType(org.mockserver.model.WebSocketFrameType.TEXT)\n                                .withResponses(\n                                        WebSocketMessage.webSocketMessage()\n                                                .withText(\"pong\")\n                                ),\n                        WebSocketMessageMatcher.webSocketMessageMatcher()\n                                .withFrameType(org.mockserver.model.WebSocketFrameType.BINARY)\n                                .withResponses(\n                                ),\n                        WebSocketMessageMatcher.webSocketMessageMatcher()\n                                .withFrameType(org.mockserver.model.WebSocketFrameType.ANY)\n                )\n                .withCloseConnection(false)\n);\n\n",
+      "note": "java: websocket"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: grpc stream"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 479",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"grpcStreamResponse\" : {\n    \"closeConnection\" : true,\n    \"messages\" : [ {\n      \"json\" : \"{\\\"a\\\":1}\"\n    }, {\n      \"delay\" : {\n        \"timeUnit\" : \"MILLISECONDS\",\n        \"value\" : 3\n      },\n      \"json\" : \"{\\\"a\\\":2}\"\n    } ],\n    \"statusMessage\" : \"done\",\n    \"statusName\" : \"OK\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/pkg.Svc/Stream\"\n  },\n  \"id\" : \"grpc\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: grpc stream"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.when(\n        request()\n                .withPath(\"/pkg.Svc/Stream\"),\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        0\n)\n.withId(\"grpc\")\n.respondWithGrpcStream(\n        GrpcStreamResponse.grpcStreamResponse()\n                .withStatusName(\"OK\")\n                .withStatusMessage(\"done\")\n                .withMessages(\n                        GrpcStreamMessage.grpcStreamMessage()\n                                .withJson(\"{\\\"a\\\":1}\"),\n                        GrpcStreamMessage.grpcStreamMessage()\n                                .withJson(\"{\\\"a\\\":2}\")\n                                .withDelay(new Delay(TimeUnit.MILLISECONDS, 3))\n                )\n                .withCloseConnection(true)\n);\n\n",
+      "note": "java: grpc stream"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: grpc bidi"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 433",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"grpcBidiResponse\" : {\n    \"messages\" : [ {\n      \"json\" : \"{}\"\n    } ],\n    \"primary\" : true,\n    \"rules\" : [ {\n      \"matchJson\" : \"{\\\"q\\\":1}\",\n      \"responses\" : [ {\n        \"json\" : \"{\\\"r\\\":1}\"\n      } ]\n    } ],\n    \"statusName\" : \"OK\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/pkg.Svc/Bidi\"\n  },\n  \"id\" : \"bidi\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: grpc bidi"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.when(\n        request()\n                .withPath(\"/pkg.Svc/Bidi\"),\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        0\n)\n.withId(\"bidi\")\n.respondWithGrpcBidi(\n        GrpcBidiResponse.grpcBidiResponse()\n                .withStatusName(\"OK\")\n                .withMessages(\n                        GrpcStreamMessage.grpcStreamMessage()\n                                .withJson(\"{}\")\n                )\n                .withRules(\n                        GrpcBidiRule.grpcBidiRule()\n                                .withMatchJson(NottableString.string(\"{\\\"q\\\":1}\", false))\n                                .withResponses(\n                                        GrpcStreamMessage.grpcStreamMessage()\n                                                .withJson(\"{\\\"r\\\":1}\")\n                                )\n                )\n                .withPrimary(true)\n);\n\n",
+      "note": "java: grpc bidi"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: llm"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 902",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpLlmResponse\" : {\n    \"provider\" : \"ANTHROPIC\",\n    \"model\" : \"m\",\n    \"completion\" : {\n      \"stopReason\" : \"end_turn\",\n      \"streaming\" : true,\n      \"text\" : \"hi\",\n      \"toolCalls\" : [ {\n        \"arguments\" : \"{}\",\n        \"id\" : \"c1\",\n        \"name\" : \"t\"\n      } ],\n      \"usage\" : {\n        \"inputTokens\" : 3,\n        \"outputTokens\" : 1\n      }\n    },\n    \"conversationPredicates\" : {\n      \"latestMessageRole\" : \"USER\",\n      \"normalization\" : {\n        \"dropVolatileFields\" : [ \"ts\" ],\n        \"lowercase\" : true\n      },\n      \"turnIndex\" : 1\n    },\n    \"chaos\" : {\n      \"errorProbability\" : 0.5,\n      \"errorStatus\" : 529,\n      \"tokenQuotaLimit\" : 100,\n      \"truncateMode\" : \"MID_STREAM\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/v1/messages\"\n  },\n  \"id\" : \"llm\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: llm"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.when(\n        request()\n                .withPath(\"/v1/messages\"),\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        0\n)\n.withId(\"llm\")\n.respondWithLlm(\n        HttpLlmResponse.llmResponse()\n                .withProvider(org.mockserver.model.Provider.ANTHROPIC)\n                .withModel(\"m\")\n                .withCompletion(\n                        Completion.completion()\n                                .withText(\"hi\")\n                                .withToolCalls(\n                                        ToolUse.toolUse(\"t\")\n                                                .withId(\"c1\")\n                                                .withArguments(\"{}\")\n                                )\n                                .withStopReason(\"end_turn\")\n                                .withUsage(\n                                        Usage.usage()\n                                                .withInputTokens(3)\n                                                .withOutputTokens(1)\n                                )\n                                .withStreaming(true)\n                )\n                .withConversationPredicates(\n                        ConversationPredicates.conversationPredicates()\n                                .withTurnIndex(1)\n                                .withLatestMessageRole(org.mockserver.llm.ParsedMessage.Role.USER)\n                                .withNormalization(\n                                        NormalizationOptions.normalizationOptions()\n                                                .withLowercase(true)\n                                                .withDropVolatileFields(java.util.Arrays.asList(\"ts\"))\n                                )\n                )\n                .withChaos(\n                        LlmChaosProfile.llmChaosProfile()\n                                .withErrorStatus(529)\n                                .withErrorProbability(0.5)\n                                .withTruncateMode(org.mockserver.model.LlmChaosProfile.TruncateMode.MID_STREAM)\n                                .withTokenQuotaLimit(100L)\n                )\n);\n\n",
+      "note": "java: llm"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: steps only"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 359",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/steps\"\n  },\n  \"id\" : \"steps\",\n  \"priority\" : 0,\n  \"steps\" : [ {\n    \"blocking\" : true,\n    \"httpRequest\" : {\n      \"path\" : \"/one\"\n    }\n  }, {\n    \"httpResponse\" : {\n      \"statusCode\" : 204\n    },\n    \"responder\" : true\n  } ],\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: steps only"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.upsert(\n        new org.mockserver.mock.Expectation(\n                request()\n                        .withPath(\"/steps\"),\n                Times.unlimited(),\n                TimeToLive.unlimited(),\n                0\n        )\n        .withId(\"steps\")\n        .withSteps(\n                ExpectationStep.step()\n                        .withHttpRequest(\n                                request()\n                                        .withPath(\"/one\")\n                        )\n                        .withBlocking(true),\n                ExpectationStep.step()\n                        .withHttpResponse(\n                                response()\n                                        .withStatusCode(204)\n                        )\n                        .withResponder(true)\n        )\n);\n\n",
+      "note": "java: steps only"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: two actions"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 290",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpError\" : {\n    \"dropConnection\" : true\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/two\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"a\",\n    \"primary\" : true\n  },\n  \"id\" : \"two\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: two actions"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.upsert(\n        new org.mockserver.mock.Expectation(\n                request()\n                        .withPath(\"/two\"),\n                Times.unlimited(),\n                TimeToLive.unlimited(),\n                0\n        )\n        .withId(\"two\")\n        .thenRespond(\n                response()\n                        .withBody(\"a\")\n                        .withPrimary(true)\n        )\n        .thenError(\n                error()\n                        .withDropConnection(true)\n        )\n);\n\n",
+      "note": "java: two actions"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset before: binary"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 266",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"binaryResponse\" : {\n    \"binaryData\" : \"AQI=\",\n    \"upstream\" : \"ANSWER_ONLY\"\n  },\n  \"httpRequest\" : {\n    \"binaryData\" : \"AAE=\"\n  },\n  \"id\" : \"bin\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "create: binary"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.when(,\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        0\n)\n.withId(\"bin\")\n.respondWithBinary(\n        BinaryResponse.binaryResponse()\n                .withBinaryData(java.util.Base64.getDecoder().decode(\"AQI=\"))\n                .withUpstream(org.mockserver.model.BinaryResponse.Upstream.ANSWER_ONLY)\n);\n\n",
+      "note": "java: binary"
+    }
+  ]
+}

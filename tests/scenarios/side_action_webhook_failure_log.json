@@ -1,0 +1,256 @@
+{
+ "source": "hand-written: HttpActionHandler side-action webhook failures (dispatchSideAction, runBeforeActions, runStepsPreResponder, dispatchStepSideEffect) as event-log entries with their throwables",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/after"
+     },
+     "httpResponse": {
+      "body": "a"
+     },
+     "afterActions": [
+      {
+       "httpRequest": {
+        "method": "GET",
+        "path": "/hook/after",
+        "headers": {
+         "Host": [
+          "{{deadhost}}"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/before"
+     },
+     "httpResponse": {
+      "body": "b"
+     },
+     "beforeActions": [
+      {
+       "httpRequest": {
+        "method": "GET",
+        "path": "/hook/before",
+        "headers": {
+         "Host": [
+          "{{deadhost}}"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/before-fail"
+     },
+     "httpResponse": {
+      "body": "never"
+     },
+     "beforeActions": [
+      {
+       "httpRequest": {
+        "method": "GET",
+        "path": "/hook/before-fail",
+        "headers": {
+         "Host": [
+          "{{deadhost}}"
+         ]
+        }
+       },
+       "failurePolicy": "FAIL_FAST"
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/slow"
+     },
+     "httpResponse": {
+      "body": "s",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 1500
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/before-timeout"
+     },
+     "httpResponse": {
+      "body": "never"
+     },
+     "beforeActions": [
+      {
+       "httpRequest": {
+        "method": "GET",
+        "path": "/slow",
+        "headers": {
+         "Host": [
+          "localhost:{{port}}"
+         ]
+        }
+       },
+       "timeout": {
+        "timeUnit": "MILLISECONDS",
+        "value": 200
+       },
+       "failurePolicy": "FAIL_FAST"
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/steps"
+     },
+     "steps": [
+      {
+       "httpRequest": {
+        "method": "GET",
+        "path": "/hook/step-pre",
+        "headers": {
+         "Host": [
+          "{{deadhost}}"
+         ]
+        }
+       }
+      },
+      {
+       "httpResponse": {
+        "body": "st"
+       },
+       "responder": true
+      },
+      {
+       "httpRequest": {
+        "method": "GET",
+        "path": "/hook/step-post",
+        "headers": {
+         "Host": [
+          "{{deadhost}}"
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/after",
+   "note": "after-action: the future's own message (AnnotatedConnectException), throwable caused by ConnectException"
+  },
+  {
+   "method": "GET",
+   "path": "/before",
+   "note": "blocking before-action, best effort: SocketConnectionException"
+  },
+  {
+   "method": "GET",
+   "path": "/before-fail",
+   "note": "blocking before-action, fail fast: the 502 names the same message",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/before-timeout",
+   "note": "blocking before-action timing out: SocketCommunicationException naming maxSocketTimeoutInMillis",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/steps",
+   "note": "pre-responder step (blocking) and post-responder step (fire-and-forget)"
+  },
+  {
+   "sleepMillis": 2000,
+   "note": "the fire-and-forget failures and the slow webhook have completed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/after"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {
+     "regex": "(\"type\" : \"WARN\",\\s*\"correlationId\" : \"[^\"]*\",)\\s*\"port\" : [^,]*,",
+     "replace": "${1}",
+     "reason": "the fire-and-forget webhook's failure entry carries the port only when the thread completing the client's future has one: the oracle records it both ways (b765b8271, as 8.0.0)"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/before"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/before-fail"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/before-timeout"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/steps"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

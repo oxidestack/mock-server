@@ -1,0 +1,26 @@
+{
+ "properties": {
+  "persistRecordedRequestsToDisk": "true",
+  "persistedRecordedRequestsPath": "{{scratch}}/persist_recorded_requests.ndjson"
+ },
+ "steps": [
+  {"writeFile": {"path": "{{scratch}}/persist_recorded_requests.ndjson", "content": ""}, "note": "the archive is opened for append at start: truncate it in place"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/target.*"}, "httpResponse": {"statusCode": 203, "headers": {"X-Target": ["yes"]}, "body": "from target"}},
+    {"httpRequest": {"path": "/mocked"}, "httpResponse": {"statusCode": 201, "body": "line1\nline2"}},
+    {"httpRequest": {"path": "/fwd"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target/fwd", "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ]},
+  {"method": "POST", "path": "/mocked?q=1", "headers": {"Authorization": "Bearer SECRET123", "Content-Type": "application/json"}, "body": "{\"a\": 1}", "note": "mocked exchange"},
+  {"method": "GET", "path": "/fwd", "headers": {"X-In": "in"}, "note": "forwarded exchange: the forwarded request and the target's own answer"},
+  {"method": "GET", "path": "/nothing-here", "note": "no match: not archived"},
+  {"sleepMillis": 1000},
+  {"readFile": "{{scratch}}/persist_recorded_requests.ndjson", "mask": [{"regex": "^\\x00+", "replace": ""}],"note": "one compact line per served exchange"},
+  {"method": "PUT", "path": "/mockserver/import?format=recording&source=disk", "note": "re-importing the archive does not append to it"},
+  {"sleepMillis": 1000},
+  {"readFile": "{{scratch}}/persist_recorded_requests.ndjson", "mask": [{"regex": "^\\x00+", "replace": ""}],"note": "unchanged"},
+  {"method": "PUT", "path": "/mockserver/reset", "note": "reset does not touch the archive"},
+  {"sleepMillis": 500},
+  {"readFile": "{{scratch}}/persist_recorded_requests.ndjson", "mask": [{"regex": "^\\x00+", "replace": ""}],"note": "still there"}
+ ]
+}

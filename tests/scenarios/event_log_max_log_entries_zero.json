@@ -1,0 +1,79 @@
+{
+ "source": "CircularConcurrentLinkedDequeTest.shouldReportZeroSizeAndRejectAddsWhenMaxSizeIsZero: a server started with maxLogEntries 0 retains no event-log entry, so retrieve shows nothing and verification has nothing to count. ringBufferSize is set because its default follows maxLogEntries (one slot here), and a ring that small makes the oracle report ring-full DROPPED events by timing.",
+ "properties": {
+  "maxLogEntries": "0",
+  "ringBufferSize": "1024"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/zero"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "zero"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/zero",
+   "note": "still matched: the expectation store is not the event log"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/zero"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "note": "the request left no entry to count"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/zero"
+    },
+    "times": {
+     "atMost": 0
+    }
+   },
+   "note": "refused entries are not evictions: the upper bound passes"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  }
+ ]
+}

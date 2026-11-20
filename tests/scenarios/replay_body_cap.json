@@ -1,0 +1,57 @@
+{
+ "properties": {
+  "maxRequestBodySize": "31457280"
+ },
+ "steps": [
+  {
+   "note": "a replayed request body one byte over the 10 MiB cap",
+   "maxMillis": 60000,
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "headers": {
+    "content-type": "application/json",
+    "content-encoding": "gzip"
+   },
+   "bodyFile": "replay/request-over-cap.json.gz"
+  },
+  {
+   "note": "a body of exactly 10 MiB passes the cap (and fails to resolve its host)",
+   "maxMillis": 60000,
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "headers": {
+    "content-type": "application/json",
+    "content-encoding": "gzip"
+   },
+   "bodyFile": "replay/request-at-cap.json.gz"
+  },
+  {
+   "note": "an expectation answering one byte over 10 MiB",
+   "maxMillis": 60000,
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "content-type": "application/json",
+    "content-encoding": "gzip"
+   },
+   "bodyFile": "replay/expectation-over-cap.json.gz",
+   "mask": [
+    "b{1000,}"
+   ]
+  },
+  {
+   "note": "an upstream response over the cap",
+   "maxMillis": 60000,
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/huge",
+    "headers": {
+     "Host": [
+      "{{host}}"
+     ]
+    }
+   }
+  }
+ ]
+}

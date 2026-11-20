@@ -1,0 +1,52 @@
+{
+ "source": "HttpWebSocketResponseActionHandler.writeWebSocketFrame's listener: a scripted message whose write fails because the client has gone (ExceptionHandling.clientGoneException) is the DEBUG entry `client left before WebSocket message {} was sent:{}for request:{}`, with the cause's class and message. Here the client stops reading a 42 MB message (rendered by a Velocity template, so the expectation and its log entries stay small) and WriteStallTimeoutHandler closes the channel under it, so the pending write fails with Netty's StacklessClosedChannelException",
+ "properties": {
+  "logLevel": "DEBUG",
+  "responseWriteStallTimeoutMillis": "1000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "ws-write-failure",
+    "httpRequest": {
+     "path": "/ws"
+    },
+    "httpWebSocketResponse": {
+     "messages": [
+      {
+       "text": "#set($s = 'aaaaaaaaaa')#foreach($i in [1..22])#set($s = \"$s$s\")#end$s"
+      },
+      {
+       "text": "b"
+      }
+     ],
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "a 42 MB text message to a WebSocket client that stops reading: cut after a second, while the message is being written",
+   "tcp": [
+    {
+     "text": "GET /ws HTTP/1.1\r\nHost: {{host}}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ],
+   "stallMillis": 15000
+  },
+  {
+   "note": "the stall WARN, then the DEBUG entry for message 1 (no `sent WebSocket message` entry, and message 2 is never written)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(took none of the\\n\\n  )\\d+",
+     "replace": "${1}<bytes>",
+     "reason": "what waits for the client depends on socket buffers (response_write_stall_websocket)"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,194 @@
+{
+ "note": "Upstream 9.1.0 #12, #26, #47). A server of its own: upstream's parse cache is JVM-wide and outlives reset, and a spec's problems are logged only when it is parsed.",
+ "properties": {
+  "mockserver.logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "note": "a spec that loads with problems: grouped, with JSON pointers, counted in a header",
+   "method": "PUT",
+   "path": "/mockserver/openapi?includeLoadProblems=true",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp grouped\"\npaths:\n  /pets:\n    get:\n      responses:\n        \"200\":\n          content: {}\n  pets:\n    get:\n      responses:\n        \"200\":\n          description: ok\n"
+   }
+  },
+  {
+   "note": "the same spec again: a parse-cache hit still reports the problems, but logs no second WARN",
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp grouped\"\npaths:\n  /pets:\n    get:\n      responses:\n        \"200\":\n          content: {}\n  pets:\n    get:\n      responses:\n        \"200\":\n          description: ok\n"
+   }
+  },
+  {
+   "note": "a clean spec: no header, an empty loadProblems",
+   "method": "PUT",
+   "path": "/mockserver/openapi?includeLoadProblems=true",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp clean\"\n  version: \"1\"\npaths:\n  /pets:\n    get:\n      operationId: listPets\n      responses:\n        \"200\":\n          description: ok\n"
+   }
+  },
+  {
+   "note": "two specs: problems numbered by specIndex; the parameter is read case-insensitively",
+   "method": "PUT",
+   "path": "/mockserver/openapi?includeLoadProblems=TRUE",
+   "body": [
+    {
+     "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp missing ref\"\n  version: \"1\"\npaths:\n  /pets:\n    get:\n      operationId: listPets\n      responses:\n        \"200\":\n          description: ok\n          content:\n            application/json:\n              schema:\n                $ref: \"#/components/schemas/Missing\"\ncomponents:\n  schemas:\n    Pet:\n      type: object\n      properties:\n        owner:\n          $ref: \"#/components/schemas/Owner\"\n"
+    },
+    {
+     "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp type list\"\n  version: \"1\"\npaths:\n  /pets:\n    get:\n      responses:\n        \"200\":\n          description: ok\n          content:\n            application/json:\n              schema:\n                type: [string, \"null\"]\n"
+    },
+    {
+     "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp duplicate operationId\"\n  version: \"1\"\npaths:\n  /pets:\n    get:\n      operationId: listPets\n      responses:\n        \"200\":\n          description: ok\n  /pets/{petId}:\n    get:\n      operationId: listPets\n      parameters:\n        - name: petId\n          in: path\n          required: true\n          schema:\n            type: string\n      responses:\n        \"200\":\n          description: ok\n"
+    }
+   ]
+  },
+  {
+   "note": "YAML tab",
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp tab\"\n  version: \"1\"\npaths:\n  /pets:\n\tget:\n      responses:\n        \"200\":\n          description: ok\n"
+   }
+  },
+  {
+   "note": "unclosed YAML flow sequence",
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp unclosed\"\n  version: \"1\"\npaths:\n  /pets:\n    get:\n      responses:\n        \"200\":\n          description: ok\n      tags: [unclosed\n    put:\n"
+   }
+  },
+  {
+   "note": "truncated JSON",
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\",\n \"info\": {\"title\": \"olp truncated\", \"version\": \"1\"},\n \"paths\": {"
+   }
+  },
+  {
+   "note": "unreadable location",
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "openapi_load_problems/no-such-spec.yaml"
+   }
+  },
+  {
+   "note": "an OpenAPI request matcher with problems: the WARN comes from the matcher's parse",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp matcher\"\n  version: \"1\"\npaths:\n  pets:\n    get:\n      operationId: listPets\n      responses:\n        \"200\":\n          description: ok\n",
+      "operationId": "listPets"
+     },
+     "httpResponse": {
+      "body": "pets"
+     }
+    }
+   ]
+  },
+  {
+   "note": "an inline JSON Schema that breaks OpenAPI 3.0 rules generates a body without a WARN",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/olp/generated"
+     },
+     "httpResponse": {
+      "generateFromSchema": "{\"$schema\": \"http://json-schema.org/draft-07/schema#\", \"type\": \"object\", \"properties\": {\"id\": {\"type\": \"integer\"}, \"kind\": {\"const\": \"pet\"}, \"name\": {\"type\": [\"string\", \"null\"]}}, \"required\": [\"id\", \"kind\"]}"
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/olp/generated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "\"instructions\" ?: ?\"(?:[^\"\\\\]|\\\\.)*\"",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "note": "create_expectation_from_openapi lists the problems",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation_from_openapi",
+     "arguments": {
+      "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp mcp\"\n  version: \"1\"\npaths:\n  pets:\n    get:\n      operationId: listPets\n      responses:\n        \"200\":\n          description: ok\n"
+     }
+    }
+   }
+  },
+  {
+   "note": "and a clean spec an empty list",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation_from_openapi",
+     "arguments": {
+      "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: \"olp clean\"\n  version: \"1\"\npaths:\n  /pets:\n    get:\n      operationId: listPets\n      responses:\n        \"200\":\n          description: ok\n"
+     }
+    }
+   }
+  }
+ ]
+}

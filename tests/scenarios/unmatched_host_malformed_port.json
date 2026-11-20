@@ -1,0 +1,18 @@
+{"source": "an unmatched request is proxied to its Host header via HttpRequest.socketAddressFromHostHeader (splitHostPort, Integer.parseInt, new InetSocketAddress); a malformed port is attempted and fails (502), not a 404",
+ "steps": [
+  {"note": "non-numeric port", "method": "GET", "path": "/unmatched", "headers": {"Host": "x.invalid:abc"}},
+  {"note": "empty port", "method": "GET", "path": "/unmatched", "headers": {"Host": "x.invalid:"}},
+  {"note": "port above range", "method": "GET", "path": "/unmatched", "headers": {"Host": "x.invalid:99999"}},
+  {"note": "port just above range", "method": "GET", "path": "/unmatched", "headers": {"Host": "x.invalid:65536"}},
+  {"note": "port zero", "method": "GET", "path": "/unmatched", "headers": {"Host": "x.invalid:0"}},
+  {"note": "negative port", "method": "GET", "path": "/unmatched", "headers": {"Host": "x.invalid:-1"}},
+  {"note": "plus-signed port", "method": "GET", "path": "/unmatched", "headers": {"Host": "x.invalid:+{{deadport}}"}},
+  {"note": "three parts", "method": "GET", "path": "/unmatched", "headers": {"Host": "x.invalid:{{deadport}}:abc"}},
+  {"note": "empty host", "method": "GET", "path": "/unmatched", "headers": {"Host": ":{{deadport}}"}},
+  {"note": "empty host and port", "method": "GET", "path": "/unmatched", "headers": {"Host": ":"}},
+  {"note": "IPv6 non-numeric port", "method": "GET", "path": "/unmatched", "headers": {"Host": "[::1]:abc"}},
+  {"note": "IPv6 empty port", "method": "GET", "path": "/unmatched", "headers": {"Host": "[::1]:"}},
+  {"note": "IPv6 out of range", "method": "GET", "path": "/unmatched", "headers": {"Host": "[::1]:70000"}},
+  {"note": "logs", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [{"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}]}
+]}

@@ -1,0 +1,332 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "gzip with a Content-Length, mixed-case headers around it",
+   "tcp": [
+    {
+     "text": "POST /gzip HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: gzip\r\nContent-Type: application/json\r\nContent-Length: 47\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVHSUcpTsjI0MjYxrQUAnjMUlRsAAAA="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "gzip, chunked",
+   "tcp": [
+    {
+     "text": "POST /gzip-chunked HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: gzip\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MmYNCh+LCAAAAAAAAhOrVspIzcnJV7JSKs8vyklR0lHKU7IyNDI2Ma0FAJ4zFJUbAAAADQowDQoNCg=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "x-gzip, upper case coding",
+   "tcp": [
+    {
+     "text": "POST /x-gzip HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: X-GZIP\r\nContent-Type: application/json\r\nContent-Length: 47\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVHSUcpTsjI0MjYxrQUAnjMUlRsAAAA="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "deflate (zlib)",
+   "tcp": [
+    {
+     "text": "POST /deflate HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: deflate\r\nContent-Type: application/json\r\nContent-Length: 35\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "eJyrVspIzcnJV7JSKs8vyklR0lHKU7IyNDI2Ma0FAHndCA4="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "snappy framing format",
+   "tcp": [
+    {
+     "text": "POST /snappy-framed HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: snappy\r\nContent-Type: application/json\r\nContent-Length: 45\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "/wYAAHNOYVBwWQEfAABaw4imeyJoZWxsbyI6IndvcmxkIiwibiI6MTIzNDV9"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "gzip shorter than a gzip header: nothing decoded",
+   "tcp": [
+    {
+     "text": "POST /short-gzip HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: gzip\r\nContent-Type: application/json\r\nContent-Length: 7\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "bm90Z3ppcA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "br is not decoded",
+   "tcp": [
+    {
+     "text": "POST /br HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: br\r\nContent-Type: text/plain\r\nContent-Length: 7\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "YnJieXRlcw=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "chunked without a coding",
+   "tcp": [
+    {
+     "text": "POST /plain-chunked HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "YQ0KcGxhaW4gYm9keQ0KMA0KDQo="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "a list of codings is not decoded",
+   "tcp": [
+    {
+     "text": "POST /gzip-list HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: gzip, identity\r\nContent-Type: application/octet-stream\r\nContent-Length: 47\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVHSUcpTsjI0MjYxrQUAnjMUlRsAAAA="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "recorded /gzip",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/gzip"
+   }
+  },
+  {
+   "note": "recorded /gzip-chunked",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/gzip-chunked"
+   }
+  },
+  {
+   "note": "recorded /x-gzip",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/x-gzip"
+   }
+  },
+  {
+   "note": "recorded /deflate",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/deflate"
+   }
+  },
+  {
+   "note": "recorded /snappy-framed",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/snappy-framed"
+   }
+  },
+  {
+   "note": "recorded /short-gzip",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/short-gzip"
+   }
+  },
+  {
+   "note": "recorded /br",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/br"
+   }
+  },
+  {
+   "note": "recorded /plain-chunked",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/plain-chunked"
+   }
+  },
+  {
+   "note": "recorded /gzip-list",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/gzip-list"
+   }
+  },
+  {
+   "note": "recorded /gzip as Java (header order)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JAVA",
+   "body": {
+    "path": "/gzip"
+   }
+  },
+  {
+   "note": "recorded /gzip-chunked as Java (header order)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JAVA",
+   "body": {
+    "path": "/gzip-chunked"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "snappy raw block: 8.0.0 SnappyFrameDecoder rejects it and closes the connection; cc8fb880a decodes it as a block",
+   "tcp": [
+    {
+     "text": "POST /snappy-raw HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: snappy\r\nContent-Type: application/json\r\nContent-Length: 29\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "G2h7ImhlbGxvIjoid29ybGQiLCJuIjoxMjM0NX0="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "logs after snappy raw block",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "nothing recorded after snappy raw block (cc8fb880a: the decoded request)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "zstd: decoded",
+   "tcp": [
+    {
+     "text": "POST /zstd HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: zstd\r\nContent-Type: application/json\r\nContent-Length: 36\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "KLUv/QBY2QAAeyJoZWxsbyI6IndvcmxkIiwibiI6MTIzNDV9"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "logs after zstd",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(HTTP/1\\.1 request from:\\n\\n  )/\\S+",
+     "replace": "${1}<client address>",
+     "reason": "the client's socket address: the oracle sees the Docker bridge's"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "gzip with a bad magic number: the connection closes",
+   "tcp": [
+    {
+     "text": "POST /bad-gzip HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: 23\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "dGhpcyBpcyBub3QgZ3ppcCBhdCBhbGw="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "logs after bad gzip",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(HTTP/1\\.1 request from:\\n\\n  )/\\S+",
+     "replace": "${1}<client address>",
+     "reason": "the client's socket address: the oracle sees the Docker bridge's"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "h2 raw: a body snappy cannot decode",
+   "h2raw": {
+    "method": "POST",
+    "path": "/h2-bad-snappy",
+    "headers": [
+     [
+      "content-encoding",
+      "snappy"
+     ]
+    ],
+    "body": "notsnappy"
+   }
+  },
+  {
+   "note": "logs after h2 bad snappy",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "h2: gzip with content-length",
+   "h2": true,
+   "method": "POST",
+   "path": "/h2-gzip",
+   "headers": {
+    "x-before": "a",
+    "content-encoding": "gzip",
+    "content-length": "47",
+    "x-after": "b"
+   },
+   "bodyBase64": "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVHSUcpTsjI0MjYxrQUAnjMUlRsAAAA="
+  },
+  {
+   "note": "h2: zstd",
+   "h2": true,
+   "method": "POST",
+   "path": "/h2-zstd",
+   "headers": {
+    "content-encoding": "zstd"
+   },
+   "bodyBase64": "KLUv/QBY2QAAeyJoZWxsbyI6IndvcmxkIiwibiI6MTIzNDV9"
+  },
+  {
+   "note": "h2: snappy framed",
+   "h2": true,
+   "method": "POST",
+   "path": "/h2-snappy",
+   "headers": {
+    "content-encoding": "snappy"
+   },
+   "bodyBase64": "/wYAAHNOYVBwWQEfAABaw4imeyJoZWxsbyI6IndvcmxkIiwibiI6MTIzNDV9"
+  },
+  {
+   "note": "recorded h2 as Java (header order)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JAVA"
+  },
+  {
+   "note": "logs after h2",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

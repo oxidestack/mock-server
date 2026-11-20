@@ -1,0 +1,45 @@
+{
+ "source": "hand-written: PUT /mockserver/generateExpectation with an LLM backend configured (llmProvider) at an address nothing listens on: LlmCompletionService.complete fails closed",
+ "properties": {
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "http://{{deadhost}}",
+  "llmApiKey": "test-key",
+  "llmRequestTimeoutMillis": "5000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "method": "POST",
+     "path": "/llm"
+    },
+    "limit": 3
+   },
+   "note": "a backend resolves but cannot be reached: the template fallback at confidence 0.3",
+   "maxMillis": 40000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/llm-added"
+    },
+    "preview": false
+   },
+   "maxMillis": 40000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {},
+   "note": "errors come before the backend is asked"
+  }
+ ]
+}

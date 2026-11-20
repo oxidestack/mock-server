@@ -1,0 +1,149 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/fuzzy",
+      "body": {
+       "type": "FUZZY",
+       "fuzzy": "hello world",
+       "threshold": 0.9
+      }
+     },
+     "httpResponse": {
+      "body": "fuzzy"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fuzzy-ci",
+      "body": {
+       "type": "FUZZY",
+       "fuzzy": "Hello World",
+       "ignoreCase": true
+      }
+     },
+     "httpResponse": {
+      "body": "fuzzy ci"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/file",
+      "body": {
+       "type": "FILE",
+       "filePath": "{{files}}/plain.txt",
+       "contentType": "text/plain"
+      }
+     },
+     "httpResponse": {
+      "body": "file"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/allof",
+      "body": {
+       "type": "ALL_OF",
+       "bodyAllOf": [
+        {
+         "type": "JSON_PATH",
+         "jsonPath": "$.a"
+        },
+        {
+         "type": "REGEX",
+         "regex": ".*b.*"
+        }
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "all of"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/allof-not",
+      "body": {
+       "not": true,
+       "bodyAllOf": [
+        {
+         "type": "STRING",
+         "string": "x"
+        }
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "not all of"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/fuzzy",
+   "body": "hello wrold",
+   "note": "fuzzy close"
+  },
+  {
+   "method": "POST",
+   "path": "/fuzzy",
+   "body": "goodbye",
+   "note": "fuzzy far"
+  },
+  {
+   "method": "POST",
+   "path": "/fuzzy-ci",
+   "body": "  hello world ",
+   "note": "fuzzy ignore case"
+  },
+  {
+   "method": "POST",
+   "path": "/file",
+   "body": "plain file body $request.path",
+   "note": "file exact"
+  },
+  {
+   "method": "POST",
+   "path": "/file",
+   "body": "plain file body $request.pathx",
+   "note": "file differs"
+  },
+  {
+   "method": "POST",
+   "path": "/allof",
+   "body": {
+    "a": 1,
+    "b": 2
+   },
+   "note": "all match"
+  },
+  {
+   "method": "POST",
+   "path": "/allof",
+   "body": {
+    "a": 1
+   },
+   "note": "one fails"
+  },
+  {
+   "method": "POST",
+   "path": "/allof-not",
+   "body": "y",
+   "note": "not all of"
+  },
+  {
+   "method": "POST",
+   "path": "/allof-not",
+   "body": "x",
+   "note": "not all of, matching"
+  }
+ ]
+}

@@ -1,0 +1,30 @@
+{
+ "properties": {
+  "proxySetupLogging": "false",
+  "initializationJsonPath": "{{files}}/init/broken.json",
+  "initializationOpenAPIPath": "{{files}}/init/broken-openapi.yaml"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "note": "init files that fail to load, without the proxy setup block, as entries (a Java throwable is left out: docs/divergences.md)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "note": "init files that fail to load, without the proxy setup block, as text",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

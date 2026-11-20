@@ -1,0 +1,90 @@
+{
+  "source": "hand-written (generated from upstream's ProviderStreamFixtures): HttpActionHandlerStreamedLlmUsageTest's shouldSayWhenAGeminiStreamIsCutOffBeforeItsFinishReason; an upstream that closes mid-body is an httpError dropping the connection after part of a chunked body, forwarded to this server's own mocks",
+  "properties": {
+    "metricsEnabled": "true",
+    "llmMetricsEnabled": "true",
+    "llmProvider": "GEMINI"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "upstream-gemini-cut",
+          "priority": 10,
+          "httpRequest": {
+            "method": "POST",
+            "path": "/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+            "headers": {
+              "x-case": [
+                "gemini-cut"
+              ]
+            }
+          },
+          "httpError": {
+            "dropConnection": true,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQpUcmFuc2Zlci1FbmNvZGluZzogY2h1bmtlZA0KDQoxMWINCmRhdGE6IHsiY2FuZGlkYXRlcyI6W3siY29udGVudCI6eyJwYXJ0cyI6W3sidGV4dCI6IkhlbGxvIn1dLCJyb2xlIjoibW9kZWwifSwiaW5kZXgiOjB9XSwidXNhZ2VNZXRhZGF0YSI6eyJwcm9tcHRUb2tlbkNvdW50Ijo4LCJ0b3RhbFRva2VuQ291bnQiOjgsInByb21wdFRva2Vuc0RldGFpbHMiOlt7Im1vZGFsaXR5IjoiVEVYVCIsInRva2VuQ291bnQiOjh9XX0sIm1vZGVsVmVyc2lvbiI6ImdlbWluaS0yLjUtZmxhc2giLCJyZXNwb25zZUlkIjoibUFpdGFMM2tMUFd0bXRrUHg1aVk4UWsifQ0KDQoNCg=="
+          }
+        },
+        {
+          "id": "forward-gemini-cut",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/client/gemini-cut"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ],
+                "x-case": [
+                  "gemini-cut"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "Gemini cut off after its first event: 8 in counted, the line that it ended before its final usage event (INFO, no budget)",
+      "method": "POST",
+      "path": "/client/gemini-cut",
+      "body": "{\"contents\":[]}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "sleepMillis": 500,
+      "note": "a relayed stream is accounted once its relay has ended, which may be after the client read it"
+    },
+    {
+      "note": "the LLM token and cost counters",
+      "method": "GET",
+      "path": "/mockserver/metrics",
+      "mask": [
+        {
+          "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+          "replace": ""
+        },
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "the streamed-usage lines of the event log",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+          "replace": "",
+          "reason": "every entry but the streamed-usage lines"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,404 @@
+{
+ "properties": {
+  "controlPlaneOidcAuthenticationRequired": "true",
+  "controlPlaneOidcIssuer": "https://issuer.example",
+  "controlPlaneOidcAudience": "mockserver",
+  "controlPlaneOidcJwksUri": "{{files}}/oidc/jwks.json",
+  "controlPlaneAuthorizationEnabled": "true",
+  "controlPlaneScopeMapping": "readers=read,mutators=mutate,admins=admin,bogus=owner,=read"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "body": {
+    "httpRequest": {
+     "path": "/guarded"
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "read role cannot mutate"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6Im11dGF0b3IiLCJzY29wZSI6Im11dGF0b3JzIG90aGVyIiwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjE3NjcyMjU2MDB9.YbzQMXycdGgjWp_NaYZZA5_hVy7taatY8jBZjbTHcsHtEOlFknA3c9cPR0oN6ZRpU5wJ-FpgkvFSMR8Pa8e-VVdtTscRMsneXQO5TPe-JliUgRpDOv-nFI1vR9fzhnAtF8W_Cst3XY5cNHaS--YCTpJnc1FkoRwFrxxScIzzsbViloOHlSjArNzFzMbjUSWbrdAmEwnTVxGZlDcSrQrU0yx6xen_GnnH0-mu0a5scUKlWUb0d6W-CudOGUctpNm1HUom1f3tnvxMe6CpOtPs2W-WFb0bnkfL20y8LQvGjPTVTQTrOy85uOo-aRtQTAiN5GGLf-Hc2GFlNA7iKcshNg"
+   },
+   "body": {
+    "httpRequest": {
+     "path": "/guarded"
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "note": "mutate role can",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "note": "retrieve is a read",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "body": {
+    "httpRequest": {
+     "path": "/guarded"
+    },
+    "times": {
+     "atLeast": 0
+    }
+   },
+   "note": "verify is a read"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "note": "any GET is a read"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InN0cmFuZ2VyIiwic2NvcGUiOiJ1bm1hcHBlZCIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.MqsMS3ZUcn6RuDRzMb2hH9R6CRTbcoAtY7WTPOXZTnb4osAb-4cHp7F6nx_5nNu0pDaoFSw0OsaifBG7gUovJFLXeoRl8nkm6eZVZVrJijl6S99_vNLqk7TmRYumTuY7R4zxbRJd09mjUysAlhCw0hhswmvkqun81qJabJgKhQvCIZf8okyUsqlxONoMC3cMIlmLGrt0IyVcA6lM6bQRs27BxD5VD_Gs_nJldTrSsY9D4CrNtrJ-Jj8eRSN2-MHonEFsR9SsrOaycztD6NmAOcxMRsp-7TMldGxfFMKEl6L3s7ubfqi8Ig58qgjrW1caWfM7Uah5Mias_PmGGeyJ0g"
+   },
+   "note": "no mapped role"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "no token"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InN0cmFuZ2VyIiwic2NvcGUiOiJ1bm1hcHBlZCIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.MqsMS3ZUcn6RuDRzMb2hH9R6CRTbcoAtY7WTPOXZTnb4osAb-4cHp7F6nx_5nNu0pDaoFSw0OsaifBG7gUovJFLXeoRl8nkm6eZVZVrJijl6S99_vNLqk7TmRYumTuY7R4zxbRJd09mjUysAlhCw0hhswmvkqun81qJabJgKhQvCIZf8okyUsqlxONoMC3cMIlmLGrt0IyVcA6lM6bQRs27BxD5VD_Gs_nJldTrSsY9D4CrNtrJ-Jj8eRSN2-MHonEFsR9SsrOaycztD6NmAOcxMRsp-7TMldGxfFMKEl6L3s7ubfqi8Ig58qgjrW1caWfM7Uah5Mias_PmGGeyJ0g"
+   },
+   "note": "status is not gated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "note": "clear is a mutation"
+  },
+  {
+   "method": "GET",
+   "path": "/guarded",
+   "note": "the data plane is not gated"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-03-26"
+    }
+   },
+   "capture": {
+    "header": "mcp-session-id",
+    "as": "session"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "MCP authenticates without authorizing"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg",
+    "Mcp-Session-Id": "{{capture:session}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg",
+    "Mcp-Session-Id": "{{capture:session}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/mcp-forbidden",
+      "statusCode": 201
+     }
+    }
+   },
+   "note": "a mutating tool needs MUTATE"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg",
+    "Mcp-Session-Id": "{{capture:session}}"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "get_status",
+     "arguments": {}
+    }
+   },
+   "note": "a reading tool needs READ",
+   "mask": [
+    "\\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg",
+    "Mcp-Session-Id": "{{capture:session}}"
+   },
+   "body": [
+    {
+     "jsonrpc": "2.0",
+     "id": 40,
+     "method": "tools/call",
+     "params": {
+      "name": "get_status",
+      "arguments": {}
+     }
+    },
+    {
+     "jsonrpc": "2.0",
+     "id": 41,
+     "method": "tools/call",
+     "params": {
+      "name": "create_expectation",
+      "arguments": {
+       "method": "GET",
+       "path": "/batch-forbidden",
+       "statusCode": 201
+      }
+     }
+    }
+   ],
+   "note": "a mutating tool inside a batch needs MUTATE, the reading one in the same batch succeeds",
+   "mask": [
+    "\\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "note": "the denied batch element created nothing",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}"
+   },
+   "note": "MCP without a token is unauthenticated",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 50,
+    "method": "tools/call",
+    "params": {
+     "name": "get_status",
+     "arguments": {}
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}"
+   },
+   "note": "MCP GET without a token is unauthenticated"
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}"
+   },
+   "note": "MCP DELETE without a token is unauthenticated"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "note": "setting the operating mode needs MUTATE",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 51,
+    "method": "tools/call",
+    "params": {
+     "name": "set_operating_mode",
+     "arguments": {
+      "mode": "proxy"
+     }
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "note": "listing expectations needs READ",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 52,
+    "method": "tools/call",
+    "params": {
+     "name": "list_expectations",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "\\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InN0cmFuZ2VyIiwic2NvcGUiOiJ1bm1hcHBlZCIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.MqsMS3ZUcn6RuDRzMb2hH9R6CRTbcoAtY7WTPOXZTnb4osAb-4cHp7F6nx_5nNu0pDaoFSw0OsaifBG7gUovJFLXeoRl8nkm6eZVZVrJijl6S99_vNLqk7TmRYumTuY7R4zxbRJd09mjUysAlhCw0hhswmvkqun81qJabJgKhQvCIZf8okyUsqlxONoMC3cMIlmLGrt0IyVcA6lM6bQRs27BxD5VD_Gs_nJldTrSsY9D4CrNtrJ-Jj8eRSN2-MHonEFsR9SsrOaycztD6NmAOcxMRsp-7TMldGxfFMKEl6L3s7ubfqi8Ig58qgjrW1caWfM7Uah5Mias_PmGGeyJ0g"
+   },
+   "note": "a reading tool for a caller without a mapped role",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 53,
+    "method": "tools/call",
+    "params": {
+     "name": "get_status",
+     "arguments": {}
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6Im11dGF0b3IiLCJzY29wZSI6Im11dGF0b3JzIG90aGVyIiwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjE3NjcyMjU2MDB9.YbzQMXycdGgjWp_NaYZZA5_hVy7taatY8jBZjbTHcsHtEOlFknA3c9cPR0oN6ZRpU5wJ-FpgkvFSMR8Pa8e-VVdtTscRMsneXQO5TPe-JliUgRpDOv-nFI1vR9fzhnAtF8W_Cst3XY5cNHaS--YCTpJnc1FkoRwFrxxScIzzsbViloOHlSjArNzFzMbjUSWbrdAmEwnTVxGZlDcSrQrU0yx6xen_GnnH0-mu0a5scUKlWUb0d6W-CudOGUctpNm1HUom1f3tnvxMe6CpOtPs2W-WFb0bnkfL20y8LQvGjPTVTQTrOy85uOo-aRtQTAiN5GGLf-Hc2GFlNA7iKcshNg"
+   },
+   "note": "a MUTATE-only caller is not READ",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 54,
+    "method": "tools/call",
+    "params": {
+     "name": "get_status",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "\\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6Im11dGF0b3IiLCJzY29wZSI6Im11dGF0b3JzIG90aGVyIiwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjE3NjcyMjU2MDB9.YbzQMXycdGgjWp_NaYZZA5_hVy7taatY8jBZjbTHcsHtEOlFknA3c9cPR0oN6ZRpU5wJ-FpgkvFSMR8Pa8e-VVdtTscRMsneXQO5TPe-JliUgRpDOv-nFI1vR9fzhnAtF8W_Cst3XY5cNHaS--YCTpJnc1FkoRwFrxxScIzzsbViloOHlSjArNzFzMbjUSWbrdAmEwnTVxGZlDcSrQrU0yx6xen_GnnH0-mu0a5scUKlWUb0d6W-CudOGUctpNm1HUom1f3tnvxMe6CpOtPs2W-WFb0bnkfL20y8LQvGjPTVTQTrOy85uOo-aRtQTAiN5GGLf-Hc2GFlNA7iKcshNg"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 60,
+    "method": "tools/call",
+    "params": {
+     "name": "create_expectation",
+     "arguments": {
+      "method": "GET",
+      "path": "/mcp-allowed",
+      "statusCode": 202
+     }
+    }
+   },
+   "note": "a MUTATE caller's tool call really mutates",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": "{{capture:session}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 61,
+    "method": "tools/call",
+    "params": {
+     "name": "list_expectations",
+     "arguments": {
+      "path": "/mcp-allowed"
+     }
+    }
+   },
+   "note": "and a READ caller sees the result",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d+"
+   ]
+  }
+ ]
+}

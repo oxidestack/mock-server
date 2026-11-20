@@ -1,0 +1,142 @@
+{
+  "note": "Upstream #227, eef1d8e8b: control-plane mTLS authenticates only the client's own certificate, the first one presented; the others are untrusted intermediates of its path to the CA chain. Refused: an untrusted leaf, a self-signed one or one signed by the bundled CA, each with the trusted CA appended; a CA certificate; the trust anchor itself; a key usage without digitalSignature; an extended key usage without clientAuth. Accepted: a leaf via a presented intermediate, a trusted leaf with its CA appended",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{files}}/tls/private-ca/ca-cert.pem\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "tls": 2,
+      "label": "warmup",
+      "warmup": true
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/attack/attacker-chain.pem",
+          "key": "tls/private-ca/attack/attacker-key.pem"
+        },
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates can be validated by control plane CA",
+        "readTimeoutMillis": 90000
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/attack/self-signed-chain.pem",
+          "key": "tls/private-ca/attack/self-signed-key.pem"
+        },
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates can be validated by control plane CA"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/attack/bundled-signed-chain.pem",
+          "key": "tls/private-ca/attack/bundled-signed-key.pem"
+        },
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates can be validated by control plane CA"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/attack/ca-leaf-cert.pem",
+          "key": "tls/private-ca/attack/ca-leaf-key.pem"
+        },
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates can be validated by control plane CA"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/ca-cert.pem",
+          "key": "tls/private-ca/ca-key.pem"
+        },
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates can be validated by control plane CA"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/attack/no-digital-signature-cert.pem",
+          "key": "tls/private-ca/attack/no-digital-signature-key.pem"
+        },
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates can be validated by control plane CA"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/attack/server-auth-cert.pem",
+          "key": "tls/private-ca/attack/server-auth-key.pem"
+        },
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates can be validated by control plane CA"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/attack/via-intermediate-chain.pem",
+          "key": "tls/private-ca/attack/via-intermediate-key.pem"
+        },
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "clientCertificate": {
+          "cert": "tls/private-ca/attack/no-eku-with-ca-chain.pem",
+          "key": "tls/private-ca/no-eku-key.pem"
+        },
+        "expectStatus": 200
+      }
+    }
+  ],
+  "timeoutSecs": 120,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "authentication handler could not be created": 0
+    }
+  }
+}

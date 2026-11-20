@@ -1,0 +1,44 @@
+{
+ "source": "a static file served with logLevel WARN is still recorded for REQUEST_RESPONSES and for a MOCKED verification (StaticFilesIntegrationTest.shouldRecordServedFileForVerificationAndRetrieveBelowInfo)",
+ "properties": {
+  "staticFilesDirectory": "{{files}}/static",
+  "logLevel": "WARN"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/data.json"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/data.json"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/data.json"
+    },
+    "httpResponse": {
+     "statusCode": 200
+    },
+    "disposition": "MOCKED",
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/data.json"
+   }
+  }
+ ]
+}

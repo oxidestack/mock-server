@@ -1,0 +1,28 @@
+{
+  "note": "control-plane Basic authentication required with no users configured, and a users file that cannot be read, is refused before anything is bound (BasicAuthenticationCredentials.parse); usage, exit 0 as for any IllegalArgumentException",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_CONTROL_PLANE_BASIC_AUTHENTICATION_REQUIRED": "true",
+    "MOCKSERVER_CONTROL_PLANE_BASIC_AUTHENTICATION_USERS_FILE": "{{scratch}}/no-such-users-file"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": false,
+    "exitCode": 0,
+    "stdoutInOrder": [
+      "[INFO] stopped for ports: []",
+      "java -jar <path to mockserver-netty-jar-with-dependencies.jar> -serverPort <port>"
+    ],
+    "stdoutNotContains": [
+      "started on port",
+      "cannot be read"
+    ]
+  }
+}

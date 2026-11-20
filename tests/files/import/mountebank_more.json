@@ -1,0 +1,39 @@
+[
+  {
+    "protocol": "https",
+    "port": 8443,
+    "stubs": [
+      {
+        "predicates": [
+          { "startsWith": { "path": "/api", "body": "BEGIN" }, "caseSensitive": true },
+          { "endsWith": { "method": "ET", "headers": { "X-End": "z" } } },
+          { "matches": { "body": "^a+$", "query": { "id": "[0-9]+" } }, "except": "\\d" },
+          { "and": [ { "equals": { "path": "/x" } } ] },
+          { "inject": "function () { return true; }" },
+          { "equals": "not-an-object" },
+          { "equals": { "requestFrom": "1.2.3.4", "body": { "k": "v" } } },
+          { "exists": { "query": { "q": true, "absent": false }, "method": true, "body": true } },
+          { "caseSensitive": true }
+        ],
+        "responses": [
+          { "is": { "statusCode": 201, "body": "one", "_mode": "binary" }, "_behaviors": { "wait": "function () { return 10; }", "decorate": "x", "copy": [], "repeat": 3 } },
+          { "proxy": { "to": "https://up.example.com" } }
+        ]
+      },
+      {
+        "predicates": [ { "deepEquals": { "body": [1, 2] } }, { "contains": { "body": "ignored", "path": "seg" }, "caseSensitive": true } ],
+        "responses": [ { "is": { "statusCode": 200, "headers": { "Set-Cookie": ["a=1", "b=2"], "X-Api-Key": "k" }, "body": "" }, "_behaviors": { "repeat": 5, "lookup": {}, "shellTransform": "x" } } ]
+      },
+      {
+        "responses": [ { "proxy": { "to": "http://bad host", "mode": "proxyAlways", "predicateGenerators": [] } } ]
+      },
+      { "responses": [ { "fault": "RANDOM_DATA_THEN_CLOSE" } ] },
+      { "responses": [ { "fault": "ODD" } ] },
+      { "responses": [ { "somethingElse": {} } ] },
+      { "predicates": [ { "equals": { "path": "/multi" } } ], "responses": [ { "is": { "body": "a" }, "_behaviors": { "repeat": 2, "wait": 5 } }, { "is": { "body": { "token": "x" } } } ] },
+      { "responses": [] }
+    ]
+  },
+  { "protocol": "http", "port": 2525 },
+  { "stubs": [ { "responses": [ { "proxy": {} } ] } ] }
+]

@@ -1,0 +1,129 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "binaryData": ""
+    },
+    "binaryResponse": {
+     "binaryData": "AQIDBA=="
+    }
+   },
+   "note": "an empty binaryData is not echoed (BinaryRequestDefinitionDTO, NON_EMPTY)",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "listed for no filter",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "binaryData": ""
+   },
+   "note": "an empty binary filter lists it",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "binaryData": "AAE="
+   },
+   "note": "a binary filter with other bytes does not list it",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/a"
+   },
+   "note": "an HTTP filter lists a binary definition",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=java",
+   "note": "the Java rendering of an empty binary definition",
+   "mask": [
+    "\"[0-9a-f-]{36}\""
+   ]
+  },
+  {
+   "tcp": [
+    "CQgHBgUEAwIBAA=="
+   ],
+   "note": "an empty binary matcher answers any binary request"
+  },
+  {
+   "method": "GET",
+   "path": "/a",
+   "note": "an HTTP request does not match a binary expectation"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "binaryData": "AAE="
+   },
+   "note": "clearing with other bytes keeps it"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "still there",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "binaryData": ""
+   },
+   "note": "clearing with an empty binary filter removes it"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "gone",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "binaryData": ""
+   },
+   "note": "an empty binary filter shows the log entries about binary definitions",
+   "mask": [
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "\"[0-9a-f-]{36}\"",
+    {
+     "regex": "\\n\\s*\"port\" : (<port>|\\d+),",
+     "replace": ""
+    }
+   ]
+  }
+ ]
+}

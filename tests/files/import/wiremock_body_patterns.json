@@ -1,0 +1,85 @@
+{
+  "mappings": [
+    {
+      "id": "xpath-equal",
+      "request": {
+        "method": "POST",
+        "urlPath": "/xpath/equal",
+        "bodyPatterns": [
+          { "matchesXPath": { "expression": "//b:book/b:title/text()", "equalTo": "Dune" }, "xPathNamespaces": { "b": "urn:books" } }
+        ]
+      },
+      "response": { "status": 200, "body": "xpath-equal" }
+    },
+    {
+      "request": {
+        "urlPath": "/xpath/contains",
+        "bodyPatterns": [ { "matchesXPath": { "expression": "//title", "contains": "it's \"quoted\"" } } ]
+      },
+      "response": { "body": "xpath-contains" }
+    },
+    {
+      "request": {
+        "urlPath": "/xpath/secret",
+        "bodyPatterns": [ { "matchesXPath": { "expression": "//password", "equalTo": "hunter2" } } ]
+      },
+      "response": { "body": "xpath-secret" }
+    },
+    {
+      "request": {
+        "urlPath": "/xpath/other",
+        "bodyPatterns": [ { "matchesXPath": { "expression": "//count", "greaterThan": "3" } }, { "matchesXPath": {} } ]
+      },
+      "response": { "body": "xpath-other" }
+    },
+    {
+      "request": {
+        "urlPath": "/xml",
+        "bodyPatterns": [ { "equalToXml": "<order><id>7</id></order>", "enablePlaceholders": true, "exemptedComparisons": [ "NAMESPACE_URI" ] } ]
+      },
+      "response": { "body": "xml" }
+    },
+    {
+      "request": { "urlPath": "/binary", "bodyPatterns": [ { "binaryEqualTo": "AAEC/w==" } ] },
+      "response": { "body": "binary" }
+    },
+    {
+      "request": { "urlPath": "/binary-bad", "bodyPatterns": [ { "binaryEqualTo": "**" }, { "equalTo": "fallback" } ] },
+      "response": { "body": "binary-bad" }
+    },
+    {
+      "request": { "urlPath": "/json-secret", "bodyPatterns": [ { "equalToJson": { "user": "ann", "password": "s3cret" } } ] },
+      "response": { "body": "json-secret" }
+    },
+    {
+      "request": { "urlPath": "/regex-secret", "bodyPatterns": [ { "matches": ".*\"token\":\"[a-z]+\".*" } ] },
+      "response": { "body": "regex-secret" }
+    },
+    {
+      "request": { "urlPath": "/contains-secret", "bodyPatterns": [ { "contains": "{\"api_key\":\"abc\"}" } ] },
+      "response": { "body": "contains-secret" }
+    },
+    {
+      "request": { "urlPath": "/jsonpath-secret", "bodyPatterns": [ { "matchesJsonPath": "$.credentials[?(@.secret == 'x')]" } ] },
+      "response": { "body": "jsonpath-secret" }
+    },
+    {
+      "request": { "urlPath": "/jsonpath-sub", "bodyPatterns": [ { "matchesJsonPath": { "expression": "$.a", "equalTo": "1" } } ] },
+      "response": { "body": "jsonpath-sub" }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathTemplate": "/users/{userId}/orders/{orderId}",
+        "pathParameters": { "userId": { "matches": "[0-9]+" }, "other": { "absent": true } }
+      },
+      "response": { "body": "path-template" }
+    },
+    {
+      "metadata": { "tags": [ "a" ] },
+      "persistent": true,
+      "request": { "urlPath": "/meta" },
+      "response": { "body": "meta" }
+    }
+  ]
+}

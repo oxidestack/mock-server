@@ -1,0 +1,35 @@
+{
+ "properties": {
+  "deduplicateRecordedExpectations": "true",
+  "templatizeRecordedValues": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "bodyFile": "import/recording_dedup.ndjson",
+   "note": "recording archive"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "note": "deduplicated and templatized"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=POSTMAN",
+   "note": "templatized postman",
+   "mask": [
+    {
+     "regex": "http://localhost:(?:1080|<port>)\"",
+     "replace": "http://localhost:<default port>\""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "log messages"
+  }
+ ]
+}

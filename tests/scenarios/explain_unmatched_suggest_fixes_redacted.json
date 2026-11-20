@@ -1,0 +1,110 @@
+{
+ "properties": {
+  "redactSecretsInLog": "true",
+  "fixtureBodyRedactFields": "password",
+  "maxLoggedBodyBytes": "100"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "r-auth",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/secure",
+      "headers": {
+       "Authorization": [
+        "Bearer old-token-1234"
+       ]
+      },
+      "body": {
+       "type": "JSON",
+       "json": {
+        "user": "a",
+        "password": "old-password"
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "s"
+     }
+    },
+    {
+     "id": "r-big",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/big",
+      "body": "short"
+     },
+     "httpResponse": {
+      "body": "b"
+     }
+    }
+   ]
+  },
+  {
+   "note": "a near miss on a credential header and a redacted body field",
+   "method": "POST",
+   "path": "/secure",
+   "headers": {
+    "Authorization": [
+     "Bearer new-secret-token-5678"
+    ],
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "user": "b",
+    "password": "new-password-xyz"
+   }
+  },
+  {
+   "note": "the credential and the redacted field are not copied",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1,
+    "suggestFixes": true
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "a body longer than maxLoggedBodyBytes",
+   "method": "POST",
+   "path": "/big",
+   "headers": {
+    "content-type": [
+     "text/plain"
+    ]
+   },
+   "body": "{{repeat:150:y}}"
+  },
+  {
+   "note": "the truncated body is not copied",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1,
+    "suggestFixes": true
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  }
+ ]
+}

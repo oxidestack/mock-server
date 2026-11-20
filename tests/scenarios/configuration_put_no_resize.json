@@ -1,0 +1,140 @@
+{
+ "source": "a PUT /mockserver/configuration that shrinks maxExpectations or maxLogEntries evicts nothing on the oracle (configuration_runtime_update checks the retrieved lists); this checks the other observables: the oldest expectation still matches and its id still resolves, and a never-verification after the shrink reports no evicted log. Its own server so the changed configuration does not leak into other scenarios.",
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "first",
+    "httpRequest": {
+     "path": "/first"
+    },
+    "httpResponse": {
+     "body": "first"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "second",
+    "httpRequest": {
+     "path": "/second"
+    },
+    "httpResponse": {
+     "body": "second"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "third",
+    "httpRequest": {
+     "path": "/third"
+    },
+    "httpResponse": {
+     "body": "third"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 1,
+    "maxLogEntries": 1
+   },
+   "note": "both bounds below what the stores hold"
+  },
+  {
+   "method": "GET",
+   "path": "/first",
+   "note": "the oldest expectation still matches"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "fourth",
+    "httpRequest": {
+     "path": "/fourth"
+    },
+    "httpResponse": {
+     "body": "fourth"
+    }
+   },
+   "note": "an add over the new bound"
+  },
+  {
+   "method": "GET",
+   "path": "/second"
+  },
+  {
+   "method": "GET",
+   "path": "/fourth"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "expectationId": {
+     "id": "first"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "note": "the oldest id still resolves"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/first"
+    },
+    "times": {
+     "atMost": 0
+    }
+   },
+   "note": "fails on the request itself, not on an evicted log"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/first"
+     },
+     {
+      "path": "/second"
+     },
+     {
+      "path": "/fourth"
+     }
+    ]
+   },
+   "note": "every request is still in the log"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 15000,
+    "maxLogEntries": 100000
+   },
+   "note": "back to the defaults"
+  }
+ ]
+}

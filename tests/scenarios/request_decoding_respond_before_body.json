@@ -1,0 +1,175 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "00000000-0000-0000-0000-000000000331",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/early",
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 202,
+     "body": "early"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "00000000-0000-0000-0000-000000000332",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/early-ce",
+     "headers": {
+      "content-encoding": [
+       "gzip"
+      ]
+     },
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 203,
+     "body": "saw content-encoding"
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "00000000-0000-0000-0000-000000000333",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/early-te",
+     "headers": {
+      "transfer-encoding": [
+       "chunked"
+      ]
+     },
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 204
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "00000000-0000-0000-0000-000000000334",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/early-cl",
+     "headers": {
+      "content-length": [
+       "37"
+      ]
+     },
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 205
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "gzip with a Content-Length, answered from the head",
+   "tcp": [
+    {
+     "text": "POST /early HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nContent-Length: 37\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVGqBQDRQQnYEQAAAA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "gzip chunked, answered from the head",
+   "tcp": [
+    {
+     "text": "POST /early HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nTransfer-Encoding: chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MjUNCh+LCAAAAAAAAhOrVspIzcnJV7JSKs8vyklRqgUA0UEJ2BEAAAANCjANCg0K"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "a Content-Encoding header matcher on the head",
+   "tcp": [
+    {
+     "text": "POST /early-ce HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nContent-Length: 37\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVGqBQDRQQnYEQAAAA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "a transfer-encoding: chunked header matcher on a gzip head with a Content-Length",
+   "tcp": [
+    {
+     "text": "POST /early-te HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nContent-Length: 37\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVGqBQDRQQnYEQAAAA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "a content-length header matcher on a gzip head",
+   "tcp": [
+    {
+     "text": "POST /early-cl HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nContent-Length: 37\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVGqBQDRQQnYEQAAAA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "Transfer-Encoding: gzip, chunked answered from the head",
+   "tcp": [
+    {
+     "text": "POST /early HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nTransfer-Encoding: gzip, chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MjUNCh+LCAAAAAAAAhOrVspIzcnJV7JSKs8vyklRqgUA0UEJ2BEAAAANCjANCg0K"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "a broken gzip body answered from the head",
+   "tcp": [
+    {
+     "text": "POST /early HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: 13\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "bm90IGd6aXAgYnl0ZQ=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/early.*"
+   },
+   "note": "recorded"
+  }
+ ]
+}

@@ -1,0 +1,236 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "x1",
+    "httpRequest": {
+     "path": "/notes",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" elementFormDefault=\"qualified\" attributeFormDefault=\"unqualified\">\n    <!-- XML Schema Generated from XML Document on Wed Jun 28 2017 21:52:45 GMT+0100 (BST) -->\n    <!-- with XmlGrid.net Free Online Service http://xmlgrid.net -->\n    <xs:element name=\"notes\">\n        <xs:complexType>\n            <xs:sequence>\n                <xs:element name=\"note\" maxOccurs=\"unbounded\">\n                    <xs:complexType>\n                        <xs:sequence>\n                            <xs:element name=\"to\" minOccurs=\"1\" maxOccurs=\"1\" type=\"xs:string\"></xs:element>\n                            <xs:element name=\"from\" minOccurs=\"1\" maxOccurs=\"1\" type=\"xs:string\"></xs:element>\n                            <xs:element name=\"heading\" minOccurs=\"1\" maxOccurs=\"1\" type=\"xs:string\"></xs:element>\n                            <xs:element name=\"body\" minOccurs=\"1\" maxOccurs=\"1\" type=\"xs:string\"></xs:element>\n                        </xs:sequence>\n                    </xs:complexType>\n                </xs:element>\n            </xs:sequence>\n        </xs:complexType>\n    </xs:element>\n</xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "notes ok"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "x2",
+    "httpRequest": {
+     "path": "/order",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"order\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element name=\"qty\" type=\"xs:int\"/>\n        <xs:element name=\"colour\" minOccurs=\"0\">\n          <xs:simpleType>\n            <xs:restriction base=\"xs:string\">\n              <xs:enumeration value=\"red\"/>\n              <xs:enumeration value=\"blue\"/>\n            </xs:restriction>\n          </xs:simpleType>\n        </xs:element>\n      </xs:sequence>\n      <xs:attribute name=\"id\" type=\"xs:string\" use=\"required\"/>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "order ok"
+    }
+   }
+  },
+  {
+   "note": "valid",
+   "method": "POST",
+   "path": "/notes",
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<notes>\n    <note>\n        <to>Bob</to>\n        <from>Bill</from>\n        <heading>Reminder</heading>\n        <body>Buy Bread</body>\n    </note>\n</notes>",
+   "headers": {
+    "Content-Type": "application/xml"
+   }
+  },
+  {
+   "note": "missing element",
+   "method": "POST",
+   "path": "/notes",
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<notes>\n    <note>\n        <to>Bob</to>\n        <heading>Reminder</heading>\n        <body>Buy Bread</body>\n    </note>\n</notes>",
+   "headers": {
+    "Content-Type": "application/xml"
+   }
+  },
+  {
+   "note": "wrong root",
+   "method": "POST",
+   "path": "/notes",
+   "body": "<other/>",
+   "headers": {
+    "Content-Type": "application/xml"
+   }
+  },
+  {
+   "note": "not xml",
+   "method": "POST",
+   "path": "/notes",
+   "body": "plain text"
+  },
+  {
+   "note": "empty body",
+   "method": "POST",
+   "path": "/notes"
+  },
+  {
+   "note": "extra element",
+   "method": "POST",
+   "path": "/notes",
+   "body": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<notes>\n    <note>\n        <to>Bob</to>\n        <from>Bill</from>\n        <heading>Reminder</heading>\n        <body>Buy Bread</body><extra/>\n    </note>\n</notes>",
+   "headers": {
+    "Content-Type": "application/xml"
+   }
+  },
+  {
+   "note": "typed valid",
+   "method": "POST",
+   "path": "/order",
+   "body": "<order id=\"1\"><qty>3</qty><colour>red</colour></order>"
+  },
+  {
+   "note": "bad int",
+   "method": "POST",
+   "path": "/order",
+   "body": "<order id=\"1\"><qty>three</qty></order>"
+  },
+  {
+   "note": "bad enum",
+   "method": "POST",
+   "path": "/order",
+   "body": "<order id=\"1\"><qty>3</qty><colour>green</colour></order>"
+  },
+  {
+   "note": "missing attribute",
+   "method": "POST",
+   "path": "/order",
+   "body": "<order><qty>3</qty></order>"
+  },
+  {
+   "note": "unknown attribute",
+   "method": "POST",
+   "path": "/order",
+   "body": "<order id=\"1\" x=\"y\"><qty>3</qty></order>"
+  },
+  {
+   "note": "text in element-only",
+   "method": "POST",
+   "path": "/order",
+   "body": "<order id=\"1\">hi<qty>3</qty></order>"
+  },
+  {
+   "note": "too few",
+   "method": "POST",
+   "path": "/order",
+   "body": "<order id=\"1\"></order>"
+  },
+  {
+   "note": "not mode",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "x3",
+    "httpRequest": {
+     "path": "/not",
+     "body": {
+      "type": "XML_SCHEMA",
+      "not": true,
+      "xmlSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"order\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element name=\"qty\" type=\"xs:int\"/>\n        <xs:element name=\"colour\" minOccurs=\"0\">\n          <xs:simpleType>\n            <xs:restriction base=\"xs:string\">\n              <xs:enumeration value=\"red\"/>\n              <xs:enumeration value=\"blue\"/>\n            </xs:restriction>\n          </xs:simpleType>\n        </xs:element>\n      </xs:sequence>\n      <xs:attribute name=\"id\" type=\"xs:string\" use=\"required\"/>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "not ok"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/not",
+   "body": "<order id=\"1\"><qty>3</qty></order>"
+  },
+  {
+   "method": "POST",
+   "path": "/not",
+   "body": "<order/>"
+  },
+  {
+   "note": "verify",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/order",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"order\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element name=\"qty\" type=\"xs:int\"/>\n        <xs:element name=\"colour\" minOccurs=\"0\">\n          <xs:simpleType>\n            <xs:restriction base=\"xs:string\">\n              <xs:enumeration value=\"red\"/>\n              <xs:enumeration value=\"blue\"/>\n            </xs:restriction>\n          </xs:simpleType>\n        </xs:element>\n      </xs:sequence>\n      <xs:attribute name=\"id\" type=\"xs:string\" use=\"required\"/>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+     }
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "verify fails with diff",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/notes",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n  <xs:element name=\"order\">\n    <xs:complexType>\n      <xs:sequence>\n        <xs:element name=\"qty\" type=\"xs:int\"/>\n        <xs:element name=\"colour\" minOccurs=\"0\">\n          <xs:simpleType>\n            <xs:restriction base=\"xs:string\">\n              <xs:enumeration value=\"red\"/>\n              <xs:enumeration value=\"blue\"/>\n            </xs:restriction>\n          </xs:simpleType>\n        </xs:element>\n      </xs:sequence>\n      <xs:attribute name=\"id\" type=\"xs:string\" use=\"required\"/>\n    </xs:complexType>\n  </xs:element>\n</xs:schema>"
+     }
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "invalid schema",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "x4",
+    "httpRequest": {
+     "path": "/bad",
+     "body": {
+      "type": "XML_SCHEMA",
+      "xmlSchema": "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"><xs:element/></xs:schema>"
+     }
+    },
+    "httpResponse": {
+     "body": "bad"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/bad",
+   "body": "<a/>"
+  },
+  {
+   "note": "logs",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/order"
+   },
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}"
+   ]
+  },
+  {
+   "note": "logs for /notes",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/notes"
+   },
+   "mask": [
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}"
+   ]
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}, "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}"], "body": {"path": "/notes"}}
+]
+}

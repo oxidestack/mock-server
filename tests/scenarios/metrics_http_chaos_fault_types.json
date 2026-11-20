@@ -1,0 +1,30 @@
+{"source": "MetricsTest httpChaosInjectedCounterIncrementsPerFaultType over the wire: each per-expectation chaos fault counts under its own fault_type when it fires (HttpActionHandler.writeResponseActionResponse, applyResponseChaos, writeForwardActionResponse): drop, quota, malformed, slow, graphql, truncate, on a response and on a forward",
+ "properties": {"metricsEnabled": "true"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+   {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "upstream"}},
+   {"httpRequest": {"path": "/drop"}, "httpResponse": {"body": "never"}, "chaos": {"dropConnectionProbability": 1.0}},
+   {"httpRequest": {"path": "/quota"}, "httpResponse": {"body": "ok"}, "chaos": {"quotaName": "metrics-0566", "quotaLimit": 1, "quotaWindowMillis": 600000}},
+   {"httpRequest": {"path": "/malformed"}, "httpResponse": {"body": "{\"a\": 1}"}, "chaos": {"malformedBody": true}},
+   {"httpRequest": {"path": "/slow"}, "httpResponse": {"body": "abcdefgh"}, "chaos": {"slowResponseChunkSize": 3, "slowResponseChunkDelay": {"timeUnit": "MILLISECONDS", "value": 1}}},
+   {"httpRequest": {"path": "/graphql"}, "httpResponse": {"body": "{\"data\": {}}"}, "chaos": {"graphqlErrors": true}},
+   {"httpRequest": {"path": "/truncate"}, "httpResponse": {"body": "abcdefgh"}, "chaos": {"truncateBodyAtFraction": 0.5}},
+   {"httpRequest": {"path": "/fwd/quota"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}, "chaos": {"quotaName": "metrics-0566-fwd", "quotaLimit": 1, "quotaWindowMillis": 600000}},
+   {"httpRequest": {"path": "/fwd/drop"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}, "chaos": {"dropConnectionProbability": 1.0}}
+  ], "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]},
+  {"method": "GET", "path": "/drop"},
+  {"method": "GET", "path": "/quota"},
+  {"method": "GET", "path": "/quota", "note": "over the quota", "mask": [{"regex": "retry-after: \\d+", "replace": "retry-after: <masked>"}]},
+  {"method": "GET", "path": "/malformed"},
+  {"method": "GET", "path": "/slow"},
+  {"method": "GET", "path": "/graphql"},
+  {"method": "GET", "path": "/truncate"},
+  {"method": "GET", "path": "/fwd/quota"},
+  {"method": "GET", "path": "/fwd/quota", "note": "forward over the quota", "mask": [{"regex": "retry-after: \\d+", "replace": "retry-after: <masked>"}]},
+  {"method": "GET", "path": "/fwd/drop"},
+  {"note": "one series per fault type", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_http_chaos_injected)[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]}
+ ]
+}

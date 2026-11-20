@@ -1,0 +1,247 @@
+{
+ "source": "the template request model's host, port, scheme, baseUrl, id, bodyAsBase64, formData and parts (9.2.0)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/rm"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"host=$request.host | port=$request.port | scheme=$request.scheme | baseUrl=$request.baseUrl | id=$request.id | b64=$request.bodyAsBase64 | form=$request.formData | a=$request.formData.a | parts=$request.parts.keySet() | detail=#foreach($e in $request.parts.entrySet())$e.key:#foreach($p in $e.value)[$p.name,$p.filename,$p.contentType,$p.headers.toString().replace('\"', \"'\"),$p.body,$p.bodyAsBase64,$p]#end;#end | getHost=$request.getHost() | classes=$request.formData.getClass().getName(),$request.parts.getClass().getName(),$request.port.getClass().getName()\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/rmm"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    \"statusCode\": 200,\n    \"body\": \"host={{request.host}} | port={{request.port}} | scheme={{request.scheme}} | baseUrl={{{request.baseUrl}}} | id={{request.id}} | b64={{request.bodyAsBase64}} | a={{#request.formData.a}}{{.}},{{/request.formData.a}} | file={{#request.parts.file}}{{name}}/{{filename}}/{{contentType}}/{{body}}/{{bodyAsBase64}}{{/request.parts.file}} | part0={{request.parts.file.0.name}}\"\n}"
+    }
+   }
+  },
+  {
+   "note": "harness Host",
+   "method": "GET",
+   "path": "/rm"
+  },
+  {
+   "note": "Host without a port",
+   "method": "GET",
+   "path": "/rm",
+   "headers": {
+    "Host": "example.com"
+   }
+  },
+  {
+   "note": "Host with a port",
+   "method": "GET",
+   "path": "/rm",
+   "headers": {
+    "Host": "example.com:8443"
+   }
+  },
+  {
+   "note": "bracketed IPv6 with a port",
+   "method": "GET",
+   "path": "/rm",
+   "headers": {
+    "Host": "[::1]:9000"
+   }
+  },
+  {
+   "note": "bracketed IPv6",
+   "method": "GET",
+   "path": "/rm",
+   "headers": {
+    "Host": "[::1]"
+   }
+  },
+  {
+   "note": "unbracketed IPv6",
+   "method": "GET",
+   "path": "/rm",
+   "headers": {
+    "Host": "::1"
+   }
+  },
+  {
+   "note": "Host with a bad port",
+   "method": "GET",
+   "path": "/rm",
+   "headers": {
+    "Host": "example.com:notaport"
+   }
+  },
+  {
+   "note": "Host with a port out of range",
+   "method": "GET",
+   "path": "/rm",
+   "headers": {
+    "Host": "example.com:70000"
+   }
+  },
+  {
+   "note": "urlencoded form",
+   "method": "POST",
+   "path": "/rm",
+   "headers": {
+    "Content-Type": "application/x-www-form-urlencoded"
+   },
+   "body": "a=1&b=2&a=3&c&d=%20x+y&e="
+  },
+  {
+   "note": "urlencoded form in Latin-1",
+   "method": "POST",
+   "path": "/rm",
+   "headers": {
+    "Content-Type": "application/x-www-form-urlencoded; charset=ISO-8859-1"
+   },
+   "body": "n=%E9t%E9"
+  },
+  {
+   "note": "multipart form",
+   "method": "POST",
+   "path": "/rm",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=XyZ"
+   },
+   "body": "--XyZ\r\nContent-Disposition: form-data; name=\"field\"\r\n\r\nplain value\r\n--XyZ\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a.txt\"\r\nContent-Type: text/plain\r\nX-Extra: 1\r\n\r\nfile one\r\n--XyZ\r\nContent-Disposition: form-data; name=\"file\"; filename=\"b.bin\"\r\n\r\nbin\r\n--XyZ--\r\n"
+  },
+  {
+   "note": "JSON body: no form, no parts",
+   "method": "POST",
+   "path": "/rm",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "body": "{\"a\": 1}"
+  },
+  {
+   "note": "undecodable multipart",
+   "method": "POST",
+   "path": "/rm",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=XyZ"
+   },
+   "body": "not multipart at all"
+  },
+  {
+   "note": "harness Host",
+   "method": "GET",
+   "path": "/rmm"
+  },
+  {
+   "note": "Host without a port",
+   "method": "GET",
+   "path": "/rmm",
+   "headers": {
+    "Host": "example.com"
+   }
+  },
+  {
+   "note": "Host with a port",
+   "method": "GET",
+   "path": "/rmm",
+   "headers": {
+    "Host": "example.com:8443"
+   }
+  },
+  {
+   "note": "bracketed IPv6 with a port",
+   "method": "GET",
+   "path": "/rmm",
+   "headers": {
+    "Host": "[::1]:9000"
+   }
+  },
+  {
+   "note": "bracketed IPv6",
+   "method": "GET",
+   "path": "/rmm",
+   "headers": {
+    "Host": "[::1]"
+   }
+  },
+  {
+   "note": "unbracketed IPv6",
+   "method": "GET",
+   "path": "/rmm",
+   "headers": {
+    "Host": "::1"
+   }
+  },
+  {
+   "note": "Host with a bad port",
+   "method": "GET",
+   "path": "/rmm",
+   "headers": {
+    "Host": "example.com:notaport"
+   }
+  },
+  {
+   "note": "Host with a port out of range",
+   "method": "GET",
+   "path": "/rmm",
+   "headers": {
+    "Host": "example.com:70000"
+   }
+  },
+  {
+   "note": "urlencoded form",
+   "method": "POST",
+   "path": "/rmm",
+   "headers": {
+    "Content-Type": "application/x-www-form-urlencoded"
+   },
+   "body": "a=1&b=2&a=3&c&d=%20x+y&e="
+  },
+  {
+   "note": "urlencoded form in Latin-1",
+   "method": "POST",
+   "path": "/rmm",
+   "headers": {
+    "Content-Type": "application/x-www-form-urlencoded; charset=ISO-8859-1"
+   },
+   "body": "n=%E9t%E9"
+  },
+  {
+   "note": "multipart form",
+   "method": "POST",
+   "path": "/rmm",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=XyZ"
+   },
+   "body": "--XyZ\r\nContent-Disposition: form-data; name=\"field\"\r\n\r\nplain value\r\n--XyZ\r\nContent-Disposition: form-data; name=\"file\"; filename=\"a.txt\"\r\nContent-Type: text/plain\r\nX-Extra: 1\r\n\r\nfile one\r\n--XyZ\r\nContent-Disposition: form-data; name=\"file\"; filename=\"b.bin\"\r\n\r\nbin\r\n--XyZ--\r\n"
+  },
+  {
+   "note": "JSON body: no form, no parts",
+   "method": "POST",
+   "path": "/rmm",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "body": "{\"a\": 1}"
+  },
+  {
+   "note": "undecodable multipart",
+   "method": "POST",
+   "path": "/rmm",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=XyZ"
+   },
+   "body": "not multipart at all"
+  }
+ ]
+}

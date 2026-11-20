@@ -1,0 +1,53 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "[{\"httpRequest\": {\"path\": \"/delay\"}, \"httpResponse\": {\"body\": \"d\", \"delay\": {\"timeUnit\": \"MILLISECONDS\", \"value\": 0, \"template\": \"nan\", \"templateType\": \"MUSTACHE\"}}}, {\"httpRequest\": {\"path\": \"/file\"}, \"httpResponse\": {\"body\": {\"type\": \"FILE\", \"filePath\": \"/no/such/dir/missing.txt\"}}}]",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/delay",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/file",
+        "ownHost": true,
+        "expectStatus": 500
+      }
+    },
+    {
+      "sleepMillis": 1000
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "falling back to static delay because:": 2,
+      "org.mockserver.file.FileBodyException": 1
+    },
+    "stdoutInOrder": [
+      " unable to read file \"\n\n  /no/such/dir/missing.txt\n\n \" for response body, returning 500 because:\n\n  Exception while loading \"/no/such/dir/missing.txt\"\n\norg.mockserver.file.FileBodyException: Exception while loading file body \"/no/such/dir/missing.txt\"",
+      "\nCaused by: java.lang.RuntimeException: Exception while loading \"/no/such/dir/missing.txt\"",
+      "\nCaused by: java.io.FileNotFoundException: /no/such/dir/missing.txt (No such file or directory)\n"
+    ]
+  }
+}

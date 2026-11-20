@@ -1,0 +1,133 @@
+{
+ "note": "a request from an IPv6 client renders its remote and local addresses as Java's InetSocketAddress.toString without the leading '/' (FullHttpRequestToMockServerHttpRequest), the address in full uncompressed form in brackets: [0:0:0:0:0:0:0:1]:port, in the template model (Velocity and Mustache), the recorded request and HAR's serverIPAddress ([0:0:0:0:0:0:0:1]). Recorded by a self-dial over ::1 inside the oracle's container, as listener_dual_stack_ipv6_loopback (the Docker VM forwards published ports on the host's 127.0.0.1 only). The client's ephemeral port is masked. HAR's url reads an IPv6 Host header with HttpRequest.splitHostPort: a bracketed literal loses its brackets, an unbracketed one (the oracle's own forward sends '::1:port') splits on ':' into an empty host and an unparsable port",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/v6/velocity\"}, \"httpResponseTemplate\": {\"templateType\": \"VELOCITY\", \"template\": \"{\\\"statusCode\\\": 200, \\\"body\\\": \\\"remote=$!request.remoteAddress local=$!request.localAddress\\\"}\"}}, {\"httpRequest\": {\"path\": \"/v6/mustache\"}, \"httpResponseTemplate\": {\"templateType\": \"MUSTACHE\", \"template\": \"{\\\"statusCode\\\": 200, \\\"body\\\": \\\"remote={{request.remoteAddress}} local={{request.localAddress}}\\\"}\"}}, {\"httpRequest\": {\"path\": \"/go/velocity\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/v6/velocity\", \"socketAddress\": {\"host\": \"::1\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}}}, {\"httpRequest\": {\"path\": \"/go/mustache\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/v6/mustache\", \"socketAddress\": {\"host\": \"[::1]\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}}}, {\"httpRequest\": {\"path\": \"/h\"}, \"httpResponse\": {\"body\": \"x\"}}]"
+  },
+  {
+   "note": "a Velocity template echoes the addresses of a request that arrived over ::1",
+   "method": "GET",
+   "path": "/go/velocity",
+   "mask": [
+    {
+     "regex": "(remote=\\S*):\\d+",
+     "replace": "${1}:<client port>",
+     "reason": "the client's ephemeral port"
+    }
+   ]
+  },
+  {
+   "note": "a Mustache template the same",
+   "method": "GET",
+   "path": "/go/mustache",
+   "mask": [
+    {
+     "regex": "(remote=\\S*):\\d+",
+     "replace": "${1}:<client port>",
+     "reason": "the client's ephemeral port"
+    }
+   ]
+  },
+  {
+   "note": "HAR's serverIPAddress is the remote address without its port",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=HAR",
+   "body": {
+    "path": "/v6/velocity"
+   },
+   "mask": [
+    {
+     "regex": "(\"(?:time|totalTimeInMillis|wait|receive|connect|send|blocked|dns|ssl)\" : )-?\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(\"startedDateTime\" : \")[^\"]*",
+     "replace": "${1}<when>"
+    },
+    {
+     "regex": "(\"(?:size|bodySize)\" : )\\d+",
+     "replace": "${1}<size>",
+     "reason": "the body's length varies with the digits of the server's and the client's ports"
+    },
+    {
+     "regex": "(remote=\\S*):\\d+",
+     "replace": "${1}:<client port>",
+     "reason": "the client's ephemeral port"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\"\\s*\\}?,?\\s*\"value\" : \")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "note": "Host: [::1]:8443",
+   "method": "GET",
+   "path": "/h",
+   "headers": {
+    "Host": [
+     "[::1]:8443"
+    ]
+   }
+  },
+  {
+   "note": "Host: [::1]",
+   "method": "GET",
+   "path": "/h",
+   "headers": {
+    "Host": [
+     "[::1]"
+    ]
+   }
+  },
+  {
+   "note": "Host: ::1:8443",
+   "method": "GET",
+   "path": "/h",
+   "headers": {
+    "Host": [
+     "::1:8443"
+    ]
+   }
+  },
+  {
+   "note": "HAR's url from IPv6 Host headers",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=HAR",
+   "body": {
+    "path": "/h"
+   },
+   "mask": [
+    {
+     "regex": "(\"serverIPAddress\" : \")[^\"]*",
+     "replace": "${1}<client>",
+     "reason": "the client's address: the Docker gateway's when recorded, loopback on replay"
+    },
+    {
+     "regex": "(\"(?:time|totalTimeInMillis|wait|receive|connect|send|blocked|dns|ssl)\" : )-?\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(\"startedDateTime\" : \")[^\"]*",
+     "replace": "${1}<when>"
+    },
+    {
+     "regex": "(\"(?:size|bodySize)\" : )\\d+",
+     "replace": "${1}<size>",
+     "reason": "the body's length varies with the digits of the server's and the client's ports"
+    },
+    {
+     "regex": "(remote=\\S*):\\d+",
+     "replace": "${1}:<client port>",
+     "reason": "the client's ephemeral port"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\"\\s*\\}?,?\\s*\"value\" : \")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmdecode-LlmOptimisationReportServiceTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "921c2637b5b5",
+   "note": "briefRedactsConfiguredBodyFields (llmdecode): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/v1/chat/completions\",\"headers\":{\"Host\":[\"api.openai.com\"]},\"body\":\"{\\\"model\\\":\\\"gpt-4o-2024-08-06\\\",\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"***REDACTED***\\\"}]}\"},\"httpResponse\":{\"statusCode\":200}}\n",
+   "note": "briefRedactsConfiguredBodyFields (llmdecode): import",
+   "mask": [
+    {
+     "regex": "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+     "replace": "\"x-mockserver-response-time-ms\" : [ \"<n>\" ]"
+    }
+   ],
+   "case": "921c2637b5b5"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "briefRedactsConfiguredBodyFields (llmdecode): json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "921c2637b5b5"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=fine-tune",
+   "note": "briefRedactsConfiguredBodyFields (llmdecode): fine-tune",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "921c2637b5b5"
+  }
+ ]
+}

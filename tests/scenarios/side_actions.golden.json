@@ -1,0 +1,234 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/hook/.*\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 202,\n    \"body\" : \"hooked\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"afterActions\" : [ {\n    \"httpRequest\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/hook/after/{$request.body#/id}\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      },\n      \"body\" : \"order {$request.body#/id} via {$request.method} {$request.query.q} {$request.header.X-Trace} {$url} {$response.x}\"\n    }\n  } ],\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/orders\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 201,\n    \"body\" : \"created\"\n  },\n  \"id\" : \"after\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"beforeActions\" : [ {\n    \"httpRequest\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/hook/before\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      },\n      \"body\" : \"blocking\"\n    }\n  }, {\n    \"blocking\" : false,\n    \"httpRequest\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/hook/before-async\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  } ],\n  \"httpRequest\" : {\n    \"path\" : \"/before\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"after the webhook\"\n  },\n  \"id\" : \"before\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"beforeActions\" : [ {\n    \"failurePolicy\" : \"FAIL_FAST\",\n    \"httpRequest\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/x\",\n      \"headers\" : {\n        \"Host\" : [ \"<deadhost>\" ]\n      }\n    }\n  } ],\n  \"httpRequest\" : {\n    \"path\" : \"/before-fail\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"never\"\n  },\n  \"id\" : \"before-fail\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"beforeActions\" : [ {\n    \"httpRequest\" : {\n      \"method\" : \"GET\",\n      \"path\" : \"/x\",\n      \"headers\" : {\n        \"Host\" : [ \"<deadhost>\" ]\n      }\n    }\n  } ],\n  \"httpRequest\" : {\n    \"path\" : \"/before-best\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"served anyway\"\n  },\n  \"id\" : \"before-best\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/steps\"\n  },\n  \"id\" : \"steps\",\n  \"priority\" : 0,\n  \"steps\" : [ {\n    \"httpRequest\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/hook/step1\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  }, {\n    \"httpResponse\" : {\n      \"body\" : \"from the responder\"\n    },\n    \"responder\" : true\n  }, {\n    \"httpRequest\" : {\n      \"method\" : \"POST\",\n      \"path\" : \"/hook/step3\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  } ],\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 7"
+      ],
+      "body": "created",
+      "note": "after action fires"
+    },
+    {
+      "status": 202,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "the after action has arrived before the next request (an after action is asynchronous)"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 17"
+      ],
+      "body": "after the webhook",
+      "note": "blocking before action"
+    },
+    {
+      "status": 202,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "the non-blocking before action has arrived before the next request"
+    },
+    {
+      "status": 502,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: <varies with the address>"
+      ],
+      "body": "before-action failed: Unable to connect to socket <deadhost>",
+      "note": "fail fast"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 13"
+      ],
+      "body": "served anyway",
+      "note": "best effort"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 18"
+      ],
+      "body": "from the responder",
+      "note": "steps"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"body\" : \"order 42 via POST search t1 http://localhost:<port>/orders \",\n  \"headers\" : {\n    \"content-length\" : [ \"<varies with the port>\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"POST\",\n  \"path\" : \"/hook/after/42\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"body\" : \"blocking\",\n  \"headers\" : {\n    \"content-length\" : [ \"8\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"POST\",\n  \"path\" : \"/hook/before\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"POST\",\n  \"path\" : \"/hook/before-async\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"POST\",\n  \"path\" : \"/hook/step1\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"POST\",\n  \"path\" : \"/hook/step3\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n} ]",
+      "note": "webhook traffic"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 98",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "invalid expectation steps: steps must contain exactly one step with responder=true, but none found",
+      "note": "no responder"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 95",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "invalid expectation steps: steps must contain exactly one step with responder=true, but found 2",
+      "note": "two responders"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 124",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "invalid expectation steps: steps cannot be combined with a top-level response action - the responder step defines the action",
+      "note": "steps with a top-level action"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 149",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "invalid expectation steps: step[0] is marked as responder but uses httpRequest (webhook); webhooks are side-effect-only and cannot produce a response",
+      "note": "webhook responder"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 901",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "incorrect expectation json format for:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/bad\"\n    },\n    \"steps\" : [\n      {\n        \"responder\" : true\n      }\n    ]\n  }\n\n schema validation errors:\n\n  8 errors:\n   - $.steps[0].httpClassCallback: is missing but it is required\n   - $.steps[0].httpError: is missing but it is required\n   - $.steps[0].httpForward: is missing but it is required\n   - $.steps[0].httpObjectCallback: is missing but it is required\n   - $.steps[0].httpOverrideForwardedRequest: is missing but it is required\n   - $.steps[0].httpRequest: is missing but it is required\n   - $.steps[0].httpResponse: is missing but it is required\n   - $.steps[0]: should be valid to one and only one schema, but 0 are valid\n  \n  OpenAPI Specification: https://app.swaggerhub.com/apis/jamesdbloom/mock-server-openapi/9.2.x\n  Documentation: https://mock-server.com/mock_server/creating_expectations.html",
+      "note": "step without target"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 112",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "invalid expectation steps: steps cannot be combined with beforeActions - use steps for the full ordered pipeline",
+      "note": "steps with before actions"
+    },
+    {
+      "status": 400,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 98",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "invalid expectation steps: httpError cannot be combined with other steps; it must be the only step",
+      "note": "error with other steps"
+    }
+  ]
+}

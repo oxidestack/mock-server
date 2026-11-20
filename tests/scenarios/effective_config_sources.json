@@ -1,0 +1,75 @@
+{
+ "source": "GET /mockserver/config (and bare /config), the effective-configuration diagnostic: per property its resolved value and the tier that supplied it. Own server (\"properties\") because the answer depends on the startup system properties. The five entries the oracle's Docker image fills from its own environment (dashboardAnalytics* variables, propertyFile, proxySetupLogging) are masked to one token.",
+ "properties": {
+  "maxExpectations": "4242",
+  "llmApiKey": "super-secret-token-value",
+  "metricsEnabled": "",
+  "maxLogEntries": "   ",
+  "notARealProperty": "ignored"
+ },
+ "steps": [
+  {
+   "note": "system-property tier: exact value and source; a credential-named key is masked but keeps its source; blank values and unset keys are (default); an unknown key is not listed",
+   "method": "GET",
+   "path": "/mockserver/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "note": "the bare legacy alias answers the same",
+   "method": "GET",
+   "path": "/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "note": "a query string does not select a text form: still the JSON array",
+   "method": "GET",
+   "path": "/mockserver/config?format=text",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "note": "PUT /mockserver/configuration changes a Configuration instance, not the property store this diagnostic reads: nothing moves",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 31337,
+    "metricsEnabled": true
+   }
+  },
+  {
+   "note": "after that PUT the diagnostic still reports the startup tiers",
+   "method": "GET",
+   "path": "/mockserver/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "note": "only GET is routed: PUT on the path is an ordinary data-plane request",
+   "method": "PUT",
+   "path": "/mockserver/config"
+  },
+  {
+   "note": "a trailing slash is not the route",
+   "method": "GET",
+   "path": "/mockserver/config/"
+  }
+ ]
+}

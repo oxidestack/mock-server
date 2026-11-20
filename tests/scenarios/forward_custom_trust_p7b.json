@@ -1,0 +1,9 @@
+{"source": "forwardProxyTLSCustomTrustX509Certificates is read with x509ChainFromPEMFile, i.e. its bytes go into CertificateFactory.generateCertificates, so a PKCS#7 bundle (DER, openssl crl2pkcs7) of the CA is trusted: an https forward under CUSTOM trust reaches a peer serving a leaf that CA signed (tests/files/x509/forward-trust/gen.sh)",
+ "peer": true,
+ "peerProperties": {"certificateAuthorityCertificate": "{{files}}/x509/forward-trust/ca.pem", "certificateAuthorityPrivateKey": "{{files}}/x509/forward-trust/ca-key.pem", "x509CertificatePath": "{{files}}/x509/forward-trust/upstream.pem", "privateKeyPath": "{{files}}/x509/forward-trust/upstream-key.pem"},
+ "properties": {"forwardProxyTLSX509CertificatesTrustManagerType": "CUSTOM", "forwardProxyTLSCustomTrustX509Certificates": "{{files}}/x509/forward-trust/ca.p7b"},
+ "steps": [
+  {"node": "peer", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "from the upstream"}}, "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": "{\"httpRequest\": {\"path\": \"/target\"}, \"httpForward\": {\"host\": \"{{peerhost}}\", \"port\": {{peerport}}, \"scheme\": \"HTTPS\"}}", "mask": ["\"id\" : \"[0-9a-f-]+\"", "\"host\" : \"[^\"]+\""]},
+  {"note": "the upstream's chain is trusted: its answer comes back", "method": "GET", "path": "/target"}
+]}

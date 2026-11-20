@@ -1,0 +1,483 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 531",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/orders/1\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"order 1\"\n  },\n  \"id\" : \"exp-orders\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForward\" : {\n    \"host\" : \"localhost\",\n    \"port\" : <deadport>,\n    \"scheme\" : \"HTTP\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fwd-dead\"\n  },\n  \"id\" : \"exp-fwd\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation exp-orders: path did not match (  string or regex match failed expected:     /orders/1    found:     /orders/2 )"
+      ],
+      "body": "",
+      "note": "unmatched"
+    },
+    {
+      "status": 502,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 101"
+      ],
+      "body": "upstream refused the connection: check the upstream is running and listening on the port forwarded to",
+      "note": "failed forward"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json",
+        "mcp-session-id: <uuid>"
+      ],
+      "body": "{\"id\":1,\"jsonrpc\":\"2.0\",\"result\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{\"tools\":{\"listChanged\":false},\"resources\":{\"subscribe\":false,\"listChanged\":false},\"prompts\":{\"listChanged\":false},\"sampling\":{}},\"serverInfo\":{\"name\":\"MockServer\",\"version\":\"9.2.0\"},\"instructions\":\"MockServer is an HTTP(S) mock server and proxy for testing. Use these tools to mock APIs, debug failing requests, and verify implementations:\\n- Mock APIs: 'create_expectation', 'create_expectation_from_openapi', and 'create_expectations_from_recorded_traffic' (turn traffic already recorded via the proxy into mocks).\\n- Debug a request that did not match: call 'explain_unmatched_requests' after a failed test run to see, for each request that hit the server, the closest expectations ranked by similarity with field-level diffs and a remediation hint — no need to reconstruct the request. 'debug_request_mismatch' does the same for a request you supply. 'explain_request' takes one received request's correlation id (from 'retrieve_logs') and says which expectation serves it now and why each one ahead of it lost; 'diagnose_config' shows which settings are in effect and where they came from. 'suggest_expectation_fix' proposes a guarded JSON patch for each close expectation; 'lint_expectations' finds expectations that can never match; 'explain_forward_failure' says why a forward or proxied request got a 502; 'test_template' dry-runs a response or forward template.\\n- Verify an implementation: 'verify_request' / 'verify_request_sequence' check requests were made; 'verify_traffic_against_openapi' checks recorded traffic conforms to an OpenAPI contract; 'run_contract_test' sends spec-derived example requests to a running service and checks the responses; 'run_resiliency_test' sends malformed and boundary-case requests and reports which inputs the service failed to handle gracefully.\\n- Deterministic LLM testing: 'record_llm_fixtures' snapshots LLM/MCP traffic recorded through the proxy into a committable, secret-free fixture file; 'load_expectations_from_file' replays it.\\nReadable resources expose live state: mockserver://expectations, mockserver://requests, mockserver://logs, mockserver://unmatched, mockserver://configuration.\"}}"
+    },
+    {
+      "status": 202,
+      "headers": [
+        "content-length: 0"
+      ],
+      "body": ""
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":11,\"jsonrpc\":\"2.0\",\"result\":{\"prompts\":[{\"name\":\"debug_unmatched_request\",\"description\":\"Guides debugging of a request that matched no MockServer expectation\",\"arguments\":[{\"name\":\"method\",\"description\":\"HTTP method of the request that did not match\",\"required\":true},{\"name\":\"path\",\"description\":\"Path of the request that did not match\",\"required\":true}]},{\"name\":\"why_did_verify_fail\",\"description\":\"Explains why a MockServer request verification failed, from the verification result and the requests MockServer received\",\"arguments\":[{\"name\":\"method\",\"description\":\"HTTP method of the request that was verified\",\"required\":true},{\"name\":\"path\",\"description\":\"Path of the request that was verified\",\"required\":true}]},{\"name\":\"fix_my_expectation\",\"description\":\"Finds the smallest change that makes an existing MockServer expectation match a request, starting from the fix MockServer suggests, and applies it only once the user agrees\",\"arguments\":[{\"name\":\"method\",\"description\":\"HTTP method of the request the expectation should match\",\"required\":true},{\"name\":\"path\",\"description\":\"Path of the request the expectation should match\",\"required\":true}]},{\"name\":\"why_forward_failed\",\"description\":\"Explains why MockServer could not forward or proxy a request, from the failed forwards MockServer recorded and the forward expectation\",\"arguments\":[{\"name\":\"method\",\"description\":\"HTTP method of the request that failed to forward\",\"required\":true},{\"name\":\"path\",\"description\":\"Path of the request that failed to forward\",\"required\":true}]},{\"name\":\"create_mock_from_description\",\"description\":\"Turns a natural-language description of an endpoint into a MockServer expectation\",\"arguments\":[{\"name\":\"description\",\"description\":\"Plain-language description of the endpoint to mock\",\"required\":true}]}]}}",
+      "note": "prompts/list"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":12,\"jsonrpc\":\"2.0\",\"result\":{\"description\":\"Guides debugging of a request that matched no MockServer expectation\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"A GET request to /orders/2 did not match any MockServer expectation. Call the 'explain_unmatched_requests' tool, then summarise the closest expectation and the field-level differences, and suggest a fix.\\n\\nAnswer in two separate sections. Under the heading \\\"Facts from MockServer\\\", list only values copied from the tool results (status codes, counts, field names, differences and error text), each with the name of the tool that returned it, without rewording them. If a tool returned an error or nothing, say so there instead of guessing. Under the heading \\\"Interpretation\\\", give your explanation and the change you suggest, and present nothing in that section as MockServer output.\"}}]}}",
+      "note": "prompt debug_unmatched_request"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":13,\"jsonrpc\":\"2.0\",\"result\":{\"description\":\"Explains why a MockServer request verification failed, from the verification result and the requests MockServer received\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"A MockServer verification of GET /orders/2 failed. Work through these steps in order.\\n1. Call 'verify_request' with method \\\"GET\\\" and path \\\"/orders/2\\\", and with the atLeast and atMost counts the failing check used if you know them. Its \\\"message\\\" states how many matching requests were expected and found, then the requests MockServer received (or how many there were) and, when any were received, a \\\"closest match diff\\\" naming each field of the closest request that differed. It is evaluated against the requests recorded now, so it also counts any that arrived after the original check ran. If the failing verification also matched headers, query parameters or a body, call 'raw_verify' with the full verification JSON instead.\\n2. Call 'retrieve_recorded_requests' with method \\\"GET\\\" to see every GET request MockServer received, and compare their paths, headers and bodies with what was verified.\\n3. If no request reached MockServer at all, call 'get_status' to confirm it is running and which ports it listens on, then call 'retrieve_logs' to look for errors.\\nThen say whether the code under test sent a different request, sent it a different number of times, or the verification itself expects the wrong thing, and suggest the change.\\n\\nAnswer in two separate sections. Under the heading \\\"Facts from MockServer\\\", list only values copied from the tool results (status codes, counts, field names, differences and error text), each with the name of the tool that returned it, without rewording them. If a tool returned an error or nothing, say so there instead of guessing. Under the heading \\\"Interpretation\\\", give your explanation and the change you suggest, and present nothing in that section as MockServer output.\"}}]}}",
+      "note": "prompt why_did_verify_fail"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":14,\"jsonrpc\":\"2.0\",\"result\":{\"description\":\"Finds the smallest change that makes an existing MockServer expectation match a request, starting from the fix MockServer suggests, and applies it only once the user agrees\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"A GET request to /orders/2 is not getting the response the user expects from MockServer. Work through these steps in order.\\n1. Call 'suggest_expectation_fix' with limit 20, adding \\\"expectationId\\\" if the user named the expectation they meant. It covers only requests that reached MockServer and matched nothing. Use only the entries in \\\"unmatchedRequests\\\" whose \\\"method\\\" and \\\"path\\\" are GET and /orders/2; each lists close expectations by \\\"expectationId\\\", each with a \\\"suggestedFix\\\": a \\\"patch\\\" (an RFC 6902 JSON patch of the expectation as 'list_expectations' returns it, each change preceded by a \\\"test\\\" of the current value), the \\\"unpatchedFields\\\" it could not patch with the reason for each, and \\\"matchesAfterPatch\\\". Nothing is applied.\\n2. Call 'list_expectations' and take the full JSON of the expectation the user meant (normally the first one with a suggested fix) by its id.\\n3. If there is no suggested fix for that expectation (a \\\"suggestedFixCount\\\" of 0 with a \\\"note\\\" means the request may not have been sent or may have matched another expectation; a fix is suggested only for the five closest expectations), or its \\\"matchesAfterPatch\\\" is false, or \\\"unpatchedFields\\\" lists fields, call 'debug_request_mismatch' with method \\\"GET\\\" and path \\\"/orders/2\\\", adding the request's headers and body if the user gave them. It returns one result per active expectation, closest first, each with its \\\"expectationId\\\", whether it \\\"matches\\\", the \\\"differences\\\" per field and a \\\"remediation\\\" hint. If an expectation the user did not mean also matches, it may be the one answering the request: say so.\\nPropose the change: the suggested patch applied to the expectation's JSON when there is one, plus the smallest hand-made change to any field it left unpatched, or only a hand-made change when no fix was suggested. Show each changed field with its old and new value and say which changes MockServer suggested. Do not apply it until the user agrees. Then call 'raw_expectation' with the corrected expectation, keeping its \\\"id\\\" so it replaces the original rather than adding a second one, and call 'debug_request_mismatch' again to confirm that it now matches.\\n\\nAnswer in two separate sections. Under the heading \\\"Facts from MockServer\\\", list only values copied from the tool results (status codes, counts, field names, differences and error text), each with the name of the tool that returned it, without rewording them. If a tool returned an error or nothing, say so there instead of guessing. Under the heading \\\"Interpretation\\\", give your explanation and the change you suggest, and present nothing in that section as MockServer output.\"}}]}}",
+      "note": "prompt fix_my_expectation"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":15,\"jsonrpc\":\"2.0\",\"result\":{\"description\":\"Explains why MockServer could not forward or proxy a request, from the failed forwards MockServer recorded and the forward expectation\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"A GET request to /orders/2 that MockServer should have forwarded or proxied failed. Work through these steps in order.\\n1. Call 'explain_forward_failure' with limit 20. It returns \\\"forwardFailures\\\", most recent first, each with its \\\"correlationId\\\", \\\"method\\\", \\\"path\\\", \\\"statusCode\\\" (502) and \\\"reason\\\"; use the ones whose method and path are GET and /orders/2. When \\\"causeNamed\\\" is true, the reason is the cause MockServer named and what to change (for example a TLS failure, an HTTP/2 error, a connection it could not set up, an upstream response it could not decode, an unresolvable host, or a refused or timed-out connection), and it is also the 502 body. When \\\"forwardLoopSuspected\\\" is true, the forward went back to MockServer itself. When \\\"causeNamed\\\" is false, the reason is the raw error: call 'retrieve_logs' with that \\\"correlationId\\\" to see the request's whole lifecycle, including any exception logged for it.\\n2. Call 'list_expectations' with path \\\"/orders/2\\\" to find the expectation that forwarded it and note its target host, port and scheme. If none matches, MockServer was acting as a proxy and sent the request to the host the request itself named.\\n3. If \\\"forwardFailureCount\\\" is 0, or no failure has this method and path, call 'retrieve_request_responses' with method \\\"GET\\\" and path \\\"/orders/2\\\" to see what MockServer sent back: a response other than a 502 means the forward did not fail inside MockServer. MockServer records failed forwards only when its logLevel is INFO or more detailed (the default is INFO), and drops the oldest log entries beyond maxLogEntries, so if neither tool shows the request, report that instead of guessing a cause.\\nThen name the most likely cause and the change to make: to the forward target, the upstream service, MockServer's TLS or proxy settings, or the network between them.\\n\\nAnswer in two separate sections. Under the heading \\\"Facts from MockServer\\\", list only values copied from the tool results (status codes, counts, field names, differences and error text), each with the name of the tool that returned it, without rewording them. If a tool returned an error or nothing, say so there instead of guessing. Under the heading \\\"Interpretation\\\", give your explanation and the change you suggest, and present nothing in that section as MockServer output.\"}}]}}",
+      "note": "prompt why_forward_failed"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":16,\"jsonrpc\":\"2.0\",\"result\":{\"description\":\"Turns a natural-language description of an endpoint into a MockServer expectation\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"Create a MockServer expectation for this endpoint: GET /pets returns {{method}} a list\\n\\nUse 'create_expectation' when the description needs only a method, a path, a status code, a response body, response headers, a match count (times), a time to live or a chaos (fault injection) profile; it accepts no other parameters. When the request must also match on headers, query parameters, cookies or a body, or the response needs a delay or a template, use 'raw_expectation' with the full expectation JSON (an object with \\\"httpRequest\\\" and \\\"httpResponse\\\").\\nIf the tool returns an error, read its \\\"message\\\" and, when present, its \\\"unknownParameters\\\" or \\\"validationErrors\\\": each names the exact field to fix. Correct only those fields and call the tool again; do not drop details from the description to make the error go away.\\nThen call 'list_expectations' with the same method and path to confirm the expectation is active. Report the expectation id the tool returned, then list separately every detail you assumed because the description did not state it (for example the status code or the content type).\"}}]}}",
+      "note": "prompt create_mock_from_description"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"error\":{\"code\":-32602,\"data\":{\"missingArguments\":[\"method\",\"path\"]},\"message\":\"Missing required arguments for prompt 'why_forward_failed': method, path\"},\"id\":17,\"jsonrpc\":\"2.0\"}",
+      "note": "prompt missing both arguments"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"error\":{\"code\":-32602,\"data\":{\"missingArguments\":[\"path\"]},\"message\":\"Missing required argument for prompt 'fix_my_expectation': path\"},\"id\":18,\"jsonrpc\":\"2.0\"}",
+      "note": "prompt null argument"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"error\":{\"code\":-32602,\"data\":{\"missingArguments\":[\"description\"]},\"message\":\"Missing required argument for prompt 'create_mock_from_description': description\"},\"id\":19,\"jsonrpc\":\"2.0\"}",
+      "note": "prompt arguments not an object"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":20,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"properties <image-env>,\\n  \\<masked>,\\n  \\\"<masked>,\\n  \\\"totalProperties\\\" : 350,\\n  \\\"unrecognised\\\" : [ {\\n    \\\"name\\\" : \\\"mockserver.maxExpectatons\\\",\\n    \\\"setAs\\\" : \\\"system property\\\",\\n    \\\"suggestions\\\" : [ \\\"mockserver.maxExpectations\\\" ],\\n    \\\"systemPropertyOnly\\\" : false,\\n    \\\"removed\\\" : false\\n  } ],\\n  \\\"note\\\" : \\\"values come from system properties, the properties file, environment variables and runtime setters; a value set only on an embedded server's Configuration object or through PUT /mockserver/configuration is not shown; each key in 'unrecognised' is ignored, so set the suggested property instead, or delete one marked removed\\\"\\n}\"}],\"structuredContent\":{\"properties <image-env>,<masked>,\"<masked>,\"totalProperties\":350,\"unrecognised\":[{\"name\":\"mockserver.maxExpectatons\",\"setAs\":\"system property\",\"suggestions\":[\"mockserver.maxExpectations\"],\"systemPropertyOnly\":false,\"removed\":false}],\"note\":\"values come from system properties, the properties file, environment variables and runtime setters; a value set only on an embedded server's Configuration object or through PUT /mockserver/configuration is not shown; each key in 'unrecognised' is ignored, so set the suggested property instead, or delete one marked removed\"},\"isError\":false}}",
+      "note": "diagnose_config default"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":21,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"properties\\\" : [ {\\n    \\\"name\\\" : \\\"mockserver.maxExpectations\\\",\\n    \\\"value\\\" : \\\"4242\\\",\\n    \\\"source\\\" : \\\"system-property\\\",\\n    \\\"default\\\" : \\\"15000\\\"\\n  }, {\\n    \\\"name\\\" : \\\"mockserver.maxExpectationsSizeInBytes\\\",\\n    \\\"value\\\" : \\\"0\\\",\\n    \\\"source\\\" : \\\"default\\\"\\n  } ],\\n  \\\"count\\\" : 2,\\n  \\\"<masked>,\\n  \\\"totalProperties\\\" : 350,\\n  \\\"unrecognised\\\" : [ {\\n    \\\"name\\\" : \\\"mockserver.maxExpectatons\\\",\\n    \\\"setAs\\\" : \\\"system property\\\",\\n    \\\"suggestions\\\" : [ \\\"mockserver.maxExpectations\\\" ],\\n    \\\"systemPropertyOnly\\\" : false,\\n    \\\"removed\\\" : false\\n  } ],\\n  \\\"note\\\" : \\\"values come from system properties, the properties file, environment variables and runtime setters; a value set only on an embedded server's Configuration object or through PUT /mockserver/configuration is not shown; each key in 'unrecognised' is ignored, so set the suggested property instead, or delete one marked removed\\\"\\n}\"}],\"structuredContent\":{\"properties\":[{\"name\":\"mockserver.maxExpectations\",\"value\":\"4242\",\"source\":\"system-property\",\"default\":\"15000\"},{\"name\":\"mockserver.maxExpectationsSizeInBytes\",\"value\":\"0\",\"source\":\"default\"}],\"count\":2,\"<masked>,\"totalProperties\":350,\"unrecognised\":[{\"name\":\"mockserver.maxExpectatons\",\"setAs\":\"system property\",\"suggestions\":[\"mockserver.maxExpectations\"],\"systemPropertyOnly\":false,\"removed\":false}],\"note\":\"values come from system properties, the properties file, environment variables and runtime setters; a value set only on an embedded server's Configuration object or through PUT /mockserver/configuration is not shown; each key in 'unrecognised' is ignored, so set the suggested property instead, or delete one marked removed\"},\"isError\":false}}",
+      "note": "diagnose_config by name"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":22,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"properties\\\" : [ ],\\n  \\\"count\\\" : 0,\\n  \\\"<masked>,\\n  \\\"totalProperties\\\" : 350,\\n  \\\"unrecognised\\\" : [ {\\n    \\\"name\\\" : \\\"mockserver.maxExpectatons\\\",\\n    \\\"setAs\\\" : \\\"system property\\\",\\n    \\\"suggestions\\\" : [ \\\"mockserver.maxExpectations\\\" ],\\n    \\\"systemPropertyOnly\\\" : false,\\n    \\\"removed\\\" : false\\n  } ],\\n  \\\"note\\\" : \\\"values come from system properties, the properties file, environment variables and runtime setters; a value set only on an embedded server's Configuration object or through PUT /mockserver/configuration is not shown; each key in 'unrecognised' is ignored, so set the suggested property instead, or delete one marked removed\\\",\\n  \\\"hint\\\" : \\\"no recognised configuration property name contains 'logLevle'; did you mean mockserver.logLevel?\\\",\\n  \\\"suggestions\\\" : [ \\\"mockserver.logLevel\\\" ]\\n}\"}],\"structuredContent\":{\"properties\":[],\"count\":0,\"<masked>,\"totalProperties\":350,\"unrecognised\":[{\"name\":\"mockserver.maxExpectatons\",\"setAs\":\"system property\",\"suggestions\":[\"mockserver.maxExpectations\"],\"systemPropertyOnly\":false,\"removed\":false}],\"note\":\"values come from system properties, the properties file, environment variables and runtime setters; a value set only on an embedded server's Configuration object or through PUT /mockserver/configuration is not shown; each key in 'unrecognised' is ignored, so set the suggested property instead, or delete one marked removed\",\"hint\":\"no recognised configuration property name contains 'logLevle'; did you mean mockserver.logLevel?\",\"suggestions\":[\"mockserver.logLevel\"]},\"isError\":false}}",
+      "note": "diagnose_config typo"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":23,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"properties\\\" : [ ],\\n  \\\"count\\\" : 0,\\n  \\\"<masked>,\\n  \\\"totalProperties\\\" : 350,\\n  \\\"unrecognised\\\" : [ {\\n    \\\"name\\\" : \\\"mockserver.maxExpectatons\\\",\\n    \\\"setAs\\\" : \\\"system property\\\",\\n    \\\"suggestions\\\" : [ \\\"mockserver.maxExpectations\\\" ],\\n    \\\"systemPropertyOnly\\\" : false,\\n    \\\"removed\\\" : false\\n  } ],\\n  \\\"note\\\" : \\\"values come from system properties, the properties file, environment variables and runtime setters; a value set only on an embedded server's Configuration object or through PUT /mockserver/configuration is not shown; each key in 'unrecognised' is ignored, so set the suggested property instead, or delete one marked removed\\\",\\n  \\\"hint\\\" : \\\"no recognised configuration property name contains 'zzzzzz'; check the spelling\\\",\\n  \\\"suggestions\\\" : [ ]\\n}\"}],\"structuredContent\":{\"properties\":[],\"count\":0,\"<masked>,\"totalProperties\":350,\"unrecognised\":[{\"name\":\"mockserver.maxExpectatons\",\"setAs\":\"system property\",\"suggestions\":[\"mockserver.maxExpectations\"],\"systemPropertyOnly\":false,\"removed\":false}],\"note\":\"values come from system properties, the properties file, environment variables and runtime setters; a value set only on an embedded server's Configuration object or through PUT /mockserver/configuration is not shown; each key in 'unrecognised' is ignored, so set the suggested property instead, or delete one marked removed\",\"hint\":\"no recognised configuration property name contains 'zzzzzz'; check the spelling\",\"suggestions\":[]},\"isError\":false}}",
+      "note": "diagnose_config nothing"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":24,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"forwardFailureCount\\\" : 1,\\n  \\\"forwardFailures\\\" : [ {\\n    \\\"correlationId\\\" : \\\"<uuid>\\\",\\n    \\\"timestamp\\\" : \\\"<timestamp>\\\",\\n    \\\"method\\\" : \\\"GET\\\",\\n    \\\"path\\\" : \\\"/fwd-dead\\\",\\n    \\\"statusCode\\\" : 502,\\n    \\\"forwardLoopSuspected\\\" : false,\\n    \\\"reason\\\" : \\\"upstream refused the connection: check the upstream is running and listening on the port forwarded to\\\",\\n    \\\"causeNamed\\\" : true\\n  } ],\\n  \\\"timestamp\\\" : \\\"<masked>\\\"\\n}\"}],\"structuredContent\":{\"forwardFailureCount\":1,\"forwardFailures\":[{\"correlationId\":\"<uuid>\",\"timestamp\":\"<timestamp>\",\"method\":\"GET\",\"path\":\"/fwd-dead\",\"statusCode\":502,\"forwardLoopSuspected\":false,\"reason\":\"upstream refused the connection: check the upstream is running and listening on the port forwarded to\",\"causeNamed\":true}],\"timestamp\":\"<masked>\"},\"isError\":false}}",
+      "note": "explain_forward_failure"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":25,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'limit' must be between 1 and 20\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'limit' must be between 1 and 20\"},\"isError\":true}}",
+      "note": "explain_forward_failure limit 0"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":26,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'correlationId' must be a non-blank string\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'correlationId' must be a non-blank string\"},\"isError\":true}}",
+      "note": "explain_forward_failure blank id"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":27,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'correlationId' must be a non-blank string\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'correlationId' must be a non-blank string\"},\"isError\":true}}",
+      "note": "explain_forward_failure numeric id"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":28,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"no failed forward is recorded with this correlationId: the request may not have been forwarded, its forward may have succeeded, or the entry was cleared or evicted from the event log (see maxLogEntries); failed forwards are recorded only at logLevel INFO or more detailed\\\",\\n  \\\"correlationId\\\" : \\\"no-such-id\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"no failed forward is recorded with this correlationId: the request may not have been forwarded, its forward may have succeeded, or the entry was cleared or evicted from the event log (see maxLogEntries); failed forwards are recorded only at logLevel INFO or more detailed\",\"correlationId\":\"no-such-id\"},\"isError\":true}}",
+      "note": "explain_forward_failure unknown id"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":29,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"templateType\\\" : \\\"VELOCITY\\\",\\n  \\\"actionType\\\" : \\\"RESPONSE_TEMPLATE\\\",\\n  \\\"<masked>,\\n  \\\"valid\\\" : true,\\n  \\\"renderedResponse\\\" : {\\n    \\\"statusCode\\\" : 200,\\n    \\\"body\\\" : \\\"/a\\\"\\n  }\\n}\"}],\"structuredContent\":{\"templateType\":\"VELOCITY\",\"actionType\":\"RESPONSE_TEMPLATE\",\"<masked>,\"valid\":true,\"renderedResponse\":{\"statusCode\":200,\"body\":\"/a\"}},\"isError\":false}}",
+      "note": "test_template velocity"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":30,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"templateType\\\" : \\\"MUSTACHE\\\",\\n  \\\"actionType\\\" : \\\"FORWARD_TEMPLATE\\\",\\n  \\\"<masked>,\\n  \\\"valid\\\" : true,\\n  \\\"renderedRequest\\\" : {\\n    \\\"path\\\" : \\\"/\\\",\\n    \\\"headers\\\" : {\\n      \\\"Host\\\" : [ \\\"x\\\" ]\\n    }\\n  }\\n}\"}],\"structuredContent\":{\"templateType\":\"MUSTACHE\",\"actionType\":\"FORWARD_TEMPLATE\",\"<masked>,\"valid\":true,\"renderedRequest\":{\"path\":\"/\",\"headers\":{\"Host\":[\"x\"]}}},\"isError\":false}}",
+      "note": "test_template mustache forward"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":31,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"template is required, as a string\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"template is required, as a string\"},\"isError\":true}}",
+      "note": "test_template missing template"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":32,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"templateType must be VELOCITY, MUSTACHE or JAVASCRIPT\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"templateType must be VELOCITY, MUSTACHE or JAVASCRIPT\"},\"isError\":true}}",
+      "note": "test_template bad engine"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":33,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"source\\\" : \\\"stored\\\",\\n  \\\"note\\\" : \\\"advisory only: lint never rejects or changes an expectation\\\",\\n  \\\"expectationsChecked\\\" : 2,\\n  \\\"inactiveExpectationsSkipped\\\" : 0,\\n  \\\"issueCount\\\" : 0,\\n  \\\"errorCount\\\" : 0,\\n  \\\"warningCount\\\" : 0,\\n  \\\"infoCount\\\" : 0,\\n  \\\"issuesTruncated\\\" : false,\\n  \\\"pairComparisons\\\" : 0,\\n  \\\"maxPairComparisons\\\" : 100000,\\n  \\\"shadowCheckTruncated\\\" : false,\\n  \\\"issues\\\" : [ ]\\n}\"}],\"structuredContent\":{\"source\":\"stored\",\"note\":\"advisory only: lint never rejects or changes an expectation\",\"expectationsChecked\":2,\"inactiveExpectationsSkipped\":0,\"issueCount\":0,\"errorCount\":0,\"warningCount\":0,\"infoCount\":0,\"issuesTruncated\":false,\"pairComparisons\":0,\"maxPairComparisons\":100000,\"shadowCheckTruncated\":false,\"issues\":[]},\"isError\":false}}",
+      "note": "lint_expectations stored"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":34,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"source\\\" : \\\"request\\\",\\n  \\\"note\\\" : \\\"advisory only: lint never rejects or changes an expectation\\\",\\n  \\\"expectationsChecked\\\" : 2,\\n  \\\"openApiExpectationsSkipped\\\" : 0,\\n  \\\"issueCount\\\" : 4,\\n  \\\"errorCount\\\" : 0,\\n  \\\"warningCount\\\" : 4,\\n  \\\"infoCount\\\" : 0,\\n  \\\"issuesTruncated\\\" : false,\\n  \\\"pairComparisons\\\" : 0,\\n  \\\"maxPairComparisons\\\" : 100000,\\n  \\\"shadowCheckTruncated\\\" : false,\\n  \\\"issues\\\" : [ {\\n    \\\"rule\\\" : \\\"TIMES_ZERO\\\",\\n    \\\"severity\\\" : \\\"WARNING\\\",\\n    \\\"index\\\" : 0,\\n    \\\"summary\\\" : \\\"any method orders\\\",\\n    \\\"field\\\" : \\\"times\\\",\\n    \\\"message\\\" : \\\"never matches: times allows 0 matches; remove times for unlimited matches, or set remainingTimes to at least 1\\\"\\n  }, {\\n    \\\"rule\\\" : \\\"PATH_MISSING_LEADING_SLASH\\\",\\n    \\\"severity\\\" : \\\"WARNING\\\",\\n    \\\"index\\\" : 0,\\n    \\\"summary\\\" : \\\"any method orders\\\",\\n    \\\"field\\\" : \\\"path\\\",\\n    \\\"message\\\" : \\\"never matches: request paths always start with /, so use \\\\\\\"/orders\\\\\\\"\\\"\\n  }, {\\n    \\\"rule\\\" : \\\"PATH_INCLUDES_QUERY_STRING\\\",\\n    \\\"severity\\\" : \\\"WARNING\\\",\\n    \\\"index\\\" : 1,\\n    \\\"summary\\\" : \\\"GTE /x?a=1\\\",\\n    \\\"field\\\" : \\\"path\\\",\\n    \\\"message\\\" : \\\"does not match as written: the query string is not part of the path, and ? is a regex quantifier here; move it to queryStringParameters\\\"\\n  }, {\\n    \\\"rule\\\" : \\\"METHOD_TYPO\\\",\\n    \\\"severity\\\" : \\\"WARNING\\\",\\n    \\\"index\\\" : 1,\\n    \\\"summary\\\" : \\\"GTE /x?a=1\\\",\\n    \\\"field\\\" : \\\"method\\\",\\n    \\\"message\\\" : \\\"\\\\\\\"GTE\\\\\\\" is not an HTTP method; did you mean GET?\\\"\\n  } ]\\n}\"}],\"structuredContent\":{\"source\":\"request\",\"note\":\"advisory only: lint never rejects or changes an expectation\",\"expectationsChecked\":2,\"openApiExpectationsSkipped\":0,\"issueCount\":4,\"errorCount\":0,\"warningCount\":4,\"infoCount\":0,\"issuesTruncated\":false,\"pairComparisons\":0,\"maxPairComparisons\":100000,\"shadowCheckTruncated\":false,\"issues\":[{\"rule\":\"TIMES_ZERO\",\"severity\":\"WARNING\",\"index\":0,\"summary\":\"any method orders\",\"field\":\"times\",\"message\":\"never matches: times allows 0 matches; remove times for unlimited matches, or set remainingTimes to at least 1\"},{\"rule\":\"PATH_MISSING_LEADING_SLASH\",\"severity\":\"WARNING\",\"index\":0,\"summary\":\"any method orders\",\"field\":\"path\",\"message\":\"never matches: request paths always start with /, so use \\\"/orders\\\"\"},{\"rule\":\"PATH_INCLUDES_QUERY_STRING\",\"severity\":\"WARNING\",\"index\":1,\"summary\":\"GTE /x?a=1\",\"field\":\"path\",\"message\":\"does not match as written: the query string is not part of the path, and ? is a regex quantifier here; move it to queryStringParameters\"},{\"rule\":\"METHOD_TYPO\",\"severity\":\"WARNING\",\"index\":1,\"summary\":\"GTE /x?a=1\",\"field\":\"method\",\"message\":\"\\\"GTE\\\" is not an HTTP method; did you mean GET?\"}]},\"isError\":false}}",
+      "note": "lint_expectations given"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":35,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"source\\\" : \\\"request\\\",\\n  \\\"note\\\" : \\\"advisory only: lint never rejects or changes an expectation\\\",\\n  \\\"expectationsChecked\\\" : 2,\\n  \\\"openApiExpectationsSkipped\\\" : 0,\\n  \\\"issueCount\\\" : 4,\\n  \\\"errorCount\\\" : 0,\\n  \\\"warningCount\\\" : 4,\\n  \\\"infoCount\\\" : 0,\\n  \\\"issuesTruncated\\\" : false,\\n  \\\"pairComparisons\\\" : 0,\\n  \\\"maxPairComparisons\\\" : 100000,\\n  \\\"shadowCheckTruncated\\\" : false,\\n  \\\"issues\\\" : [ {\\n    \\\"rule\\\" : \\\"TIMES_ZERO\\\",\\n    \\\"severity\\\" : \\\"WARNING\\\",\\n    \\\"index\\\" : 0,\\n    \\\"summary\\\" : \\\"any method orders\\\",\\n    \\\"field\\\" : \\\"times\\\",\\n    \\\"message\\\" : \\\"never matches: times allows 0 matches; remove times for unlimited matches, or set remainingTimes to at least 1\\\"\\n  } ],\\n  \\\"issuesReturned\\\" : 1,\\n  \\\"issuesOmitted\\\" : 3\\n}\"}],\"structuredContent\":{\"source\":\"request\",\"note\":\"advisory only: lint never rejects or changes an expectation\",\"expectationsChecked\":2,\"openApiExpectationsSkipped\":0,\"issueCount\":4,\"errorCount\":0,\"warningCount\":4,\"infoCount\":0,\"issuesTruncated\":false,\"pairComparisons\":0,\"maxPairComparisons\":100000,\"shadowCheckTruncated\":false,\"issues\":[{\"rule\":\"TIMES_ZERO\",\"severity\":\"WARNING\",\"index\":0,\"summary\":\"any method orders\",\"field\":\"times\",\"message\":\"never matches: times allows 0 matches; remove times for unlimited matches, or set remainingTimes to at least 1\"}],\"issuesReturned\":1,\"issuesOmitted\":3},\"isError\":false}}",
+      "note": "lint_expectations maxIssues 1"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":36,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'maxIssues' must be between 1 and 1000\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'maxIssues' must be between 1 and 1000\"},\"isError\":true}}",
+      "note": "lint_expectations maxIssues 0"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":37,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'expectations' must be an expectation object or an array of expectations\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'expectations' must be an expectation object or an array of expectations\"},\"isError\":true}}",
+      "note": "lint_expectations bad expectations"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":38,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"correlationId\\\" : \\\"<uuid>\\\",\\n  \\\"timestamp\\\" : \\\"<masked>\\\",\\n  \\\"unmatchedRequestCount\\\" : 1,\\n  \\\"truncated\\\" : false,\\n  \\\"unmatchedRequests\\\" : [ {\\n    \\\"timestamp\\\" : \\\"<timestamp>\\\",\\n    \\\"method\\\" : \\\"GET\\\",\\n    \\\"path\\\" : \\\"/orders/2\\\",\\n    \\\"closestExpectations\\\" : [ {\\n      \\\"expectationId\\\" : \\\"exp-orders\\\",\\n      \\\"expectationPath\\\" : \\\"/orders/1\\\",\\n      \\\"expectationMethod\\\" : \\\"GET\\\",\\n      \\\"matches\\\" : false,\\n      \\\"matchedFieldCount\\\" : 18,\\n      \\\"totalFieldCount\\\" : 19,\\n      \\\"differingFieldCount\\\" : 1,\\n      \\\"differences\\\" : {\\n        \\\"path\\\" : [ \\\"  string or regex match failed expected:\\\\n\\\\n    /orders/1\\\\n\\\\n   found:\\\\n\\\\n    /orders/2\\\\n\\\" ]\\n      },\\n      \\\"remediation\\\" : {\\n        \\\"path\\\" : \\\"check the request path\\\"\\n      },\\n      \\\"suggestedFix\\\" : {\\n        \\\"patch\\\" : [ {\\n          \\\"op\\\" : \\\"test\\\",\\n          \\\"path\\\" : \\\"/httpRequest/path\\\",\\n          \\\"value\\\" : \\\"/orders/1\\\"\\n        }, {\\n          \\\"op\\\" : \\\"replace\\\",\\n          \\\"path\\\" : \\\"/httpRequest/path\\\",\\n          \\\"value\\\" : \\\"/orders/2\\\"\\n        } ],\\n        \\\"patchedFields\\\" : [ \\\"path\\\" ],\\n        \\\"unpatchedFields\\\" : [ ],\\n        \\\"matchesAfterPatch\\\" : true\\n      }\\n    }, {\\n      \\\"expectationId\\\" : \\\"exp-fwd\\\",\\n      \\\"expectationPath\\\" : \\\"/fwd-dead\\\",\\n      \\\"expectationMethod\\\" : \\\"\\\",\\n      \\\"matches\\\" : false,\\n      \\\"matchedFieldCount\\\" : 18,\\n      \\\"totalFieldCount\\\" : 19,\\n      \\\"differingFieldCount\\\" : 1,\\n      \\\"differences\\\" : {\\n        \\\"path\\\" : [ \\\"  string or regex match failed expected:\\\\n\\\\n    /fwd-dead\\\\n\\\\n   found:\\\\n\\\\n    /orders/2\\\\n\\\" ]\\n      },\\n      \\\"remediation\\\" : {\\n        \\\"path\\\" : \\\"check the request path\\\"\\n      },\\n      \\\"suggestedFix\\\" : {\\n        \\\"patch\\\" : [ {\\n          \\\"op\\\" : \\\"test\\\",\\n          \\\"path\\\" : \\\"/httpRequest/path\\\",\\n          \\\"value\\\" : \\\"/fwd-dead\\\"\\n        }, {\\n          \\\"op\\\" : \\\"replace\\\",\\n          \\\"path\\\" : \\\"/httpRequest/path\\\",\\n          \\\"value\\\" : \\\"/orders/2\\\"\\n        } ],\\n        \\\"patchedFields\\\" : [ \\\"path\\\" ],\\n        \\\"unpatchedFields\\\" : [ ],\\n        \\\"matchesAfterPatch\\\" : true\\n      }\\n    } ],\\n    \\\"totalExpectationsEvaluated\\\" : 2\\n  } ],\\n  \\\"suggestedFixCount\\\" : 2\\n}\"}],\"structuredContent\":{\"correlationId\":\"<uuid>\",\"timestamp\":\"<masked>\",\"unmatchedRequestCount\":1,\"truncated\":false,\"unmatchedRequests\":[{\"timestamp\":\"<timestamp>\",\"method\":\"GET\",\"path\":\"/orders/2\",\"closestExpectations\":[{\"expectationId\":\"exp-orders\",\"expectationPath\":\"/orders/1\",\"expectationMethod\":\"GET\",\"matches\":false,\"matchedFieldCount\":18,\"totalFieldCount\":19,\"differingFieldCount\":1,\"differences\":{\"path\":[\"  string or regex match failed expected:\\n\\n    /orders/1\\n\\n   found:\\n\\n    /orders/2\\n\"]},\"remediation\":{\"path\":\"check the request path\"},\"suggestedFix\":{\"patch\":[{\"op\":\"test\",\"path\":\"/httpRequest/path\",\"value\":\"/orders/1\"},{\"op\":\"replace\",\"path\":\"/httpRequest/path\",\"value\":\"/orders/2\"}],\"patchedFields\":[\"path\"],\"unpatchedFields\":[],\"matchesAfterPatch\":true}},{\"expectationId\":\"exp-fwd\",\"expectationPath\":\"/fwd-dead\",\"expectationMethod\":\"\",\"matches\":false,\"matchedFieldCount\":18,\"totalFieldCount\":19,\"differingFieldCount\":1,\"differences\":{\"path\":[\"  string or regex match failed expected:\\n\\n    /fwd-dead\\n\\n   found:\\n\\n    /orders/2\\n\"]},\"remediation\":{\"path\":\"check the request path\"},\"suggestedFix\":{\"patch\":[{\"op\":\"test\",\"path\":\"/httpRequest/path\",\"value\":\"/fwd-dead\"},{\"op\":\"replace\",\"path\":\"/httpRequest/path\",\"value\":\"/orders/2\"}],\"patchedFields\":[\"path\"],\"unpatchedFields\":[],\"matchesAfterPatch\":true}}],\"totalExpectationsEvaluated\":2}],\"suggestedFixCount\":2},\"isError\":false}}",
+      "note": "suggest_expectation_fix"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":39,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"correlationId\\\" : \\\"<uuid>\\\",\\n  \\\"timestamp\\\" : \\\"<masked>\\\",\\n  \\\"unmatchedRequestCount\\\" : 1,\\n  \\\"truncated\\\" : false,\\n  \\\"unmatchedRequests\\\" : [ {\\n    \\\"timestamp\\\" : \\\"<timestamp>\\\",\\n    \\\"method\\\" : \\\"GET\\\",\\n    \\\"path\\\" : \\\"/orders/2\\\",\\n    \\\"closestExpectations\\\" : [ {\\n      \\\"expectationId\\\" : \\\"exp-orders\\\",\\n      \\\"expectationPath\\\" : \\\"/orders/1\\\",\\n      \\\"expectationMethod\\\" : \\\"GET\\\",\\n      \\\"matches\\\" : false,\\n      \\\"matchedFieldCount\\\" : 18,\\n      \\\"totalFieldCount\\\" : 19,\\n      \\\"differingFieldCount\\\" : 1,\\n      \\\"differences\\\" : {\\n        \\\"path\\\" : [ \\\"  string or regex match failed expected:\\\\n\\\\n    /orders/1\\\\n\\\\n   found:\\\\n\\\\n    /orders/2\\\\n\\\" ]\\n      },\\n      \\\"remediation\\\" : {\\n        \\\"path\\\" : \\\"check the request path\\\"\\n      },\\n      \\\"suggestedFix\\\" : {\\n        \\\"patch\\\" : [ {\\n          \\\"op\\\" : \\\"test\\\",\\n          \\\"path\\\" : \\\"/httpRequest/path\\\",\\n          \\\"value\\\" : \\\"/orders/1\\\"\\n        }, {\\n          \\\"op\\\" : \\\"replace\\\",\\n          \\\"path\\\" : \\\"/httpRequest/path\\\",\\n          \\\"value\\\" : \\\"/orders/2\\\"\\n        } ],\\n        \\\"patchedFields\\\" : [ \\\"path\\\" ],\\n        \\\"unpatchedFields\\\" : [ ],\\n        \\\"matchesAfterPatch\\\" : true\\n      }\\n    } ],\\n    \\\"totalExpectationsEvaluated\\\" : 2\\n  } ],\\n  \\\"suggestedFixCount\\\" : 1\\n}\"}],\"structuredContent\":{\"correlationId\":\"<uuid>\",\"timestamp\":\"<masked>\",\"unmatchedRequestCount\":1,\"truncated\":false,\"unmatchedRequests\":[{\"timestamp\":\"<timestamp>\",\"method\":\"GET\",\"path\":\"/orders/2\",\"closestExpectations\":[{\"expectationId\":\"exp-orders\",\"expectationPath\":\"/orders/1\",\"expectationMethod\":\"GET\",\"matches\":false,\"matchedFieldCount\":18,\"totalFieldCount\":19,\"differingFieldCount\":1,\"differences\":{\"path\":[\"  string or regex match failed expected:\\n\\n    /orders/1\\n\\n   found:\\n\\n    /orders/2\\n\"]},\"remediation\":{\"path\":\"check the request path\"},\"suggestedFix\":{\"patch\":[{\"op\":\"test\",\"path\":\"/httpRequest/path\",\"value\":\"/orders/1\"},{\"op\":\"replace\",\"path\":\"/httpRequest/path\",\"value\":\"/orders/2\"}],\"patchedFields\":[\"path\"],\"unpatchedFields\":[],\"matchesAfterPatch\":true}}],\"totalExpectationsEvaluated\":2}],\"suggestedFixCount\":1},\"isError\":false}}",
+      "note": "suggest_expectation_fix for one"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":40,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"correlationId\\\" : \\\"<uuid>\\\",\\n  \\\"timestamp\\\" : \\\"<masked>\\\",\\n  \\\"unmatchedRequestCount\\\" : 0,\\n  \\\"truncated\\\" : false,\\n  \\\"unmatchedRequests\\\" : [ ],\\n  \\\"suggestedFixCount\\\" : 0,\\n  \\\"note\\\" : \\\"no recent unmatched request has a suggested fix for expectation 'exp-none'\\\"\\n}\"}],\"structuredContent\":{\"correlationId\":\"<uuid>\",\"timestamp\":\"<masked>\",\"unmatchedRequestCount\":0,\"truncated\":false,\"unmatchedRequests\":[],\"suggestedFixCount\":0,\"note\":\"no recent unmatched request has a suggested fix for expectation 'exp-none'\"},\"isError\":false}}",
+      "note": "suggest_expectation_fix for other"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":41,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'limit' must be between 1 and 20\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'limit' must be between 1 and 20\"},\"isError\":true}}",
+      "note": "suggest_expectation_fix limit 21"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":42,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'expectationId' must be a non-blank string\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'expectationId' must be a non-blank string\"},\"isError\":true}}",
+      "note": "suggest_expectation_fix numeric id"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":43,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"create_expectation does not accept: 'body' (did you mean 'responseBody'?), 'Status_Code' (did you mean 'statusCode'?), 'foo'. It accepts: method, path, statusCode, responseBody, responseHeaders, times, timeToLive, chaos. To match on request headers, query parameters, cookies or a body, or to add a delay or a template, use raw_expectation with the full expectation JSON.\\\",\\n  \\\"unknownParameters\\\" : [ \\\"body\\\", \\\"Status_Code\\\", \\\"foo\\\" ],\\n  \\\"acceptedParameters\\\" : [ \\\"method\\\", \\\"path\\\", \\\"statusCode\\\", \\\"responseBody\\\", \\\"responseHeaders\\\", \\\"times\\\", \\\"timeToLive\\\", \\\"chaos\\\" ],\\n  \\\"suggestions\\\" : {\\n    \\\"body\\\" : \\\"responseBody\\\",\\n    \\\"Status_Code\\\" : \\\"statusCode\\\"\\n  }\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"create_expectation does not accept: 'body' (did you mean 'responseBody'?), 'Status_Code' (did you mean 'statusCode'?), 'foo'. It accepts: method, path, statusCode, responseBody, responseHeaders, times, timeToLive, chaos. To match on request headers, query parameters, cookies or a body, or to add a delay or a template, use raw_expectation with the full expectation JSON.\",\"unknownParameters\":[\"body\",\"Status_Code\",\"foo\"],\"acceptedParameters\":[\"method\",\"path\",\"statusCode\",\"responseBody\",\"responseHeaders\",\"times\",\"timeToLive\",\"chaos\"],\"suggestions\":{\"body\":\"responseBody\",\"Status_Code\":\"statusCode\"}},\"isError\":true}}",
+      "note": "create_expectation unknown"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":44,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'chaos' must be an object, for example {\\\\\\\"errorStatus\\\\\\\": 503, \\\\\\\"errorProbability\\\\\\\": 0.5}\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'chaos' must be an object, for example {\\\"errorStatus\\\": 503, \\\"errorProbability\\\": 0.5}\"},\"isError\":true}}",
+      "note": "create_expectation chaos not object"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":45,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"create_expectation 'chaos' does not accept: 'errorstatus' (did you mean 'errorStatus'?), 'bogus'. It accepts: errorStatus, errorProbability, retryAfter, latency, dropConnectionProbability, seed, succeedFirst, failRequestCount, outageAfterMillis, outageDurationMillis, truncateBodyAtFraction, malformedBody, slowResponseChunkSize, slowResponseChunkDelay, quotaName, quotaLimit, quotaWindowMillis, quotaErrorStatus, degradationRampMillis.\\\",\\n  \\\"unknownParameters\\\" : [ \\\"errorstatus\\\", \\\"bogus\\\" ],\\n  \\\"acceptedParameters\\\" : [ \\\"errorStatus\\\", \\\"errorProbability\\\", \\\"retryAfter\\\", \\\"latency\\\", \\\"dropConnectionProbability\\\", \\\"seed\\\", \\\"succeedFirst\\\", \\\"failRequestCount\\\", \\\"outageAfterMillis\\\", \\\"outageDurationMillis\\\", \\\"truncateBodyAtFraction\\\", \\\"malformedBody\\\", \\\"slowResponseChunkSize\\\", \\\"slowResponseChunkDelay\\\", \\\"quotaName\\\", \\\"quotaLimit\\\", \\\"quotaWindowMillis\\\", \\\"quotaErrorStatus\\\", \\\"degradationRampMillis\\\" ],\\n  \\\"suggestions\\\" : {\\n    \\\"errorstatus\\\" : \\\"errorStatus\\\"\\n  }\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"create_expectation 'chaos' does not accept: 'errorstatus' (did you mean 'errorStatus'?), 'bogus'. It accepts: errorStatus, errorProbability, retryAfter, latency, dropConnectionProbability, seed, succeedFirst, failRequestCount, outageAfterMillis, outageDurationMillis, truncateBodyAtFraction, malformedBody, slowResponseChunkSize, slowResponseChunkDelay, quotaName, quotaLimit, quotaWindowMillis, quotaErrorStatus, degradationRampMillis.\",\"unknownParameters\":[\"errorstatus\",\"bogus\"],\"acceptedParameters\":[\"errorStatus\",\"errorProbability\",\"retryAfter\",\"latency\",\"dropConnectionProbability\",\"seed\",\"succeedFirst\",\"failRequestCount\",\"outageAfterMillis\",\"outageDurationMillis\",\"truncateBodyAtFraction\",\"malformedBody\",\"slowResponseChunkSize\",\"slowResponseChunkDelay\",\"quotaName\",\"quotaLimit\",\"quotaWindowMillis\",\"quotaErrorStatus\",\"degradationRampMillis\"],\"suggestions\":{\"errorstatus\":\"errorStatus\"}},\"isError\":true}}",
+      "note": "create_expectation chaos unknown"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":46,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'method' must be a string, for example \\\\\\\"GET\\\\\\\"\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'method' must be a string, for example \\\"GET\\\"\"},\"isError\":true}}",
+      "note": "create_expectation method number"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":47,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'path' must be a string, for example \\\\\\\"/users/1\\\\\\\"\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'path' must be a string, for example \\\"/users/1\\\"\"},\"isError\":true}}",
+      "note": "create_expectation path object"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":48,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'responseHeaders' must be an object mapping each header name to a string value, for example {\\\\\\\"Content-Type\\\\\\\": \\\\\\\"application/json\\\\\\\"}\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'responseHeaders' must be an object mapping each header name to a string value, for example {\\\"Content-Type\\\": \\\"application/json\\\"}\"},\"isError\":true}}",
+      "note": "create_expectation headers not object"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":49,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'responseHeaders.X-A' must be a string or an array of strings\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'responseHeaders.X-A' must be a string or an array of strings\"},\"isError\":true}}",
+      "note": "create_expectation header object"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":50,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'responseHeaders.X-A' must be a string or an array of strings\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'responseHeaders.X-A' must be a string or an array of strings\"},\"isError\":true}}",
+      "note": "create_expectation header empty array"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":51,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"status\\\" : \\\"created\\\",\\n  \\\"count\\\" : 1,\\n  \\\"id\\\" : \\\"<uuid>\\\"\\n}\"}],\"structuredContent\":{\"status\":\"created\",\"count\":1,\"id\":\"<uuid>\"},\"isError\":false}}",
+      "note": "create_expectation header arrays"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-a: 1",
+        "x-a: 2",
+        "x-b: true",
+        "x-n: 7"
+      ],
+      "body": "",
+      "note": "header arrays served"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":52,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'expectation' must be a JSON object in MockServer expectation format, or a non-empty array of them, for example {\\\\\\\"httpRequest\\\\\\\": {\\\\\\\"method\\\\\\\": \\\\\\\"GET\\\\\\\", \\\\\\\"path\\\\\\\": \\\\\\\"/hello\\\\\\\"}, \\\\\\\"httpResponse\\\\\\\": {\\\\\\\"statusCode\\\\\\\": 200, \\\\\\\"body\\\\\\\": \\\\\\\"hi\\\\\\\"}}\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'expectation' must be a JSON object in MockServer expectation format, or a non-empty array of them, for example {\\\"httpRequest\\\": {\\\"method\\\": \\\"GET\\\", \\\"path\\\": \\\"/hello\\\"}, \\\"httpResponse\\\": {\\\"statusCode\\\": 200, \\\"body\\\": \\\"hi\\\"}}\"},\"isError\":true}}",
+      "note": "raw_expectation string"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":53,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"'expectation' must be a JSON object in MockServer expectation format, or a non-empty array of them, for example {\\\\\\\"httpRequest\\\\\\\": {\\\\\\\"method\\\\\\\": \\\\\\\"GET\\\\\\\", \\\\\\\"path\\\\\\\": \\\\\\\"/hello\\\\\\\"}, \\\\\\\"httpResponse\\\\\\\": {\\\\\\\"statusCode\\\\\\\": 200, \\\\\\\"body\\\\\\\": \\\\\\\"hi\\\\\\\"}}\\\"\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"'expectation' must be a JSON object in MockServer expectation format, or a non-empty array of them, for example {\\\"httpRequest\\\": {\\\"method\\\": \\\"GET\\\", \\\"path\\\": \\\"/hello\\\"}, \\\"httpResponse\\\": {\\\"statusCode\\\": 200, \\\"body\\\": \\\"hi\\\"}}\"},\"isError\":true}}",
+      "note": "raw_expectation empty array"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":54,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"The expectation does not match the MockServer expectation schema: correct each entry of 'validationErrors' (a JSON path, then what is wrong there) and call raw_expectation again\\\",\\n  \\\"validationErrors\\\" : [ \\\"$.httpRequest.anyOf: is missing, but is required, if specifying action of type Request.anyOf\\\", \\\"$.httpRequest.binaryData: is missing, but is required, if specifying action of type Request.binaryData\\\", \\\"$.httpRequest.dnsName: is missing, but is required, if specifying action of type Request.dnsName\\\", \\\"$.httpRequest.if: is missing, but is required, if specifying action of type Request.if\\\", \\\"$.httpRequest.path: integer found, string expected\\\", \\\"$.httpRequest.path: should be valid to one and only one schema, but 0 are valid\\\", \\\"$.httpRequest.specUrlOrPayload: is missing, but is required, if specifying OpenAPI request matcher\\\", \\\"$.httpResponse.statusCode: string found, integer expected\\\", \\\"oneOf of the following must be specified [httpError, httpForward, httpForwardClassCallback, httpForwardObjectCallback, httpForwardTemplate, httpForwardValidateAction, httpForwardWithFallback, httpOverrideForwardedRequest, httpResponse, httpResponseClassCallback, httpResponseObjectCallback, httpResponseTemplate]\\\" ]\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"The expectation does not match the MockServer expectation schema: correct each entry of 'validationErrors' (a JSON path, then what is wrong there) and call raw_expectation again\",\"validationErrors\":[\"$.httpRequest.anyOf: is missing, but is required, if specifying action of type Request.anyOf\",\"$.httpRequest.binaryData: is missing, but is required, if specifying action of type Request.binaryData\",\"$.httpRequest.dnsName: is missing, but is required, if specifying action of type Request.dnsName\",\"$.httpRequest.if: is missing, but is required, if specifying action of type Request.if\",\"$.httpRequest.path: integer found, string expected\",\"$.httpRequest.path: should be valid to one and only one schema, but 0 are valid\",\"$.httpRequest.specUrlOrPayload: is missing, but is required, if specifying OpenAPI request matcher\",\"$.httpResponse.statusCode: string found, integer expected\",\"oneOf of the following must be specified [httpError, httpForward, httpForwardClassCallback, httpForwardObjectCallback, httpForwardTemplate, httpForwardValidateAction, httpForwardWithFallback, httpOverrideForwardedRequest, httpResponse, httpResponseClassCallback, httpResponseObjectCallback, httpResponseTemplate]\"]},\"isError\":true}}",
+      "note": "raw_expectation invalid"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":55,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"error\\\" : true,\\n  \\\"message\\\" : \\\"The expectation does not match the MockServer expectation schema: correct each entry of 'validationErrors' (a JSON path, then what is wrong there) and call raw_expectation again\\\",\\n  \\\"validationErrors\\\" : [ \\\"expectation 2: must be an object\\\", \\\"expectation 3: $.binaryResponse: is missing but it is required\\\", \\\"expectation 3: $.dnsResponse: is missing but it is required\\\", \\\"expectation 3: $.grpcBidiResponse: is missing, but is required, if specifying action of type GrpcBidiResponse\\\", \\\"expectation 3: $.grpcStreamResponse: is missing, but is required, if specifying action of type GrpcStreamResponse\\\", \\\"expectation 3: $.httpError: is missing, but is required, if specifying action of type Error\\\", \\\"expectation 3: $.httpForward: is missing, but is required, if specifying action of type Forward\\\", \\\"expectation 3: $.httpForwardClassCallback: is missing, but is required, if specifying action of type ForwardClassCallback\\\", \\\"expectation 3: $.httpForwardObjectCallback: is missing, but is required, if specifying action of type ForwardObjectCallback\\\", \\\"expectation 3: $.httpForwardTemplate: is missing, but is required, if specifying action of type ForwardTemplate\\\", \\\"expectation 3: $.httpForwardValidateAction: is missing, but is required, if specifying action of type ForwardValidateAction\\\", \\\"expectation 3: $.httpForwardWithFallback: is missing, but is required, if specifying action of type ForwardWithFallback\\\", \\\"expectation 3: $.httpLlmResponse: is missing, but is required, if specifying action of type LlmResponse\\\", \\\"expectation 3: $.httpOverrideForwardedRequest: is missing, but is required, if specifying action of type OverrideForwardedRequest\\\", \\\"expectation 3: $.httpRequest.anyOf: is missing, but is required, if specifying action of type Request.anyOf\\\", \\\"expectation 3: $.httpRequest.binaryData: is missing, but is required, if specifying action of type Request.binaryData\\\", \\\"expectation 3: $.httpRequest.dnsName: is missing, but is required, if specifying action of type Request.dnsName\\\", \\\"expectation 3: $.httpRequest.if: is missing, but is required, if specifying action of type Request.if\\\", \\\"expectation 3: $.httpRequest.method: integer found, string expected\\\", \\\"expectation 3: $.httpRequest.method: should be valid to one and only one schema, but 0 are valid\\\", \\\"expectation 3: $.httpRequest.specUrlOrPayload: is missing, but is required, if specifying OpenAPI request matcher\\\", \\\"expectation 3: $.httpResponse: is missing, but is required, if specifying action of type Response\\\", \\\"expectation 3: $.httpResponseClassCallback: is missing, but is required, if specifying action of type ResponseClassCallback\\\", \\\"expectation 3: $.httpResponseObjectCallback: is missing, but is required, if specifying action of type ResponseObjectCallback\\\", \\\"expectation 3: $.httpResponseTemplate: is missing, but is required, if specifying action of type ResponseTemplate\\\", \\\"expectation 3: $.httpResponses: is missing, but is required, if specifying action of type Responses\\\", \\\"expectation 3: $.httpSseResponse: is missing, but is required, if specifying action of type SseResponse\\\", \\\"expectation 3: $.httpWebSocketResponse: is missing, but is required, if specifying action of type WebSocketResponse\\\", \\\"expectation 3: $.steps: is missing but it is required\\\", \\\"expectation 3: $.times.remainingTimes: string found, integer expected\\\", \\\"expectation 3: oneOf of the following must be specified [httpError, httpForward, httpForwardClassCallback, httpForwardObjectCallback, httpForwardTemplate, httpForwardValidateAction, httpForwardWithFallback, httpOverrideForwardedRequest, httpResponse, httpResponseClassCallback, httpResponseObjectCallback, httpResponseTemplate]\\\" ]\\n}\"}],\"structuredContent\":{\"error\":true,\"message\":\"The expectation does not match the MockServer expectation schema: correct each entry of 'validationErrors' (a JSON path, then what is wrong there) and call raw_expectation again\",\"validationErrors\":[\"expectation 2: must be an object\",\"expectation 3: $.binaryResponse: is missing but it is required\",\"expectation 3: $.dnsResponse: is missing but it is required\",\"expectation 3: $.grpcBidiResponse: is missing, but is required, if specifying action of type GrpcBidiResponse\",\"expectation 3: $.grpcStreamResponse: is missing, but is required, if specifying action of type GrpcStreamResponse\",\"expectation 3: $.httpError: is missing, but is required, if specifying action of type Error\",\"expectation 3: $.httpForward: is missing, but is required, if specifying action of type Forward\",\"expectation 3: $.httpForwardClassCallback: is missing, but is required, if specifying action of type ForwardClassCallback\",\"expectation 3: $.httpForwardObjectCallback: is missing, but is required, if specifying action of type ForwardObjectCallback\",\"expectation 3: $.httpForwardTemplate: is missing, but is required, if specifying action of type ForwardTemplate\",\"expectation 3: $.httpForwardValidateAction: is missing, but is required, if specifying action of type ForwardValidateAction\",\"expectation 3: $.httpForwardWithFallback: is missing, but is required, if specifying action of type ForwardWithFallback\",\"expectation 3: $.httpLlmResponse: is missing, but is required, if specifying action of type LlmResponse\",\"expectation 3: $.httpOverrideForwardedRequest: is missing, but is required, if specifying action of type OverrideForwardedRequest\",\"expectation 3: $.httpRequest.anyOf: is missing, but is required, if specifying action of type Request.anyOf\",\"expectation 3: $.httpRequest.binaryData: is missing, but is required, if specifying action of type Request.binaryData\",\"expectation 3: $.httpRequest.dnsName: is missing, but is required, if specifying action of type Request.dnsName\",\"expectation 3: $.httpRequest.if: is missing, but is required, if specifying action of type Request.if\",\"expectation 3: $.httpRequest.method: integer found, string expected\",\"expectation 3: $.httpRequest.method: should be valid to one and only one schema, but 0 are valid\",\"expectation 3: $.httpRequest.specUrlOrPayload: is missing, but is required, if specifying OpenAPI request matcher\",\"expectation 3: $.httpResponse: is missing, but is required, if specifying action of type Response\",\"expectation 3: $.httpResponseClassCallback: is missing, but is required, if specifying action of type ResponseClassCallback\",\"expectation 3: $.httpResponseObjectCallback: is missing, but is required, if specifying action of type ResponseObjectCallback\",\"expectation 3: $.httpResponseTemplate: is missing, but is required, if specifying action of type ResponseTemplate\",\"expectation 3: $.httpResponses: is missing, but is required, if specifying action of type Responses\",\"expectation 3: $.httpSseResponse: is missing, but is required, if specifying action of type SseResponse\",\"expectation 3: $.httpWebSocketResponse: is missing, but is required, if specifying action of type WebSocketResponse\",\"expectation 3: $.steps: is missing but it is required\",\"expectation 3: $.times.remainingTimes: string found, integer expected\",\"expectation 3: oneOf of the following must be specified [httpError, httpForward, httpForwardClassCallback, httpForwardObjectCallback, httpForwardTemplate, httpForwardValidateAction, httpForwardWithFallback, httpOverrideForwardedRequest, httpResponse, httpResponseClassCallback, httpResponseObjectCallback, httpResponseTemplate]\"]},\"isError\":true}}",
+      "note": "raw_expectation invalid array"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "<masked>",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\":56,\"jsonrpc\":\"2.0\",\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"status\\\" : \\\"created\\\",\\n  \\\"count\\\" : 1,\\n  \\\"ids\\\" : [ \\\"exp-raw\\\" ]\\n}\"}],\"structuredContent\":{\"status\":\"created\",\"count\":1,\"ids\":[\"exp-raw\"]},\"isError\":false}}",
+      "note": "raw_expectation valid"
+    }
+  ]
+}

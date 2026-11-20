@@ -1,0 +1,128 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "reset"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 384",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/early\",\n    \"respondBeforeBody\" : true\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"ok\",\n    \"recoverAfter\" : {\n      \"failTimes\" : 2\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "an early (respondBeforeBody) response that recovers after two failures"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 598",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/early-key\",\n    \"respondBeforeBody\" : true\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 201,\n    \"body\" : \"created\",\n    \"recoverAfter\" : {\n      \"failResponse\" : {\n        \"statusCode\" : 429,\n        \"headers\" : {\n          \"Retry-After\" : [ \"1\" ]\n        },\n        \"body\" : \"slow down\"\n      },\n      \"failTimes\" : 1,\n      \"idempotencyHeader\" : \"Idempotency-Key\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "an early response with a failure response, counted per idempotency key"
+    },
+    {
+      "status": 503,
+      "headers": [
+        "connection: close",
+        "content-length: 0"
+      ],
+      "body": "",
+      "note": "first attempt fails"
+    },
+    {
+      "status": 503,
+      "headers": [
+        "connection: close",
+        "content-length: 0"
+      ],
+      "body": "",
+      "note": "second attempt fails"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: close",
+        "content-length: 2"
+      ],
+      "body": "ok",
+      "note": "third attempt recovers"
+    },
+    {
+      "status": 429,
+      "headers": [
+        "connection: close",
+        "content-length: 9",
+        "retry-after: 1"
+      ],
+      "body": "slow down",
+      "note": "key a, first attempt fails with the failure response"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "connection: close",
+        "content-length: 7"
+      ],
+      "body": "created",
+      "note": "key a, second attempt recovers"
+    },
+    {
+      "status": 429,
+      "headers": [
+        "connection: close",
+        "content-length: 9",
+        "retry-after: 1"
+      ],
+      "body": "slow down",
+      "note": "key b has its own window"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/early\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"9\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"socketAddress\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    },\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"reasonPhrase\" : \"Service Unavailable\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/early\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"9\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"socketAddress\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    },\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"reasonPhrase\" : \"Service Unavailable\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/early\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"9\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"socketAddress\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    },\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"ok\",\n    \"recoverAfter\" : {\n      \"failTimes\" : 2\n    }\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/early-key\",\n    \"headers\" : {\n      \"idempotency-key\" : [ \"a\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"9\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"socketAddress\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    },\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 429,\n    \"headers\" : {\n      \"Retry-After\" : [ \"1\" ]\n    },\n    \"body\" : \"slow down\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/early-key\",\n    \"headers\" : {\n      \"idempotency-key\" : [ \"a\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"9\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"socketAddress\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    },\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 201,\n    \"body\" : \"created\",\n    \"recoverAfter\" : {\n      \"failResponse\" : {\n        \"statusCode\" : 429,\n        \"headers\" : {\n          \"Retry-After\" : [ \"1\" ]\n        },\n        \"body\" : \"slow down\"\n      },\n      \"failTimes\" : 1,\n      \"idempotencyHeader\" : \"Idempotency-Key\"\n    }\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/early-key\",\n    \"headers\" : {\n      \"idempotency-key\" : [ \"b\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"9\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"socketAddress\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    },\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 429,\n    \"headers\" : {\n      \"Retry-After\" : [ \"1\" ]\n    },\n    \"body\" : \"slow down\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n} ]",
+      "note": "served responses as recorded"
+    }
+  ]
+}

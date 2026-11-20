@@ -1,0 +1,905 @@
+{
+  "note": "EC JWKs whose d is not in [1, n - 1] are accepted by PUT /mockserver/oidc and published; signing a token fails in the JDK's ECUtil.checkPrivateKey, so /token answers 404 with the callback's ERROR and its throwable chain; the RSA signing failures' chains beside it.",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a P-256 JWK with d = 0 is accepted at generate time",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-p256\", \"x\": \"tKcE-R7XISCbOFqh1_FZGRFbF8BQtCjx1KW1jp5gog8\", \"y\": \"aDnKmtiTbVVcyHipo___81hapa_W6vNZSqww3Etu3N8\", \"d\": \"AA\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "ECDSASignature.engineInitSign range-checks d: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "d = 0 as 32 zero bytes",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-p256\", \"x\": \"tKcE-R7XISCbOFqh1_FZGRFbF8BQtCjx1KW1jp5gog8\", \"y\": \"aDnKmtiTbVVcyHipo___81hapa_W6vNZSqww3Etu3N8\", \"d\": \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "ECDSASignature.engineInitSign range-checks d: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "d = n",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-p256\", \"x\": \"tKcE-R7XISCbOFqh1_FZGRFbF8BQtCjx1KW1jp5gog8\", \"y\": \"aDnKmtiTbVVcyHipo___81hapa_W6vNZSqww3Etu3N8\", \"d\": \"_____wAAAAD__________7zm-q2nF56E87nKwvxjJVE\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "ECDSASignature.engineInitSign range-checks d: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "d = n + 1 is not reduced mod n",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-p256\", \"x\": \"tKcE-R7XISCbOFqh1_FZGRFbF8BQtCjx1KW1jp5gog8\", \"y\": \"aDnKmtiTbVVcyHipo___81hapa_W6vNZSqww3Etu3N8\", \"d\": \"_____wAAAAD__________7zm-q2nF56E87nKwvxjJVI\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "ECDSASignature.engineInitSign range-checks d: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "d = n - 1 is in range: it signs, with a key that is not x/y's",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-p256\", \"x\": \"tKcE-R7XISCbOFqh1_FZGRFbF8BQtCjx1KW1jp5gog8\", \"y\": \"aDnKmtiTbVVcyHipo___81hapa_W6vNZSqww3Etu3N8\", \"d\": \"_____wAAAAD__________7zm-q2nF56E87nKwvxjJVA\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "a token is signed",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "ec_p256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "it does not verify against x/y",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:ec_p256}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a P-384 JWK with d = 0 under ES384",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-384\", \"kid\": \"ec-p384\", \"x\": \"pagRAvCYhV4fC-pNTT2cjoguyRh1nZEV7QCxaM6I2Z73Od9J0RPtUsu3hYW8Kgu5\", \"y\": \"KhmOMG4NE4p7URqD0NtAziEE3WiqxPjXPDe7FLyr4GzMoSvXcSNyiWkBNY7rc0KD\", \"d\": \"AA\"}",
+        "signingAlgorithm": "ES384"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "ECDSASignature.engineInitSign range-checks d: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "P-384 d = n",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-384\", \"kid\": \"ec-p384\", \"x\": \"pagRAvCYhV4fC-pNTT2cjoguyRh1nZEV7QCxaM6I2Z73Od9J0RPtUsu3hYW8Kgu5\", \"y\": \"KhmOMG4NE4p7URqD0NtAziEE3WiqxPjXPDe7FLyr4GzMoSvXcSNyiWkBNY7rc0KD\", \"d\": \"________________________________x2NNgfQ3Ld9YGg2ySLCneuzsGWrMxSlz\"}",
+        "signingAlgorithm": "ES384"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "ECDSASignature.engineInitSign range-checks d: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "P-384 d = n + 1",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-384\", \"kid\": \"ec-p384\", \"x\": \"pagRAvCYhV4fC-pNTT2cjoguyRh1nZEV7QCxaM6I2Z73Od9J0RPtUsu3hYW8Kgu5\", \"y\": \"KhmOMG4NE4p7URqD0NtAziEE3WiqxPjXPDe7FLyr4GzMoSvXcSNyiWkBNY7rc0KD\", \"d\": \"________________________________x2NNgfQ3Ld9YGg2ySLCneuzsGWrMxSl0\"}",
+        "signingAlgorithm": "ES384"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "ECDSASignature.engineInitSign range-checks d: the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an RSA JWK whose dp is not d mod (p - 1), for the RSA signing chain beside the EC one",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"RSA\", \"kid\": \"rsa-bad-dp\", \"n\": \"mohzVGloeBdxpDQyd1JG_rw27BVqENyAlRyVAie28M3dEQGGJau-TH4eQhlIn__qnRWNoeu-0O_zJxnRRcya_Wf0imfdm9wOWUectDJ5_LSJ9mjsCESPTLFDVGZUZyf3ZmOxM4_1bG6z0M_hsw-djEOkNGq_E5sLFZjCPOEDVhKbRaWxsvf618ctAAOhWh3LTenS8-NXfBt0Gemjii5F2h8E4QjK4k9NG29AADralVwh-_1xC2F6EtTVgFhR4fpYil9EUDq4b31kicqxZTFpnHpYlUwU6LbqHTWaezkXsudaCaNrHbtmHshZB4ceMDrDvidPv1DZtmi2hIt0dNj2WQ\", \"e\": \"AQAB\", \"d\": \"CN9618bxo6uc79O7bhSAVRITiTy1iWBP1b_9YlFLdMotPlO7EyCoXZYEQMFY5S75lqltJ3X0z-RnLsCRvpM_9vroFKZgGBnrjP7KpaIcVQE8xrRBkTv2im3HMuppQD8QOoXQ3-gNLHuywXOePvzPjAU6QXQ7onGNkmDiDkLRQTjbYt0JffARTYW0ws_INAaXGOIxJhxJK0_bVwkqkQJssQ5kiF5O_TlCH01JeC1OBD9ZuRkcf225cYie9STkahuldZlSYpil2s8Si45ggJpAc1PhDwCwOWJ1TCxbak-ZoOfqvu7LyiX3Y7hL0B4zluCZjJuF9ta8_HZmtjY9EKok3Q\", \"p\": \"1M7V3Mv2tJO8GDQ_ycryw27A-0FSSahmny3IyG5J1CYg3oReKIyMOXz4VrkMKBWiQ2Qf69i7ZlkWUGXvjsZO_6HDDhdjqhGhGEU__JJqxHecSOPRF61v1S19SOygNBacGC_36X-uTl-FcXDCNrWpzxEHJWLwmay05-qlEqNbBsc\", \"q\": \"ueW9x4CDMm2-3hBfBPLqUze3TAJ5J_pqBYDyAnyh_5UrSEHw9CPPgLPMX57A4eD8M5nq4cBGGCFIYo86dpLJg67vWLgfnUSxr8ELJQHwI-n_kwA1lRJG1M7z36DCqgWi-P_dzMuUktYSs9t6s9aH8llf8IKPv2DBZr6SacjWed8\", \"dp\": \"IbBozN6BPM8SfOZwnrqBOg0jgeMyarS9Ij_2RDypdWtf0rozycmOPV-aVOhQk1vxZyfHoeeaqzY5QRsSFJEyWme6YFW1kmveC-CSo6JuQpII7MUcCdqMFLxx1ASZzAU0SuP1JELxTjjzACVwqYaSzlQMxI9oNXvQ29Iatdukgm0\", \"dq\": \"lEBExhqWBpyBEAWMUZ0MBMu1MTfzuU86SCNaXWNZqkMjHmAAMiNw81nwTf2EI19SojBIojq9a7b3TCqfXDqZ3JuhI2bLR5emANz570yJX4rYmDodgUHvHP3ifWBufjs6iks7bnyYgzWX-rm5NDyNdFeUbHEjBGO8OR0YFKbnbI8\", \"qi\": \"OkE8jLnhs2GWONLacnjqc-Ioytn5iQpMhoRjXeON24BHz1SED00PspxV_1IfP9pVZkp2x1A0Rp6pvbdt3MrqC4-TF0ergsxehYaxtydeAwcoEOK1Zyk3YQ0odp6GJvZjjs8FmH3BE-QHnri40t2CkaEMAlJKB8MB14amSY6yZ3I\"}",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSACore's CRT check fails: 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 1024-bit RSA JWK is accepted at generate time",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"RSA\", \"kid\": \"rsa-1024\", \"n\": \"yJycHurQvBFMNcSB7KCi22SoSHO_TO-euqJlQXc19YVuVls5ZqnGE-n_m_f_lTfms8ztxg3IqC4Y7aTWe9VcXThf4xTgE0d4vwtlavJSkrVM4Mu1hR06h37uLIrKDlVpBmDuyoO2GfctifpHhBO1k97-2qoW239jrHF3ya9V5D0\", \"e\": \"AQAB\", \"d\": \"bb0NwfPdXyNvNvJZyCFPNQho7ckzWlix0ZJIJXmasMXex6p7SeeRDQ-x3ZXZ37yGnNB7OR4NJ8KfrE_BbFgYf4XCUfxaqpisP9OSXwb6iMdZpwhUMrIvd0IYhJJo6d23sJJlK3PqjblaYT2ZWGeHn8NeR0yEcf2qId-neL_5hZk\", \"p\": \"7aKVkphdDjIam4nhVLbB-oywzrpIOFFW0puETMJWy0maFg0g1LtZAFsky27mLxQaNEJwFOm6LCoEQvA_evbGyw\", \"q\": \"2B2MliQvtXa9WHZye-Da3s8b79GzBABF_A8zJ3Cr4ZKsrIcL3NaNWcPS2kBUpm8COMR7EosLDyEJ3syaebUYFw\", \"dp\": \"Bc_7PpmxdP5uvi0yMMNDnWBBltzhlVcP-5jINKRwQQqs1Ss_CVUHyUVxcfRldvNT7MFPQoOxBRGGBykfNF_C3w\", \"dq\": \"lDpAMMKFDntwhvpGr3yb4fI_gQ9dL0NYvPdX6Jc47LCDSpodosxtisHrHtK8vKKq7XCl0SQY47mPYYcH9K4m5Q\", \"qi\": \"yZvpmlFmneYpQ7UJnYcmf58DDO-ihKoCeNFt5xQLE-o9MjlbkfXCd9WAAFmOJJP5DF3SttoEGiOQWDY0BgbndQ\"}",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS publishes the JWK's public key",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSASSASigner refuses a key under 2048 bits: 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entry and its throwable chain",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    }
+  ]
+}

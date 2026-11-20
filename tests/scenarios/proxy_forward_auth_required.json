@@ -1,0 +1,15 @@
+{"source": "the peer node is an HTTP(S) proxy that demands proxyAuthentication credentials; forwards through forwardHttpProxy and forwardHttpsProxy carry forwardProxyAuthenticationUsername/Password, so it lets them through",
+ "peer": true,
+ "peerProperties": {"proxyAuthenticationUsername": "userName", "proxyAuthenticationPassword": "password"},
+ "properties": {"forwardHttpProxy": "{{peerhost}}:{{peerport}}", "forwardHttpsProxy": "{{peerhost}}:{{peerport}}", "forwardProxyAuthenticationUsername": "userName", "forwardProxyAuthenticationPassword": "password"},
+ "steps": [
+  {"node": "peer", "method": "PUT", "path": "/mockserver/reset", "note": "the proxy's startup entries are not the point"},
+  {"node": "peer", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "from proxy"}}, "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/plain"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["target.example:8080"]}}}},
+    {"httpRequest": {"path": "/secure"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "secure": true, "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ], "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"note": "plain forward: the proxy accepts the Proxy-Authorization header", "method": "GET", "path": "/plain"},
+  {"note": "https forward: the proxy accepts the CONNECT's Proxy-Authorization", "method": "GET", "path": "/secure"},
+  {"note": "both reached the proxy's own expectation", "node": "peer", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS"}
+]}

@@ -1,0 +1,99 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/remote",
+     "headers": {
+      "Host": [
+       "127.0.0.1:{{port}}"
+      ]
+     }
+    },
+    "httpResponse": {
+     "body": "answered by the remote"
+    }
+   },
+   "note": "matches only the Host an unmatched request is forwarded to the remote with"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&forwardUnmatchedTo=127.0.0.1:{{port}}",
+   "note": "arms record-and-forward to the server itself"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "unmatched here, forwarded back carrying the loop header, matches there"
+  },
+  {
+   "method": "GET",
+   "path": "/nowhere",
+   "note": "unmatched here and there: the looped request's 404 is the answer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "the looped request logs everything but RECEIVED_REQUEST",
+   "mask": [
+    "\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the same as entries, with the outer entry's timing",
+   "mask": [
+    "\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : \\d+",
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\" : \\[\\s*\")\\d+",
+     "replace": "${1}0",
+     "reason": "the exchange's own duration"
+    },
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0",
+     "reason": "timing of the forward, also inside the message lines"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "note": "only the outer requests"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON",
+   "note": "the exchanges"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=JSON",
+   "note": "the recorded expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/remote"
+    },
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   },
+   "note": "the looped request is not a received one"
+  }
+ ]
+}

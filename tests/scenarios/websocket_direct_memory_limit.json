@@ -1,0 +1,48 @@
+{
+ "source": "Netty's direct-memory limit (NettyDirectMemoryLimit: io.netty.maxDirectMemory) on a scripted WebSocket message. HttpWebSocketResponseActionHandler.writeWebSocketFrame writes the frame as one write: WebSocket08FrameEncoder's header (10 bytes for a 42 MB text frame) goes out, the payload's direct copy (AbstractEpollChannel.newDirectBuffer) fails with OutOfDirectMemoryError, which is not a client gone: the WARN `async write failure for WebSocket message {} for request:{}` (the throwable is not part of the entry), then finishWebSocket closes the connection with a 1000 `Bye` frame, which lands inside the frame the header announced. Message 2 is never written. A message under the limit is sent as usual.",
+ "properties": {
+  "logLevel": "DEBUG"
+ },
+ "jvmOptions": [
+  "-Dio.netty.maxDirectMemory=8388608"
+ ],
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "ws-direct-memory",
+    "httpRequest": {
+     "path": "/ws"
+    },
+    "httpWebSocketResponse": {
+     "messages": [
+      {
+       "text": "#set($s = 'aaaaaaaaaa')#foreach($i in [1..22])#set($s = \"$s$s\")#end$s"
+      },
+      {
+       "text": "b"
+      }
+     ],
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "a 42 MB text message against an 8 MiB limit: the 101, the frame's 10-byte header, the close frame, then the connection closes",
+   "tcp": [
+    {
+     "text": "GET /ws HTTP/1.1\r\nHost: {{host}}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "the WARN for message 1, no `sent WebSocket message` entry and no entry for message 2",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  }
+ ]
+}

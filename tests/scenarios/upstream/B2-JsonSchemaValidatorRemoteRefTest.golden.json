@@ -1,0 +1,52 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "unstable": [],
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 1221",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/internal-ref\",\n    \"body\" : {\n      \"type\" : \"JSON_SCHEMA\",\n      \"jsonSchema\" : {\n        \"type\" : \"object\",\n        \"definitions\" : {\n          \"positiveInt\" : {\n            \"type\" : \"integer\",\n            \"minimum\" : 1\n          }\n        },\n        \"properties\" : {\n          \"count\" : {\n            \"$ref\" : \"#/definitions/positiveInt\"\n          }\n        },\n        \"required\" : [ \"count\" ]\n      }\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"internal ref matched\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/remote-ref\",\n    \"body\" : {\n      \"type\" : \"JSON_SCHEMA\",\n      \"jsonSchema\" : {\n        \"type\" : \"object\",\n        \"properties\" : {\n          \"value\" : {\n            \"$ref\" : \"http://192.0.2.1/external-schema.json\"\n          }\n        },\n        \"required\" : [ \"value\" ]\n      }\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"remote ref matched\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "register: an internal-$ref schema (unaffected by the SSRF gate) and a remote-$ref schema (RFC 5737 TEST-NET-1, guaranteed non-routable — the point is that it is never actually contacted)"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 20"
+      ],
+      "body": "internal ref matched",
+      "note": "shouldMatchSchemaUsingOnlyInternalRefsAsBefore: a schema with only internal ($ref: #/...) refs validates exactly as before the SSRF gate"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: body did not match (  json schema match failed expected:     {       \"type\" : \"object\",       \"definitions\" : {         \"positiveInt\" : {           \"type\" : \"integer\",           \"minimum\" : 1         }  ..."
+      ],
+      "body": "",
+      "note": "shouldRejectNonMatchingBodyAgainstInternalRefSchemaAsBefore: a body violating the internal ref's minimum:1 is reported as a non-match, mentioning \"count\" — the gate changes nothing about internal-ref validation"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: path did not match (  string or regex match failed expected:     /internal-ref    found:     /remote-ref )"
+      ],
+      "body": "",
+      "note": "shouldBlockRemoteRefByDefaultWithoutNetworkFetch: the remote $ref is never fetched (default deny, no opt-in) — the response comes back promptly (this step would hang/timeout if the server actually tried to reach 192.0.2.1) and the closest-match hint names the blocked reference instead of a connection failure"
+    }
+  ]
+}

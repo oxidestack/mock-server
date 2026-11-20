@@ -1,0 +1,36 @@
+{
+  "source": "-XX:MaxRAM in JAVA_TOOL_OPTIONS replaces the memory the percentage is taken of; a MaxRAMPercentage there precedes the ENTRYPOINT's 45.0 and loses to it, so the ceiling is 45% of 3 GiB.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-XX:+UseZGC -XX:MaxRAM=3g -XX:MaxRAMPercentage=10"
+  },
+  "containerMemoryBytes": 8589934592,
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "compareBody": "configuration"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

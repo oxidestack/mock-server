@@ -1,0 +1,88 @@
+{
+ "isolated": true,
+ "properties": {
+  "logLevel": "INFO",
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "note": "a forward back to this server: every hop adds the instance id to x-mockserver-forwarded-by, and the request carrying it forwardLoopMaxHops (default 10) times is answered 508 Loop Detected; a fresh oracle takes about 15 s to create its first forward expectation",
+   "maxMillis": 30000,
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\"httpRequest\": {\"path\": \"/loop\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}"
+  },
+  {
+   "method": "GET",
+   "path": "/loop"
+  },
+  {
+   "note": "a lower limit, set at run time (the dump lists 9.1.0 properties this scenario does not check)",
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": "{\"forwardLoopMaxHops\": 2}",
+   "compare": "status"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": ""
+  },
+  {
+   "method": "GET",
+   "path": "/loop",
+   "headers": {
+    "x-in": "in"
+   }
+  },
+  {
+   "note": "each hop's received request carries one more entry",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": "{\"path\": \"/loop\"}"
+  },
+  {
+   "note": "the WARN entry (drift detection off: its re-match entry races the forwarded response's)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": "",
+   "mask": [
+    "\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : \\d+"
+   ]
+  },
+  {
+   "note": "an entry of another instance is not counted; folded entries are",
+   "method": "GET",
+   "path": "/loop",
+   "headers": {
+    "x-mockserver-forwarded-by": "MockServer_0123abcd, MockServer_4567ef"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": "{\"forwardLoopMaxHops\": -3}",
+   "compare": "status"
+  },
+  {
+   "note": "a negative limit is read as 0, loop detection off: an expectation used once forwards with no header",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/once\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"times\": {\"remainingTimes\": 1}, \"priority\": 5}, {\"httpRequest\": {\"path\": \"/once\"}, \"httpResponse\": {\"statusCode\": 202}}]"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": ""
+  },
+  {
+   "method": "GET",
+   "path": "/once"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": "{\"path\": \"/once\"}"
+  }
+ ]
+}

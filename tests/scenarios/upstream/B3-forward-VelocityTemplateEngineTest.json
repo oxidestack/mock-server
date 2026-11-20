@@ -1,0 +1,84 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) forward-VelocityTemplateEngineTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "50332c96173c",
+   "note": "shouldHandleHttpRequestsWithVelocityForwardTemplateWithPathBodyParametersAndCookies (forward): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/somePath"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'headers': {'host': ['{{deadhost}}']},\n    'path': '$request.path',\n    'body': \"{'queryStringParameters': '$request.queryStringParameters.nameOne[0],$request.queryStringParameters.nameTwo[0],$request.queryStringParameters.nameTwo[1]', 'pathParameters': '$request.pathParameters.nameOne[0],$request.pathParameters.nameTwo[0],$request.pathParameters.nameTwo[1]', 'cookies': '$request.cookies.session', 'body': '$request.body'}\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldHandleHttpRequestsWithVelocityForwardTemplateWithPathBodyParametersAndCookies (forward): forward template",
+   "case": "50332c96173c"
+  },
+  {
+   "method": "POST",
+   "path": "/somePath?nameTwo=queryValueTwoOne&nameTwo=queryValueTwoTwo&nameOne=queryValueOne",
+   "headers": {
+    "Cookie": "session=some_session_id"
+   },
+   "body": "some_body",
+   "note": "shouldHandleHttpRequestsWithVelocityForwardTemplateWithPathBodyParametersAndCookies (forward): request",
+   "case": "50332c96173c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": "",
+   "note": "shouldHandleHttpRequestsWithVelocityForwardTemplateWithPathBodyParametersAndCookies (forward): received",
+   "case": "50332c96173c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "88ef788ebd45",
+   "note": "shouldHandleInvalidVelocityTemplate (forward): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/someOtherPath"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#if {\n    'path' : \"/somePath\",\n    'queryStringParameters' : [ {\n        'name' : \"queryParameter\",\n        'values' : [ \"$!request.queryStringParameters['queryParameter'][0]\" ]\n    } ],\n    'headers' : [ {\n        'name' : \"Host\",\n        'values' : [ \"localhost:1090\" ]\n    } ],\n    'body': \"{'name': 'value'}\"\n}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldHandleInvalidVelocityTemplate (forward): forward template",
+   "case": "88ef788ebd45"
+  },
+  {
+   "method": "GET",
+   "path": "/someOtherPath?queryParameter=someValue",
+   "body": "some_body",
+   "note": "shouldHandleInvalidVelocityTemplate (forward): request",
+   "case": "88ef788ebd45"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": "",
+   "note": "shouldHandleInvalidVelocityTemplate (forward): received",
+   "case": "88ef788ebd45"
+  }
+ ]
+}

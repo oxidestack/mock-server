@@ -1,0 +1,198 @@
+{
+ "properties": {
+  "loadGenerationEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/inflight/slow"
+    },
+    "httpResponse": {
+     "body": "late",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 4000
+     }
+    }
+   },
+   "note": "a response held open for 4 s"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/inflight/warm"
+    },
+    "httpResponse": {
+     "body": "warm"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": {
+    "name": "warm",
+    "steps": [
+     {
+      "request": {
+       "method": "GET",
+       "path": "/inflight/warm",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    ],
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 20000
+      }
+     ]
+    },
+    "maxRequests": 1
+   },
+   "note": "a warm-up run: a fresh oracle JVM takes over a second to render and send its first load request"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "body": {
+    "name": "warm"
+   },
+   "note": "RUNNING or already COMPLETED: requestsSent reaches maxRequests before the first send returns, and a control tick during a slow send completes the run",
+   "mask": [
+    {
+     "regex": "\"state\" : \"(RUNNING|COMPLETED)\"",
+     "replace": "\"state\" : \"<RUNNING or COMPLETED>\""
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": {
+    "name": "held",
+    "steps": [
+     {
+      "request": {
+       "method": "GET",
+       "path": "/inflight/slow",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    ],
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 20000
+      }
+     ]
+    },
+    "maxRequests": 1
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "body": {
+    "name": "held"
+   },
+   "note": "RUNNING or already COMPLETED: requestsSent reaches maxRequests before the first send returns, and a control tick during a slow send completes the run",
+   "mask": [
+    {
+     "regex": "\"state\" : \"(RUNNING|COMPLETED)\"",
+     "replace": "\"state\" : \"<RUNNING or COMPLETED>\""
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 1500
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/held",
+   "note": "COMPLETED while the request is in flight",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAt|endedAt|elapsedMillis|p50Millis|p95Millis|p99Millis|p999Millis|observed|currentTarget)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/held/report",
+   "note": "report counts the in-flight request as sent only",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|observed)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 4500
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/loadScenario/held/report",
+   "note": "the terminal snapshot stays frozen after the response arrives",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"(startedAtEpochMillis|endedAtEpochMillis|durationMillis|p50|p95|p99|p999|observed)\" : [0-9.E-]+",
+     "replace": "\"${1}\" : <varies>"
+    },
+    {
+     "regex": "content-length: \\d+",
+     "replace": "content-length: <varies>"
+    }
+   ]
+  }
+ ]
+}

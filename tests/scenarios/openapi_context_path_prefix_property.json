@@ -1,0 +1,81 @@
+{
+ "properties": {
+  "openAPIContextPathPrefix": "/api"
+ },
+ "steps": [
+  {
+   "note": "an OpenAPI request matcher without a contextPathPrefix takes the configured one",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"t\",\"version\":\"1\"},\"paths\":{\"/pets\":{\"get\":{\"operationId\":\"listPets\",\"responses\":{\"200\":{\"description\":\"ok\"}}}}}}"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "configured prefix"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api/pets"
+  },
+  {
+   "note": "the unprefixed path no longer matches",
+   "method": "GET",
+   "path": "/pets"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "the definition's own contextPathPrefix wins over the configured one",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"t\",\"version\":\"1\"},\"paths\":{\"/pets\":{\"get\":{\"operationId\":\"listPets\",\"responses\":{\"200\":{\"description\":\"ok\"}}}}}}",
+     "contextPathPrefix": "/v2"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "own prefix"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v2/pets"
+  },
+  {
+   "method": "GET",
+   "path": "/api/pets"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "PUT /mockserver/openapi without a contextPathPrefix: the built expectations match under the configured one",
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"t\",\"version\":\"1\"},\"paths\":{\"/pets\":{\"get\":{\"operationId\":\"listPets\",\"responses\":{\"200\":{\"description\":\"ok\",\"content\":{\"text/plain\":{\"example\":\"from spec\"}}}}}}}}"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api/pets"
+  },
+  {
+   "method": "GET",
+   "path": "/pets"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  }
+ ]
+}

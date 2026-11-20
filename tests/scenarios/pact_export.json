@@ -1,0 +1,213 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact",
+   "note": "no expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "list-users",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/users",
+      "queryStringParameters": {
+       "page": [
+        "[0-9]+"
+       ],
+       "sort": [
+        "name"
+       ],
+       "!hidden": [
+        "x"
+       ]
+      },
+      "headers": {
+       "Accept": [
+        "application/json"
+       ],
+       "X-Trace": [
+        "[a-f0-9]{8}"
+       ],
+       "?optional": [
+        "o"
+       ],
+       "X-Not": [
+        "!bad"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "Content-Type": [
+        "application/json"
+       ]
+      },
+      "body": {
+       "type": "JSON",
+       "json": {
+        "users": [
+         {
+          "id": 1
+         }
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/users/\\d+",
+      "body": {
+       "type": "JSON",
+       "json": {
+        "name": "a"
+       }
+      }
+     },
+     "httpResponse": {
+      "statusCode": 201,
+      "body": "created"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "PUT",
+      "path": "/schema",
+      "body": {
+       "type": "JSON_SCHEMA",
+       "jsonSchema": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "integer"
+         },
+         "ok": {
+          "type": "boolean"
+         },
+         "score": {
+          "type": "number"
+         },
+         "name": {
+          "type": "string"
+         }
+        }
+       }
+      },
+      "headers": {
+       "X-Num": [
+        {
+         "schema": {
+          "type": "integer"
+         }
+        }
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": {
+       "type": "JSON_SCHEMA_NOPE"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/xml",
+      "body": {
+       "type": "XPATH",
+       "xpath": "/a/b"
+      }
+     },
+     "httpResponse": {
+      "statusCode": 204
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/any-schema",
+      "body": {
+       "type": "JSON_SCHEMA",
+       "jsonSchema": {
+        "type": "array"
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "[1,2]"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "!DELETE",
+      "path": "/notted"
+     },
+     "httpResponse": {
+      "statusCode": 200
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/forward"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/state"
+     },
+     "httpResponse": {
+      "body": "s"
+     },
+     "scenarioName": "pact-provider-state",
+     "scenarioState": "user exists"
+    },
+    {
+     "httpRequest": {
+      "path": "/other-scenario"
+     },
+     "httpResponse": {
+      "body": "s"
+     },
+     "scenarioName": "x",
+     "scenarioState": "y"
+    },
+    {
+     "httpRequest": {
+      "path": "/string-body",
+      "body": {
+       "type": "STRING",
+       "string": "not json {"
+      }
+     },
+     "httpResponse": {
+      "body": {
+       "type": "STRING",
+       "string": "{\"a\":1}"
+      }
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/pact?consumer=web&provider=api",
+   "note": "export"
+  },
+  {
+   "method": "PUT",
+   "path": "/pact?consumer=%20",
+   "note": "blank consumer, bare alias"
+  }
+ ]
+}

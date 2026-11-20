@@ -1,0 +1,95 @@
+{
+  "source": "hand-written (generated from upstream's ProviderStreamFixtures): HttpActionHandlerStreamedLlmUsageTest's shouldCountOllamaStreamFromItsDoneLine (Ollama known by the llmBaseUrl host, the forward's socket address localhost), forwarded to this server's own mocks",
+  "properties": {
+    "metricsEnabled": "true",
+    "llmMetricsEnabled": "true",
+    "llmBaseUrl": "http://localhost:11434"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "upstream-ollama",
+          "priority": 10,
+          "httpRequest": {
+            "method": "POST",
+            "path": "/api/chat",
+            "headers": {
+              "x-case": [
+                "ollama"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "headers": {
+              "content-type": [
+                "application/x-ndjson"
+              ]
+            },
+            "body": "{\"model\":\"llama3.2\",\"created_at\":\"2023-08-04T08:52:19.385406455-07:00\",\"message\":{\"role\":\"assistant\",\"content\":\"The\"},\"done\":false}\n{\"model\":\"llama3.2\",\"created_at\":\"2023-08-04T08:52:19.412123455-07:00\",\"message\":{\"role\":\"assistant\",\"content\":\" sky\"},\"done\":false}\n{\"model\":\"llama3.2\",\"created_at\":\"2023-08-04T19:22:45.499127Z\",\"message\":{\"role\":\"assistant\",\"content\":\"\"},\"done\":true,\"done_reason\":\"stop\",\"total_duration\":4883583458,\"load_duration\":1334875,\"prompt_eval_count\":26,\"prompt_eval_duration\":342546000,\"eval_count\":282,\"eval_duration\":4535599000}\n"
+          }
+        },
+        {
+          "id": "forward-ollama",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/client/ollama"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/api/chat",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ],
+                "x-case": [
+                  "ollama"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "Ollama NDJSON relayed as a stream: the done line, 26 in, 282 out",
+      "method": "POST",
+      "path": "/client/ollama",
+      "body": "{\"model\":\"llama3.2\",\"stream\":true,\"messages\":[]}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "sleepMillis": 500,
+      "note": "a relayed stream is accounted once its relay has ended, which may be after the client read it"
+    },
+    {
+      "note": "the LLM token and cost counters",
+      "method": "GET",
+      "path": "/mockserver/metrics",
+      "mask": [
+        {
+          "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+          "replace": ""
+        },
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "the streamed-usage lines of the event log",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+          "replace": "",
+          "reason": "every entry but the streamed-usage lines"
+        }
+      ]
+    }
+  ]
+}

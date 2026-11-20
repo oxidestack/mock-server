@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/reset", "note": "Netty 4.2's strict line parsing (HttpObjectDecoder defaultStrictLineParsing): a line ended by a bare LF, or a request starting with a control character, fails the decoder with InvalidLineSeparatorException; a decoder failure after the connection's first request is logged once (EarlyMatchingHandler has detached)"},
+    {"tcp": [{"text": "POST /a HTTP/1.1\r\nHost: {{host}}\r\nTransfer-Encoding: gzip\r\n\r\n"}, "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVGqBQDRQQnYEQAAAA=="], "note": "keep-alive Transfer-Encoding gzip without Content-Length: the body is empty and its bytes are read as the next request, which starts with 0x1f"},
+    {"tcp": [{"text": "GET /b HTTP/1.1\r\nHost: {{host}}\r\n\r\n"}, {"text": "GET /b FOO\r\n\r\n"}], "note": "an invalid version on the connection's second request: logged once"},
+    {"tcp": [{"text": "GET /c HTTP/1.1\nHost: {{host}}\r\n\r\n"}], "note": "a request line ended by a bare LF: the invalid message, logged twice on the first request"},
+    {"tcp": [{"text": "GET /d HTTP/1.1\r\nA: 1\r\nB: 2\nC: 3\r\n\r\n"}], "note": "a header line ended by a bare LF: the request keeps the headers before the one pending"},
+    {"tcp": [{"text": "GET /e HTTP/1.1\r\nA: 1\r\nB: 2\r\n\n"}], "note": "a blank line that is a bare LF"},
+    {"tcp": [{"text": "GET /f HTTP/1.1\r\nHost: {{host}}\r\n\r\n"}, {"text": "GET /g HTTP/1.1\r\nA: 1\r\nB: 2\nC: 3\r\n\r\n"}], "note": "a bare LF in a header line of the second request"},
+    {"tcp": [{"text": "GET /h HTTP/1.1\r\nHost: {{host}}\r\n\r\n"}, {"text": "\n\r\n\rGET /i HTTP/1.1\r\nHost: {{host}}\r\n\r\n"}], "note": "CR and LF bytes before a request line are skipped, in any order"},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/.*"}, "note": "what the log says", "mask": ["\"(local|remote)Address\" : \"[^\"]*\"", {"regex": "(closing connection from:\\n\\n  )/\\S+", "replace": "${1}<client address>", "reason": "the client's socket address: the oracle sees the Docker bridge's"}]},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "note": "what was recorded"}
+  ]
+}

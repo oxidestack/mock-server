@@ -1,0 +1,607 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/model/m1/converse"
+     },
+     "httpLlmResponse": {
+      "provider": "BEDROCK",
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "completion": {
+       "text": "Let me check.",
+       "reasoningText": "The user wants the weather.",
+       "reasoningSignature": "sig-1",
+       "toolCalls": [
+        {
+         "id": "tooluse_fixed",
+         "name": "get_weather",
+         "arguments": "{\"city\":\"Paris\"}"
+        },
+        {
+         "name": "get_time",
+         "arguments": "not json"
+        },
+        {
+         "id": "tooluse_blank",
+         "name": "noop",
+         "arguments": "  "
+        }
+       ],
+       "usage": {
+        "inputTokens": 12,
+        "outputTokens": 7,
+        "cachedInputTokens": 3,
+        "cacheCreationTokens": 2
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/model/m1/converse-stream"
+     },
+     "httpLlmResponse": {
+      "provider": "BEDROCK",
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "completion": {
+       "text": "Sunny and warm today",
+       "reasoningText": "Think about it.",
+       "reasoningSignature": "sig-2",
+       "toolCalls": [
+        {
+         "id": "tooluse_stream",
+         "name": "get_weather",
+         "arguments": "{\"city\":\"Paris\"}"
+        }
+       ],
+       "stopReason": "length",
+       "usage": {
+        "inputTokens": 4,
+        "outputTokens": 6
+       },
+       "streaming": true
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/model/m2/converse/"
+     },
+     "httpLlmResponse": {
+      "provider": "BEDROCK",
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "completion": {
+       "text": "filtered",
+       "stopReason": "SAFETY"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/model/m3/converse"
+     },
+     "httpLlmResponse": {
+      "provider": "BEDROCK",
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "completion": {
+       "text": "odd",
+       "stopReason": "pause_turn"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/gateway/bedrock"
+     },
+     "httpLlmResponse": {
+      "provider": "BEDROCK",
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "completion": {
+       "text": "hello",
+       "usage": {
+        "inputTokens": 1,
+        "outputTokens": 2
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/model/cf/converse"
+     },
+     "httpLlmResponse": {
+      "provider": "BEDROCK",
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "completion": {
+       "text": "never"
+      },
+      "chaos": {
+       "contentFilterBlockProbability": 1.0
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/model/cf/converse-stream"
+     },
+     "httpLlmResponse": {
+      "provider": "BEDROCK",
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "completion": {
+       "text": "never",
+       "streaming": true
+      },
+      "chaos": {
+       "contentFilterBlockProbability": 1.0
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/messages"
+     },
+     "httpLlmResponse": {
+      "provider": "ANTHROPIC",
+      "model": "claude-x",
+      "completion": {
+       "text": "never",
+       "streaming": true
+      },
+      "chaos": {
+       "contentFilterBlockProbability": 1.0
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1beta/models/gemini-x:streamGenerateContent"
+     },
+     "httpLlmResponse": {
+      "provider": "GEMINI",
+      "model": "gemini-x",
+      "completion": {
+       "text": "never",
+       "streaming": true
+      },
+      "chaos": {
+       "contentFilterBlockProbability": 1.0
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-x",
+      "completion": {
+       "text": "never",
+       "streaming": true
+      },
+      "chaos": {
+       "contentFilterBlockProbability": 1.0
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/model/ms/converse-stream"
+     },
+     "httpLlmResponse": {
+      "provider": "BEDROCK",
+      "model": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "completion": {
+       "text": "hi",
+       "streaming": true
+      },
+      "chaos": {
+       "malformedSse": true
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/model/m1/converse",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "system": [
+     {
+      "text": "You are terse."
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "weather in Paris?"
+       }
+      ]
+     }
+    ],
+    "inferenceConfig": {
+     "maxTokens": 100
+    }
+   },
+   "note": "Converse tool-use answer",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|tooluse)_[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\"",
+     "reason": "generated tool and message ids are random"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/model/m1/converse-stream",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "system": [
+     {
+      "text": "You are terse."
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "weather in Paris?"
+       }
+      ]
+     }
+    ],
+    "inferenceConfig": {
+     "maxTokens": 100
+    }
+   },
+   "note": "ConverseStream with reasoning",
+   "binaryBody": true
+  },
+  {
+   "method": "POST",
+   "path": "/model/m2/converse/",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "system": [
+     {
+      "text": "You are terse."
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "weather in Paris?"
+       }
+      ]
+     }
+    ],
+    "inferenceConfig": {
+     "maxTokens": 100
+    }
+   },
+   "note": "SAFETY maps to content_filtered; trailing slash"
+  },
+  {
+   "method": "POST",
+   "path": "/model/m3/converse",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "system": [
+     {
+      "text": "You are terse."
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "weather in Paris?"
+       }
+      ]
+     }
+    ],
+    "inferenceConfig": {
+     "maxTokens": 100
+    }
+   },
+   "note": "unknown stop reason maps to end_turn"
+  },
+  {
+   "method": "POST",
+   "path": "/gateway/bedrock",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "system": [
+     {
+      "text": "You are terse."
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "weather in Paris?"
+       }
+      ]
+     }
+    ],
+    "inferenceConfig": {
+     "maxTokens": 100
+    }
+   },
+   "note": "Converse-shaped body on a gateway path"
+  },
+  {
+   "method": "POST",
+   "path": "/gateway/bedrock",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "hi"
+       }
+      ]
+     }
+    ]
+   },
+   "note": "union-keyed content block on a gateway path"
+  },
+  {
+   "method": "POST",
+   "path": "/gateway/bedrock",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "anthropic_version": "bedrock-2023-05-31",
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "hi"
+       }
+      ]
+     }
+    ]
+   },
+   "note": "anthropic_version keeps InvokeModel",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|tooluse)_[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\"",
+     "reason": "generated tool and message ids are random"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/gateway/bedrock",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "type": "text",
+        "text": "hi"
+       }
+      ]
+     }
+    ]
+   },
+   "note": "typed content block keeps InvokeModel",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|tooluse)_[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\"",
+     "reason": "generated tool and message ids are random"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/model/cf/converse",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "system": [
+     {
+      "text": "You are terse."
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "weather in Paris?"
+       }
+      ]
+     }
+    ],
+    "inferenceConfig": {
+     "maxTokens": 100
+    }
+   },
+   "note": "content-filter block on Converse"
+  },
+  {
+   "method": "POST",
+   "path": "/model/cf/converse-stream",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "system": [
+     {
+      "text": "You are terse."
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "weather in Paris?"
+       }
+      ]
+     }
+    ],
+    "inferenceConfig": {
+     "maxTokens": 100
+    }
+   },
+   "note": "streamed content-filter block on ConverseStream",
+   "binaryBody": true
+  },
+  {
+   "method": "POST",
+   "path": "/v1/messages",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "claude-x",
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ],
+    "stream": true
+   },
+   "note": "streamed content-filter block on Anthropic",
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|tooluse)_[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\"",
+     "reason": "generated tool and message ids are random"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1beta/models/gemini-x:streamGenerateContent?alt=sse",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "contents": [
+     {
+      "role": "user",
+      "parts": [
+       {
+        "text": "hi"
+       }
+      ]
+     }
+    ]
+   },
+   "note": "streamed content-filter block on Gemini SSE"
+  },
+  {
+   "method": "POST",
+   "path": "/v1beta/models/gemini-x:streamGenerateContent",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "contents": [
+     {
+      "role": "user",
+      "parts": [
+       {
+        "text": "hi"
+       }
+      ]
+     }
+    ]
+   },
+   "note": "streamed content-filter block on Gemini JSON array"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-x",
+    "messages": [
+     {
+      "role": "user",
+      "content": "hi"
+     }
+    ],
+    "stream": true
+   },
+   "note": "content-filter block on an OpenAI stream stays HTTP 400"
+  },
+  {
+   "method": "POST",
+   "path": "/model/ms/converse-stream",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "system": [
+     {
+      "text": "You are terse."
+     }
+    ],
+    "messages": [
+     {
+      "role": "user",
+      "content": [
+       {
+        "text": "weather in Paris?"
+       }
+      ]
+     }
+    ],
+    "inferenceConfig": {
+     "maxTokens": 100
+    }
+   },
+   "note": "malformed SSE chunk on ConverseStream",
+   "binaryBody": true
+  }
+ ]
+}

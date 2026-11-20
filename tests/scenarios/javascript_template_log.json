@@ -1,0 +1,10 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/js"}, "httpResponseTemplate": {"templateType": "JAVASCRIPT", "template": "return { statusCode: 200 };"}}, "mask": ["content-length: \\d+"]},
+  {"method": "GET", "path": "/js", "note": "the template engine is missing: 404"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/js"}, "note": "LOGS as text: the ERROR, then the WARN after the response", "mask": ["content-length: \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/js"}, "note": "LOGS as entries: type, level and arguments", "mask": ["(?s)\"stackTrace\" : \\[.*?\\]", "\"epochTime\" : \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "content-length: \\d+"]},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/jsf"}, "httpForwardTemplate": {"templateType": "JAVASCRIPT", "template": "return { path: '/x' };"}}, "mask": ["content-length: \\d+"]},
+  {"method": "GET", "path": "/jsf", "note": "a forward template fails the same way"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/jsf"}, "mask": ["(?s)\"stackTrace\" : \\[.*?\\]", "\"epochTime\" : \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "content-length: \\d+"]}
+]}

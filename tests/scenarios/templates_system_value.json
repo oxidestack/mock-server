@@ -1,0 +1,71 @@
+{
+ "source": "systemValue.env/.property gated by templateSystemValueAllowList, its startup and refusal warnings (9.2.0)",
+ "properties": {
+  "templateSystemValueAllowList": "MY_VAR, PRE_*,mockserver.x,*,A*B,,MOCKSERVER_*,MY_VAR"
+ },
+ "env": {
+  "MY_VAR": "one",
+  "PRE_A": "two",
+  "OTHER": "three",
+  "OTHER2": "four"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+   ],
+   "note": "startup warnings about the allow list"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/sv/v"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"env=[$systemValue.env('MY_VAR')] pre=[$systemValue.env('PRE_A')] other=[$systemValue.env('OTHER')] unset=[$systemValue.env('PRE_UNSET')] reserved=[$systemValue.env('MOCKSERVER_SECRET')] reservedLower=[$systemValue.env('mockserver_secret')] prop=[$systemValue.property('mockserver.x')] propOther=[$systemValue.property('other.prop')] null=[$systemValue.env($null)] empty=[$systemValue.env('')] again=[$systemValue.env('OTHER')] str=$systemValue class=$systemValue.getClass().getName()\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/sv/m"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    \"statusCode\": 200,\n    \"body\": \"env=[{{#systemValue.env}}MY_VAR{{/systemValue.env}}] other=[{{#systemValue.env}} OTHER2 {{/systemValue.env}}] pre=[{{#systemValue.env}} PRE_A {{/systemValue.env}}] prop=[{{#systemValue.property}}mockserver.y{{/systemValue.property}}]\"\n}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/sv/v"
+  },
+  {
+   "method": "GET",
+   "path": "/sv/v"
+  },
+  {
+   "method": "GET",
+   "path": "/sv/m"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,253 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/fb/ok\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"X-Upstream\" : [ \"ok\" ]\n    },\n    \"body\" : \"upstream ok\"\n  },\n  \"id\" : \"target-ok\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/fb/(503|custom-503)\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"body\" : \"upstream down\"\n  },\n  \"id\" : \"target-503\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/fb/(404|custom-404)\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 404,\n    \"body\" : \"upstream missing\"\n  },\n  \"id\" : \"target-404\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/ok\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/ok\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-ok\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/503\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/503\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-503\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/404\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/404\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-404\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackOnStatusCodes\" : [ 404, 429 ],\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/custom-404\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/custom-404\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-custom-404\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackOnStatusCodes\" : [ 404, 429 ],\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/custom-503\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/custom-503\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-custom-503\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/refused\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <deadport>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/refused\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-refused\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackOnTimeout\" : false,\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/refused-strict\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <deadport>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/refused-strict\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-refused-no-timeout\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"body\" : {\n        \"cached\" : true\n      }\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <deadport>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/json\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-json\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11",
+        "x-upstream: ok"
+      ],
+      "body": "upstream ok",
+      "note": "upstream 200: not triggered"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 20",
+        "x-fallback: yes"
+      ],
+      "body": "fallback for /fb/503",
+      "reason": "Non-Authoritative Information",
+      "note": "upstream 503: default 5xx fallback"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 16"
+      ],
+      "body": "upstream missing",
+      "note": "upstream 404: not triggered"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 27",
+        "x-fallback: yes"
+      ],
+      "body": "fallback for /fb/custom-404",
+      "reason": "Non-Authoritative Information",
+      "note": "404 in fallbackOnStatusCodes"
+    },
+    {
+      "status": 503,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 13"
+      ],
+      "body": "upstream down",
+      "note": "503 not in fallbackOnStatusCodes"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 24",
+        "x-fallback: yes"
+      ],
+      "body": "fallback for /fb/refused",
+      "reason": "Non-Authoritative Information",
+      "note": "connection refused: fallback"
+    },
+    {
+      "status": 502,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0"
+      ],
+      "body": "",
+      "note": "connection refused, fallbackOnTimeout false: 502"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 21",
+        "content-type: application/json; charset=utf-8"
+      ],
+      "body": "{\n  \"cached\" : true\n}",
+      "note": "JSON fallback body"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/ok\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/ok\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-ok\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/503\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/503\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-503\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/404\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/404\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-404\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackOnStatusCodes\" : [ 404, 429 ],\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/custom-404\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/custom-404\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-custom-404\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackOnStatusCodes\" : [ 404, 429 ],\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/custom-503\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <port>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/custom-503\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-custom-503\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/refused\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <deadport>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/refused\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-refused\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackOnTimeout\" : false,\n    \"fallbackResponse\" : {\n      \"statusCode\" : 203,\n      \"headers\" : {\n        \"X-Fallback\" : [ \"yes\" ]\n      },\n      \"body\" : \"fallback for /fb/refused-strict\"\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <deadport>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/refused-strict\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-refused-no-timeout\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForwardWithFallback\" : {\n    \"fallbackResponse\" : {\n      \"body\" : {\n        \"cached\" : true\n      }\n    },\n    \"httpForward\" : {\n      \"host\" : \"localhost\",\n      \"port\" : <deadport>,\n      \"scheme\" : \"HTTP\"\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fb/json\",\n    \"headers\" : {\n      \"Host\" : [ \"front.example\" ]\n    }\n  },\n  \"id\" : \"fwf-json\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "active expectations"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/java; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "\nnew MockServerClient(\"localhost\", <port>)\n.when(\n        request()\n                .withPath(\"/fb/ok\")\n                .withHeaders(\n                        new Header(\"Host\", \"front.example\")\n                ),\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        10\n)\n.withId(\"fwf-ok\")\n.forwardWithFallback(\n        HttpForwardWithFallback.forwardWithFallback()\n                .withForward(\n                        forward()\n                                .withHost(\"localhost\")\n                                .withPort(<port>)\n                                .withScheme(HttpForward.Scheme.HTTP)\n                )\n                .withFallback(\n                        response()\n                                .withStatusCode(203)\n                                .withHeaders(\n                                        new Header(\"X-Fallback\", \"yes\")\n                                )\n                                .withBody(\"fallback for /fb/ok\")\n                )\n);\n\n\nnew MockServerClient(\"localhost\", <port>)\n.when(\n        request()\n                .withPath(\"/fb/refused\")\n                .withHeaders(\n                        new Header(\"Host\", \"front.example\")\n                ),\n        Times.unlimited(),\n        TimeToLive.unlimited(),\n        10\n)\n.withId(\"fwf-refused\")\n.forwardWithFallback(\n        HttpForwardWithFallback.forwardWithFallback()\n                .withForward(\n                        forward()\n                                .withHost(\"localhost\")\n                                .withPort(<deadport>)\n                                .withScheme(HttpForward.Scheme.HTTP)\n                )\n                .withFallback(\n                        response()\n                                .withStatusCode(203)\n                                .withHeaders(\n                                        new Header(\"X-Fallback\", \"yes\")\n                                )\n                                .withBody(\"fallback for /fb/refused\")\n                )\n);\n\n",
+      "note": "as java"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"Host\" : [ \"localhost:<port>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/ok\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/ok\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"Host\" : [ \"localhost:<port>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/503\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/503\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"Host\" : [ \"localhost:<port>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/404\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/404\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"Host\" : [ \"localhost:<port>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/custom-404\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/custom-404\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"Host\" : [ \"localhost:<port>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/custom-503\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/custom-503\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"Host\" : [ \"<deadhost>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/refused\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"Host\" : [ \"<deadhost>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/refused-strict\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"Host\" : [ \"<deadhost>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/fb/json\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n} ]",
+      "note": "requests"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/ok\",\n    \"headers\" : {\n      \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"X-Upstream\" : [ \"ok\" ]\n    },\n    \"body\" : \"upstream ok\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/ok\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"reasonPhrase\" : \"OK\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Upstream\" : [ \"ok\" ]\n    },\n    \"body\" : \"upstream ok\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/503\",\n    \"headers\" : {\n      \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"body\" : \"upstream down\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/503\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Fallback\" : [ \"yes\" ]\n    },\n    \"body\" : \"fallback for /fb/503\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/404\",\n    \"headers\" : {\n      \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 404,\n    \"body\" : \"upstream missing\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/404\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 404,\n    \"reasonPhrase\" : \"Not Found\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"content-length\" : [ \"16\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"body\" : \"upstream missing\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/custom-404\",\n    \"headers\" : {\n      \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 404,\n    \"body\" : \"upstream missing\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/custom-404\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Fallback\" : [ \"yes\" ]\n    },\n    \"body\" : \"fallback for /fb/custom-404\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/custom-503\",\n    \"headers\" : {\n      \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"body\" : \"upstream down\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/custom-503\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"reasonPhrase\" : \"Service Unavailable\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"content-length\" : [ \"13\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"body\" : \"upstream down\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/refused\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"<deadhost>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Fallback\" : [ \"yes\" ]\n    },\n    \"body\" : \"fallback for /fb/refused\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/refused-strict\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"<deadhost>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 502,\n    \"reasonPhrase\" : \"Bad Gateway\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ]\n    }\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/json\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"<deadhost>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ]\n    },\n    \"body\" : {\n      \"cached\" : true\n    }\n  },\n  \"timestamp\" : \"<timestamp>\"\n} ]",
+      "note": "exchanges"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/ok\",\n    \"headers\" : {\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"reasonPhrase\" : \"OK\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Upstream\" : [ \"ok\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"upstream ok\",\n      \"rawBytes\" : \"dXBzdHJlYW0gb2s=\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/503\",\n    \"headers\" : {\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Fallback\" : [ \"yes\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"fallback for /fb/503\",\n      \"rawBytes\" : \"ZmFsbGJhY2sgZm9yIC9mYi81MDM=\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/404\",\n    \"headers\" : {\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 404,\n    \"reasonPhrase\" : \"Not Found\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"content-length\" : [ \"16\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"upstream missing\",\n      \"rawBytes\" : \"dXBzdHJlYW0gbWlzc2luZw==\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/custom-404\",\n    \"headers\" : {\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Fallback\" : [ \"yes\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"fallback for /fb/custom-404\",\n      \"rawBytes\" : \"ZmFsbGJhY2sgZm9yIC9mYi9jdXN0b20tNDA0\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/custom-503\",\n    \"headers\" : {\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 503,\n    \"reasonPhrase\" : \"Service Unavailable\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"content-length\" : [ \"13\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"upstream down\",\n      \"rawBytes\" : \"dXBzdHJlYW0gZG93bg==\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/refused\",\n    \"headers\" : {\n      \"Host\" : [ \"<deadhost>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Fallback\" : [ \"yes\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"fallback for /fb/refused\",\n      \"rawBytes\" : \"ZmFsbGJhY2sgZm9yIC9mYi9yZWZ1c2Vk\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/refused-strict\",\n    \"headers\" : {\n      \"Host\" : [ \"<deadhost>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 502,\n    \"reasonPhrase\" : \"Bad Gateway\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ]\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fb/json\",\n    \"headers\" : {\n      \"Host\" : [ \"<deadhost>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ]\n    },\n    \"body\" : {\n      \"type\" : \"JSON\",\n      \"json\" : {\n        \"cached\" : true\n      }\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n} ]",
+      "note": "recorded expectations"
+    },
+    {
+      "status": 406,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "Request not found exactly once, expected:<{\n  \"headers\" : {\n    \"Host\" : [ \"front.example\" ]\n  },\n  \"path\" : \"/fb/503\"\n}> but was found 0 times among 13 total requests\n\nclosest match diff:\n  path:\n      string or regex match failed expected:      /fb/503     found:      /fb/ok \n\n\nverification summary:\n  expected exactly once but matched 0 times among 13 recorded requests\n  closest non-matching requests (fewest differing fields first):\n    1. GET /fb/503 differs in: headers\n    2. GET /fb/503 differs in: headers\n    3. GET /fb/json differs in: path, headers\n",
+      "note": "verify by request"
+    },
+    {
+      "status": 406,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "Request not found at least 2 times, expected:<{\n  \"path\" : \"/fb/refused\"\n}> but was found 1 time among 13 total requests\n\nverification summary:\n  expected at least 2 times but matched 1 time among 13 recorded requests\n  closest non-matching requests (fewest differing fields first):\n    1. GET /fb/json differs in: path\n    2. GET /fb/refused-strict differs in: path\n    3. GET /fb/custom-503 differs in: path\n",
+      "note": "verify by request fails"
+    },
+    {
+      "status": 202,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "verify by expectation id"
+    },
+    {
+      "status": 406,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "<masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "Request not found at least 3 times, expected:<{\n  \"headers\" : {\n    \"Host\" : [ \"front.example\" ]\n  },\n  \"path\" : \"/fb/refused\"\n}> but was found 1 time among 13 total requests\n\nclosest match diff:\n  path:\n      string or regex match failed expected:      /fb/refused     found:      /fb/ok \n\n\nverification summary:\n  expected at least 3 times but matched 1 time among 13 recorded requests\n  closest non-matching requests (fewest differing fields first):\n    1. GET /fb/refused differs in: headers\n    2. GET /fb/json differs in: path, headers\n    3. GET /fb/refused-strict differs in: path, headers\n",
+      "note": "verify by expectation id fails"
+    }
+  ]
+}

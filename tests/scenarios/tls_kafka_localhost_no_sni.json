@@ -1,0 +1,63 @@
+{
+ "note": "Kafka over TLS (kafka-clients, securityProtocol SSL) dialing a dotless host (localhost) at this server sends no SNI, as the JDK's own SSLEngine/SSLSocket default; the server's fault entry for the handshake its refused fixed chain leaves without a certificate shows whether the ClientHello named one",
+ "properties": {
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/x509/mtls/chain-garbage.txt"
+ },
+ "settleMillis": 3000,
+ "steps": [
+  {
+   "note": "Kafka over TLS (kafka-clients, securityProtocol SSL) to localhost",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Sni",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         },
+         "examples": [
+          {
+           "payload": {
+            "id": 1
+           }
+          }
+         ]
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "localhost:{{port}}",
+     "kafkaSecurity": {
+      "securityProtocol": "SSL"
+     }
+    }
+   },
+   "maxMillis": 120000
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "the log: the self-dial's fault entry names no SNI (or names one)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)^.*?SSL or decoder fault caught by port unification handler -> closing pipeline \\[id: [^\n]*?\\]( \\(SNI: [^)\n]*\\))?\n.*$",
+     "replace": "the first fault entry's SNI:${1}",
+     "reason": "only whether the first handshake named an SNI: the rest of the log (retries, the client's own failure) is not this scenario's subject"
+    }
+   ]
+  }
+ ]
+}

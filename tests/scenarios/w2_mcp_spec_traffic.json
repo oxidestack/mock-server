@@ -1,0 +1,659 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 11,
+    "method": "tools/call",
+    "params": {
+     "name": "list_mock_tools",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "no mock tools"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/api/orders/{id}",
+      "queryStringParameters": {
+       "z": [
+        "1"
+       ],
+       "a": [
+        "2"
+       ],
+       "!neg": [
+        "x"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/api/orders",
+      "body": {
+       "type": "JSON",
+       "json": {
+        "a": 1
+       }
+      }
+     },
+     "httpResponses": [
+      {
+       "body": "a"
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/api/orders"
+     },
+     "httpResponse": {
+      "body": "y"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/api/orders"
+     },
+     "httpResponse": {
+      "body": "y"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/api/orders"
+     },
+     "httpResponse": {
+      "statusCode": 201
+     }
+    },
+    {
+     "httpRequest": {
+      "method": {
+       "not": true,
+       "value": "GET"
+      },
+      "path": "/n"
+     },
+     "httpResponse": {}
+    },
+    {
+     "httpRequest": {
+      "path": {
+       "not": true,
+       "value": "/n"
+      }
+     },
+     "httpResponse": {}
+    },
+    {
+     "httpRequest": {
+      "path": "/fwd"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "PUT",
+      "path": "/very-long-segmentvery-long-segmentvery-long-segmentvery-long-segmentvery-long-segmentvery-long-segment"
+     },
+     "httpResponse": {}
+    },
+    {
+     "httpRequest": {
+      "method": "PUT",
+      "path": "/very-long-segmentvery-long-segmentvery-long-segmentvery-long-segmentvery-long-segmentvery-long-segment"
+     },
+     "httpResponse": {
+      "statusCode": 202
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "%%",
+      "path": "/%%"
+     },
+     "httpResponse": {}
+    },
+    {
+     "httpRequest": {
+      "specUrlOrPayload": "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"t\",\"version\":\"1\"},\"paths\":{}}"
+     },
+     "httpResponse": {}
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 12,
+    "method": "tools/call",
+    "params": {
+     "name": "list_mock_tools",
+     "arguments": {
+      "ignored": 1
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ],
+   "note": "mock tools"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 13,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"operationId\": \"createPet\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\"}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}}}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify no traffic"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/pets"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "[{\"id\":1,\"name\":\"rex\"}]"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "GET",
+      "path": "/pets/1"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"name\":\"no id\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/pets"
+     },
+     "httpResponse": {
+      "statusCode": 201
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/other"
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    }
+   ],
+   "note": "expectations",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/pets?limit=5"
+  },
+  {
+   "method": "GET",
+   "path": "/pets"
+  },
+  {
+   "method": "GET",
+   "path": "/pets/1"
+  },
+  {
+   "method": "POST",
+   "path": "/pets",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "rex"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/pets",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "nom": 1
+   }
+  },
+  {
+   "method": "DELETE",
+   "path": "/other"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 14,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"operationId\": \"createPet\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\"}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}}}}"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify all traffic"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 15,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"operationId\": \"createPet\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\"}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}}}}",
+      "method": "GET",
+      "path": "/pets"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify filtered traffic"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 16,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"operationId\": \"createPet\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\"}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}}}}",
+      "method": "POST"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify post traffic"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 17,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Pets\", \"version\": \"1\"}, \"paths\": {\"/pets\": {\"get\": {\"operationId\": \"listPets\", \"parameters\": [{\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"array\", \"items\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}, \"name\": {\"type\": \"string\"}}}}}}}}}, \"post\": {\"operationId\": \"createPet\", \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"name\"], \"properties\": {\"name\": {\"type\": \"string\"}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}, \"/pets/{petId}\": {\"get\": {\"operationId\": \"getPet\", \"parameters\": [{\"name\": \"petId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\"}}], \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"required\": [\"id\"], \"properties\": {\"id\": {\"type\": \"integer\"}}}}}}, \"404\": {\"description\": \"nf\"}}}}}}",
+      "path": "/none"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify filter matches nothing"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 18,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {
+      "specUrlOrPayload": " "
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify blank spec"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 19,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {}
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify no spec"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 20,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {
+      "specUrlOrPayload": {
+       "openapi": "3.0.0",
+       "info": {
+        "title": "Pets",
+        "version": "1"
+       },
+       "paths": {
+        "/pets": {
+         "get": {
+          "operationId": "listPets",
+          "parameters": [
+           {
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+             "type": "integer"
+            }
+           }
+          ],
+          "responses": {
+           "200": {
+            "description": "ok",
+            "content": {
+             "application/json": {
+              "schema": {
+               "type": "array",
+               "items": {
+                "type": "object",
+                "required": [
+                 "id"
+                ],
+                "properties": {
+                 "id": {
+                  "type": "integer"
+                 },
+                 "name": {
+                  "type": "string"
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         },
+         "post": {
+          "operationId": "createPet",
+          "requestBody": {
+           "required": true,
+           "content": {
+            "application/json": {
+             "schema": {
+              "type": "object",
+              "required": [
+               "name"
+              ],
+              "properties": {
+               "name": {
+                "type": "string"
+               }
+              }
+             }
+            }
+           }
+          },
+          "responses": {
+           "201": {
+            "description": "created"
+           }
+          }
+         }
+        },
+        "/pets/{petId}": {
+         "get": {
+          "operationId": "getPet",
+          "parameters": [
+           {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": {
+             "type": "integer"
+            }
+           }
+          ],
+          "responses": {
+           "200": {
+            "description": "ok",
+            "content": {
+             "application/json": {
+              "schema": {
+               "type": "object",
+               "required": [
+                "id"
+               ],
+               "properties": {
+                "id": {
+                 "type": "integer"
+                }
+               }
+              }
+             }
+            }
+           },
+           "404": {
+            "description": "nf"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify object spec"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 21,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_traffic_against_openapi",
+     "arguments": {
+      "specUrlOrPayload": "not a spec"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "verify bad spec"
+  }
+ ]
+}

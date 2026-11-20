@@ -1,0 +1,83 @@
+{
+ "properties": {
+  "initializationJsonPath": "{{scratch}}/init_repeated_id_reload.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "start from nothing"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/init_repeated_id_reload.json",
+    "content": "[ ]"
+   },
+   "note": "a known starting content"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/init_repeated_id_reload.json",
+    "content": "[\n  {\n    \"id\": \"repeated\",\n    \"httpRequest\": {\n      \"path\": \"/firstEntry\"\n    },\n    \"httpResponse\": {\n      \"body\": \"the first entry for the repeated id\"\n    }\n  },\n  {\n    \"id\": \"middle\",\n    \"httpRequest\": {\n      \"path\": \"/shared\"\n    },\n    \"httpResponse\": {\n      \"body\": \"the middle entry\"\n    }\n  },\n  {\n    \"id\": \"repeated\",\n    \"httpRequest\": {\n      \"path\": \"/shared\"\n    },\n    \"httpResponse\": {\n      \"body\": \"the last entry for the repeated id\"\n    }\n  }\n]",
+    "replace": true
+   },
+   "note": "upstream #106 (33cdd577e): a reload repeating an id keeps the last entry, at the first entry's place"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "the last entry for the repeated id, ahead of the middle one (polled: the oracle's first load of a file with lint problems can take tens of seconds)",
+   "pollUntil": "the last entry for the repeated id"
+  },
+  {
+   "method": "GET",
+   "path": "/shared",
+   "note": "answered by the kept (last) entry"
+  },
+  {
+   "sleepMillis": 3000,
+   "note": "the first load's log entries land before the reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the log and the expectations from here on (clear?type=LOG keeps the first load's init-file lint WARN; a reset does not, and a reload with the same lint problems does not repeat it)"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/init_repeated_id_reload.json",
+    "content": "[\n  {\n    \"id\": \"repeated\",\n    \"httpRequest\": {\n      \"path\": \"/firstEntry\"\n    },\n    \"httpResponse\": {\n      \"body\": \"the first entry for the repeated id\"\n    }\n  },\n  {\n    \"id\": \"middle\",\n    \"httpRequest\": {\n      \"path\": \"/shared\"\n    },\n    \"httpResponse\": {\n      \"body\": \"the middle entry\"\n    }\n  },\n  {\n    \"id\": \"repeated\",\n    \"httpRequest\": {\n      \"path\": \"/shared\"\n    },\n    \"httpResponse\": {\n      \"body\": \"the changed last entry for the repeated id\"\n    }\n  }\n]",
+    "replace": true
+   },
+   "note": "only the last entry for the repeated id changes (its body, so the lint problems stay the same): the reload recreates what the reset removed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "the changed entry, ahead of the middle one",
+   "pollUntil": "the changed last entry for the repeated id"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "one creating expectation for the repeated id, with its changed last entry, then the middle one; nothing for the first entry",
+   "mask": [
+    {
+     "regex": "[^\\n]* - retrieved \\d+ active expectations in json that match:\\n\\n  \\{ \\}\\n\\n-+\\n",
+     "replace": "",
+     "reason": "the polls of the active expectations: how many depends on how soon each server reloads"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/shared",
+   "note": "answered by the changed entry"
+  }
+ ]
+}

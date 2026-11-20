@@ -1,0 +1,236 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "dm",
+    "httpRequest": {
+     "path": "/m"
+    },
+    "httpResponse": {
+     "body": "m"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "dt",
+    "httpRequest": {
+     "path": "/target"
+    },
+    "httpResponse": {
+     "body": "t"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "do",
+    "httpRequest": {
+     "path": "/o"
+    },
+    "httpOverrideForwardedRequest": {
+     "httpRequest": {
+      "path": "/target",
+      "headers": {
+       "Host": [
+        "{{host}}"
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "de",
+    "httpRequest": {
+     "path": "/e"
+    },
+    "httpError": {
+     "dropConnection": true,
+     "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpjb250ZW50LWxlbmd0aDogMA0KDQo="
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/m"
+  },
+  {
+   "method": "GET",
+   "path": "/o"
+  },
+  {
+   "method": "GET",
+   "path": "/o"
+  },
+  {
+   "method": "GET",
+   "path": "/e"
+  },
+  {
+   "method": "GET",
+   "path": "/nomatch"
+  },
+  {
+   "note": "mocked, verified as mocked: passes",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/m"
+    },
+    "disposition": "MOCKED"
+   }
+  },
+  {
+   "note": "mocked, verified as forwarded: fails with the other-disposition line",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/m"
+    },
+    "disposition": "FORWARDED"
+   }
+  },
+  {
+   "note": "forwarded twice, verified as forwarded",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/o"
+    },
+    "disposition": "FORWARDED",
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "forwarded twice, verified as mocked: plural line",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/o"
+    },
+    "disposition": "MOCKED"
+   }
+  },
+  {
+   "note": "never mocked passes on a forwarded request",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/o"
+    },
+    "disposition": "MOCKED",
+    "times": {
+     "atLeast": 0,
+     "atMost": 0
+    }
+   }
+  },
+  {
+   "note": "an error action counts as mocked",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/e"
+    },
+    "disposition": "MOCKED"
+   }
+  },
+  {
+   "note": "a no-match 404 is neither mocked nor forwarded",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/nomatch"
+    },
+    "disposition": "MOCKED",
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "the forward's target was mocked",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/target"
+    },
+    "disposition": "MOCKED",
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "found too often still prints the other-disposition line",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {},
+    "disposition": "FORWARDED",
+    "times": {
+     "atMost": 1
+    }
+   }
+  },
+  {
+   "note": "by expectation id the disposition is ignored",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "expectationId": {
+     "id": "do"
+    },
+    "disposition": "MOCKED",
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "without a disposition every received request counts",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/o"
+    },
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   }
+  },
+  {
+   "note": "disposition in the verification log line",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/m"
+   }
+  }
+ ]
+}

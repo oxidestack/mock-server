@@ -1,0 +1,137 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "w2sh-sse",
+     "httpRequest": {
+      "path": "/w2sh/sse"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "one"
+       },
+       {
+        "data": "two",
+        "delay": {
+         "timeUnit": "MILLISECONDS",
+         "value": 50
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "w2sh-proxy",
+     "httpRequest": {
+      "path": "/w2sh/stream"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/w2sh/sse",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "stream-phase breakpoints of a client that is not connected",
+   "method": "PUT",
+   "path": "/mockserver/breakpoint/matcher",
+   "body": {
+    "httpRequest": {
+     "path": "/w2sh/stream"
+    },
+    "phases": [
+     "RESPONSE_STREAM"
+    ],
+    "clientId": "w2sh-absent-client"
+   },
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/breakpoint/matcher",
+   "body": {
+    "httpRequest": {
+     "path": "/w2sh/sse"
+    },
+    "phases": [
+     "INBOUND_STREAM",
+     "RESPONSE_STREAM"
+    ],
+    "clientId": "w2sh-absent-client"
+   },
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "note": "SSE mocks hold nothing",
+   "method": "GET",
+   "path": "/w2sh/sse"
+  },
+  {
+   "sleepMillis": 200
+  },
+  {
+   "note": "the whole log so far: no hold line for the SSE mock in either phase",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {
+   "note": "streaming proxy: each frame goes out unheld",
+   "method": "GET",
+   "path": "/w2sh/stream"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/breakpoint/matchers",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "the registry's missing-client line and the RESPONSE_STREAM dispatch failure for each frame, in order, then the streamed forward's completion entry (`writeStreamingForwardActionResponse`: the captured body as a string, `x-mockserver-streamed` and the chunk delays; the timing block, which leaves out the time to first byte on a pooled connection, is masked); masked before them is what the previous step compared plus the forward's matching and its drift pass",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "(?s)^.*?(?=[^\\n]* - client w2sh-absent-client not found)",
+    "\"x-mockserver-chunk-delays-ms\" : \\[ \"[0-9,]+\" \\]",
+    "\"timing\" : \\{[^}]*\\}"
+   ]
+  },
+  {
+   "note": "the missing-client and dispatch-failure lines as typed entries (WARN, with their arguments)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": "(?s)^.*?(?=  \\{\\n    \"logLevel\" : \"[A-Z]+\",\\n(?:    [^\\n]*\\n)*?    \"messageFormat\" : \"client w2sh-absent-client not found)",
+     "replace": "<earlier entries>"
+    },
+    {
+     "regex": "(?s)^(.*\"messageFormat\" : \"stream frame WS dispatch failed[^\\n]*\\n(?:    [^\\n]*\\n)*?  \\}).*$",
+     "replace": "${1}<later entries>"
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "source": "a dry run needs the mutate role",
+ "properties": {
+  "controlPlaneOidcAuthenticationRequired": "true",
+  "controlPlaneOidcIssuer": "https://issuer.example",
+  "controlPlaneOidcAudience": "mockserver",
+  "controlPlaneOidcJwksUri": "{{files}}/oidc/jwks.json",
+  "controlPlaneAuthorizationEnabled": "true",
+  "controlPlaneScopeMapping": "readers=read,mutators=mutate,admins=admin,bogus=owner,=read"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\"statusCode\": 200}"
+   },
+   "note": "the read role cannot run a dry run",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ],
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6InJlYWRlciIsInNjb3BlIjoicmVhZGVycyIsImV4cCI6NDEwMjQ0NDgwMCwiaWF0IjoxNzY3MjI1NjAwfQ.JfAozIVZctf4TCDF5b22OPgS7dOhJk0MDgSQmV0jSMAOPiVAmo1nAt2EODx8Ij-9pyM4URg4JBsaF_MjWzFXEddUnxY33_AiBRVqZZU_imxw4IgpiqqmCdg2Pf7TQ86ViWEUirNIs2mMdNvbH76AHOF1nX6Q2BKJmoH10iJhnXjAYEPoOchNaq00pw4Lt6zKYGeJQLx4_f5I_ndFDw4ar644LczFtwHjtcbJohXCppG5pxOjcxuqPZicxl6ORHp0cVnV0_pqqj0KiiZ7yy-wiqrLdUIINazroKvYVBB-KL_JGJFyl9Aqlc64T9gvgj_1F4BBTBI5Bk4iRETNNcw5Jg"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\"statusCode\": 200}"
+   },
+   "note": "the mutate role can",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ],
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGhvcml6YXRpb24tdGVzdCJ9.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwiYXVkIjoibW9ja3NlcnZlciIsInN1YiI6Im11dGF0b3IiLCJzY29wZSI6Im11dGF0b3JzIG90aGVyIiwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjE3NjcyMjU2MDB9.YbzQMXycdGgjWp_NaYZZA5_hVy7taatY8jBZjbTHcsHtEOlFknA3c9cPR0oN6ZRpU5wJ-FpgkvFSMR8Pa8e-VVdtTscRMsneXQO5TPe-JliUgRpDOv-nFI1vR9fzhnAtF8W_Cst3XY5cNHaS--YCTpJnc1FkoRwFrxxScIzzsbViloOHlSjArNzFzMbjUSWbrdAmEwnTVxGZlDcSrQrU0yx6xen_GnnH0-mu0a5scUKlWUb0d6W-CudOGUctpNm1HUom1f3tnvxMe6CpOtPs2W-WFb0bnkfL20y8LQvGjPTVTQTrOy85uOo-aRtQTAiN5GGLf-Hc2GFlNA7iKcshNg"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\"statusCode\": 200}"
+   },
+   "note": "no credentials",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  }
+ ]
+}

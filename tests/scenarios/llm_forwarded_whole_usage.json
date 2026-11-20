@@ -1,0 +1,428 @@
+{
+ "source": "hand-written (cases from upstream's HttpActionHandlerStreamedLlmUsageTest, 9.1.0): whole forwarded OPENAI responses accounted by HttpActionHandler.emitForwardGenAiSpan (accountableOperation, isPolledCompletion, the provider clients' parseCompletionResponse), forwarded to this server's own mocks",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "OPENAI"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-models",
+     "priority": 10,
+     "httpRequest": {
+      "method": "GET",
+      "path": "/v1/models",
+      "headers": {
+       "x-case": [
+        "models"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"object\":\"list\",\"data\":[{\"id\":\"gpt-4o\",\"object\":\"model\",\"created\":1686935002,\"owned_by\":\"openai\"}]}"
+     }
+    },
+    {
+     "id": "forward-models",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/client/models"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/models",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "models"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-chat-list",
+     "priority": 10,
+     "httpRequest": {
+      "method": "GET",
+      "path": "/v1/chat/completions",
+      "headers": {
+       "x-case": [
+        "chat-list"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"object\":\"list\",\"data\":[{\"object\":\"chat.completion\",\"id\":\"chatcmpl-AyPNinnUqUDYo9SAdA52NobMflmj2\",\"model\":\"gpt-4o-2024-08-06\",\"usage\":{\"total_tokens\":31,\"completion_tokens\":18,\"prompt_tokens\":13},\"choices\":[{\"index\":0,\"message\":{\"content\":\"Mind of circuits hum\",\"role\":\"assistant\"},\"finish_reason\":\"stop\"}]}],\"has_more\":false,\"model\":\"gpt-4o-2024-08-06\",\"usage\":{\"prompt_tokens\":13,\"completion_tokens\":18}}"
+     }
+    },
+    {
+     "id": "forward-chat-list",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/client/chat-list"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "chat-list"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-count-tokens",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/messages/count_tokens",
+      "headers": {
+       "x-case": [
+        "count-tokens"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"input_tokens\":14}"
+     }
+    },
+    {
+     "id": "forward-count-tokens",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/count-tokens"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/messages/count_tokens",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "count-tokens"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-assistants-thread",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/threads/thread_abc123/messages",
+      "headers": {
+       "x-case": [
+        "assistants-thread"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\":\"msg_abc123\",\"object\":\"thread.message\",\"model\":\"gpt-4o\",\"usage\":{\"prompt_tokens\":3,\"completion_tokens\":4}}"
+     }
+    },
+    {
+     "id": "forward-assistants-thread",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/assistants-thread"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/threads/thread_abc123/messages",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "assistants-thread"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-batches",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/batches",
+      "headers": {
+       "x-case": [
+        "batches"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\":\"batch_abc123\",\"object\":\"batch\",\"model\":\"gpt-4o\",\"usage\":{\"prompt_tokens\":9,\"completion_tokens\":9}}"
+     }
+    },
+    {
+     "id": "forward-batches",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/batches"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/batches",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "batches"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-embeddings",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/embeddings",
+      "headers": {
+       "x-case": [
+        "embeddings"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[0.0023064255,-0.009327292],\"index\":0}],\"model\":\"text-embedding-3-small\",\"usage\":{\"prompt_tokens\":8,\"total_tokens\":8}}"
+     }
+    },
+    {
+     "id": "forward-embeddings",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/embeddings"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/embeddings",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "embeddings"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-legacy",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/completions",
+      "headers": {
+       "x-case": [
+        "legacy"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\":\"cmpl-uqkvlQyYK7bGYrRHQ0eXlWi7\",\"object\":\"text_completion\",\"created\":1589478378,\"model\":\"gpt-3.5-turbo-instruct\",\"choices\":[{\"text\":\"\\n\\nThis is indeed a test\",\"index\":0,\"logprobs\":null,\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":7,\"total_tokens\":12}}"
+     }
+    },
+    {
+     "id": "forward-legacy",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/legacy"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "legacy"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-chat",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "headers": {
+       "x-case": [
+        "chat"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\":\"chatcmpl-123\",\"object\":\"chat.completion\",\"model\":\"gpt-4o-2024-08-06\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Hello\"},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":8,\"total_tokens\":20}}"
+     }
+    },
+    {
+     "id": "forward-chat",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/chat"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "chat"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "GET /v1/models calls no model: not accounted",
+   "method": "GET",
+   "path": "/client/models"
+  },
+  {
+   "note": "listing stored chat completions with GET, on the path a completion is created on: not accounted",
+   "method": "GET",
+   "path": "/client/chat-list"
+  },
+  {
+   "note": "a token count calls no model: not accounted",
+   "method": "POST",
+   "path": "/client/count-tokens",
+   "body": "{\"model\":\"claude-sonnet-4-5\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello, world\"}]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "adding a message to an Assistants thread calls no model: not accounted",
+   "method": "POST",
+   "path": "/client/assistants-thread",
+   "body": "{\"role\":\"user\",\"content\":\"Hi\",\"model\":\"gpt-4o\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a batch calls no model now: not accounted",
+   "method": "POST",
+   "path": "/client/batches",
+   "body": "{\"model\":\"gpt-4o\",\"input_file_id\":\"file-abc123\",\"endpoint\":\"/v1/chat/completions\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "an embeddings call: 8 in",
+   "method": "POST",
+   "path": "/client/embeddings",
+   "body": "{\"model\":\"text-embedding-3-small\",\"input\":\"The food was delicious\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a legacy completion: 5 in, 7 out",
+   "method": "POST",
+   "path": "/client/legacy",
+   "body": "{\"model\":\"gpt-3.5-turbo-instruct\",\"prompt\":\"Say this is a test\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a whole chat completion: 12 in, 8 out",
+   "method": "POST",
+   "path": "/client/chat",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

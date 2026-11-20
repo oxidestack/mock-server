@@ -1,0 +1,57 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) confput-ConfigurationSecuritySnapshotTest-eb59216e (conformance/harvest)",
+ "properties": {
+  "controlPlaneAuthorizationEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "56c5cfa8731f",
+   "note": "controlPlaneAuthenticationSnapshotShouldMatchTheGettersForEveryValue (confput): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneAuthorizationEnabled": true
+   },
+   "note": "controlPlaneAuthenticationSnapshotShouldMatchTheGettersForEveryValue (confput): configuration.controlPlaneAuthorizationEnabled(true)",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n(?:.*?\\n)?  \"controlPlaneAuthorizationEnabled\" : (\\{\\n.*?\\n  \\}|[^\\n]*?),?\\n.*\\z",
+     "replace": "\"controlPlaneAuthorizationEnabled\" : ${1}"
+    },
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration, which has no controlPlaneAuthorizationEnabled member>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ],
+   "case": "56c5cfa8731f"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "controlPlaneAuthenticationSnapshotShouldMatchTheGettersForEveryValue (confput): the value as read at startup",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n(?:.*?\\n)?  \"controlPlaneAuthorizationEnabled\" : (\\{\\n.*?\\n  \\}|[^\\n]*?),?\\n.*\\z",
+     "replace": "\"controlPlaneAuthorizationEnabled\" : ${1}"
+    },
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration, which has no controlPlaneAuthorizationEnabled member>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ],
+   "case": "56c5cfa8731f"
+  }
+ ]
+}

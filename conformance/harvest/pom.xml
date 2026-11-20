@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <!--
+      Harvests category-B cases. Runs mockserver-core's own unit tests, unmodified, from
+      upstream/mockserver at the oracle's revision, with a recorder on the
+      boundary methods; each call becomes one case in target/harvest/*.jsonl, which
+      harvest.py turns into tests/scenarios/upstream/*.json. Goldens come from the oracle, not from these tests.
+      The tests compile against the mockserver jars of mockserver.version, whose default is oracle.env's ORACLE_VERSION
+      and moves with every re-pin (test_harvest.py's MockServerVersion fails when they differ).
+    -->
+    <groupId>io.github.oxidestack</groupId>
+    <artifactId>upstream-harvest</artifactId>
+    <version>0.1.0</version>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mockserver.version>9.2.0</mockserver.version>
+        <upstreamCore>${project.basedir}/../../upstream/mockserver/mockserver/mockserver-core</upstreamCore>
+        <harvest.tests>org/mockserver/serialization/**/*Test.java,org/mockserver/validator/**/*Test.java,org/mockserver/matchers/**/*Test.java,org/mockserver/mock/**/*Test.java,org/mockserver/log/**/*Test.java,org/mockserver/verify/**/*Test.java,org/mockserver/model/HttpChaosProfileTest.java</harvest.tests>
+        <!-- HttpChaosProfileTest (model/) was harvested with a widened command line; it is named
+             here so a re-harvest keeps B4-HttpChaosProfileTest (the rest of model/** was never in the default run). -->
+        <!-- B3 boundaries are harvested by a run each, then converted by harvest.py in its kinds mode (see its docstring):
+             mvn -q test -Pjavascript -Dharvest.tests='org/mockserver/templates/**/*Test.java' -Dharvest.dir=target/harvest-b3/template
+             mvn -q test -Dharvest.tests='org/mockserver/openapi/**/*Test.java' -Dharvest.dir=target/harvest-b3/openapi
+             mvn -q test -Dharvest.tests='org/mockserver/serialization/java/*Test.java,org/mockserver/serialization/code/*Test.java,org/mockserver/serialization/curl/*Test.java' -Dharvest.dir=target/harvest-b3/code
+             mvn -q test -Dharvest.tests='org/mockserver/serialization/har/*Test.java' -Dharvest.dir=target/harvest-b3/har
+             The template run also feeds kinds helper, configured, forward and render. -->
+        <harvest.dir>${project.build.directory}/harvest</harvest.dir>
+        <!-- The tests' working directory. The grpc run passes -Dharvest.workdir=${upstreamCore}, because
+             its tests read src/test/resources/grpc/*.dsc by a relative path; give it with an absolute harvest.dir:
+             mvn -q test -Dharvest.tests='org/mockserver/grpc/**/*Test.java' -Dharvest.workdir=<core> -Dharvest.dir=<abs>/target/harvest-b4/grpc -->
+        <harvest.workdir>${project.basedir}</harvest.workdir>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.mock-server</groupId>
+                <artifactId>mockserver</artifactId>
+                <version>${mockserver.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency><groupId>org.mock-server</groupId><artifactId>mockserver-core</artifactId><version>${mockserver.version}</version><scope>test</scope></dependency>
+        <!-- mockserver-core's test-scope dependencies -->
+        <dependency><groupId>org.mock-server</groupId><artifactId>mockserver-testing</artifactId><version>${mockserver.version}</version><scope>test</scope></dependency>
+        <dependency><groupId>com.nimbusds</groupId><artifactId>oauth2-oidc-sdk</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>io.opentelemetry</groupId><artifactId>opentelemetry-sdk-testing</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>junit</groupId><artifactId>junit</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.mockito</groupId><artifactId>mockito-core</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-test</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.springframework</groupId><artifactId>spring-web</artifactId><scope>test</scope></dependency>
+        <dependency><groupId>org.skyscreamer</groupId><artifactId>jsonassert</artifactId><scope>test</scope></dependency>
+        <!-- the recorder -->
+        <dependency><groupId>net.bytebuddy</groupId><artifactId>byte-buddy</artifactId><version>1.17.7</version><scope>test</scope></dependency>
+        <dependency><groupId>net.bytebuddy</groupId><artifactId>byte-buddy-agent</artifactId><version>1.17.7</version><scope>test</scope></dependency>
+    </dependencies>
+
+    <profiles>
+        <!-- JavaScriptTemplateEngineTest assumes GraalJS (optional in mockserver-core, absent from the oracle image):
+             the B3 template harvest runs with -Pjavascript so those tests reach executeTemplate and are recorded;
+             the goldens still come from the GraalJS-less oracle. -->
+        <profile>
+            <id>javascript</id>
+            <dependencies>
+                <dependency><groupId>org.graalvm.polyglot</groupId><artifactId>polyglot</artifactId><scope>test</scope></dependency>
+                <dependency><groupId>org.graalvm.polyglot</groupId><artifactId>js</artifactId><type>pom</type><scope>test</scope></dependency>
+            </dependencies>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <id>upstream-core-tests</id>
+                        <phase>generate-test-sources</phase>
+                        <goals><goal>add-test-source</goal><goal>add-test-resource</goal></goals>
+                        <configuration>
+                            <sources><source>${upstreamCore}/src/test/java</source></sources>
+                            <resources><resource><directory>${upstreamCore}/src/test/resources</directory></resource></resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <compilerArgs><arg>-Xmaxerrs</arg><arg>2000</arg></compilerArgs>
+                    <!-- Master added a JMH-style benchmark that imports GraalJS directly; it is no test,
+                         and without -Pjavascript polyglot is absent (optional in mockserver-core). -->
+                    <testExcludes><testExclude>**/PolyglotRunnerConcurrencyBenchmark.java</testExclude></testExcludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+                <configuration>
+                    <includes>${harvest.tests}</includes>
+                    <testFailureIgnore>true</testFailureIgnore>
+                    <workingDirectory>${harvest.workdir}</workingDirectory>
+                    <argLine>-XX:+EnableDynamicAgentLoading -Djdk.attach.allowAttachSelf=true</argLine>
+                    <properties>
+                        <property><name>listener</name><value>harvest.Recorder</value></property>
+                    </properties>
+                    <systemPropertyVariables>
+                        <harvestDir>${harvest.dir}</harvestDir>
+                    </systemPropertyVariables>
+                    <trimStackTrace>true</trimStackTrace>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

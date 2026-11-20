@@ -1,0 +1,29 @@
+{
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "dashboard-one", "httpRequest": {"path": "/dash/one"}, "httpResponse": {"statusCode": 200, "body": "one"}}},
+    {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "dashboard-two", "httpRequest": {"method": "POST", "path": "/dash/two"}, "httpResponse": {"statusCode": 201, "body": "two"}}},
+    {"method": "GET", "path": "/dash/one", "headers": {"x-case": "first"}},
+    {"method": "POST", "path": "/dash/two", "body": "posted"},
+    {"method": "GET", "path": "/dash/none"},
+    {"wsOpen": "ui", "path": "/_mockserver_ui_websocket", "note": "the dashboard socket"},
+    {"wsDrain": "ui", "note": "the first frame, which the oracle sends late or not at all"},
+    {"wsSend": "ui", "text": "{}", "note": "an empty matcher: everything"},
+    {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"], "note": "the whole view"},
+    {"sleepMillis": 1500},
+    {"wsSend": "ui", "text": "{\"path\": \"/dash/one\"}", "note": "a path filter"},
+    {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"], "note": "the view narrowed to /dash/one"},
+    {"sleepMillis": 1500},
+    {"wsSend": "ui", "text": "{\"httpRequest\": {\"method\": \"POST\"}}", "note": "a filter wrapped in httpRequest"},
+    {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"], "note": "the view narrowed to POST"},
+    {"sleepMillis": 1500},
+    {"wsSend": "ui", "text": "null", "note": "null"},
+    {"wsRead": "ui", "note": "the schema error"},
+    {"sleepMillis": 1500},
+    {"wsSend": "ui", "text": "{\"path\": 5, \"method\": [] }\n  ", "note": "a matcher the schema rejects, trailing whitespace kept"},
+    {"wsRead": "ui", "note": "the schema error echoing the body"},
+    {"sleepMillis": 1500},
+    {"wsSend": "ui", "text": "{}", "note": "back to everything"},
+    {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"], "note": "the whole view again"},
+    {"wsClose": "ui"}
+  ]
+}

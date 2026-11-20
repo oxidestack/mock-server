@@ -1,0 +1,219 @@
+{
+ "quic": true,
+ "source": "upstream 456a9dee3 and 6dcc66b58 (Http3GrpcReflectionDataPlaneAuthenticationIntegrationTest, Http3GrpcBidiDataPlaneAuthenticationIntegrationTest). Over HTTP/3, without data-plane credentials, a gRPC decode error (UNIMPLEMENTED for an unknown method, reflection included) answers UNAUTHENTICATED, and the bidi match checks credentials before it consumes.",
+ "properties": {
+  "http3Port": "19733",
+  "grpcBidiStreamingEnabled": "true",
+  "dataPlaneAuthenticationRequired": "true",
+  "dataPlaneBearerAuthenticationToken": "reflection-token"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "pollUntil": "\"enabled\" ?: ?true",
+   "note": "wait for the HTTP/3 server"
+  },
+  {
+   "h3": true,
+   "method": "GET",
+   "path": "/warm-up",
+   "headers": {
+    "authorization": "Bearer reflection-token"
+   },
+   "note": "lets the oracle's startup logging finish"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the oracle may log its startup entries after the opening reset: reset again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc",
+   "note": "descriptors"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpResponse": {
+     "body": {
+      "greeting": "hi"
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "times": {
+     "remainingTimes": 1,
+     "unlimited": false
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*Alice.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hello Alice\"}"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "bodyBase64": "AAAAAAI6AA==",
+   "note": "reflection without credentials is refused",
+   "binaryBody": true
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc",
+    "authorization": "Bearer reflection-token"
+   },
+   "bodyBase64": "AAAAAAI6AA==",
+   "note": "reflection with credentials is UNIMPLEMENTED over HTTP/3",
+   "binaryBody": true
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/NoSuchMethod",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "bodyBase64": "AAAAAAA=",
+   "note": "an unknown method without credentials is refused, not UNIMPLEMENTED"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/NoSuchMethod",
+   "headers": {
+    "content-type": "application/grpc",
+    "authorization": "Bearer reflection-token"
+   },
+   "bodyBase64": "AAAAAAA=",
+   "note": "an unknown method with credentials"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "bodyBase64": "AAAAAAP///8=",
+   "note": "an undecodable message without credentials"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "authorization": "Bearer reflection-token"
+   },
+   "bodyBase64": "AAAAAAP///8=",
+   "note": "an undecodable message with credentials"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "a unary call without credentials"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "authorization": "Bearer reflection-token"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "a unary call with credentials"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "a bidi stream without credentials is refused"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "the Times.once bidi expectation is unused",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "authorization": "Bearer reflection-token"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "a bidi stream with credentials uses it"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "used up",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}",
+    {
+     "regex": "(\"totalTimeInMillis\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ],
+   "note": "refusals are logged"
+  }
+ ]
+}

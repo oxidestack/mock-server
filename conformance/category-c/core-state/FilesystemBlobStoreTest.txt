@@ -1,0 +1,22 @@
+# org.mockserver.state.FilesystemBlobStoreTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldPutAndGetWithRelativeKey  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldPutAndGetWithAbsoluteKey  http:persistence_file_content  # the persisted file at its absolute {{scratch}} path
+shouldOverwriteExistingBlob  http:persistence_file_content  # each change rewrites the file
+shouldCreateParentDirectories  http:persistence_parent_directories  # the persisted file's directories are missing at start; the first save creates them
+shouldReturnEmptyForMissingKey  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldPersistAndReadMetadata  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldNotCreateMetaFileWhenMetadataEmpty  n/a  # persistence writes no metadata, so no .meta file is ever created
+shouldListByPrefix  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldReturnEmptyListForNonMatchingPrefix  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldExcludeMetaFilesFromListing  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldDeleteBlob  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldDeleteMetaFileWhenDeletingBlob  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldReturnFalseWhenDeletingMissingKey  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldWriteByteForByteIdenticalContent  http:persistence_file_content  # readFile compares the persisted bytes with the oracle's
+shouldHandleEmptyData  http:persistence_blob_store_memory  # the file as created at startup, empty
+shouldHandleLargeData  n/a  # mock-server has no general filesystem blob store: persistence writes its one file itself (src/persistence.rs), so the key/listing/metadata API this checks has no counterpart
+shouldThrowOnPutWhenDirectoryCannotBeCreated  http:startup_log_persistence  # a path whose directory cannot be created: `exception while persisting expectations to …` logged
+shouldThrowOnPutWhenFileCannotBeCreated  http:startup_log_persistence  # the same failure path (the write is refused and logged, not swallowed)
+shouldPropagateWriteFailureWithNullLogger  n/a  # a null MockServerLogger is a Java construction detail; the logged failure is http:startup_log_persistence

@@ -1,0 +1,80 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmsniff-LlmProviderSnifferTest-1b615b33 (conformance/harvest)",
+ "properties": {
+  "llmProvider": "GEMINI"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "24fdbb283fd6",
+   "note": "fallsBackToConfiguredProviderForGeminiStreamingOnAGateway (llmsniff): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/v1beta/models/gemini-2.5-flash:streamGenerateContent\",\"headers\":{\"Host\":[\"llm-gateway.internal\"]}},\"httpResponse\":{\"statusCode\":200}}\n",
+   "note": "fallsBackToConfiguredProviderForGeminiStreamingOnAGateway (llmsniff): import",
+   "mask": [
+    {
+     "regex": "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+     "replace": "\"x-mockserver-response-time-ms\" : [ \"<n>\" ]"
+    }
+   ],
+   "case": "24fdbb283fd6"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "fallsBackToConfiguredProviderForGeminiStreamingOnAGateway (llmsniff): json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "24fdbb283fd6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "285ca0e9cb24",
+   "note": "fallsBackToConfiguredProviderForGeminiStreamingOnAGateway (llmsniff): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse\",\"headers\":{\"Host\":[\"llm-gateway.internal\"]}},\"httpResponse\":{\"statusCode\":200}}\n",
+   "note": "fallsBackToConfiguredProviderForGeminiStreamingOnAGateway (llmsniff): import",
+   "mask": [
+    {
+     "regex": "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+     "replace": "\"x-mockserver-response-time-ms\" : [ \"<n>\" ]"
+    }
+   ],
+   "case": "285ca0e9cb24"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "fallsBackToConfiguredProviderForGeminiStreamingOnAGateway (llmsniff): json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "285ca0e9cb24"
+  }
+ ]
+}

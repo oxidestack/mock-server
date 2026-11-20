@@ -1,0 +1,56 @@
+{
+ "properties": {
+  "controlPlaneJWTAuthenticationRequired": "true",
+  "controlPlaneJWTAuthenticationJWKSource": "{{files}}/jwt/callback_takeover_jwk.json"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "no authorization header"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "Authorization": "abc.def.ghi"
+   },
+   "note": "no scheme separator"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "Authorization": "Basic dXNlcjpwYXNz"
+   },
+   "note": "a Basic header"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "Authorization": "BEARER eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImNhbGxiYWNrLXRha2VvdmVyIn0.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOi8vd3d3Lm1vY2stc2VydmVyLmNvbSIsImF1ZCI6Imh0dHBzOi8vd3d3Lm1vY2stc2VydmVyLmNvbSIsIm5iZiI6MTYwMDAwMDAwMCwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjE2MDAwMDAwMDB9.g_fjaL3I9xUq-Dz-1bNyOGtbFNOaJ8XQDuPigf3eIO1rkJjXPohKk9jqR6reWhIwjB2CW8RC1H7WfWNO9yBfQKab68AdzBkgq3vRMn2Xx0kfS7Fgyl6fv9Fk2pr5Z8RciCSSaMJUfHSH8mLWQphtsrrn5RTjCV5ibJ6loFbRNJJhJIQte1DfxfJkXtQaHoNh6bgSEb6YeKGWersy4EMBq3d6pW7nkABdop5V9cSHqhCsJ29zw6nZnJj_ajaaivK5N_q3ebm6KiW_u4YA653cfnkH54Go_q0pQMKGSHI-HxzmbOQfyRLTnvYPuwwLqt55se9q_js70JzANailtJlkhg"
+   },
+   "note": "the scheme is case-insensitive"
+  },
+  {
+   "wsOpen": "schemeless",
+   "headers": {
+    "X-CLIENT-REGISTRATION-ID": "jwt-client",
+    "Authorization": "Token abc"
+   },
+   "note": "a callback upgrade with a non-Bearer scheme"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImNhbGxiYWNrLXRha2VvdmVyIn0.eyJzdWIiOiJhbGljZSIsImlzcyI6Imh0dHBzOi8vd3d3Lm1vY2stc2VydmVyLmNvbSIsImF1ZCI6Imh0dHBzOi8vd3d3Lm1vY2stc2VydmVyLmNvbSIsIm5iZiI6MTYwMDAwMDAwMCwiZXhwIjo0MTAyNDQ0ODAwLCJpYXQiOjE2MDAwMDAwMDB9.g_fjaL3I9xUq-Dz-1bNyOGtbFNOaJ8XQDuPigf3eIO1rkJjXPohKk9jqR6reWhIwjB2CW8RC1H7WfWNO9yBfQKab68AdzBkgq3vRMn2Xx0kfS7Fgyl6fv9Fk2pr5Z8RciCSSaMJUfHSH8mLWQphtsrrn5RTjCV5ibJ6loFbRNJJhJIQte1DfxfJkXtQaHoNh6bgSEb6YeKGWersy4EMBq3d6pW7nkABdop5V9cSHqhCsJ29zw6nZnJj_ajaaivK5N_q3ebm6KiW_u4YA653cfnkH54Go_q0pQMKGSHI-HxzmbOQfyRLTnvYPuwwLqt55se9q_js70JzANailtJlkhg"
+   },
+   "note": "the JWT handler's ERROR entries (start-up entries masked)",
+   "mask": [
+    "(?s)\\A.*?------------------------------------\\n(?=[^\\n]* - JWT control plane request failed)"
+   ]
+  }
+ ]
+}

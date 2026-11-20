@@ -1,0 +1,42 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.privateKeyPath={{scratch}}/new-key.pem",
+    "-Dmockserver.x509CertificatePath={{scratch}}/new-cert.pem"
+  ],
+  "certificates": [
+    {
+      "name": "new",
+      "notBeforeSecs": 86400,
+      "notAfterSecs": 31536000
+    }
+  ],
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 3,
+      "label": "t"
+    }
+  ],
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "tls": {
+      "t": "refused"
+    },
+    "stdoutContains": [
+      "SSL or decoder fault caught by port unification handler",
+      "is not yet valid until",
+      "Replace it with a valid certificate"
+    ]
+  }
+}

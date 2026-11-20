@@ -1,0 +1,10 @@
+{"properties": {"enableCORSForAllResponses": "true", "defaultResponseHeaders": "X-Default=one", "driftDetectionEnabled": "false"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/upstream"}, "httpResponse": {"headers": {"X-Up": ["1"]}, "body": "from upstream"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/fwd"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/upstream", "headers": {"Host": ["localhost:{{port}}"]}}}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=log"},
+  {"note": "forwarded through an expectation, origin", "method": "GET", "path": "/fwd", "headers": {"Origin": "http://example.com"}},
+  {"note": "the entries", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "mask": [{"regex": "(Millis\" : )\\d+", "replace": "${1}0", "reason": "measured forward timing"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES", "mask": [{"regex": "(Millis\" : )\\d+", "replace": "${1}0", "reason": "measured forward timing"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS"}
+]}

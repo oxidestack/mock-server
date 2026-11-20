@@ -1,0 +1,58 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/hello"
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "hello"
+    }
+   },
+   "note": "NettyHttpProxyConnectHttp2IntegrationTest (upstream fix 40939d794, after 8.0.0): cleartext HTTP/1.1 and h2c prior knowledge inside a cleartext CONNECT tunnel. The 8.0.0 oracle assumes TLS, answers the CONNECT 200 and closes the tunnel without an answer; the fix classifies the first tunnelled bytes. Port: tests/upstream/connect_tunnel_protocols.rs The tunnelled bytes follow the CONNECT after a second (chunkMillis): the oracle opens its loopback to itself before it answers 200, and bytes that arrive while it does so are lost, so a 200 ms gap raced against a cold oracle."
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /hello HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "plaintext HTTP/1.1 through a cleartext CONNECT"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a000000040000000000000033010500000001828600053a70617468062f68656c6c6f000a3a617574686f72697479166d6f636b65642e6578616d706c652e746573743a3830"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "h2c prior knowledge through a cleartext CONNECT: the preface, an empty SETTINGS and a HEADERS frame (GET /hello, END_STREAM) on stream 1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/hello"
+    },
+    "times": {
+     "atLeast": 2,
+     "atMost": 2
+    }
+   },
+   "note": "both tunnelled requests reached the data plane"
+  }
+ ]
+}

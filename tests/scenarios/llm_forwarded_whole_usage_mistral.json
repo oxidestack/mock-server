@@ -1,0 +1,283 @@
+{
+ "source": "hand-written (cases from upstream's HttpActionHandlerStreamedLlmUsageTest, 9.1.0): whole forwarded MISTRAL responses accounted by HttpActionHandler.emitForwardGenAiSpan (accountableOperation, isPolledCompletion, the provider clients' parseCompletionResponse), forwarded to this server's own mocks",
+ "properties": {
+  "metricsEnabled": "true",
+  "llmMetricsEnabled": "true",
+  "llmProvider": "MISTRAL"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-embed",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/embeddings",
+      "headers": {
+       "x-case": [
+        "embed"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\":\"embd-aad6fc62b17349b192ef09225058bc45\",\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"embedding\":[-0.016632080078125,0.0701904296875],\"index\":0}],\"model\":\"mistral-embed\",\"usage\":{\"prompt_tokens\":15,\"total_tokens\":15,\"completion_tokens\":0}}"
+     }
+    },
+    {
+     "id": "forward-embed",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/embed"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/embeddings",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "embed"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-fim",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/fim/completions",
+      "headers": {
+       "x-case": [
+        "fim"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\":\"447e3e0d457e42e98248b5d2ef52a2a3\",\"object\":\"chat.completion\",\"model\":\"codestral-2508\",\"usage\":{\"prompt_tokens\":8,\"completion_tokens\":91,\"total_tokens\":99},\"created\":1759496862,\"choices\":[{\"index\":0,\"message\":{\"content\":\"a, b):\\n    \",\"tool_calls\":null,\"prefix\":false,\"role\":\"assistant\"},\"finish_reason\":\"stop\"}]}"
+     }
+    },
+    {
+     "id": "forward-fim",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/fim"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/fim/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "fim"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-conv-start",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/conversations",
+      "headers": {
+       "x-case": [
+        "conv-start"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"object\":\"conversation.response\",\"conversation_id\":\"conv_06835b9dc0c7749180001ed2adbbc4e2\",\"outputs\":[{\"object\":\"entry\",\"type\":\"message.output\",\"created_at\":\"2025-05-27T13:02:21.290Z\",\"completed_at\":\"2025-05-27T13:02:22.580Z\",\"id\":\"msg_06835b9dd4a97a6e80002c8d3c5bd5d8\",\"agent_id\":null,\"model\":\"mistral-medium-2505\",\"role\":\"assistant\",\"content\":\"Albert Einstein was a physicist.\"}],\"usage\":{\"prompt_tokens\":7,\"completion_tokens\":12,\"total_tokens\":19,\"connector_tokens\":null,\"connectors\":null}}"
+     }
+    },
+    {
+     "id": "forward-conv-start",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/conv-start"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/conversations",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "conv-start"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-conv-append",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/conversations/conv_06835b9dc0c7749180001ed2adbbc4e2",
+      "headers": {
+       "x-case": [
+        "conv-append"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"object\":\"conversation.response\",\"conversation_id\":\"conv_06835b9dc0c7749180001ed2adbbc4e2\",\"outputs\":[{\"object\":\"entry\",\"type\":\"message.output\",\"created_at\":\"2025-05-27T13:02:21.290Z\",\"completed_at\":\"2025-05-27T13:02:22.580Z\",\"id\":\"msg_06835b9dd4a97a6e80002c8d3c5bd5d8\",\"agent_id\":null,\"model\":\"mistral-medium-2505\",\"role\":\"assistant\",\"content\":\"Albert Einstein was a physicist.\"}],\"usage\":{\"prompt_tokens\":30,\"completion_tokens\":14,\"total_tokens\":44,\"connector_tokens\":null,\"connectors\":null}}"
+     }
+    },
+    {
+     "id": "forward-conv-append",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/conv-append"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/conversations/conv_06835b9dc0c7749180001ed2adbbc4e2",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "conv-append"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-conv-restart",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/conversations/conv_06835b9dc0c7749180001ed2adbbc4e2/restart",
+      "headers": {
+       "x-case": [
+        "conv-restart"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"object\":\"conversation.response\",\"conversation_id\":\"conv_06835b9dc0c7749180001ed2adbbc4e2\",\"outputs\":[{\"object\":\"entry\",\"type\":\"message.output\",\"created_at\":\"2025-05-27T13:02:21.290Z\",\"completed_at\":\"2025-05-27T13:02:22.580Z\",\"id\":\"msg_06835b9dd4a97a6e80002c8d3c5bd5d8\",\"agent_id\":null,\"model\":\"mistral-medium-2505\",\"role\":\"assistant\",\"content\":\"Albert Einstein was a physicist.\"}],\"usage\":{\"prompt_tokens\":30,\"completion_tokens\":15,\"total_tokens\":45,\"connector_tokens\":null,\"connectors\":null}}"
+     }
+    },
+    {
+     "id": "forward-conv-restart",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/conv-restart"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/conversations/conv_06835b9dc0c7749180001ed2adbbc4e2/restart",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "conv-restart"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "Mistral embeddings: 15 in",
+   "method": "POST",
+   "path": "/client/embed",
+   "body": "{\"model\":\"mistral-embed\",\"input\":[\"Embed this sentence.\"]}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a fill-in-the-middle completion: 8 in, 91 out",
+   "method": "POST",
+   "path": "/client/fim",
+   "body": "{\"model\":\"codestral-2508\",\"prompt\":\"def f(\",\"suffix\":\"return a + b\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "a conversation started: 7 in, 12 out, by the model on its outputs",
+   "method": "POST",
+   "path": "/client/conv-start",
+   "body": "{\"model\":\"mistral-medium-latest\",\"inputs\":\"Who is Albert Einstein?\",\"stream\":false}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "appended to: 30 in, 14 out",
+   "method": "POST",
+   "path": "/client/conv-append",
+   "body": "{\"inputs\":\"Translate to French.\",\"stream\":false}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "restarted: 30 in, 15 out",
+   "method": "POST",
+   "path": "/client/conv-restart",
+   "body": "{\"inputs\":\"Translate to German.\",\"from_entry_id\":\"msg_06835b9dd4a97a6e80002c8d3c5bd5d8\",\"stream\":false}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "the LLM token and cost counters",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,10 @@
+{"source": "noProxyHosts lists only 127.0.0.1. Since 9.1.0 (NoProxyHostsUtils: an IP-address entry matches only a destination given as that address, no name is looked up) neither a webhook to localhost (afterActions) nor an httpForward to localhost is exempt: both go through forwardHttpProxy (a refusing address: 502)",
+ "properties": {"forwardHttpProxy": "{{deadhost}}", "noProxyHosts": "127.0.0.1"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/orders\"}, \"httpResponse\": {\"body\": \"created\"}, \"afterActions\": [{\"httpRequest\": {\"method\": \"POST\", \"path\": \"/hook\", \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}}]}, {\"httpRequest\": {\"path\": \"/hook\"}, \"httpResponse\": {\"body\": \"hooked\"}}, {\"priority\": 10, \"times\": {\"remainingTimes\": 1}, \"httpRequest\": {\"path\": \"/forward\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}, {\"httpRequest\": {\"path\": \"/forward\"}, \"httpResponse\": {\"body\": \"reached forward\"}}]"},
+  {"note": "the webhook to localhost goes out after the response", "method": "GET", "path": "/orders"},
+  {"sleepMillis": 2000},
+  {"note": "it did not arrive: localhost is not looked up, so the listed 127.0.0.1 does not match it", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "body": {"path": "/hook"}},
+  {"note": "an explicit httpForward to localhost is not resolved before the check: proxied", "method": "GET", "path": "/forward"}
+]}

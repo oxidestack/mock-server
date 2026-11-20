@@ -1,0 +1,18 @@
+# A MockServer 8.0.0 deployment (a fixture)
+services:
+  mockserver:
+    image: mockserver/mockserver:mockserver-8.0.0   # the upstream image
+    ports:
+      - "1080:1080"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dmockserver.logLevel=INFO -Xmx256m -Djava.util.logging.config.file=/config/logging.properties"
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/expectations.json
+      MOCKSERVER_USE_NATIVE_TRANSPORT: "false"
+    volumes:
+      - ./config:/config
+      - ./target/callbacks.jar:/libs/callbacks.jar
+    command: -serverPort 1080 -Dmockserver.maxExpectations=500
+  api:
+    image: acme/api:1.4
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx1g

@@ -1,0 +1,18 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/dribble"}, "httpResponse": {"body": "abcdefghij", "trailers": {"x-t": ["1"]}, "connectionOptions": {"chunkSize": 3, "chunkDelay": {"timeUnit": "MILLISECONDS", "value": 20}}}},
+    {"httpRequest": {"path": "/chunked"}, "httpResponse": {"body": "abcdefghij", "connectionOptions": {"chunkSize": 3}}},
+    {"httpRequest": {"path": "/sse"}, "httpSseResponse": {"events": [{"data": "one"}, {"data": "two", "delay": {"timeUnit": "MILLISECONDS", "value": 50}}]}},
+    {"httpRequest": {"path": "/sse-close"}, "httpSseResponse": {"closeConnection": true, "events": [{"data": "one"}]}},
+    {"httpRequest": {"path": "/fwd"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/dribble", "headers": {"Host": ["localhost:{{port}}"]}}}},
+    {"httpRequest": {"path": "/fwd-sse"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/sse", "headers": {"Host": ["localhost:{{port}}"]}}}}
+  ]},
+  {"note": "HEAD, dribbled chunks with trailers: the head only", "tcp": [{"text": "HEAD /dribble HTTP/1.1\r\nHost: localhost\r\n\r\n"}]},
+  {"note": "GET, the same: chunks and trailers", "tcp": [{"text": "GET /dribble HTTP/1.1\r\nHost: localhost\r\n\r\n"}]},
+  {"note": "HEAD, chunked without delay: the head only", "tcp": [{"text": "HEAD /chunked HTTP/1.1\r\nHost: localhost\r\n\r\n"}]},
+  {"note": "HEAD, SSE: the head only, the connection kept for the next request", "tcp": [{"text": "HEAD /sse HTTP/1.1\r\nHost: localhost\r\n\r\n"}, {"text": "GET /chunked HTTP/1.1\r\nHost: localhost\r\n\r\n"}]},
+  {"note": "HEAD, SSE with closeConnection: the head only, then close", "tcp": [{"text": "HEAD /sse-close HTTP/1.1\r\nHost: localhost\r\n\r\n"}]},
+  {"note": "HEAD forwarded to a dribbled response: aggregated, chunked dropped, content-length: 0", "tcp": [{"text": "HEAD /fwd HTTP/1.1\r\nHost: localhost\r\n\r\n"}]},
+  {"note": "HEAD forwarded to an SSE response, asking for a stream: the streamed head relayed, no body", "tcp": [{"text": "HEAD /fwd-sse HTTP/1.1\r\nHost: localhost\r\nAccept: text/event-stream\r\n\r\n"}]},
+  {"note": "the forwarded HEAD exchanges", "method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES", "mask": ["content-length: \\d+"], "body": {"method": "HEAD", "path": "/fwd.*"}}
+]}

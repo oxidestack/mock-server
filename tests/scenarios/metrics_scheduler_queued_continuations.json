@@ -1,0 +1,418 @@
+{
+ "source": "hand-written: the action scheduler's queue (mock_server_scheduler_queued_tasks, Scheduler.getQueue().size()) holds the forward continuations waiting for the action thread a semantic drift analysis holds (actionHandlerThreadCount 1); they are not delayed tasks, so mock_server_pending_delayed_tasks stays 0",
+ "peer": true,
+ "properties": {
+  "metricsEnabled": "true",
+  "actionHandlerThreadCount": "1",
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "40000",
+  "driftSemanticAnalysisEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "node": "peer",
+   "body": [
+    {
+     "id": "classify",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-test\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"1|BREAKING|The status changed.\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 30000
+      }
+     }
+    },
+    {
+     "id": "upstream",
+     "httpRequest": {
+      "path": "/thing"
+     },
+     "httpResponse": {
+      "statusCode": 500
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "stub",
+     "httpRequest": {
+      "path": "/thing"
+     },
+     "httpResponse": {
+      "statusCode": 200
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"forward\", \"priority\": 10, \"httpRequest\": {\"path\": \"/thing\"}, \"httpForward\": {\"host\": \"{{peerhost}}\", \"port\": {{peerport}}}}]",
+   "mask": [
+    {
+     "regex": "\"host\" : \"[^\"]*\"",
+     "replace": "\"host\" : \"<peer>\""
+    }
+   ]
+  },
+  {
+   "note": "nothing queued yet",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:scheduler_queued_tasks|pending_delayed_tasks))[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "its semantic analysis holds the only action thread (actionHandlerThreadCount 1) for 20 s (longer here so all 30 forwards arrive while it holds the thread, even on a loaded machine). The backend answers after 30 s, but the client's read timeout, maxSocketTimeout (20 s by default), ends the call first (and before llmRequestTimeoutMillis does), so it fails, nothing is cached, and each later analysis waits 20 s for the backend again (a 20 s backend raced the read timeout, and won in the 9.1.0 recording)",
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "async": "f0",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing",
+   "note": "30 forwards at once: each one's continuation waits for the thread, first come first served; once it is free, each continuation submits its analysis behind the remaining continuations, so the first 16 fill the backlog (max(16, 4 x 1 thread)) and the other 14 are shed"
+  },
+  {
+   "async": "f1",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f2",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f3",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f4",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f5",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f6",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f7",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f8",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f9",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f10",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f11",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f12",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f13",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f14",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f15",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f16",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f17",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f18",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f19",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f20",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f21",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f22",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f23",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f24",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f25",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f26",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f27",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f28",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "async": "f29",
+   "maxMillis": 45000,
+   "method": "GET",
+   "path": "/thing"
+  },
+  {
+   "sleepMillis": 1500
+  },
+  {
+   "note": "the 30 continuations wait for the thread the first analysis holds",
+   "pollUntil": "mock_server_scheduler_queued_tasks 30\\.0",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:scheduler_queued_tasks|pending_delayed_tasks))[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "await": "f0"
+  },
+  {
+   "await": "f1"
+  },
+  {
+   "await": "f2"
+  },
+  {
+   "await": "f3"
+  },
+  {
+   "await": "f4"
+  },
+  {
+   "await": "f5"
+  },
+  {
+   "await": "f6"
+  },
+  {
+   "await": "f7"
+  },
+  {
+   "await": "f8"
+  },
+  {
+   "await": "f9"
+  },
+  {
+   "await": "f10"
+  },
+  {
+   "await": "f11"
+  },
+  {
+   "await": "f12"
+  },
+  {
+   "await": "f13"
+  },
+  {
+   "await": "f14"
+  },
+  {
+   "await": "f15"
+  },
+  {
+   "await": "f16"
+  },
+  {
+   "await": "f17"
+  },
+  {
+   "await": "f18"
+  },
+  {
+   "await": "f19"
+  },
+  {
+   "await": "f20"
+  },
+  {
+   "await": "f21"
+  },
+  {
+   "await": "f22"
+  },
+  {
+   "await": "f23"
+  },
+  {
+   "await": "f24"
+  },
+  {
+   "await": "f25"
+  },
+  {
+   "await": "f26"
+  },
+  {
+   "await": "f27"
+  },
+  {
+   "await": "f28"
+  },
+  {
+   "await": "f29"
+  },
+  {
+   "note": "after the burst: of the 16 admitted analyses one waits for the backend's read timeout and 15 queue behind it, one fewer every 20 s; the other 14 were shed",
+   "pollUntil": "mock_server_scheduler_queued_tasks 15\\.0",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:scheduler_queued_tasks|pending_delayed_tasks|dropped_drift_analyses))[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "the second analysis has run, 20 s after the first: each one records its drift once its LLM call has failed",
+   "method": "GET",
+   "path": "/mockserver/drift?expectationId=stub",
+   "mask": [
+    {
+     "regex": "\"epochTimeMs\" : \\d+",
+     "replace": "\"epochTimeMs\" : <millis>"
+    }
+   ],
+   "pollUntil": "\"count\" : 2"
+  }
+ ]
+}

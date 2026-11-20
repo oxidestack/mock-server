@@ -1,0 +1,88 @@
+{
+ "properties": {
+  "initializationJsonPath": "{{scratch}}/file_watcher_reload.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "start from nothing"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_reload.json",
+    "content": "[ ]"
+   },
+   "note": "a known starting content"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_reload.json",
+    "content": "[\n  {\n    \"id\": \"one\",\n    \"httpRequest\": {\n      \"path\": \"/simpleFirst\"\n    },\n    \"httpResponse\": {\n      \"body\": \"some first response\"\n    }\n  },\n  {\n    \"id\": \"two\",\n    \"httpRequest\": {\n      \"path\": \"/simpleSecond\"\n    },\n    \"httpResponse\": {\n      \"body\": \"some second response\"\n    }\n  },\n  {\n    \"id\": \"three\",\n    \"httpRequest\": {\n      \"path\": \"/simpleThird\"\n    },\n    \"httpResponse\": {\n      \"body\": \"some third response\"\n    }\n  }\n]"
+   },
+   "note": "add: three expectations appear in the file"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "all three loaded, in file order"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_reload.json",
+    "content": "[\n  {\n    \"id\": \"one\",\n    \"httpRequest\": {\n      \"path\": \"/simpleFirst\"\n    },\n    \"httpResponse\": {\n      \"body\": \"some first response\"\n    }\n  },\n  {\n    \"id\": \"four\",\n    \"httpRequest\": {\n      \"path\": \"/simpleThird\"\n    },\n    \"httpResponse\": {\n      \"body\": \"some updated third response\"\n    }\n  }\n]"
+   },
+   "note": "partial deletion and an added one"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "two and three gone, four added"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_reload.json",
+    "content": "[\n  {\n    \"id\": \"one\",\n    \"httpRequest\": {\n      \"path\": \"/simpleFirst\"\n    },\n    \"httpResponse\": {\n      \"body\": \"some first response\"\n    }\n  },\n  {\n    \"id\": \"four\",\n    \"httpRequest\": {\n      \"path\": \"/simpleThirdChanged\"\n    },\n    \"httpResponse\": {\n      \"body\": \"some changed response\"\n    }\n  }\n]"
+   },
+   "note": "update: the same id with a new definition"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "four updated in place"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_reload.json",
+    "content": "[ ]"
+   },
+   "note": "complete deletion"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "nothing is left"
+  }
+ ]
+}

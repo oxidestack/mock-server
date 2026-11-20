@@ -1,0 +1,92 @@
+{
+  "source": "hand-written (generated from upstream's ProviderStreamFixtures): HttpActionHandlerStreamedLlmUsageTest's shouldCountOnlyWhatWasReportedWhenAnAnthropicStreamIsCutOff and shouldCountAStreamForwardedAfterARequestBreakpointIsContinued's sibling cases; an upstream that closes mid-body is an httpError dropping the connection after part of a chunked body, forwarded to this server's own mocks",
+  "properties": {
+    "metricsEnabled": "true",
+    "llmMetricsEnabled": "true",
+    "llmProvider": "ANTHROPIC",
+    "llmCostBudgetUsd": "100",
+    "logLevel": "WARN"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "upstream-anthropic-cut",
+          "priority": 10,
+          "httpRequest": {
+            "method": "POST",
+            "path": "/v1/messages",
+            "headers": {
+              "x-case": [
+                "anthropic-cut"
+              ]
+            }
+          },
+          "httpError": {
+            "dropConnection": true,
+            "responseBytes": "SFRUUC8xLjEgMjAwIE9LDQpDb250ZW50LVR5cGU6IHRleHQvZXZlbnQtc3RyZWFtDQpUcmFuc2Zlci1FbmNvZGluZzogY2h1bmtlZA0KDQoyYjENCmV2ZW50OiBtZXNzYWdlX3N0YXJ0CmRhdGE6IHsidHlwZSI6Im1lc3NhZ2Vfc3RhcnQiLCJtZXNzYWdlIjp7ImlkIjoibXNnXzFuWmRMMjl4eDVNVUExeUFEeUhURXNuUjh1dXZHenN6eVkiLCJ0eXBlIjoibWVzc2FnZSIsInJvbGUiOiJhc3Npc3RhbnQiLCJjb250ZW50IjpbXSwibW9kZWwiOiJjbGF1ZGUtc29ubmV0LTQtNS0yMDI1MDkyOSIsInN0b3BfcmVhc29uIjpudWxsLCJzdG9wX3NlcXVlbmNlIjpudWxsLCJ1c2FnZSI6eyJpbnB1dF90b2tlbnMiOjI1LCJjYWNoZV9jcmVhdGlvbl9pbnB1dF90b2tlbnMiOjMsImNhY2hlX3JlYWRfaW5wdXRfdG9rZW5zIjo3LCJvdXRwdXRfdG9rZW5zIjoxfX19CgpldmVudDogY29udGVudF9ibG9ja19zdGFydApkYXRhOiB7InR5cGUiOiJjb250ZW50X2Jsb2NrX3N0YXJ0IiwiaW5kZXgiOjAsImNvbnRlbnRfYmxvY2siOnsidHlwZSI6InRleHQiLCJ0ZXh0IjoiIn19CgpldmVudDogcGluZwpkYXRhOiB7InR5cGUiOiAicGluZyJ9CgpldmVudDogY29udGVudF9ibG9ja19kZWx0YQpkYXRhOiB7InR5cGUiOiJjb250ZW50X2Jsb2NrX2RlbHRhIiwiaW5kZXgiOjAsImRlbHRhIjp7InR5cGUiOiJ0ZXh0X2RlbHRhIiwidGV4dCI6IkhlbGxvIn19CgpldmVudDogY29udGVudF9ibG9ja19zdG9wCmRhdGE6IHsidHlwZSI6ImNvbnRlbnRfYmxvY2tfc3RvcCIsImluZGV4IjowfQoKDQo="
+          }
+        },
+        {
+          "id": "forward-anthropic-cut",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/client/anthropic-cut"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/v1/messages",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ],
+                "x-case": [
+                  "anthropic-cut"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "Anthropic cut off after message_start: 25 in, 1 out counted, and a WARN that it ended before its final usage event",
+      "method": "POST",
+      "path": "/client/anthropic-cut",
+      "body": "{\"model\":\"claude-sonnet-4-5\",\"stream\":true}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "sleepMillis": 500,
+      "note": "a relayed stream is accounted once its relay has ended, which may be after the client read it"
+    },
+    {
+      "note": "the LLM token and cost counters",
+      "method": "GET",
+      "path": "/mockserver/metrics",
+      "mask": [
+        {
+          "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+          "replace": ""
+        },
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "the streamed-usage lines of the event log",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+          "replace": "",
+          "reason": "every entry but the streamed-usage lines"
+        }
+      ]
+    }
+  ]
+}

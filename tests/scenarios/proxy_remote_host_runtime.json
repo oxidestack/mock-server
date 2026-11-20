@@ -1,0 +1,101 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/remote",
+     "headers": {
+      "Host": [
+       "127.0.0.1:{{port}}"
+      ]
+     }
+    },
+    "httpResponse": {
+     "body": "answered by the remote"
+    }
+   },
+   "note": "matches only the Host an unmatched request is forwarded to the remote with"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "no remote yet: no match"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": "{\"proxyRemoteHost\": \"127.0.0.1\", \"proxyRemotePort\": {{port}}}",
+   "note": "a runtime remote (getRemoteAddressWithFallback reads the live configuration)"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "forwarded to the remote, Host rewritten to proxyRemoteHost:proxyRemotePort, which matches there"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyAuthenticationUsername": "user",
+    "proxyAuthenticationPassword": "pass"
+   },
+   "note": "proxy authentication with a configured remote (hasConfiguredRemoteProxy makes it potentiallyHttpProxy)"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "407: no Proxy-Authorization"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "headers": {
+    "Proxy-Authorization": "Basic dXNlcjpwYXNz"
+   },
+   "note": "authenticated: forwarded to the remote"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyAuthenticationUsername": "",
+    "proxyAuthenticationPassword": ""
+   },
+   "note": "proxy authentication off again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": "{\"proxyRemoteHost\": \"localhost\", \"proxyRemotePort\": {{deadport}}}",
+   "note": "a remote nothing listens on"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "502 from the dead remote"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyRemoteHost": ""
+   },
+   "note": "a blank host clears the remote, the port stays"
+  },
+  {
+   "method": "GET",
+   "path": "/remote",
+   "note": "no remote again: no match"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "what is left: a blank host and the port"
+  }
+ ]
+}

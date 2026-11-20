@@ -1,0 +1,47 @@
+{
+ "properties": {
+  "controlPlaneAuditEnabled": "true",
+  "controlPlaneAuditReads": "true",
+  "controlPlaneAuditMaxEntries": "3"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/status"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/audit",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/audit",
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ]
+  }
+ ]
+}

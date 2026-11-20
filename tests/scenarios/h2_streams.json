@@ -1,0 +1,34 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/proto", "protocol": "HTTP_2"}, "httpResponse": {"body": "seen as h2"}},
+    {"httpRequest": {"path": "/bad-name"}, "httpResponse": {"headers": {"bad@name": ["v"]}, "body": "x"}},
+    {"httpRequest": {"path": "/chunked"}, "httpResponse": {"body": "abcdefghij", "connectionOptions": {"chunkSize": 3}}},
+    {"httpRequest": {"path": "/sse"}, "httpSseResponse": {"events": [{"event": "e", "data": "one"}, {"data": "two"}]}},
+    {"httpRequest": {"path": "/upper-name"}, "httpResponse": {"headers": {"X-Upper": ["v"]}, "body": "x"}},
+    {"httpRequest": {"path": "/trailers"}, "httpResponse": {"headers": {"Transfer-Encoding": ["chunked"], "Connection": ["keep-alive"]}, "body": "x"}}
+   ],
+   "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]
+  },
+  {"method": "GET", "path": "/proto", "h2": true, "note": "an HTTP/2 stream is seen as protocol HTTP_2 (ConnectionScopeHandler)"},
+  {"method": "GET", "path": "/proto", "note": "the same path over HTTP/1.1 does not match"},
+  {"method": "GET", "path": "/_mockserver_callback_websocket", "h2": true, "note": "callback websocket path over h2 without upgrade headers"},
+  {"method": "GET", "path": "/_mockserver_ui_websocket", "h2": true, "note": "dashboard websocket over an HTTP/2 stream"},
+  {"method": "GET", "path": "/bad-name", "h2": true, "maxMillis": 2000, "note": "response with an illegal header name over h2"},
+  {"method": "GET", "path": "/upper-name", "h2": true, "note": "response with an upper-case header name over h2"},
+  {"method": "GET", "path": "/trailers", "h2": true, "note": "connection-specific response headers over h2"},
+  {"method": "GET", "path": "/chunked", "h2": true, "note": "a chunked streamed response ends its HTTP/2 stream (StreamAddressedContentHandler)"},
+  {"method": "GET", "path": "/sse", "h2": true, "note": "an SSE response ends its HTTP/2 stream"},
+  {"h2raw": {"method": "GET", "path": "/chunked"}, "note": "frames: chunked response"},
+  {"h2raw": {"method": "GET", "path": "/sse"}, "note": "frames: SSE response"},
+  {"h2raw": {"method": "GET", "path": "/bad-name"}, "note": "frames: response with an illegal header name"},
+  {"h2raw": {"method": "GET", "path": "/trailers"}, "note": "frames: connection-specific response headers"},
+  {"h2raw": {"method": "GET", "path": "/upper-name"}, "note": "frames: upper-case response header name"},
+  {"h2raw": {"method": "GET", "path": "/_mockserver_ui_websocket"}, "note": "frames: websocket path"},
+  {"method": "GET", "path": "/mockserver/status", "h2": true, "note": "control plane over h2"},
+  {"method": "PUT", "path": "/mockserver/status", "h2": true, "note": "status over h2 PUT"}
+ ]
+}

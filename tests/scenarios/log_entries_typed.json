@@ -1,0 +1,236 @@
+{
+ "source": "Empty properties: its golden logs a forward's timing, which carries timeToFirstByteInMillis only on a new upstream connection, so it is recorded on an oracle of its own, whose forward connection pool is empty.",
+ "properties": {},
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"a\", \"httpRequest\": {\"path\": \"/a\"}, \"httpResponse\": {\"statusCode\": 201, \"body\": \"hi\"}}, {\"id\": \"target\", \"httpRequest\": {\"path\": \"/fwd\"}, \"httpResponse\": {\"statusCode\": 200, \"body\": \"upstream\"}}, {\"id\": \"fwd\", \"httpRequest\": {\"path\": \"/fwd\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}]"
+  },
+  {
+   "method": "GET",
+   "path": "/a",
+   "note": "matched"
+  },
+  {
+   "method": "GET",
+   "path": "/b",
+   "note": "not matched"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/a"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "note": "verification passes"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/c"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "note": "verification fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/a"
+   },
+   "note": "entries about /a",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "every entry (before the forward: upstream rewrites the forwarded request's Host while other threads log it)",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/fwd",
+   "headers": {
+    "Host": "front.example"
+   },
+   "note": "forwarded to itself"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=LOG_ENTRIES",
+   "note": "request-response entries",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=LOG_ENTRIES",
+   "body": {
+    "path": "/a"
+   },
+   "note": "request-response entries for /a",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=LOG_ENTRIES",
+   "note": "forwarded entries",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/a"
+   },
+   "note": "received entries for /a",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "(Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "note": "recorded expectations as HAR",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=HAR",
+   "mask": [
+    "\"serverIPAddress\" : \"[^\"]*\"",
+    {
+     "regex": "(\"(?:time|totalTimeInMillis|wait|receive|connect)\" : )-?\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\"\\s*\\}?,?\\s*\"value\" : \")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "note": "request-responses as HAR",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=HAR",
+   "mask": [
+    "\"serverIPAddress\" : \"[^\"]*\"",
+    {
+     "regex": "(\"(?:time|totalTimeInMillis|wait|receive|connect)\" : )-?\\d+",
+     "replace": "${1}0"
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\"\\s*\\}?,?\\s*\"value\" : \")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "note": "recorded expectations as OpenAPI",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=OPENAPI"
+  },
+  {
+   "note": "recorded expectations as Postman",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=POSTMAN",
+   "mask": [
+    {
+     "regex": "http://localhost:(?:1080|<port>)\"",
+     "replace": "http://localhost:<default port>\""
+    },
+    {
+     "regex": "(x-mockserver-response-time-ms\",\\s*\"value\" : \")\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

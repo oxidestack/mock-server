@@ -1,0 +1,17 @@
+{
+ "quic": true,
+ "properties": {
+  "http3Port": "19476",
+  "http3ConnectUdpEnabled": "true"
+ },
+ "steps": [
+  {"h3": true, "method": "CONNECT", "path": "/", "authority": "127.0.0.1:{{deadport}}", "headers": {":protocol": "CONNECT-UDP"}, "maxMillis": 3000, "note": "an upper-case :protocol is recognised: the tunnel opens and stays open"},
+  {"h3": true, "method": "CONNECT", "path": "/", "authority": "bad host", "headers": {":protocol": "Connect-Udp"}, "note": "mixed-case :protocol, an authority with a space and no port: 400"},
+  {"h3": true, "method": "CONNECT", "path": "/", "authority": "bad host:53", "headers": {":protocol": "connect-udp"}, "note": "a space in the host: unresolvable, 403"},
+  {"h3": true, "method": "CONNECT", "path": "/", "authority": "host:80:90", "headers": {":protocol": "connect-udp"}, "note": "split on the last colon: host `host:80`, unresolvable, 403"},
+  {"h3": true, "method": "CONNECT", "path": "/", "authority": "host:80:x", "headers": {":protocol": "connect-udp"}, "note": "split on the last colon: a non-numeric port, 400"},
+  {"h3": true, "method": "CONNECT", "path": "/", "authority": "::1:{{deadport}}", "headers": {":protocol": "connect-udp"}, "maxMillis": 3000, "note": "an unbracketed IPv6 literal: host `::1`, the tunnel opens"},
+  {"h3": true, "method": "CONNECT", "path": "/", "authority": "a{b}:53", "headers": {":protocol": "connect-udp"}, "note": "characters invalid in a URI: unresolvable, 403"},
+  {"h3": true, "method": "CONNECT", "path": "/", "authority": "", "headers": {":protocol": "connect-udp"}, "note": "an empty :authority: 400"}
+ ]
+}

@@ -1,0 +1,170 @@
+{
+ "steps": [
+  {
+   "note": "reset",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a verification failure prints only HttpRequestPrettyPrintedDTO's fields, values without their negation",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "method": "!GET",
+     "path": "/some/{id}",
+     "pathParameters": {
+      "id": [
+       "[0-9]+"
+      ]
+     },
+     "queryStringParameters": {
+      "keyMatchStyle": "MATCHING_KEY",
+      "q": [
+       "!x",
+       "y"
+      ]
+     },
+     "headers": {
+      "!X-Neg": [
+       "a"
+      ],
+      "X-Pos": [
+       "!b"
+      ],
+      "X-Schema": [
+       {
+        "schema": {
+         "type": "string"
+        }
+       }
+      ]
+     },
+     "cookies": {
+      "c": "!v"
+     },
+     "socketAddress": {
+      "host": "h",
+      "port": 1234,
+      "scheme": "HTTPS"
+     },
+     "clientCertificate": {
+      "subject": "CN=x"
+     },
+     "secure": true,
+     "keepAlive": false,
+     "protocol": "HTTP_2",
+     "body": {
+      "type": "JSON",
+      "json": {
+       "a": 1
+      }
+     },
+     "localAddress": "1.2.3.4",
+     "remoteAddress": "5.6.7.8"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "a sequence prints each the same way",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "not": true,
+      "path": "!/a",
+      "body": {
+       "not": true,
+       "type": "STRING",
+       "string": "hello"
+      }
+     },
+     {
+      "path": "/b",
+      "body": {
+       "type": "JSON",
+       "json": {
+        "b": 2
+       },
+       "matchType": "STRICT"
+      }
+     },
+     {
+      "path": "/c",
+      "body": {
+       "type": "PARAMETERS",
+       "parameters": {
+        "p": [
+         "!1"
+        ]
+       }
+      }
+     },
+     {
+      "path": "/d",
+      "body": {
+       "type": "REGEX",
+       "regex": "a.*"
+      }
+     },
+     {
+      "path": "/e",
+      "body": "plain"
+     },
+     {
+      "path": "/f",
+      "headers": [
+       {
+        "name": "H",
+        "values": [
+         "1"
+        ]
+       },
+       {
+        "name": "H",
+        "values": [
+         "2"
+        ]
+       }
+      ]
+     },
+     {
+      "path": "/g",
+      "method": {
+       "schema": {
+        "type": "string",
+        "enum": [
+         "GET"
+        ]
+       }
+      },
+      "headers": {
+       "X-Opt": [
+        "?"
+       ],
+       "?X-Opt2": [
+        "v"
+       ]
+      }
+     },
+     {
+      "path": "/h",
+      "jwt": {
+       "claims": {
+        "sub": "x"
+       }
+      },
+      "respondBeforeBody": true,
+      "socketAddress": {
+       "host": "h"
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

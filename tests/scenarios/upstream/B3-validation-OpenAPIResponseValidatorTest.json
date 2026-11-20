@@ -1,0 +1,805 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) validation-OpenAPIResponseValidatorTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "5122a8381363",
+   "note": "shouldValidateRequiredResponseHeader (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/test"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldValidateRequiredResponseHeader (validation): traffic",
+   "case": "5122a8381363"
+  },
+  {
+   "method": "GET",
+   "path": "/test",
+   "note": "shouldValidateRequiredResponseHeader (validation): request",
+   "case": "5122a8381363"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\"title\": \"Test\", \"version\": \"1.0\"},\n  \"paths\": {\n    \"/test\": {\n      \"get\": {\n        \"operationId\": \"testOp\",\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\",\n            \"headers\": {\n              \"X-Request-Id\": {\n                \"required\": true,\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"type\": \"object\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldValidateRequiredResponseHeader (validation): trafficValidate",
+   "case": "5122a8381363"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d0fd8b208704",
+   "note": "shouldMatch404AgainstFourXXRangeBucketKey (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/notFound"
+    },
+    "httpResponse": {
+     "statusCode": 404,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"message\": \"not found\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldMatch404AgainstFourXXRangeBucketKey (validation): traffic",
+   "case": "d0fd8b208704"
+  },
+  {
+   "method": "GET",
+   "path": "/notFound",
+   "note": "shouldMatch404AgainstFourXXRangeBucketKey (validation): request",
+   "case": "d0fd8b208704"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: status code range example\n  version: 1.0.0\npaths:\n  /range:\n    get:\n      operationId: rangeOnly\n      responses:\n        '2XX':\n          description: success\n          content:\n            application/json:\n              schema:\n                type: string\n                example: \"ok\"\n  /notFound:\n    get:\n      operationId: notFoundRange\n      responses:\n        '4XX':\n          description: client error\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  message:\n                    type: string\n                required:\n                  - message\n  /exactAndRange:\n    get:\n      operationId: exactAndRange\n      responses:\n        '200':\n          description: exact success\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  exact:\n                    type: string\n                required:\n                  - exact\n                additionalProperties: false\n        '2XX':\n          description: range success\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  range:\n                    type: string\n                required:\n                  - range\n                additionalProperties: false\n"
+   },
+   "note": "shouldMatch404AgainstFourXXRangeBucketKey (validation): trafficValidate",
+   "case": "d0fd8b208704"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "02123cfa172a",
+   "note": "shouldReturnErrorForInvalidErrorSchemaResponse (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets"
+    },
+    "httpResponse": {
+     "statusCode": 500,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"wrong\": \"fields\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldReturnErrorForInvalidErrorSchemaResponse (validation): traffic",
+   "case": "02123cfa172a"
+  },
+  {
+   "method": "GET",
+   "path": "/pets",
+   "note": "shouldReturnErrorForInvalidErrorSchemaResponse (validation): request",
+   "case": "02123cfa172a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldReturnErrorForInvalidErrorSchemaResponse (validation): trafficValidate",
+   "case": "02123cfa172a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d0eb52f2f1b1",
+   "note": "shouldValidateResponseWithNoBody (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/pets"
+    },
+    "httpResponse": {
+     "statusCode": 201
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldValidateResponseWithNoBody (validation): traffic",
+   "case": "d0eb52f2f1b1"
+  },
+  {
+   "method": "POST",
+   "path": "/pets",
+   "note": "shouldValidateResponseWithNoBody (validation): request",
+   "case": "d0eb52f2f1b1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldValidateResponseWithNoBody (validation): trafficValidate",
+   "case": "d0eb52f2f1b1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f084834685af",
+   "note": "shouldPassWhenRequiredHeaderIsPresent (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/test"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ],
+      "X-Request-Id": [
+       "abc-123"
+      ]
+     },
+     "body": "{}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldPassWhenRequiredHeaderIsPresent (validation): traffic",
+   "case": "f084834685af"
+  },
+  {
+   "method": "GET",
+   "path": "/test",
+   "note": "shouldPassWhenRequiredHeaderIsPresent (validation): request",
+   "case": "f084834685af"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\"title\": \"Test\", \"version\": \"1.0\"},\n  \"paths\": {\n    \"/test\": {\n      \"get\": {\n        \"operationId\": \"testOp\",\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\",\n            \"headers\": {\n              \"X-Request-Id\": {\n                \"required\": true,\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"type\": \"object\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldPassWhenRequiredHeaderIsPresent (validation): trafficValidate",
+   "case": "f084834685af"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e664330c5974",
+   "note": "shouldReturnErrorForStatusCodeNotDefinedAndNoDefault (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/test"
+    },
+    "httpResponse": {
+     "statusCode": 404
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldReturnErrorForStatusCodeNotDefinedAndNoDefault (validation): traffic",
+   "case": "e664330c5974"
+  },
+  {
+   "method": "GET",
+   "path": "/test",
+   "note": "shouldReturnErrorForStatusCodeNotDefinedAndNoDefault (validation): request",
+   "case": "e664330c5974"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\"title\": \"Test\", \"version\": \"1.0\"},\n  \"paths\": {\n    \"/test\": {\n      \"get\": {\n        \"operationId\": \"testOp\",\n        \"responses\": {\n          \"200\": {\n            \"description\": \"OK\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldReturnErrorForStatusCodeNotDefinedAndNoDefault (validation): trafficValidate",
+   "case": "e664330c5974"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "2ea56471b36d",
+   "note": "shouldPreferExactStatusCodeOverRangeBucketKey (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/exactAndRange"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"exact\": \"value\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldPreferExactStatusCodeOverRangeBucketKey (validation): traffic",
+   "case": "2ea56471b36d"
+  },
+  {
+   "method": "GET",
+   "path": "/exactAndRange",
+   "note": "shouldPreferExactStatusCodeOverRangeBucketKey (validation): request",
+   "case": "2ea56471b36d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: status code range example\n  version: 1.0.0\npaths:\n  /range:\n    get:\n      operationId: rangeOnly\n      responses:\n        '2XX':\n          description: success\n          content:\n            application/json:\n              schema:\n                type: string\n                example: \"ok\"\n  /notFound:\n    get:\n      operationId: notFoundRange\n      responses:\n        '4XX':\n          description: client error\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  message:\n                    type: string\n                required:\n                  - message\n  /exactAndRange:\n    get:\n      operationId: exactAndRange\n      responses:\n        '200':\n          description: exact success\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  exact:\n                    type: string\n                required:\n                  - exact\n                additionalProperties: false\n        '2XX':\n          description: range success\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  range:\n                    type: string\n                required:\n                  - range\n                additionalProperties: false\n"
+   },
+   "note": "shouldPreferExactStatusCodeOverRangeBucketKey (validation): trafficValidate",
+   "case": "2ea56471b36d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ae2662671ba6",
+   "note": "shouldValidateErrorSchemaResponse (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets"
+    },
+    "httpResponse": {
+     "statusCode": 500,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"code\": 500, \"message\": \"internal error\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldValidateErrorSchemaResponse (validation): traffic",
+   "case": "ae2662671ba6"
+  },
+  {
+   "method": "GET",
+   "path": "/pets",
+   "note": "shouldValidateErrorSchemaResponse (validation): request",
+   "case": "ae2662671ba6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldValidateErrorSchemaResponse (validation): trafficValidate",
+   "case": "ae2662671ba6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "087c5d8989ee",
+   "note": "shouldMatchStatusCodeAgainstLowercaseRangeBucketKey (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/range"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "\"ok\""
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldMatchStatusCodeAgainstLowercaseRangeBucketKey (validation): traffic",
+   "case": "087c5d8989ee"
+  },
+  {
+   "method": "GET",
+   "path": "/range",
+   "note": "shouldMatchStatusCodeAgainstLowercaseRangeBucketKey (validation): request",
+   "case": "087c5d8989ee"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: lowercase status code range example\n  version: 1.0.0\npaths:\n  /range:\n    get:\n      operationId: lowercaseRangeOnly\n      responses:\n        # Non-conformant lowercase range key; the generator accepts it, so the validator\n        # must match it case-insensitively against the \"2XX\" bucket.\n        '2xx':\n          description: success\n          content:\n            application/json:\n              schema:\n                type: string\n                example: \"ok\"\n"
+   },
+   "note": "shouldMatchStatusCodeAgainstLowercaseRangeBucketKey (validation): trafficValidate",
+   "case": "087c5d8989ee"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9bccb326acc5",
+   "note": "shouldMatchStatusCodeAgainstRangeBucketKey (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/range"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "\"ok\""
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldMatchStatusCodeAgainstRangeBucketKey (validation): traffic",
+   "case": "9bccb326acc5"
+  },
+  {
+   "method": "GET",
+   "path": "/range",
+   "note": "shouldMatchStatusCodeAgainstRangeBucketKey (validation): request",
+   "case": "9bccb326acc5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: status code range example\n  version: 1.0.0\npaths:\n  /range:\n    get:\n      operationId: rangeOnly\n      responses:\n        '2XX':\n          description: success\n          content:\n            application/json:\n              schema:\n                type: string\n                example: \"ok\"\n  /notFound:\n    get:\n      operationId: notFoundRange\n      responses:\n        '4XX':\n          description: client error\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  message:\n                    type: string\n                required:\n                  - message\n  /exactAndRange:\n    get:\n      operationId: exactAndRange\n      responses:\n        '200':\n          description: exact success\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  exact:\n                    type: string\n                required:\n                  - exact\n                additionalProperties: false\n        '2XX':\n          description: range success\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  range:\n                    type: string\n                required:\n                  - range\n                additionalProperties: false\n"
+   },
+   "note": "shouldMatchStatusCodeAgainstRangeBucketKey (validation): trafficValidate",
+   "case": "9bccb326acc5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "deb5693a2367",
+   "note": "shouldReturnErrorForInvalidResponseBody (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets/1"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"invalid\": \"body\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldReturnErrorForInvalidResponseBody (validation): traffic",
+   "case": "deb5693a2367"
+  },
+  {
+   "method": "GET",
+   "path": "/pets/1",
+   "note": "shouldReturnErrorForInvalidResponseBody (validation): request",
+   "case": "deb5693a2367"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldReturnErrorForInvalidResponseBody (validation): trafficValidate",
+   "case": "deb5693a2367"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d96ed527e2f0",
+   "note": "shouldReturnNoErrorsForValidResponse (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "[{\"id\": 1, \"name\": \"Fido\"}]"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldReturnNoErrorsForValidResponse (validation): traffic",
+   "case": "d96ed527e2f0"
+  },
+  {
+   "method": "GET",
+   "path": "/pets",
+   "note": "shouldReturnNoErrorsForValidResponse (validation): request",
+   "case": "d96ed527e2f0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldReturnNoErrorsForValidResponse (validation): trafficValidate",
+   "case": "d96ed527e2f0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "3d07b1c51b4b",
+   "note": "shouldReturnErrorForInvalidArrayResponseBody (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"not\": \"an array\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldReturnErrorForInvalidArrayResponseBody (validation): traffic",
+   "case": "3d07b1c51b4b"
+  },
+  {
+   "method": "GET",
+   "path": "/pets",
+   "note": "shouldReturnErrorForInvalidArrayResponseBody (validation): request",
+   "case": "3d07b1c51b4b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldReturnErrorForInvalidArrayResponseBody (validation): trafficValidate",
+   "case": "3d07b1c51b4b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b388e0d05071",
+   "note": "shouldReturnErrorForUndefinedStatusCode (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets/1"
+    },
+    "httpResponse": {
+     "statusCode": 404,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"code\": 404, \"message\": \"not found\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldReturnErrorForUndefinedStatusCode (validation): traffic",
+   "case": "b388e0d05071"
+  },
+  {
+   "method": "GET",
+   "path": "/pets/1",
+   "note": "shouldReturnErrorForUndefinedStatusCode (validation): request",
+   "case": "b388e0d05071"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldReturnErrorForUndefinedStatusCode (validation): trafficValidate",
+   "case": "b388e0d05071"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "1feb7b332b4a",
+   "note": "shouldUseExactStatusCodeSchemaNotRangeBucketForValidation (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/exactAndRange"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"range\": \"value\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldUseExactStatusCodeSchemaNotRangeBucketForValidation (validation): traffic",
+   "case": "1feb7b332b4a"
+  },
+  {
+   "method": "GET",
+   "path": "/exactAndRange",
+   "note": "shouldUseExactStatusCodeSchemaNotRangeBucketForValidation (validation): request",
+   "case": "1feb7b332b4a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.0\ninfo:\n  title: status code range example\n  version: 1.0.0\npaths:\n  /range:\n    get:\n      operationId: rangeOnly\n      responses:\n        '2XX':\n          description: success\n          content:\n            application/json:\n              schema:\n                type: string\n                example: \"ok\"\n  /notFound:\n    get:\n      operationId: notFoundRange\n      responses:\n        '4XX':\n          description: client error\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  message:\n                    type: string\n                required:\n                  - message\n  /exactAndRange:\n    get:\n      operationId: exactAndRange\n      responses:\n        '200':\n          description: exact success\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  exact:\n                    type: string\n                required:\n                  - exact\n                additionalProperties: false\n        '2XX':\n          description: range success\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  range:\n                    type: string\n                required:\n                  - range\n                additionalProperties: false\n"
+   },
+   "note": "shouldUseExactStatusCodeSchemaNotRangeBucketForValidation (validation): trafficValidate",
+   "case": "1feb7b332b4a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9509940bbc96",
+   "note": "shouldReturnNoErrorsForValidSinglePetResponse (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets/1"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"id\": 1, \"name\": \"Fido\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldReturnNoErrorsForValidSinglePetResponse (validation): traffic",
+   "case": "9509940bbc96"
+  },
+  {
+   "method": "GET",
+   "path": "/pets/1",
+   "note": "shouldReturnNoErrorsForValidSinglePetResponse (validation): request",
+   "case": "9509940bbc96"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldReturnNoErrorsForValidSinglePetResponse (validation): trafficValidate",
+   "case": "9509940bbc96"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e552aee91c42",
+   "note": "shouldHandleDefaultStatusCode (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets/1"
+    },
+    "httpResponse": {
+     "statusCode": 503,
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"code\": 503, \"message\": \"service unavailable\"}"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldHandleDefaultStatusCode (validation): traffic",
+   "case": "e552aee91c42"
+  },
+  {
+   "method": "GET",
+   "path": "/pets/1",
+   "note": "shouldHandleDefaultStatusCode (validation): request",
+   "case": "e552aee91c42"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldHandleDefaultStatusCode (validation): trafficValidate",
+   "case": "e552aee91c42"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a7fad5eeeed7",
+   "note": "shouldHandleNullStatusCode (validation): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/pets"
+    },
+    "httpResponse": {
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "[{\"id\": 1, \"name\": \"Fido\"}]"
+    },
+    "times": {
+     "remainingTimes": 1
+    }
+   },
+   "note": "shouldHandleNullStatusCode (validation): traffic",
+   "case": "a7fad5eeeed7"
+  },
+  {
+   "method": "GET",
+   "path": "/pets",
+   "note": "shouldHandleNullStatusCode (validation): request",
+   "case": "a7fad5eeeed7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"version\": \"1.0.0\",\n    \"title\": \"Swagger Petstore\",\n    \"license\": {\n      \"name\": \"MIT\"\n    }\n  },\n  \"servers\": [\n    {\n      \"url\": \"http://petstore.swagger.io/v1\"\n    }\n  ],\n  \"paths\": {\n    \"/pets\": {\n      \"get\": {\n        \"summary\": \"List all pets\",\n        \"operationId\": \"listPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"A paged array of pets\",\n            \"headers\": {\n              \"x-next\": {\n                \"description\": \"A link to the next page of responses\",\n                \"schema\": {\n                  \"type\": \"string\"\n                }\n              }\n            },\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pets\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      },\n      \"post\": {\n        \"summary\": \"Create a pet\",\n        \"operationId\": \"createPets\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"requestBody\": {\n          \"description\": \"a pet\",\n          \"required\": true,\n          \"content\": {\n            \"application/json\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            },\n            \"*/*\": {\n              \"schema\": {\n                \"$ref\": \"#/components/schemas/Pet\"\n              }\n            }\n          }\n        },\n        \"responses\": {\n          \"201\": {\n            \"description\": \"Null response\"\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/pets/{petId}\": {\n      \"get\": {\n        \"summary\": \"Info for a specific pet\",\n        \"operationId\": \"showPetById\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"petId\",\n            \"in\": \"path\",\n            \"required\": true,\n            \"description\": \"The id of the pet to retrieve\",\n            \"schema\": {\n              \"type\": \"string\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"400\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"500\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    },\n    \"/some/path\": {\n      \"get\": {\n        \"summary\": \"Additional request with extra matchers\",\n        \"operationId\": \"somePath\",\n        \"tags\": [\n          \"pets\"\n        ],\n        \"parameters\": [\n          {\n            \"name\": \"limit\",\n            \"in\": \"query\",\n            \"description\": \"How many items to return at one time (max 100)\",\n            \"required\": false,\n            \"schema\": {\n              \"type\": \"integer\",\n              \"format\": \"int32\"\n            }\n          },\n          {\n            \"in\": \"header\",\n            \"name\": \"X-Request-ID\",\n            \"schema\": {\n              \"type\": \"string\",\n              \"format\": \"uuid\"\n            },\n            \"required\": true\n          }\n        ],\n        \"responses\": {\n          \"200\": {\n            \"description\": \"Expected response to a valid request\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Pet\"\n                }\n              }\n            }\n          },\n          \"default\": {\n            \"description\": \"unexpected error\",\n            \"content\": {\n              \"application/json\": {\n                \"schema\": {\n                  \"$ref\": \"#/components/schemas/Error\"\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"Pet\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"name\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"integer\",\n            \"format\": \"int64\"\n          },\n          \"name\": {\n            \"type\": \"string\"\n          },\n          \"tag\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"Pets\": {\n        \"type\": \"array\",\n        \"items\": {\n          \"$ref\": \"#/components/schemas/Pet\"\n        }\n      },\n      \"Error\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"properties\": {\n          \"code\": {\n            \"type\": \"integer\",\n            \"format\": \"int32\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    }\n  }\n}"
+   },
+   "note": "shouldHandleNullStatusCode (validation): trafficValidate",
+   "case": "a7fad5eeeed7"
+  }
+ ]
+}

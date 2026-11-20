@@ -1,0 +1,53 @@
+{
+  "routes": [
+    {
+      "type": "http",
+      "method": "all",
+      "endpoint": "files/:name/*.txt",
+      "responseMode": "DISABLE_RULES",
+      "responses": [ { "statusCode": 200, "body": "first", "rules": [ { "target": "query", "modifier": "a", "value": "b" } ] }, { "statusCode": 500 } ]
+    },
+    {
+      "uuid": "fallback",
+      "method": "post",
+      "endpoint": "/v1/items(1)",
+      "responseMode": "FALLBACK",
+      "responses": [
+        {
+          "statusCode": 201,
+          "headers": [ { "key": "Set-Cookie", "value": "x=1" }, { "key": "X-None" } ],
+          "body": "{{faker 'name'}}",
+          "latency": 0,
+          "bodyType": "FILE",
+          "databucketID": "db1",
+          "rulesOperator": "OR",
+          "rules": [
+            { "target": "header", "modifier": "X-Mode", "value": "fast", "operator": "regex_i", "invert": true },
+            { "target": "query", "modifier": "q", "value": "1" }
+          ]
+        },
+        {
+          "statusCode": 202,
+          "rules": [
+            { "target": "body", "modifier": "user.id", "value": "7" },
+            { "target": "header", "value": "x" },
+            { "target": "query", "value": "x" },
+            { "target": "params", "modifier": "id", "value": "1" },
+            { "target": "method", "value": "GET" },
+            { "target": "request_number", "value": "1" },
+            { "value": "no target" },
+            { "target": "cookie", "modifier": "c", "value": "1", "operator": "empty_array" }
+          ]
+        },
+        { "statusCode": 203, "rules": [ { "target": "body", "value": "a.b", "operator": "regex" } ] },
+        { "statusCode": 204, "rules": [ { "target": "body", "value": "plain" } ] },
+        { "statusCode": 205, "rules": [ { "target": "body", "modifier": "$.x" }, { "target": "path", "value": "/" } ] },
+        { "statusCode": 206, "rules": [ { "target": "body" } ], "default": true }
+      ]
+    },
+    { "type": "http", "method": "get", "endpoint": "", "responses": [] },
+    { "method": "put", "responseMode": "SEQUENTIAL", "responses": [ { "statusCode": 200, "rules": [ { "target": "query", "modifier": "x", "value": "1" } ] } ] },
+    { "type": "ws", "endpoint": "socket", "responses": [ { "statusCode": 101 } ] },
+    { "method": "get", "endpoint": "only-default", "responses": [ { "statusCode": 200, "default": true, "rules": [ { "target": "query", "modifier": "x", "value": "1" } ] } ] }
+  ]
+}

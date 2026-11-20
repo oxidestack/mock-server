@@ -1,0 +1,25 @@
+{
+  "note": "Upstream #227: a controlPlaneTLSMutualAuthenticationCAChain holding the bundled CA is refused before anything is bound (requireUsableControlPlaneMutualTls)",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{files}}/tls/private-ca/attack/trusted-and-bundled-reissued.pem\n",
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": false,
+    "exitCode": 0,
+    "stdoutInOrder": [
+      "[INFO] stopped for ports: []",
+      "java -jar <path to mockserver-netty-jar-with-dependencies.jar> -serverPort <port>"
+    ],
+    "stdoutNotContains": [
+      "started on port",
+      "controlPlaneTLSMutualAuthenticationCAChain contains"
+    ]
+  }
+}

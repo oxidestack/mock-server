@@ -1,0 +1,41 @@
+{
+ "properties": {
+  "dnsEnabled": "true",
+  "dnsPort": "18553"
+ },
+ "steps": [
+  {
+   "note": "a DNS expectation for one query, and one that expires after a second",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "dns-once",
+     "httpRequest": {"dnsName": "once.example.com", "dnsType": "A"},
+     "dnsResponse": {"answerRecords": [{"name": "once.example.com", "type": "A", "value": "10.0.0.1", "ttl": 60}]},
+     "times": {"remainingTimes": 1}
+    },
+    {
+     "id": "dns-ttl",
+     "httpRequest": {"dnsName": "ttl.example.com", "dnsType": "A"},
+     "dnsResponse": {"answerRecords": [{"name": "ttl.example.com", "type": "A", "value": "10.0.0.2", "ttl": 60}]},
+     "timeToLive": {"timeUnit": "SECONDS", "timeToLive": 1}
+    }
+   ]
+  },
+  {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"note": "answered, which uses it up", "udp": "AQEBAAABAAAAAAAABG9uY2UHZXhhbXBsZQNjb20AAAEAAQ=="},
+  {"sleepMillis": 1600},
+  {"note": "NXDOMAIN: the used-up one stays (DNS never ends its response in progress), the expired one is dropped", "udp": "AQIBAAABAAAAAAAABG9uY2UHZXhhbXBsZQNjb20AAAEAAQ=="},
+  {"sleepMillis": 500},
+  {"note": "the removal is logged from the oracle's scheduler, racing the query's own entries", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "compare": "unordered", "mask": ["(?<=\"endDate\" : )\\d+"]},
+  {"note": "the expired one's removal is about its DNS matcher, which only a DNS filter shows", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"dnsName": "ttl.example.com"}, "mask": ["(?<=\"endDate\" : )\\d+"]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "a query for the expired one: no expectation left", "udp": "AQMBAAABAAAAAAAAA3R0bAdleGFtcGxlA2NvbQAAAQAB"},
+  {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+  {"note": "the used-up one is still evaluated, as not matching, and kept", "udp": "AQIBAAABAAAAAAAABG9uY2UHZXhhbXBsZQNjb20AAAEAAQ=="},
+  {"sleepMillis": 300},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"}
+ ]
+}

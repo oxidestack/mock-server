@@ -1,0 +1,356 @@
+{
+ "properties": {
+  "forwardProxyRetryCount": "2",
+  "forwardProxyRetryBackoffMillis": "100"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/up503"
+     },
+     "httpResponse": {
+      "statusCode": 503,
+      "body": "down"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/up502"
+     },
+     "httpResponse": {
+      "statusCode": 502,
+      "body": "bad gateway"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/up504"
+     },
+     "httpResponse": {
+      "statusCode": 504,
+      "body": "timeout"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/up500"
+     },
+     "httpResponse": {
+      "statusCode": 500,
+      "body": "error"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ok"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "fine"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovr503"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up503",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovr502"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up502",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovr504"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up504",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovr500"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up500",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovrok"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/ok",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/tpl503"
+     },
+     "httpForwardTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{'method': '$request.method', 'path': '/up503', 'headers': {'Host': ['localhost:{{port}}']}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dead"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "GET to a 503: the first attempt and two retries, linear back-off 100 + 200 ms",
+   "method": "GET",
+   "path": "/ovr503",
+   "minMillis": 300
+  },
+  {
+   "note": "three upstream GETs",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/up503"
+    },
+    "times": {
+     "atLeast": 3,
+     "atMost": 3
+    }
+   }
+  },
+  {
+   "note": "POST is not idempotent: sent once",
+   "method": "POST",
+   "path": "/ovr503",
+   "body": "payload"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/up503"
+    },
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   }
+  },
+  {
+   "note": "PATCH is not idempotent: sent once",
+   "method": "PATCH",
+   "path": "/ovr503",
+   "body": "payload"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "method": "PATCH",
+     "path": "/up503"
+    },
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   }
+  },
+  {
+   "note": "PUT, DELETE, HEAD, OPTIONS and lower-case get are retried",
+   "method": "PUT",
+   "path": "/ovr503",
+   "body": "payload"
+  },
+  {
+   "method": "DELETE",
+   "path": "/ovr503"
+  },
+  {
+   "method": "HEAD",
+   "path": "/ovr503"
+  },
+  {
+   "method": "OPTIONS",
+   "path": "/ovr503"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/up503"
+   }
+  },
+  {
+   "note": "502 and 504 are retried, 500 is not",
+   "method": "GET",
+   "path": "/ovr502"
+  },
+  {
+   "method": "GET",
+   "path": "/ovr504"
+  },
+  {
+   "method": "GET",
+   "path": "/ovr500"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/up502"
+    },
+    "times": {
+     "atLeast": 3,
+     "atMost": 3
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/up504"
+    },
+    "times": {
+     "atLeast": 3,
+     "atMost": 3
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/up500"
+    },
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   }
+  },
+  {
+   "note": "a success is not retried",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/ok"
+    },
+    "times": {
+     "atLeast": 1,
+     "atMost": 1
+    }
+   }
+  },
+  {
+   "note": "httpForwardTemplate retries too",
+   "method": "GET",
+   "path": "/tpl503"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/up503"
+    },
+    "times": {
+     "atLeast": 6,
+     "atMost": 6
+    }
+   }
+  },
+  {
+   "note": "a refused connection is retried with back-off, then failed as before",
+   "method": "GET",
+   "path": "/dead",
+   "minMillis": 300
+  },
+  {
+   "note": "POST to a refused connection: no retry",
+   "method": "POST",
+   "path": "/dead"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/dead"
+   },
+   "mask": [
+    {
+     "regex": "\"host\" : \\[ \"localhost:<port>\" \\],\\s*\"content-length\" : \\[ \"0\" \\]|\"content-length\" : \\[ \"0\" \\],\\s*\"Host\" : \\[ \"<deadhost>\" \\]",
+     "replace": "<received request headers>"
+    }
+   ],
+   "note": "the received request's Host in log lines about an httpForward is nondeterministic upstream (docs/divergences.md)"
+  }
+ ]
+}

@@ -1,0 +1,49 @@
+{
+ "quic": true,
+ "source": "Http3DataPlaneAuthenticationIntegrationTest.shouldNotGateControlPlaneOverHttp3WithoutDataPlaneCredentials. Http3MockServerHandler tries only HttpState.handle before the data plane, so the routes HttpRequestHandler serves itself on TCP (status, ready, bind, stop, configuration, http3status, dashboard, openapi.yaml, metrics, the LLM report and diff, the liveness path) fall through over HTTP/3 to DataPlaneAuthenticationGate, which exempts /mockserver/* and the liveness path, and then to the data plane.",
+ "properties": {
+  "http3Port": "19688",
+  "dataPlaneAuthenticationRequired": "true",
+  "dataPlaneBasicAuthenticationUsername": "user",
+  "dataPlaneBasicAuthenticationPassword": "secret",
+  "dataPlaneBasicAuthenticationRealm": "data-plane-realm",
+  "dataPlaneBearerAuthenticationToken": "bearer-token-123",
+  "dataPlaneApiKeyAuthenticationHeader": "x-api-key",
+  "dataPlaneApiKeyAuthenticationValue": "key-abc",
+  "attemptToProxyIfNoMatchingExpectation": "false",
+  "livenessHttpGetPath": "/health",
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "pollUntil": "\"enabled\" ?: ?true",
+   "note": "wait for the HTTP/3 server"
+  },
+  {"h3": true, "method": "PUT", "path": "/mockserver/expectation", "headers": {"content-type": "application/json"}, "body": "{\"httpRequest\":{\"path\":\"/mocked\"},\"httpResponse\":{\"statusCode\":200,\"body\":\"mocked-body\"}}", "note": "HttpState.handle: an expectation created over HTTP/3 without data-plane credentials"},
+  {"h3": true, "method": "GET", "path": "/mocked", "note": "the data plane without credentials: 401"},
+  {"h3": true, "method": "GET", "path": "/mocked", "headers": {"authorization": "Bearer bearer-token-123"}, "note": "the data plane with the bearer token"},
+  {"h3": true, "method": "PUT", "path": "/mockserver/clear", "note": "HttpState.handle: clear without data-plane credentials"},
+  {"h3": true, "method": "PUT", "path": "/mockserver/status", "note": "HttpRequestHandler's status: falls through, exempt from the gate, no expectation: 404"},
+  {"h3": true, "method": "PUT", "path": "/mockserver/status", "headers": {"authorization": "Bearer bearer-token-123"}, "note": "the same with credentials"},
+  {"h3": true, "method": "PUT", "path": "/status", "note": "the bare alias is not under /mockserver: the gate answers 401"},
+  {"h3": true, "method": "GET", "path": "/mockserver/ready", "note": "readiness probe falls through"},
+  {"h3": true, "method": "GET", "path": "/health", "note": "the liveness path falls through, exempt from the gate"},
+  {"h3": true, "method": "GET", "path": "/mockserver/http3status", "note": "falls through"},
+  {"h3": true, "method": "GET", "path": "/mockserver/configuration", "note": "falls through"},
+  {"h3": true, "method": "PUT", "path": "/mockserver/configuration", "headers": {"content-type": "application/json"}, "body": "{\"logLevel\":\"INFO\"}", "note": "falls through"},
+  {"h3": true, "method": "GET", "path": "/mockserver/dashboard", "note": "falls through"},
+  {"h3": true, "method": "GET", "path": "/mockserver/openapi.yaml", "note": "falls through"},
+  {"h3": true, "method": "GET", "path": "/mockserver/metrics", "note": "falls through"},
+  {"h3": true, "method": "GET", "path": "/mockserver/metrics", "headers": {"accept": "application/openmetrics-text"}, "note": "the OpenMetrics scrape falls through too"},
+  {"h3": true, "method": "GET", "path": "/mockserver/llm/optimisationReport", "note": "falls through"},
+  {"h3": true, "method": "PUT", "path": "/mockserver/llm/diffRuns", "headers": {"content-type": "application/json"}, "body": "{}", "note": "falls through"},
+  {"h3": true, "method": "PUT", "path": "/mockserver/bind", "headers": {"content-type": "application/json"}, "body": "{\"ports\":[0]}", "note": "falls through: nothing is bound"},
+  {"h3": true, "method": "GET", "path": "/mockserver/mode", "note": "HttpState.handle's GETs are served"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS&format=JSON", "note": "what the data plane received"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "note": "what the fall-throughs logged"},
+  {"h3": true, "method": "PUT", "path": "/mockserver/stop", "note": "falls through: the server keeps running"},
+  {"method": "PUT", "path": "/mockserver/status", "note": "still running over TCP"}
+ ]
+}

@@ -1,0 +1,73 @@
+{
+ "source": "harvested from mockserver-core 9.2.0 (789142c14) template-MustacheDateTemplateHelperTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "52bc6b059d18",
+   "note": "shouldReportInvalidOptionAsTemplateFailure (template): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {},
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{ 'statusCode': 200, 'body': '{{#dates.render}}now|shift=1 days{{/dates.render}}' }"
+    }
+   },
+   "note": "shouldReportInvalidOptionAsTemplateFailure (template): template",
+   "case": "52bc6b059d18"
+  },
+  {
+   "method": "GET",
+   "path": "/token",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "shouldReportInvalidOptionAsTemplateFailure (template): request",
+   "case": "52bc6b059d18"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "47337f453499",
+   "note": "shouldRenderDocumentedExample (template): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {},
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{ 'statusCode': 200, 'headers': { 'Expires': [ '{{#dates.render}}now|offset=1 hours|format=rfc1123{{/dates.render}}' ], 'Last-Modified': [ '{{ dates.now.startOfDay.rfc1123 }}' ] }, 'body': 'billing period ends {{#dates.render}}now|zone=Europe/London|truncate=lastDayOfMonth|format=d MMMM yyyy{{/dates.render}}' }"
+    }
+   },
+   "note": "shouldRenderDocumentedExample (template): template",
+   "case": "47337f453499"
+  },
+  {
+   "method": "GET",
+   "path": "/token",
+   "headers": {
+    "Date": "Wed, 21 Oct 2026 15:04:05 GMT"
+   },
+   "note": "shouldRenderDocumentedExample (template): request",
+   "case": "47337f453499",
+   "mask": [
+    {
+     "regex": "[A-Z][a-z]{2}, \\d{2} [A-Z][a-z]{2} \\d{4} \\d{2}:\\d{2}:\\d{2} GMT",
+     "replace": "<http date>",
+     "reason": "the server clock's now"
+    },
+    {
+     "regex": "billing period ends \\d{1,2} [A-Z][a-z]+ \\d{4}",
+     "replace": "billing period ends <date>",
+     "reason": "the server clock's now at month grain"
+    }
+   ]
+  }
+ ]
+}

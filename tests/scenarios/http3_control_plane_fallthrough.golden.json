@@ -1,0 +1,385 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19688\"; ma=86400",
+        "connection: keep-alive",
+        "content-length: 51",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\"enabled\":true,\"port\":19688,\"activeConnections\":0}",
+      "note": "wait for the HTTP/3 server"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "server: mockserver-http3",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/mocked\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"body\" : \"mocked-body\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "end": "fin",
+      "note": "HttpState.handle: an expectation created over HTTP/3 without data-plane credentials"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "the data plane without credentials: 401"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 200,
+      "headers": [
+        "server: mockserver-http3"
+      ],
+      "body": "mocked-body",
+      "end": "fin",
+      "note": "the data plane with the bearer token"
+    },
+    {
+      "frames": [
+        "HEADERS"
+      ],
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "server: mockserver-http3",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "end": "fin",
+      "note": "HttpState.handle: clear without data-plane credentials"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "HttpRequestHandler's status: falls through, exempt from the gate, no expectation: 404"
+    },
+    {
+      "frames": [
+        "HEADERS"
+      ],
+      "status": 404,
+      "headers": [
+        "server: mockserver-http3"
+      ],
+      "body": "",
+      "end": "fin",
+      "note": "the same with credentials"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "the bare alias is not under /mockserver: the gate answers 401"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "readiness probe falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "the liveness path falls through, exempt from the gate"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "the OpenMetrics scrape falls through too"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through: nothing is bound"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "server: mockserver-http3",
+        "version: 9.2.0"
+      ],
+      "body": "{\"mode\":\"SIMULATE\",\"proxyUnmatchedRequests\":false}",
+      "end": "fin",
+      "note": "HttpState.handle's GETs are served"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19688\"; ma=86400",
+        "connection: keep-alive",
+        "content-length: 203",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"headers\" : {\n    \"authorization\" : [ \"***REDACTED***\" ],\n    \"host\" : [ \"localhost:19688\" ]\n  },\n  \"method\" : \"PUT\",\n  \"path\" : \"/mockserver/status\",\n  \"protocol\" : \"HTTP_3\",\n  \"secure\" : true\n} ]",
+      "note": "what the data plane received"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19688\"; ma=86400",
+        "connection: keep-alive",
+        "content-length: 9727",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - cleared logs that match:\n\n  {}\n\n------------------------------------\n<timestamp> - removed expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/mocked\"\n    },\n    \"httpResponse\" : {\n      \"statusCode\" : 200,\n      \"body\" : \"mocked-body\"\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/status\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/status\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ],\n      \"authorization\" : [ \"***REDACTED***\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - no expectation for:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/status\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ],\n      \"authorization\" : [ \"***REDACTED***\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n returning response:\n\n  {\n    \"statusCode\" : 404,\n    \"reasonPhrase\" : \"Not Found\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/status\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/ready\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/health\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/http3status\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/configuration\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/configuration\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ],\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : {\n      \"logLevel\" : \"INFO\"\n    }\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/dashboard\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/openapi.yaml\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/metrics\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/metrics\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ],\n      \"accept\" : [ \"application/openmetrics-text\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/mockserver/llm/optimisationReport\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/llm/diffRuns\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ],\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : { }\n  }\n\n------------------------------------\n<timestamp> - data plane authentication failed so returning response:\n\n  {\n    \"statusCode\" : 401,\n    \"reasonPhrase\" : \"Unauthorized\",\n    \"headers\" : {\n      \"www-authenticate\" : [ \"Basic realm=\\\"data-plane-realm\\\", charset=\\\"UTF-8\\\"\" ]\n    },\n    \"body\" : \"Unauthorized for data plane\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"PUT\",\n    \"path\" : \"/mockserver/bind\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:19688\" ],\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"secure\" : true,\n    \"protocol\" : \"HTTP_3\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : {\n      \"ports\" : [ 0 ]\n    }\n  }\n\n------------------------------------\n<timestamp> - retrieved requests in json that match:\n\n  { }\n\n",
+      "note": "what the fall-throughs logged"
+    },
+    {
+      "frames": [
+        "HEADERS",
+        "DATA"
+      ],
+      "status": 401,
+      "headers": [
+        "server: mockserver-http3",
+        "www-authenticate: Basic realm=\"data-plane-realm\", charset=\"UTF-8\""
+      ],
+      "body": "Unauthorized for data plane",
+      "end": "fin",
+      "note": "falls through: the server keeps running"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19688\"; ma=86400",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"artifactId\" : \"mockserver-core\",\n  \"gitHash\" : \"789142c1\",\n  \"groupId\" : \"org.mock-server\",\n  \"ports\" : [ <port> ],\n  \"version\" : \"9.2.0\"\n}",
+      "note": "still running over TCP"
+    }
+  ]
+}

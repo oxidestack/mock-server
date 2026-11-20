@@ -1,0 +1,232 @@
+{
+ "source": "hand-written: with globalResponseDelayMillis set, a rate-limited SSE, WebSocket or gRPC stream 429 goes through writeResponseActionResponse, which applies the global delay (the logged response carries a timing block) and does not count http_chaos_injected; the gRPC log retrieve has maxMillis because the oracle can take ~8 s to filter its log by the gRPC path",
+ "properties": {
+  "globalResponseDelayMillis": "1000",
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyBase64": "CvgDCg5ncmVldGluZy5wcm90bxIQY29tLmV4YW1wbGUuZ3JwYyIiCgxIZWxsb1JlcXVlc3QSEgoEbmFtZRgBIAEoCVIEbmFtZSIrCg1IZWxsb1Jlc3BvbnNlEhoKCGdyZWV0aW5nGAEgASgJUghncmVldGluZzLWAgoPR3JlZXRpbmdTZXJ2aWNlEksKCEdyZWV0aW5nEh4uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1JlcXVlc3QaHy5jb20uZXhhbXBsZS5ncnBjLkhlbGxvUmVzcG9uc2USUgoNTGlzdEdyZWV0aW5ncxIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlMAESVQoQQ29sbGVjdEdyZWV0aW5ncxIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlKAESSwoEQ2hhdBIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlKAEwAUIiChBjb20uZXhhbXBsZS5ncnBjQg5HcmVldGluZ1Byb3Rvc2IGcHJvdG8z",
+   "note": "the greeting service's descriptors"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "rl-sse",
+     "httpRequest": {
+      "path": "/rl/sse"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "one"
+       }
+      ]
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "id": "rl-ws",
+     "httpRequest": {
+      "path": "/rl/ws"
+     },
+     "httpWebSocketResponse": {
+      "messages": [
+       {
+        "text": "a"
+       }
+      ]
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "id": "rl-grpc",
+     "httpRequest": {
+      "path": "/com.example.grpc.GreetingService/ListGreetings"
+     },
+     "grpcStreamResponse": {
+      "statusName": "OK",
+      "messages": [
+       {
+        "json": "{\"greeting\": \"one\"}"
+       }
+      ]
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "method": "GET",
+   "path": "/rl/sse",
+   "note": "SSE 1: the stream"
+  },
+  {
+   "method": "GET",
+   "path": "/rl/sse",
+   "note": "SSE 2 over the limit: the 429, held back by the global delay",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "minMillis": 1000
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /rl/ws HTTP/1.1\r\nHost: ws.example.com\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 1,
+   "note": "WebSocket 1: the upgrade and its message"
+  },
+  {
+   "method": "GET",
+   "path": "/rl/ws",
+   "note": "WebSocket 2 over the limit (a plain GET matches too): the 429, held back by the global delay",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "minMillis": 1000
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "gRPC stream 1"
+  },
+  {
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "note": "gRPC stream 2 over the limit: the 429, held back by the global delay",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "minMillis": 1000
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/rl/sse"
+   },
+   "note": "the 429 logged as returning response for the streaming action",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    {
+     "regex": "(totalTimeInMillis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/rl/ws"
+   },
+   "note": "the 429 logged as returning response for the streaming action",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    {
+     "regex": "(totalTimeInMillis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/ListGreetings"
+   },
+   "note": "the 429 logged as returning response for the streaming action",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    {
+     "regex": "(totalTimeInMillis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ],
+   "maxMillis": 30000
+  },
+  {
+   "note": "the streaming 429s are not counted as http_chaos_injected",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_http_chaos_injected_).*\\n",
+     "replace": ""
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,29 @@
+{
+  "source": "_JAVA_OPTIONS comes after JAVA_TOOL_OPTIONS and the last heap flag wins (-XX:MaxHeapSize and -Xmx alike); setting JAVA_TOOL_OPTIONS replaces the image's -XX:+UseZGC, so G1 aligns the 20000001k ceiling up to its 8 MiB region (heap/2048, a power of two) rather than ZGC's 2 MiB.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-XX:MaxHeapSize=300m -Xmx1g",
+    "_JAVA_OPTIONS": "-Xmx20000001k"
+  },
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

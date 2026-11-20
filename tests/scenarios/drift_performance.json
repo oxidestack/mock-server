@@ -1,0 +1,15 @@
+{
+ "source": "driftResponseTimeThresholdMs on a slow forward. `writeForwardActionResponse` times the wait for a response that has already arrived (its task runs once the forward completes), so the p95 it records is 0 ms and no PERFORMANCE drift is raised however slow the upstream is",
+ "properties": {"driftResponseTimeThresholdMs": "1"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"id": "upstream", "priority": 1000, "httpRequest": {"headers": {"Host": ["localhost:[0-9]+"]}}, "httpResponse": {"statusCode": 200, "body": "slow", "delay": {"timeUnit": "MILLISECONDS", "value": 300}}},
+    {"id": "stub", "httpRequest": {"path": "/slow"}, "httpResponse": {"statusCode": 200, "body": "slow"}}
+  ]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": "{\"id\": \"forward\", \"priority\": 10, \"httpRequest\": {\"path\": \"/slow\"}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}"},
+  {"method": "GET", "path": "/slow", "headers": {"Host": "harvest.client"}, "minMillis": 300},
+  {"method": "GET", "path": "/slow", "headers": {"Host": "harvest.client"}, "minMillis": 300},
+  {"sleepMillis": 500},
+  {"method": "GET", "path": "/mockserver/drift", "note": "no PERFORMANCE record", "mask": [{"regex": "\"epochTimeMs\" : \\d+", "replace": "\"epochTimeMs\" : <millis>"}]}
+ ]
+}

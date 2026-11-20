@@ -1,0 +1,37 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.dynamicallyCreateCertificateAuthorityCertificate=true",
+    "-Dmockserver.directoryToSaveDynamicSSLCertificate={{scratch}}",
+    "-Dmockserver.preventCertificateDynamicUpdate=true"
+  ],
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 3,
+      "label": "t"
+    }
+  ],
+  "timeoutSecs": 240,
+  "expect": {
+    "running": true,
+    "tls": {
+      "t": "served"
+    },
+    "fileModes": {
+      "{{scratch}}/PKCS8CertificateAuthorityPrivateKey.pem": "rw-------",
+      "{{scratch}}/PKCS8PrivateKey.pem": "rw-------",
+      "{{scratch}}/CertificateAuthorityCertificate.pem": "rw-r--r--",
+      "{{scratch}}/Certificate.pem": "rw-r--r--"
+    }
+  }
+}

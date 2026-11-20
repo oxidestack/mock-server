@@ -1,0 +1,300 @@
+{
+ "properties": {
+  "metricsEnabled": "true",
+  "loadGenerationEnabled": "true",
+  "loadGenerationMetricLabels": "team, env"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/load/orders/.*"
+     },
+     "httpResponse": {
+      "body": "{\"ok\":\"yes\"}",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 300
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/load/tail"
+     },
+     "httpResponse": {
+      "body": "late",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 800
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/load/.*"
+     },
+     "httpResponse": {
+      "body": "{\"ok\":\"yes\"}"
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "note": "load with custom labels",
+   "body": {
+    "name": "self",
+    "labels": {
+     "team": "payments",
+     "zone": "eu"
+    },
+    "steps": [
+     {
+      "name": "orders",
+      "labels": {
+       "team": "orders-team"
+      },
+      "request": {
+       "method": "POST",
+       "path": "/load/orders/$iteration.index",
+       "body": "abc",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "traceparent": [
+         "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
+        ]
+       }
+      },
+      "checks": [
+       {
+        "source": "STATUS",
+        "comparator": "EQUALS",
+        "value": "200"
+       },
+       {
+        "source": "STATUS",
+        "comparator": "EQUALS",
+        "value": "201"
+       }
+      ]
+     },
+     {
+      "request": {
+       "method": "GET",
+       "path": "/load/items/12345",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     {
+      "request": {
+       "method": "GET",
+       "path": "/load/tail",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    ],
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 30000
+      }
+     ]
+    },
+    "maxRequests": 3
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "note": "start",
+   "body": {
+    "names": [
+     "self"
+    ]
+   }
+  },
+  {
+   "sleepMillis": 1500
+  },
+  {
+   "note": "prometheus exposition after the run",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "pollUntil": "mock_server_forward_requests_total\\{[^}]*\\} 3\\.0",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "(?m)^(# (HELP|TYPE|UNIT) )?(jvm|process|tokio|http_server|http_client|mock_server_(?:native_build_info|active_connections|connection_duration_seconds|tls_handshake_duration_seconds))[^\\n]*\\n",
+     "replace": ""
+    },
+    {
+     "regex": "(_seconds_(bucket|count|sum)(\\{(?:[^}\"]|\"[^\"]*\")*\\})?) [0-9.E-]+",
+     "replace": "${1} <varies>"
+    },
+    {
+     "regex": " # \\{trace_id=\"([0-9a-f]+)\"\\} [0-9.E-]+ [0-9.E]+",
+     "replace": " # {trace_id=\"${1}\"} <value> <timestamp>"
+    },
+    {
+     "regex": "(?m)^mock_server_load_request_duration_seconds_bucket[^\\n]*\\} <varies>\\n",
+     "replace": ""
+    },
+    {
+     "regex": "le=\"[^\"]*\"\\} <varies> # ",
+     "replace": "le=\"<varies>\"} <varies> # "
+    },
+    "mock_server_requests_received_total [0-9.E]+",
+    "(?m)^requests_received_count [0-9.E]+",
+    "content-length: \\d+"
+   , {"regex": "(?m)^(# (HELP|TYPE|UNIT) )?netty_[^\\n]*\\n", "replace": "", "reason": "JvmMetricsCollector's Netty direct-memory gauge, as jvm_*: no counterpart outside the JVM"}, {"regex": "(?m)^(# (HELP|TYPE|UNIT) )?mock_server_accept_queue_backlog_effective[^\\n]*\\n", "replace": "", "reason": "exported only where /proc/sys/net/core/somaxconn is readable (the oracle's Linux container, not a macOS host)"}, {"regex": "(?m)^(mock_server_event_log_retained_bytes|mock_server_expectations_bytes) \\S+", "replace": "${1} <heap-estimate>", "reason": "upstream's JVM heap-size estimates of log entries and expectations"}, {"regex": "(?m)^mock_server_inbound_connections_open \\S+", "replace": "mock_server_inbound_connections_open <connections>", "reason": "the oracle's gauge stays one above its open sockets after its JVM start-up warm-up request (1 with MOCKSERVER_STARTUP_WARMUP=false, no extra socket in its /proc/net/tcp); ours counts open sockets"}]
+  },
+  {
+   "note": "openmetrics exposition after the run (exemplars)",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "headers": {
+    "Accept": [
+     "application/openmetrics-text; version=1.0.0; charset=utf-8"
+    ]
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "(?m)^(# (HELP|TYPE|UNIT) )?(jvm|process|tokio|http_server|http_client|mock_server_(?:native_build_info|active_connections|connection_duration_seconds|tls_handshake_duration_seconds))[^\\n]*\\n",
+     "replace": ""
+    },
+    {
+     "regex": "(_seconds_(bucket|count|sum)(\\{(?:[^}\"]|\"[^\"]*\")*\\})?) [0-9.E-]+",
+     "replace": "${1} <varies>"
+    },
+    {
+     "regex": " # \\{trace_id=\"([0-9a-f]+)\"\\} [0-9.E-]+ [0-9.E]+",
+     "replace": " # {trace_id=\"${1}\"} <value> <timestamp>"
+    },
+    {
+     "regex": "(?m)^mock_server_load_request_duration_seconds_bucket[^\\n]*\\} <varies>\\n",
+     "replace": ""
+    },
+    {
+     "regex": "le=\"[^\"]*\"\\} <varies> # ",
+     "replace": "le=\"<varies>\"} <varies> # "
+    },
+    "mock_server_requests_received_total [0-9.E]+",
+    "(?m)^requests_received_count [0-9.E]+",
+    "content-length: \\d+"
+   , {"regex": "(?m)^(# (HELP|TYPE|UNIT) )?netty_[^\\n]*\\n", "replace": "", "reason": "JvmMetricsCollector's Netty direct-memory gauge, as jvm_*: no counterpart outside the JVM"}, {"regex": "(?m)^(# (HELP|TYPE|UNIT) )?mock_server_accept_queue_backlog_effective[^\\n]*\\n", "replace": "", "reason": "exported only where /proc/sys/net/core/somaxconn is readable (the oracle's Linux container, not a macOS host)"}, {"regex": "(?m)^(mock_server_event_log_retained_bytes|mock_server_expectations_bytes) \\S+", "replace": "${1} <heap-estimate>", "reason": "upstream's JVM heap-size estimates of log entries and expectations"}, {"regex": "(?m)^mock_server_inbound_connections_open \\S+", "replace": "mock_server_inbound_connections_open <connections>", "reason": "the oracle's gauge stays one above its open sockets after its JVM start-up warm-up request (1 with MOCKSERVER_STARTUP_WARMUP=false, no extra socket in its /proc/net/tcp); ours counts open sockets"}]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "note": "second run of the same scenario",
+   "body": {
+    "names": [
+     "self"
+    ]
+   }
+  },
+  {
+   "sleepMillis": 1500
+  },
+  {
+   "note": "the first run's series are evicted",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "pollUntil": "mock_server_forward_requests_total\\{[^}]*\\} 6\\.0",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "(?m)^(# (HELP|TYPE|UNIT) )?(jvm|process|tokio|http_server|http_client|mock_server_(?:native_build_info|active_connections|connection_duration_seconds|tls_handshake_duration_seconds))[^\\n]*\\n",
+     "replace": ""
+    },
+    {
+     "regex": "(_seconds_(bucket|count|sum)(\\{(?:[^}\"]|\"[^\"]*\")*\\})?) [0-9.E-]+",
+     "replace": "${1} <varies>"
+    },
+    {
+     "regex": " # \\{trace_id=\"([0-9a-f]+)\"\\} [0-9.E-]+ [0-9.E]+",
+     "replace": " # {trace_id=\"${1}\"} <value> <timestamp>"
+    },
+    {
+     "regex": "(?m)^mock_server_load_request_duration_seconds_bucket[^\\n]*\\} <varies>\\n",
+     "replace": ""
+    },
+    {
+     "regex": "le=\"[^\"]*\"\\} <varies> # ",
+     "replace": "le=\"<varies>\"} <varies> # "
+    },
+    "mock_server_requests_received_total [0-9.E]+",
+    "(?m)^requests_received_count [0-9.E]+",
+    "content-length: \\d+"
+   , {"regex": "(?m)^(# (HELP|TYPE|UNIT) )?netty_[^\\n]*\\n", "replace": "", "reason": "JvmMetricsCollector's Netty direct-memory gauge, as jvm_*: no counterpart outside the JVM"}, {"regex": "(?m)^(# (HELP|TYPE|UNIT) )?mock_server_accept_queue_backlog_effective[^\\n]*\\n", "replace": "", "reason": "exported only where /proc/sys/net/core/somaxconn is readable (the oracle's Linux container, not a macOS host)"}, {"regex": "(?m)^(mock_server_event_log_retained_bytes|mock_server_expectations_bytes) \\S+", "replace": "${1} <heap-estimate>", "reason": "upstream's JVM heap-size estimates of log entries and expectations"}, {"regex": "(?m)^mock_server_inbound_connections_open \\S+", "replace": "mock_server_inbound_connections_open <connections>", "reason": "the oracle's gauge stays one above its open sockets after its JVM start-up warm-up request (1 with MOCKSERVER_STARTUP_WARMUP=false, no extra socket in its /proc/net/tcp); ours counts open sockets"}]
+  },
+  {
+   "method": "DELETE",
+   "path": "/mockserver/loadScenario/self",
+   "note": "delete evicts the terminal run"
+  },
+  {
+   "note": "after delete",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "(?m)^(# (HELP|TYPE|UNIT) )?(jvm|process|tokio|http_server|http_client|mock_server_(?:native_build_info|active_connections|connection_duration_seconds|tls_handshake_duration_seconds))[^\\n]*\\n",
+     "replace": ""
+    },
+    {
+     "regex": "(_seconds_(bucket|count|sum)(\\{(?:[^}\"]|\"[^\"]*\")*\\})?) [0-9.E-]+",
+     "replace": "${1} <varies>"
+    },
+    {
+     "regex": " # \\{trace_id=\"([0-9a-f]+)\"\\} [0-9.E-]+ [0-9.E]+",
+     "replace": " # {trace_id=\"${1}\"} <value> <timestamp>"
+    },
+    {
+     "regex": "(?m)^mock_server_load_request_duration_seconds_bucket[^\\n]*\\} <varies>\\n",
+     "replace": ""
+    },
+    {
+     "regex": "le=\"[^\"]*\"\\} <varies> # ",
+     "replace": "le=\"<varies>\"} <varies> # "
+    },
+    "mock_server_requests_received_total [0-9.E]+",
+    "(?m)^requests_received_count [0-9.E]+",
+    "content-length: \\d+"
+   , {"regex": "(?m)^(# (HELP|TYPE|UNIT) )?netty_[^\\n]*\\n", "replace": "", "reason": "JvmMetricsCollector's Netty direct-memory gauge, as jvm_*: no counterpart outside the JVM"}, {"regex": "(?m)^(# (HELP|TYPE|UNIT) )?mock_server_accept_queue_backlog_effective[^\\n]*\\n", "replace": "", "reason": "exported only where /proc/sys/net/core/somaxconn is readable (the oracle's Linux container, not a macOS host)"}, {"regex": "(?m)^(mock_server_event_log_retained_bytes|mock_server_expectations_bytes) \\S+", "replace": "${1} <heap-estimate>", "reason": "upstream's JVM heap-size estimates of log entries and expectations"}, {"regex": "(?m)^mock_server_inbound_connections_open \\S+", "replace": "mock_server_inbound_connections_open <connections>", "reason": "the oracle's gauge stays one above its open sockets after its JVM start-up warm-up request (1 with MOCKSERVER_STARTUP_WARMUP=false, no extra socket in its /proc/net/tcp); ours counts open sockets"}]
+  }
+ ]
+}

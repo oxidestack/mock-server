@@ -1,0 +1,296 @@
+{
+ "source": "at TRACE, the scenario debug_would_match_branches again (a conditional expectation's branches, a -bin header, an OpenAPI expectation, an invalid regex), now with each recorded difference's TRACE entry; then the control plane's other filters of received requests: a sequence verification, a filtered log retrieval and a filtered log clear.",
+ "properties": {
+  "logLevel": "TRACE"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "conditional",
+    "httpRequest": {
+     "if": {
+      "method": "GET",
+      "headers": {
+       "x-key": [
+        "abcdef"
+       ]
+      }
+     },
+     "then": {
+      "path": "/abc"
+     },
+     "else": {
+      "path": "/b"
+     }
+    },
+    "httpResponse": {
+     "body": "conditional"
+    }
+   }
+  },
+  {
+   "note": "the then branch's path, read as a regex, would match (the hint's field is the first of an identity-hashed map's keys, which differs run to run)",
+   "method": "GET",
+   "path": "/a.c",
+   "headers": {
+    "x-key": "abcdef"
+   },
+   "mask": [
+    {
+     "regex": "(closest-match-hint: expectation conditional: )\\w+ did not match \\(.*\\)(; \\+1 more)",
+     "replace": "${1}<field> did not match (<difference>)${2}"
+    }
+   ]
+  },
+  {
+   "note": "the if branch's header value, read as a regex, would match; the else branch fails (the hint's field is the first of an identity-hashed map's keys, which differs run to run)",
+   "method": "GET",
+   "path": "/abc",
+   "headers": {
+    "x-key": "ab.*"
+   },
+   "mask": [
+    {
+     "regex": "(closest-match-hint: expectation conditional: )\\w+ did not match \\(.*\\)(; \\+1 more)",
+     "replace": "${1}<field> did not match (<difference>)${2}"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "binary-header",
+    "httpRequest": {
+     "path": "/bin",
+     "headers": {
+      "x-bin": [
+       "QQE="
+      ]
+     }
+    },
+    "httpResponse": {
+     "body": "binary-header"
+    }
+   }
+  },
+  {
+   "note": "a -bin header compares base64 values without their padding, and would match prints them so",
+   "method": "GET",
+   "path": "/bin",
+   "headers": {
+    "x-bin": "Q+E="
+   }
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "openapi",
+    "httpRequest": {
+     "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"t\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+    },
+    "httpResponse": {
+     "body": "openapi"
+    }
+   }
+  },
+  {
+   "note": "OpenAPI operation matchers are control-plane matchers: a path that matches as a regex matches, and nothing is logged",
+   "method": "GET",
+   "path": "/a.c"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "invalid-regex",
+    "httpRequest": {
+     "path": "/a(b"
+    },
+    "httpResponse": {
+     "body": "invalid-regex"
+    }
+   }
+  },
+  {
+   "note": "NottableString.matches swallows the PatternSyntaxException: no 'error while matching regex' entry",
+   "method": "GET",
+   "path": "/x("
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "plain-text LOGS (the exploratory forward's DEBUG negotiation entry is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "[^\\n]* - forward upstream connection to \\n\\n  [^\\n]*\\n\\n negotiated \\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": ""
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "GET",
+   "path": "/tmb/a"
+  },
+  {
+   "method": "GET",
+   "path": "/tmb/b"
+  },
+  {
+   "method": "GET",
+   "path": "/tmb/c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": {
+    "path": "/mockserver/.*"
+   }
+  },
+  {
+   "note": "a sequence verification that passes and one that fails",
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/tmb/a"
+     },
+     {
+      "path": "/tmb/c"
+     }
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verifySequence",
+   "body": {
+    "httpRequests": [
+     {
+      "path": "/tmb/c"
+     },
+     {
+      "path": "/tmb/a"
+     }
+    ]
+   }
+  },
+  {
+   "note": "a filtered log retrieval",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/tmb/b"
+   },
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ]
+  },
+  {
+   "note": "a filtered log clear",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": {
+    "path": "/tmb/a"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ]
+  }
+ ]
+}

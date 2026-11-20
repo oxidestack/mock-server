@@ -1,0 +1,451 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "manual-one",
+    "httpRequest": {
+     "path": "/manual"
+    },
+    "httpResponse": {
+     "body": "manual"
+    }
+   },
+   "note": "a manual expectation (upstream shouldNotPruneManualExpectations)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "Sync Pets",
+      "version": "1"
+     },
+     "paths": {
+      "/a": {
+       "get": {
+        "operationId": "opA",
+        "responses": {
+         "200": {
+          "description": "ok",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opA"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      "/b": {
+       "get": {
+        "operationId": "opB",
+        "responses": {
+         "200": {
+          "description": "ok",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opB"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "spec with two operations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "Other Spec",
+      "version": "1"
+     },
+     "paths": {
+      "/c": {
+       "get": {
+        "operationId": "opC",
+        "responses": {
+         "200": {
+          "description": "ok",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opC"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "a second spec in its own namespace (upstream shouldNotPruneExpectationsInDifferentNamespace)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "Sync Pets",
+      "version": "1"
+     },
+     "paths": {
+      "/a": {
+       "get": {
+        "operationId": "opA",
+        "responses": {
+         "200": {
+          "description": "ok changed",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opA"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      "/b": {
+       "get": {
+        "operationId": "opB",
+        "responses": {
+         "200": {
+          "description": "ok changed",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opB"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "same title, different content: its own spec key (upstream shouldNotPruneOtherSpecWhenItSharesSanitizedTitleButNotHash)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": "",
+   "note": "four namespaces' expectations and the manual one"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "Sync Pets",
+      "version": "1"
+     },
+     "paths": {
+      "/a": {
+       "get": {
+        "operationId": "opA",
+        "responses": {
+         "200": {
+          "description": "ok",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opA"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "same title and content, fewer operations: an inline payload is keyed by its content, so this is a new namespace and nothing is pruned"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": "",
+   "note": "after the re-import"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "Sync Pets",
+      "version": "1"
+     },
+     "paths": {
+      "/a": {
+       "get": {
+        "operationId": "opA",
+        "responses": {
+         "200": {
+          "description": "ok",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opA"
+            }
+           }
+          }
+         }
+        }
+       }
+      },
+      "/d": {
+       "get": {
+        "operationId": "opD",
+        "responses": {
+         "200": {
+          "description": "ok",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opD"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "another inline payload: again a namespace of its own"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": "",
+   "note": "after adding an operation"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "  Sync / Pets! v2 ",
+      "version": "1"
+     },
+     "paths": {
+      "/e": {
+       "get": {
+        "operationId": "opE",
+        "responses": {
+         "200": {
+          "description": "ok",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opE"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "title with special characters (upstream shouldHandleTitleWithSpecialCharacters)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "",
+      "version": "1"
+     },
+     "paths": {
+      "/f": {
+       "get": {
+        "operationId": "opF",
+        "responses": {
+         "200": {
+          "description": "ok",
+          "content": {
+           "application/json": {
+            "example": {
+             "op": "opF"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "blank title (upstream shouldFallBackToHashOnlyWhenTitleBlank)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "Dup",
+      "version": "1"
+     },
+     "paths": {
+      "/g": {
+       "get": {
+        "responses": {
+         "200": {
+          "description": "ok"
+         }
+        }
+       }
+      },
+      "/h": {
+       "get": {
+        "responses": {
+         "200": {
+          "description": "ok"
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "note": "operations without ids"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": "",
+   "note": "ids for sanitised, blank and missing titles/operation ids"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "the spec served by the server itself, two operations",
+   "body": {
+    "id": "spec-file",
+    "httpRequest": {
+     "path": "/spec.json"
+    },
+    "httpResponse": {
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Served Spec\", \"version\": \"1\"}, \"paths\": {\"/sa\": {\"get\": {\"operationId\": \"opA\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"example\": {\"op\": \"opA\"}}}}}}}, \"/sb\": {\"get\": {\"operationId\": \"opB\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"example\": {\"op\": \"opB\"}}}}}}}}}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "http://localhost:{{port}}/spec.json"
+   },
+   "note": "import by URL",
+   "mask": [
+    {
+     "regex": "served_spec_[0-9a-f]{16}",
+     "replace": "served_spec_<hash of the URL>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "the served spec drops opB and adds opD",
+   "body": {
+    "id": "spec-file",
+    "httpRequest": {
+     "path": "/spec.json"
+    },
+    "httpResponse": {
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Served Spec\", \"version\": \"1\"}, \"paths\": {\"/sa\": {\"get\": {\"operationId\": \"opA\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"example\": {\"op\": \"opA\"}}}}}}}, \"/sd\": {\"get\": {\"operationId\": \"opD\", \"responses\": {\"200\": {\"description\": \"ok\", \"content\": {\"application/json\": {\"example\": {\"op\": \"opD\"}}}}}}}}}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "http://localhost:{{port}}/spec.json"
+   },
+   "note": "re-import by URL (upstream shouldPruneRemovedOperationInSameNamespace, shouldAddNewOperationWithoutPruning)",
+   "mask": [
+    {
+     "regex": "served_spec_[0-9a-f]{16}",
+     "replace": "served_spec_<hash of the URL>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": "",
+   "note": "opB pruned, opD added, the manual spec-file expectation kept",
+   "mask": [
+    {
+     "regex": "served_spec_[0-9a-f]{16}",
+     "replace": "served_spec_<hash of the URL>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/sb",
+   "note": "pruned operation no longer answers"
+  },
+  {
+   "method": "GET",
+   "path": "/sd",
+   "note": "added operation answers"
+  }
+ ]
+}

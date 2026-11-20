@@ -1,0 +1,44 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmsniff-LlmProviderSnifferTest-dcc06b1b (conformance/harvest)",
+ "properties": {
+  "llmProvider": "NOT_A_REAL_PROVIDER"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "24ecd6165aaf",
+   "note": "returnsEmptyForInvalidConfiguredProvider (llmsniff): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/v1/chat/completions\",\"headers\":{\"Host\":[\"unknown-host.example.com\"]}},\"httpResponse\":{\"statusCode\":200}}\n",
+   "note": "returnsEmptyForInvalidConfiguredProvider (llmsniff): import",
+   "mask": [
+    {
+     "regex": "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+     "replace": "\"x-mockserver-response-time-ms\" : [ \"<n>\" ]"
+    }
+   ],
+   "case": "24ecd6165aaf"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "returnsEmptyForInvalidConfiguredProvider (llmsniff): json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "24ecd6165aaf"
+  }
+ ]
+}

@@ -1,0 +1,112 @@
+{
+ "properties": {
+  "proxySetupLogging": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/cal/target"
+     },
+     "httpResponse": {
+      "body": "t"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/cal/forward"
+     },
+     "httpOverrideForwardedRequest": {
+      "httpRequest": {
+       "path": "/cal/target",
+       "secure": true,
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "first TLS forward, to this server: the forwarding client's context loads the CA, then the server's on the inbound connection",
+   "method": "GET",
+   "path": "/cal/forward",
+   "maxMillis": 30000
+  },
+  {
+   "note": "each context's CA load, once",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)^(.*loaded CA private key from path\\n\\n  [^\\n]*\\n\\n-+\\n).*$",
+     "replace": "${1}(the rest: the forwarded request served over TLS, whose client certificate serial is random and whose exchange entries race)"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/cal/target"
+     },
+     "httpResponse": {
+      "body": "t"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/cal/forward"
+     },
+     "httpOverrideForwardedRequest": {
+      "httpRequest": {
+       "path": "/cal/target",
+       "secure": true,
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "a second TLS forward",
+   "method": "GET",
+   "path": "/cal/forward"
+  },
+  {
+   "note": "nothing loaded again (entry headlines only; the exchange entries race)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?m)^[^<\\n][^\\n]*\\n",
+     "replace": ""
+    },
+    {
+     "regex": "(?m)^\\n",
+     "replace": ""
+    },
+    {
+     "regex": "<timestamp> - returning response:\\n",
+     "replace": ""
+    }
+   ]
+  }
+ ]
+}

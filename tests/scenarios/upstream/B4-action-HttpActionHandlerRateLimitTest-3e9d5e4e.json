@@ -1,0 +1,699 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) action-HttpActionHandlerRateLimitTest-3e9d5e4e (conformance/harvest)",
+ "properties": {
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8475b969ce38",
+   "note": "grpcStreamRequestIsRateLimited (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "grpcStreamResponse": {},
+    "httpRequest": {
+     "path": "/grpc_path"
+    },
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1,
+     "name": "grpc-acct",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "grpcStreamRequestIsRateLimited (action): the expectation HttpState returned",
+   "case": "8475b969ce38"
+  },
+  {
+   "method": "GET",
+   "path": "/grpc_path",
+   "note": "grpcStreamRequestIsRateLimited (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "8475b969ce38"
+  },
+  {
+   "method": "GET",
+   "path": "/grpc_path",
+   "note": "grpcStreamRequestIsRateLimited (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "8475b969ce38"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e80f1f62cd3b",
+   "note": "namedCounterIsSharedAcrossExpectations (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/path_a"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "body a",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    },
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1,
+     "name": "shared-acct",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "namedCounterIsSharedAcrossExpectations (action): the expectation HttpState returned",
+   "case": "e80f1f62cd3b"
+  },
+  {
+   "method": "GET",
+   "path": "/path_a",
+   "note": "namedCounterIsSharedAcrossExpectations (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "e80f1f62cd3b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/path_b"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "body b",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    },
+    "id": "harvested-action-2",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1,
+     "name": "shared-acct",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "namedCounterIsSharedAcrossExpectations (action): the expectation HttpState returned",
+   "case": "e80f1f62cd3b"
+  },
+  {
+   "method": "GET",
+   "path": "/path_b",
+   "note": "namedCounterIsSharedAcrossExpectations (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "e80f1f62cd3b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ba2df3393547",
+   "note": "sseStreamWithinLimitIsNotThrottled (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/sse_ok_path"
+    },
+    "httpSseResponse": {},
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1000,
+     "name": "sse-ok",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "sseStreamWithinLimitIsNotThrottled (action): the expectation HttpState returned",
+   "case": "ba2df3393547"
+  },
+  {
+   "method": "GET",
+   "path": "/sse_ok_path",
+   "note": "sseStreamWithinLimitIsNotThrottled (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "ba2df3393547"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "bc7e5f9f1b7d",
+   "note": "tokenBucketBurstOfOneAllowsBurstThenReturns429 (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/some_path"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "normal body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    },
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "algorithm": "token_bucket",
+     "burst": 1,
+     "name": "bkt-acct",
+     "refillPerSecond": 0.001
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "tokenBucketBurstOfOneAllowsBurstThenReturns429 (action): the expectation HttpState returned",
+   "case": "bc7e5f9f1b7d"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "tokenBucketBurstOfOneAllowsBurstThenReturns429 (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "bc7e5f9f1b7d"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "tokenBucketBurstOfOneAllowsBurstThenReturns429 (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "bc7e5f9f1b7d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "3399553158ef",
+   "note": "sseStreamRequestIsRateLimited (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/sse_path"
+    },
+    "httpSseResponse": {},
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1,
+     "name": "sse-acct",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "sseStreamRequestIsRateLimited (action): the expectation HttpState returned",
+   "case": "3399553158ef"
+  },
+  {
+   "method": "GET",
+   "path": "/sse_path",
+   "note": "sseStreamRequestIsRateLimited (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "3399553158ef"
+  },
+  {
+   "method": "GET",
+   "path": "/sse_path",
+   "note": "sseStreamRequestIsRateLimited (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "3399553158ef"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d93b33fb624f",
+   "note": "allowedResponseIsUnchangedWhenWithinLimit (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/some_path"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "headers": {
+      "x-custom": [
+       "v"
+      ]
+     },
+     "body": "normal body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    },
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1000,
+     "name": "acct",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "allowedResponseIsUnchangedWhenWithinLimit (action): the expectation HttpState returned",
+   "case": "d93b33fb624f"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "allowedResponseIsUnchangedWhenWithinLimit (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "d93b33fb624f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "bacb72de3d46",
+   "note": "rateLimitTakesPrecedenceOverChaosError (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "chaos": {
+     "errorProbability": 1.0,
+     "errorStatus": 503
+    },
+    "httpRequest": {
+     "path": "/some_path"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "normal body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    },
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1,
+     "name": "acct",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "rateLimitTakesPrecedenceOverChaosError (action): the expectation HttpState returned",
+   "case": "bacb72de3d46"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "rateLimitTakesPrecedenceOverChaosError (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "bacb72de3d46"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "rateLimitTakesPrecedenceOverChaosError (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "bacb72de3d46"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e74a52abf1da",
+   "note": "webSocketStreamRequestIsRateLimited (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/ws_path"
+    },
+    "httpWebSocketResponse": {},
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1,
+     "name": "ws-acct",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "webSocketStreamRequestIsRateLimited (action): the expectation HttpState returned",
+   "case": "e74a52abf1da"
+  },
+  {
+   "method": "GET",
+   "path": "/ws_path",
+   "note": "webSocketStreamRequestIsRateLimited (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "e74a52abf1da"
+  },
+  {
+   "method": "GET",
+   "path": "/ws_path",
+   "note": "webSocketStreamRequestIsRateLimited (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "e74a52abf1da"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ffc30ba03aa6",
+   "note": "errorStatusOverrideIsHonoured (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/some_path"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "normal body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    },
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "errorStatus": 529,
+     "limit": 1,
+     "name": "acct",
+     "retryAfter": "120",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "errorStatusOverrideIsHonoured (action): the expectation HttpState returned",
+   "case": "ffc30ba03aa6"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "errorStatusOverrideIsHonoured (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "ffc30ba03aa6"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "errorStatusOverrideIsHonoured (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "ffc30ba03aa6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "34bde4bce153",
+   "note": "overLimitReturns429WithAllHeaders (action): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/some_path"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "normal body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    },
+    "id": "harvested-action-1",
+    "priority": 0,
+    "rateLimit": {
+     "limit": 1,
+     "name": "acct",
+     "windowMillis": 60000
+    },
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "overLimitReturns429WithAllHeaders (action): the expectation HttpState returned",
+   "case": "34bde4bce153"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "overLimitReturns429WithAllHeaders (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "34bde4bce153"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "note": "overLimitReturns429WithAllHeaders (action): processAction",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch seconds>"
+    },
+    {
+     "regex": "^retry-after: (59|60)$",
+     "replace": "retry-after: <seconds left in the window>"
+    }
+   ],
+   "case": "34bde4bce153"
+  }
+ ]
+}

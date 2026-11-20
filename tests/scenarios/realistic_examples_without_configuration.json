@@ -1,0 +1,260 @@
+{
+ "properties": {
+  "generateRealisticExampleValues": "true",
+  "loadGenerationEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "reset",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "generateFromSchema reads the startup flag",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/gen"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "generateFromSchema": "{\"type\": \"object\", \"properties\": {\"id\": {\"type\": \"integer\", \"format\": \"int32\", \"minimum\": 10, \"maximum\": 20}, \"big\": {\"type\": \"integer\", \"format\": \"int64\"}, \"ratio\": {\"type\": \"number\", \"format\": \"double\"}, \"ok\": {\"type\": \"boolean\"}, \"email\": {\"type\": \"string\", \"format\": \"email\"}, \"uid\": {\"type\": \"string\", \"format\": \"uuid\"}, \"day\": {\"type\": \"string\", \"format\": \"date\"}, \"name\": {\"type\": \"string\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}"
+    }
+   }
+  },
+  {
+   "note": "generateFromSchema string",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/gen-email"
+    },
+    "httpResponse": {
+     "generateFromSchema": "{\"type\":\"string\",\"format\":\"email\"}"
+    }
+   }
+  },
+  {
+   "note": "generated object",
+   "method": "GET",
+   "path": "/gen"
+  },
+  {
+   "note": "generated again (fresh seed-42 generator per response)",
+   "method": "GET",
+   "path": "/gen"
+  },
+  {
+   "note": "generated email",
+   "method": "GET",
+   "path": "/gen-email"
+  },
+  {
+   "note": "load scenario from OpenAPI: realistic request body",
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/generateFromOpenAPI",
+   "body": {
+    "name": "realistic",
+    "specUrlOrPayload": {
+     "openapi": "3.0.0",
+     "info": {
+      "title": "t",
+      "version": "1"
+     },
+     "paths": {
+      "/things/{thingId}": {
+       "post": {
+        "operationId": "createThing",
+        "parameters": [
+         {
+          "name": "thingId",
+          "in": "path",
+          "required": true,
+          "schema": {
+           "type": "integer",
+           "format": "int64"
+          }
+         },
+         {
+          "name": "limit",
+          "in": "query",
+          "required": true,
+          "schema": {
+           "type": "integer"
+          }
+         },
+         {
+          "name": "owner",
+          "in": "query",
+          "required": true,
+          "schema": {
+           "type": "string",
+           "format": "email"
+          }
+         },
+         {
+          "name": "X-Trace",
+          "in": "header",
+          "required": true,
+          "schema": {
+           "type": "string",
+           "format": "uuid"
+          }
+         }
+        ],
+        "requestBody": {
+         "required": true,
+         "content": {
+          "application/json": {
+           "schema": {
+            "type": "object",
+            "properties": {
+             "id": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 10,
+              "maximum": 20
+             },
+             "big": {
+              "type": "integer",
+              "format": "int64"
+             },
+             "ratio": {
+              "type": "number",
+              "format": "double"
+             },
+             "ok": {
+              "type": "boolean"
+             },
+             "email": {
+              "type": "string",
+              "format": "email"
+             },
+             "uid": {
+              "type": "string",
+              "format": "uuid"
+             },
+             "day": {
+              "type": "string",
+              "format": "date"
+             },
+             "name": {
+              "type": "string"
+             },
+             "tags": {
+              "type": "array",
+              "items": {
+               "type": "string"
+              }
+             }
+            }
+           }
+          }
+         }
+        },
+        "responses": {
+         "201": {
+          "description": "created"
+         }
+        }
+       }
+      }
+     }
+    },
+    "target": {
+     "host": "h",
+     "port": 1234,
+     "scheme": "http"
+    }
+   }
+  },
+  {
+   "note": "mcp initialize",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "note": "target expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/things/.*"
+    },
+    "httpResponse": {
+     "statusCode": 201
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "clear the log before the contract test",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "MCP run_contract_test: realistic parameters and body",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "run_contract_test",
+     "arguments": {
+      "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"t\", \"version\": \"1\"}, \"paths\": {\"/things/{thingId}\": {\"post\": {\"operationId\": \"createThing\", \"parameters\": [{\"name\": \"thingId\", \"in\": \"path\", \"required\": true, \"schema\": {\"type\": \"integer\", \"format\": \"int64\"}}, {\"name\": \"limit\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"integer\"}}, {\"name\": \"owner\", \"in\": \"query\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"email\"}}, {\"name\": \"X-Trace\", \"in\": \"header\", \"required\": true, \"schema\": {\"type\": \"string\", \"format\": \"uuid\"}}], \"requestBody\": {\"required\": true, \"content\": {\"application/json\": {\"schema\": {\"type\": \"object\", \"properties\": {\"id\": {\"type\": \"integer\", \"format\": \"int32\", \"minimum\": 10, \"maximum\": 20}, \"big\": {\"type\": \"integer\", \"format\": \"int64\"}, \"ratio\": {\"type\": \"number\", \"format\": \"double\"}, \"ok\": {\"type\": \"boolean\"}, \"email\": {\"type\": \"string\", \"format\": \"email\"}, \"uid\": {\"type\": \"string\", \"format\": \"uuid\"}, \"day\": {\"type\": \"string\", \"format\": \"date\"}, \"name\": {\"type\": \"string\"}, \"tags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}}}}}}}, \"responses\": {\"201\": {\"description\": \"created\"}}}}}}",
+      "baseUrl": "http://127.0.0.1:{{port}}"
+     }
+    }
+   }
+  },
+  {
+   "note": "the request the contract test sent, with the HttpURLConnection client headers",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/things/.*"
+   }
+  }
+ ]
+}

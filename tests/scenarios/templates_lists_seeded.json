@@ -1,0 +1,94 @@
+{
+ "source": "lists.pickRandom seeded by templateFakerSeed, per engine",
+ "properties": {
+  "templateFakerSeed": "4242"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t0"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"v=$lists.pickRandom('a','b','c','d','e','f','g','h') $lists.pickRandom('a','b','c','d','e','f','g','h') $lists.pickRandom(['a','b','c','d','e','f','g','h']) $lists.pickRandom($lists.range(1, 1000))\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t1"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    \"statusCode\": 200,\n    \"body\": \"m={{#lists.pickRandom}}a|b|c|d|e|f|g|h{{/lists.pickRandom}} {{#lists.pickRandom}}a|b|c|d|e|f|g|h{{/lists.pickRandom}}\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t2"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\n    'statusCode': 200,\n    'body': \"v=$lists.pickRandom('a','b','c','d','e','f','g','h') $lists.pickRandom('a','b','c','d','e','f','g','h') $lists.pickRandom(['a','b','c','d','e','f','g','h']) $lists.pickRandom($lists.range(1, 1000))\"\n}"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/t3"
+    },
+    "httpResponseTemplate": {
+     "templateType": "MUSTACHE",
+     "template": "{\n    \"statusCode\": 200,\n    \"body\": \"m={{#lists.pickRandom}}a|b|c|d|e|f|g|h{{/lists.pickRandom}} {{#lists.pickRandom}}a|b|c|d|e|f|g|h{{/lists.pickRandom}}\"\n}"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/t0",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/t1"
+  },
+  {
+   "method": "GET",
+   "path": "/t2",
+   "mask": [
+    {
+     "regex": " at t\\d+\\[line ",
+     "replace": " at t<n>[line ",
+     "reason": "the Velocity engine names each template by how many it rendered before: on a shared server that counts earlier scenarios' templates too"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/t3"
+  }
+ ]
+}

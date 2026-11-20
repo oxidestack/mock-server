@@ -1,0 +1,20 @@
+{
+ "properties": {
+  "http3Port": "19443",
+  "http3AltSvcMaxAge": "3600"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/user-alt-svc"}, "httpResponse": {"statusCode": 200, "headers": {"alt-svc": ["h3=\":9443\"; ma=60"]}, "body": "x"}},
+    {"httpRequest": {"path": "/plain"}, "httpResponse": {"statusCode": 200, "body": "y"}}
+   ]
+  },
+  {"method": "GET", "path": "/plain", "note": "AltSvcHeaderHandlerTest: the configured port and max age"},
+  {"method": "GET", "path": "/user-alt-svc", "note": "a user-set Alt-Svc is not clobbered"},
+  {"method": "GET", "path": "/not-matched", "note": "a 404 carries it too"},
+  {"method": "PUT", "path": "/mockserver/status", "note": "control plane responses carry it as well"}
+ ]
+}

@@ -1,0 +1,217 @@
+{
+ "source": "hand-written: a missing class callback's 404 under per-expectation HTTP chaos and a rate limit",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/cb-error"
+     },
+     "httpResponseClassCallback": {
+      "callbackClass": "com.example.NoSuchCallback"
+     },
+     "chaos": {
+      "errorStatus": 503,
+      "errorProbability": 1.0
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/cb-latency"
+     },
+     "httpResponseClassCallback": {
+      "callbackClass": "com.example.NoSuchCallback"
+     },
+     "chaos": {
+      "latency": {
+       "timeUnit": "MILLISECONDS",
+       "value": 300
+      },
+      "malformedBody": true
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/cb-quota"
+     },
+     "httpResponseClassCallback": {
+      "callbackClass": "com.example.NoSuchCallback"
+     },
+     "chaos": {
+      "quotaName": "cbq",
+      "quotaLimit": 1,
+      "quotaWindowMillis": 600000,
+      "quotaErrorStatus": 503
+     },
+     "rateLimit": {
+      "limit": 2,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/cb-drop"
+     },
+     "httpResponseClassCallback": {
+      "callbackClass": "com.example.NoSuchCallback"
+     },
+     "chaos": {
+      "dropConnectionProbability": 1.0
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/cb-error",
+   "note": "missing class, chaos error: the rate limit passes, the chaos error replaces the 404"
+  },
+  {
+   "method": "GET",
+   "path": "/cb-error",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "over the limit: the 429 beats the chaos error"
+  },
+  {
+   "method": "GET",
+   "path": "/cb-latency",
+   "minMillis": 300,
+   "note": "missing class, chaos latency and malformed body on the 404"
+  },
+  {
+   "method": "GET",
+   "path": "/cb-latency",
+   "minMillis": 300,
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "over the limit: is the latency still applied to the 429, and the body left alone?"
+  },
+  {
+   "method": "GET",
+   "path": "/cb-quota",
+   "note": "missing class, quota 1: 404"
+  },
+  {
+   "method": "GET",
+   "path": "/cb-quota",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "quota exhausted, rate limit (2) not: the quota error"
+  },
+  {
+   "method": "GET",
+   "path": "/cb-quota",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "both exhausted: the rate limit wins"
+  },
+  {
+   "method": "GET",
+   "path": "/cb-drop",
+   "note": "chaos drop on the missing class's 404"
+  },
+  {
+   "method": "GET",
+   "path": "/cb-drop",
+   "note": "dropped again, never rate limited"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/cb-error"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "(totalTimeInMillis|injectedChaosLatencyMillis|injectedDelayMillis)\\\\?\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/cb-latency"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "(totalTimeInMillis|injectedChaosLatencyMillis|injectedDelayMillis)\\\\?\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/cb-quota"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "(totalTimeInMillis|injectedChaosLatencyMillis|injectedDelayMillis)\\\\?\" : \\d+"
+   ]
+  }
+ ]
+}

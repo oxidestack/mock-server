@@ -1,0 +1,63 @@
+{
+ "note": "a Kafka load with publishOnLoad false and no consumer still dials its bootstrap server: kafka-clients' KafkaProducer bootstraps a Metadata that needs a full update, so its Sender connects at construction (ApiVersions first, correlation id 0, the producer's client id), not at the first send. The bootstrap server is this MockServer, which logs the request as a binary request it cannot answer",
+ "steps": [
+  {
+   "note": "reset: closes any earlier load's clients and clears the log",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a Kafka load at this server: no publish on load, no consume",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Producer",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "localhost:{{port}}",
+     "publishOnLoad": false
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the log: the producer's first request, sent with no record to publish",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "pollUntil": "received binary request",
+   "mask": [
+    {
+     "regex": "(?s)^(?:.*?received binary request:\\s*([0-9a-f]+))?.*$",
+     "replace": "first binary request: ${1}",
+     "reason": "only the producer's first request; later ones are its reconnects, whose number and timing depend on the scheduler"
+    },
+    {
+     "regex": "request: 0000[0-9a-f]{4}([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{8})00[0-9a-f]{2}70726f64756365722d(?:3[0-9])+(.*)$",
+     "replace": "request: api key ${1}, version ${2}, correlation id ${3}, client id producer-<n>, rest ${4}",
+     "reason": "the client id's number counts the producers the process built before (the frame and string lengths with it)"
+    }
+   ]
+  },
+  {
+   "note": "reset: closes the load's producer",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

@@ -1,0 +1,19 @@
+{
+  "target": "binary",
+  "args": ["-serverPort", "{{serverPort}}"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_LOCAL_BOUND_IP": "localhost"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {"http": {"method": "PUT", "path": "/mockserver/status", "expectStatus": 200}}
+  ],
+  "timeoutSecs": 30,
+  "expect": {
+    "running": true,
+    "stdoutNotContains": ["[ERROR]"]
+  }
+}

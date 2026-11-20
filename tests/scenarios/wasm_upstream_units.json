@@ -1,0 +1,566 @@
+{
+ "source": "mockserver-core 8.0.0 WASM unit tests that no recorded boundary reaches (WasmStoreTest, WasmBodyTest, WasmBodyDTOTest, WasmBodyMatcherTest blank names, WasmRuntimeShapeAbiTest readShapedResult, WasmResponseShaperTest applyShaped), by hand; modules in tests/files/wasm/units (WAT sources next to them)",
+ "properties": {
+  "wasmEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "WasmStoreTest: empty store",
+   "method": "GET",
+   "path": "/mockserver/wasm/modules"
+  },
+  {
+   "note": "WasmStoreTest#shouldListAllModuleNames: mod1",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=mod1",
+   "bodyFile": "wasm/match.wasm"
+  },
+  {
+   "note": "WasmStoreTest#shouldListAllModuleNames: mod2",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=mod2",
+   "bodyFile": "wasm/match.wasm"
+  },
+  {
+   "note": "WasmStoreTest#shouldIgnoreNullName: no name",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules",
+   "bodyFile": "wasm/match.wasm"
+  },
+  {
+   "note": "WasmStoreTest#shouldIgnoreNullName: blank name",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=",
+   "bodyFile": "wasm/match.wasm"
+  },
+  {
+   "note": "WasmStoreTest#shouldIgnoreNullBytes: no bytes",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=name"
+  },
+  {
+   "note": "WasmStoreTest#shouldListAllModuleNames: list",
+   "method": "GET",
+   "path": "/mockserver/wasm/modules"
+  },
+  {
+   "note": "WasmStoreTest#shouldStoreAndRetrieveModule / shouldReportContains: present",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "moduleName": "mod1",
+    "request": {
+     "body": "{\"amount\": 5000}"
+    }
+   }
+  },
+  {
+   "note": "WasmStoreTest#shouldReturnNullForUnknownModule / shouldReportContains: absent",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "moduleName": "absent",
+    "request": {
+     "body": "{\"amount\": 5000}"
+    }
+   }
+  },
+  {
+   "note": "WasmStoreTest#shouldRemoveModule",
+   "method": "DELETE",
+   "path": "/mockserver/wasm/modules?name=mod2"
+  },
+  {
+   "note": "WasmStoreTest#shouldRemoveModule / WasmRuntimeModuleCacheTest#shouldEvictCachedModuleViaWasmStoreRemove: removed",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "moduleName": "mod2",
+    "request": {
+     "body": "{\"amount\": 5000}"
+    }
+   }
+  },
+  {
+   "note": "WasmStoreTest#shouldHandleNullRemove: no name",
+   "method": "DELETE",
+   "path": "/mockserver/wasm/modules"
+  },
+  {
+   "note": "WasmStoreTest#shouldHandleNullRemove: mod1 survives",
+   "method": "GET",
+   "path": "/mockserver/wasm/modules"
+  },
+  {
+   "note": "WasmStoreTest#shouldOverwriteExistingModule: v1",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=m",
+   "bodyFile": "wasm/match.wasm"
+  },
+  {
+   "note": "WasmStoreTest#shouldOverwriteExistingModule: v2",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=m",
+   "bodyFile": "wasm/match-request.wasm"
+  },
+  {
+   "note": "WasmStoreTest#shouldOverwriteExistingModule: one name",
+   "method": "GET",
+   "path": "/mockserver/wasm/modules"
+  },
+  {
+   "note": "WasmStoreTest#shouldOverwriteExistingModule: v1 no longer runs",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "moduleName": "m",
+    "request": {
+     "body": "{\"amount\": 5000}"
+    }
+   }
+  },
+  {
+   "note": "WasmStoreTest#shouldOverwriteExistingModule: v2 runs",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "moduleName": "m",
+    "request": {
+     "method": "POST",
+     "path": "/orders",
+     "headers": {
+      "X-Tenant": [
+       "acme"
+      ]
+     },
+     "body": "{}"
+    }
+   }
+  },
+  {
+   "note": "WasmStoreTest#shouldResetClearAllModules / WasmRuntimeModuleCacheTest#shouldClearCacheOnWasmStoreReset",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "WasmStoreTest#shouldResetClearAllModules: empty",
+   "method": "GET",
+   "path": "/mockserver/wasm/modules"
+  },
+  {
+   "note": "WasmBodyDTOTest#shouldPreserveOptional",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/wasm-body",
+     "body": {
+      "type": "WASM",
+      "moduleName": "myModule",
+      "optional": true
+     }
+    },
+    "httpResponse": {
+     "body": "optional"
+    }
+   }
+  },
+  {
+   "note": "WasmBodyTest#shouldReturnModuleName / WasmBodyDTOTest#shouldBuildObjectFromDTO",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/wasm-named",
+     "body": {
+      "type": "WASM",
+      "moduleName": "myModule"
+     }
+    },
+    "httpResponse": {
+     "body": "named"
+    }
+   }
+  },
+  {
+   "note": "WasmBodyMatcherTest#shouldReportBlankWhenModuleNameIsEmpty",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/wasm-empty",
+     "body": {
+      "type": "WASM",
+      "moduleName": ""
+     }
+    },
+    "httpResponse": {
+     "body": "empty"
+    }
+   }
+  },
+  {
+   "note": "WasmBodyMatcherTest#shouldReportBlankWhenModuleNameIsNull",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/wasm-null",
+     "body": {
+      "type": "WASM"
+     }
+    },
+    "httpResponse": {
+     "body": "null"
+    }
+   }
+  },
+  {
+   "note": "WasmBodyTest / WasmBodyDTOTest: echo",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "WasmBodyDTOTest#shouldPreserveOptional: no body, module not loaded",
+   "method": "GET",
+   "path": "/wasm-body"
+  },
+  {
+   "note": "WasmBodyMatcherTest#shouldReportBlankWhenModuleNameIsEmpty: request",
+   "method": "POST",
+   "path": "/wasm-empty",
+   "body": "x"
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest#readShapedResultShouldReturnNullOnZero",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/shape-zero.wasm}}",
+    "request": {
+     "method": "POST",
+     "path": "/shape",
+     "body": "{}"
+    },
+    "response": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest#readShapedResultShouldParseStatusHeadersAndBody",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/shape-full.wasm}}",
+    "request": {
+     "method": "POST",
+     "path": "/shape",
+     "body": "{}"
+    },
+    "response": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest#readShapedResultShouldAllowPartialReturns",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/shape-partial.wasm}}",
+    "request": {
+     "method": "POST",
+     "path": "/shape",
+     "body": "{}"
+    },
+    "response": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest#readShapedResultShouldRejectOversizedReturn",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/shape-oversize.wasm}}",
+    "request": {
+     "method": "POST",
+     "path": "/shape",
+     "body": "{}"
+    },
+    "response": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest#readShapedResultShouldRejectOutOfBoundsRegion",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/shape-out-of-bounds.wasm}}",
+    "request": {
+     "method": "POST",
+     "path": "/shape",
+     "body": "{}"
+    },
+    "response": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest#readShapedResultShouldRejectGarbageJson",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/shape-garbage.wasm}}",
+    "request": {
+     "method": "POST",
+     "path": "/shape",
+     "body": "{}"
+    },
+    "response": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest#readShapedResultShouldRejectNonObjectJson",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/shape-array.wasm}}",
+    "request": {
+     "method": "POST",
+     "path": "/shape",
+     "body": "{}"
+    },
+    "response": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-partial on an expectation (load)",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=shape-partial",
+   "bodyFile": "wasm/units/shape-partial.wasm"
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-partial on an expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/shape-partial",
+     "body": {
+      "type": "WASM",
+      "moduleName": "shape-partial"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-partial on an expectation (request)",
+   "method": "POST",
+   "path": "/shape-partial",
+   "body": "{}"
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-full on an expectation (load)",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=shape-full",
+   "bodyFile": "wasm/units/shape-full.wasm"
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-full on an expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/shape-full",
+     "body": {
+      "type": "WASM",
+      "moduleName": "shape-full"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-full on an expectation (request)",
+   "method": "POST",
+   "path": "/shape-full",
+   "body": "{}"
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-oversize on an expectation (load)",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=shape-oversize",
+   "bodyFile": "wasm/units/shape-oversize.wasm"
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-oversize on an expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/shape-oversize",
+     "body": {
+      "type": "WASM",
+      "moduleName": "shape-oversize"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "headers": {
+      "Content-Type": [
+       "application/json"
+      ]
+     },
+     "body": "{\"name\":\"acme\"}"
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeShapeAbiTest: shape-oversize on an expectation (request)",
+   "method": "POST",
+   "path": "/shape-oversize",
+   "body": "{}"
+  },
+  {
+   "note": "WasmResponseShaperTest#shouldRemoveHeaderWhenShapedValuesEmpty: load",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=remover",
+   "bodyFile": "wasm/units/shape-remove-headers.wasm"
+  },
+  {
+   "note": "WasmResponseShaperTest#shouldRemoveHeaderWhenShapedValuesEmpty: expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/remove",
+     "body": {
+      "type": "WASM",
+      "moduleName": "remover"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "X-Remove-Me": [
+       "present"
+      ],
+      "X-Keep": [
+       "kept"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "note": "WasmResponseShaperTest#shouldRemoveHeaderWhenShapedValuesEmpty: request",
+   "method": "POST",
+   "path": "/remove",
+   "body": "{}"
+  },
+  {
+   "note": "WasmResponseShaperTest#shouldRemoveHeaderWhenShapedValuesEmpty: dry run",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "moduleName": "remover",
+    "request": {
+     "method": "POST",
+     "path": "/shape",
+     "body": "{}"
+    },
+    "response": {
+     "statusCode": 200,
+     "headers": {
+      "X-Remove-Me": [
+       "present"
+      ],
+      "X-Keep": [
+       "kept"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "note": "WasmRuntimeConfigurationRouteTest#memoryPageLimit: default 256 pages, growing by 10 succeeds",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/memory-grow.wasm}}",
+    "request": {
+     "body": "x"
+    }
+   }
+  }
+ ]
+}

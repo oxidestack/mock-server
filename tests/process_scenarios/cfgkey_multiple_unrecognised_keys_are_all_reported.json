@@ -1,0 +1,28 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.typoOne=1"
+  ],
+  "env": {
+    "MOCKSERVER_TYPO_TWO": "1"
+  },
+  "propertyFile": "mockserver.typoThree=1\n",
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "unrecognised MockServer configuration ": 3
+    },
+    "stdoutInOrder": [
+      "unrecognised MockServer configuration environment variable [MOCKSERVER_TYPO_TWO]",
+      "unrecognised MockServer configuration properties-file key [mockserver.typoThree]",
+      "unrecognised MockServer configuration system property [mockserver.typoOne]"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+ "properties": {"forwardProxyHttp2Upgrade": "true"},
+ "peer": true,
+ "steps": [
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/plain"}, "httpResponse": {"body": "served"}},
+    {"httpRequest": {"path": "/trailers"}, "httpResponse": {"headers": {"trailer": ["x-t"]}, "body": "served", "trailers": {"x-t": ["1"]}}},
+    {"httpRequest": {"path": "/sse"}, "httpSseResponse": {"events": [{"data": "one"}]}}
+   ],
+   "mask": [{"regex": "^version: .*", "replace": "version: <the peer's>"}],
+   "note": "the upstream: an HTTP/2 server whose answer to HEAD is its HEADERS frame ending the stream (upstream c4e2b8985, the peer's image; ours alike)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\"httpRequest\": {}, \"httpForward\": {\"host\": \"{{peerhost}}\", \"port\": {{peerport}}, \"scheme\": \"HTTPS\"}}",
+   "mask": ["(?<=\"host\" : \")[^\"]+"],
+   "note": "forwarded over TLS, upgraded to HTTP/2 by forwardProxyHttp2Upgrade (the peer's host differs: the Docker bridge address when recording)"
+  },
+  {"method": "HEAD", "path": "/plain", "note": "HEAD of a plain response: the upstream's content-length kept"},
+  {"method": "HEAD", "path": "/trailers", "note": "HEAD of a response announcing trailers: the trailer header is not relayed"},
+  {"method": "HEAD", "path": "/sse", "note": "HEAD of an SSE response: aggregated, content-length 0"},
+  {"method": "GET", "path": "/trailers", "note": "GET of the same: the trailer relayed as a header"},
+  {"method": "GET", "path": "/sse", "note": "GET of the SSE response: streamed"}
+ ]
+}

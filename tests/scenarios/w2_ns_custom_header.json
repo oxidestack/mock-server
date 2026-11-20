@@ -1,0 +1,11 @@
+{
+ "properties": {"matchNamespaceHeader": "X-Tenant"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [{"id": "t-a", "httpRequest": {"path": "/t"}, "httpResponse": {"body": "a"}, "namespace": "a"}, {"id": "t-g", "priority": -1, "httpRequest": {"path": "/t"}, "httpResponse": {"body": "global"}}]},
+  {"note": "default header is ignored", "method": "GET", "path": "/t", "headers": {"X-MockServer-Namespace": "a"}},
+  {"note": "configured header", "method": "GET", "path": "/t", "headers": {"x-tenant": "a"}},
+  {"note": "tenant view by configured header", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "headers": {"X-Tenant": "b"}},
+  {"note": "clear by configured header", "method": "PUT", "path": "/mockserver/clear", "headers": {"X-Tenant": "a"}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"}
+ ]
+}

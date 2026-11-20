@@ -1,0 +1,305 @@
+{
+  "steps": [
+    {
+      "wsOpen": "bp",
+      "headers": {
+        "X-CLIENT-REGISTRATION-ID": "bp-decisions-client"
+      }
+    },
+    {
+      "wsRead": "bp"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/held"
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "headers": {
+              "x-from": [
+                "expectation"
+              ]
+            },
+            "body": "from /held"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/modified"
+          },
+          "httpResponse": {
+            "statusCode": 202,
+            "body": "from /modified"
+          }
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/breakpoint/matcher",
+      "body": {
+        "httpRequest": {
+          "path": "/held",
+          "headers": {
+            "x-case": [
+              "modify|abort|error"
+            ]
+          }
+        },
+        "phases": [
+          "REQUEST"
+        ],
+        "clientId": "bp-decisions-client"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/breakpoint/matcher",
+      "body": {
+        "httpRequest": {
+          "path": "/held",
+          "headers": {
+            "x-case": [
+              "response-.*"
+            ]
+          }
+        },
+        "phases": [
+          "RESPONSE"
+        ],
+        "clientId": "bp-decisions-client"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/held",
+      "headers": {
+        "x-case": [
+          "modify"
+        ]
+      },
+      "async": "m",
+      "note": "modify: held"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+        "as": "m"
+      },
+      "mask": [
+        "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+      ],
+      "note": "modify: what the client is sent"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.model.HttpRequest",
+        "value": {
+          "method": "GET",
+          "path": "/modified",
+          "headers": {
+            "x-modified": [
+              "yes"
+            ],
+            "WebSocketCorrelationId": [
+              "{{capture:m}}"
+            ]
+          }
+        }
+      },
+      "note": "MODIFY: another request goes on"
+    },
+    {
+      "await": "m",
+      "note": "modify: answered for the modified request"
+    },
+    {
+      "method": "GET",
+      "path": "/held",
+      "headers": {
+        "x-case": [
+          "abort"
+        ]
+      },
+      "async": "a",
+      "note": "abort: held"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+        "as": "a"
+      },
+      "mask": [
+        "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+      ],
+      "note": "abort: what the client is sent"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.model.HttpResponse",
+        "value": {
+          "statusCode": 418,
+          "headers": {
+            "x-aborted": [
+              "yes"
+            ],
+            "WebSocketCorrelationId": [
+              "{{capture:a}}"
+            ]
+          },
+          "body": "aborted by the client"
+        }
+      },
+      "note": "ABORT: a response of the client's"
+    },
+    {
+      "await": "a",
+      "note": "abort: the client's response"
+    },
+    {
+      "method": "GET",
+      "path": "/held",
+      "headers": {
+        "x-case": [
+          "error"
+        ]
+      },
+      "async": "e",
+      "note": "error: held"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+        "as": "e"
+      },
+      "mask": [
+        "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+      ],
+      "note": "error: what the client is sent"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.WebSocketErrorDTO",
+        "value": {
+          "message": "client failed",
+          "webSocketCorrelationId": "{{capture:e}}"
+        }
+      },
+      "note": "an error from the client"
+    },
+    {
+      "await": "e",
+      "note": "error: the request goes on as it was"
+    },
+    {
+      "method": "GET",
+      "path": "/held",
+      "headers": {
+        "x-case": [
+          "response-continue"
+        ]
+      },
+      "async": "rc",
+      "note": "response-continue: held"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+        "as": "rc"
+      },
+      "mask": [
+        "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+      ],
+      "note": "response-continue: what the client is sent"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.model.HttpResponse",
+        "value": {
+          "statusCode": 200,
+          "headers": {
+            "x-from": [
+              "expectation"
+            ],
+            "WebSocketCorrelationId": [
+              "{{capture:rc}}"
+            ]
+          },
+          "body": "from /held"
+        }
+      },
+      "note": "RESPONSE CONTINUE: the response sent back"
+    },
+    {
+      "await": "rc",
+      "note": "response-continue: the original response"
+    },
+    {
+      "method": "GET",
+      "path": "/held",
+      "headers": {
+        "x-case": [
+          "response-modify"
+        ]
+      },
+      "async": "rm",
+      "note": "response-modify: held"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"",
+        "as": "rm"
+      },
+      "mask": [
+        "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+      ],
+      "note": "response-modify: what the client is sent"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.model.HttpResponse",
+        "value": {
+          "statusCode": 503,
+          "headers": {
+            "x-modified": [
+              "yes"
+            ],
+            "WebSocketCorrelationId": [
+              "{{capture:rm}}"
+            ]
+          },
+          "body": "replaced by the client"
+        }
+      },
+      "note": "RESPONSE MODIFY"
+    },
+    {
+      "await": "rm",
+      "note": "response-modify: the client's response"
+    },
+    {
+      "wsRead": "bp",
+      "waitMillis": 500,
+      "note": "nothing more is held"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "note": "what each exchange recorded"
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "The quick brown fox, jumpsOver 42 lazy_dogs!\n\tDone.",
+       "toolCalls": [
+        {
+         "name": "getWeather",
+         "arguments": "{\"city\":\"Paris\"}"
+        }
+       ]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/v1/messages"
+     },
+     "httpLlmResponse": {
+      "provider": "ANTHROPIC",
+      "model": "m",
+      "completion": {
+       "text": "\u65e5\u672c\u8a9e\u306e\u30c6\u30ad\u30b9\u30c8 \ud55c\uad6d\uc5b4",
+       "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "cachedInputTokens": 7
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/keep"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "kept",
+       "usage": {
+        "inputTokens": 5
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/stream"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "m",
+      "completion": {
+       "text": "streamed words here",
+       "streaming": true
+      }
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "body": {
+    "model": "m",
+    "messages": [
+     {
+      "role": "system",
+      "content": "You are helpful."
+     },
+     {
+      "role": "user",
+      "content": "What's the weather in Paris? Use getWeather."
+     },
+     {
+      "role": "assistant",
+      "content": null,
+      "tool_calls": [
+       {
+        "id": "call_1",
+        "type": "function",
+        "function": {
+         "name": "getWeather",
+         "arguments": "{\"city\":\"Paris\"}"
+        }
+       }
+      ]
+     },
+     {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "{\"temp\":21}"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/messages",
+   "body": {
+    "model": "m",
+    "max_tokens": 10,
+    "system": "\u30b7\u30b9\u30c6\u30e0",
+    "messages": [
+     {
+      "role": "user",
+      "content": "\u3053\u3093\u306b\u3061\u306f \u4e16\u754c"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/keep",
+   "body": {
+    "model": "m",
+    "messages": [
+     {
+      "role": "user",
+      "content": "a b c"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/stream",
+   "body": {
+    "model": "m",
+    "stream": true,
+    "messages": [
+     {
+      "role": "user",
+      "content": "count these tokens please"
+     }
+    ]
+   },
+   "mask": [
+    {
+     "regex": "\"(msg|toolu|chatcmpl|call|resp|fc|rs|item|msg_bdrk)_?-?[A-Za-z0-9]{8,}\"",
+     "replace": "\"<id>\""
+    },
+    {
+     "regex": "\"created\":\\d+",
+     "replace": "\"created\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\\d+",
+     "replace": "\"created_at\":<time>"
+    },
+    {
+     "regex": "\"created_at\":\"[^\"]+\"",
+     "replace": "\"created_at\":\"<time>\""
+    },
+    {
+     "regex": "\"(total|load|prompt_eval|eval)_duration\":\\d+",
+     "replace": "\"d\":0"
+    }
+   ]
+  }
+ ],
+ "isolated": true,
+ "properties": {
+  "llmInferUsageEnabled": "true"
+ }
+}

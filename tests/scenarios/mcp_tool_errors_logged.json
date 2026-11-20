@@ -1,0 +1,151 @@
+{
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/api/answer"
+     },
+     "httpResponse": {
+      "headers": {
+       "x-up": [
+        "1"
+       ],
+       "Set-Cookie": [
+        "a=b"
+       ]
+      },
+      "body": "it is sunny"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/api/events"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": "event: a\ndata: {\"token\":\"t1\",\"x\":1}\n\ndata: two\n\n"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/p/.*"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      },
+      "requestModifier": {
+       "path": {
+        "regex": "^/p",
+        "substitution": ""
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/p/api/answer",
+   "headers": {
+    "Authorization": [
+     "Bearer secret"
+    ],
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": "{\"request_id\":\"r1\",\"q\":\"weather\",\"token\":\"t\"}"
+  },
+  {
+   "note": "writing over a directory fails: logged as an MCP tool error",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp"
+     }
+    }
+   }
+  },
+  {
+   "note": "reading a directory fails: logged as an MCP tool error",
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp"
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "the tool errors in the event log (entries without a request match any filter)",
+   "body": {
+    "path": "/none"
+   }
+  }
+ ]
+}

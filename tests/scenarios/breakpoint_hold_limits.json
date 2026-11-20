@@ -1,0 +1,111 @@
+{
+  "properties": {
+    "breakpointTimeoutMillis": "5000",
+    "breakpointMaxHeld": "1"
+  },
+  "steps": [
+    {
+      "wsOpen": "bp",
+      "headers": {
+        "X-CLIENT-REGISTRATION-ID": "bp-limits-client"
+      }
+    },
+    {
+      "wsRead": "bp"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "path": "/held"
+        },
+        "httpResponse": {
+          "statusCode": 200,
+          "body": "from /held"
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/breakpoint/matcher",
+      "body": {
+        "httpRequest": {
+          "path": "/held"
+        },
+        "phases": [
+          "REQUEST",
+          "RESPONSE"
+        ],
+        "clientId": "bp-limits-client"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/held",
+      "headers": {
+        "x-case": [
+          "first"
+        ]
+      },
+      "async": "first",
+      "minMillis": 7500,
+      "maxMillis": 30000,
+      "note": "held, never answered"
+    },
+    {
+      "wsRead": "bp",
+      "mask": [
+        "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+      ],
+      "note": "first: the request phase hold"
+    },
+    {
+      "method": "GET",
+      "path": "/held",
+      "headers": {
+        "x-case": [
+          "second"
+        ]
+      },
+      "note": "breakpointMaxHeld 1: goes on unheld at once"
+    },
+    {
+      "wsRead": "bp",
+      "waitMillis": 300,
+      "note": "second was not sent to the client"
+    },
+    {
+      "wsRead": "bp",
+      "waitMillis": 15000,
+      "mask": [
+        "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+      ],
+      "note": "first auto-continued after breakpointTimeoutMillis, then its response is held"
+    },
+    {
+      "await": "first",
+      "note": "first: answered once the response hold timed out too"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "compare": "unordered",
+      "mask": [
+        "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+",
+        "(?<=\"breakpointHeldMillis\" : )\\d+",
+        "(?<=\"totalTimeInMillis\" : )\\d+"
+      ],
+      "note": "the cap and auto-continue lines"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "mask": [
+        "(?<=\"breakpointHeldMillis\" : )\\d+",
+        "(?<=\"totalTimeInMillis\" : )\\d+"
+      ],
+      "note": "the held exchange as recorded"
+    }
+  ]
+}

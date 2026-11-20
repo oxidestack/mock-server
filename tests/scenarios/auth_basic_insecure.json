@@ -1,0 +1,290 @@
+{
+ "properties": {
+  "controlPlaneBasicAuthenticationRequired": "true",
+  "controlPlaneBasicAuthenticationAllowInsecure": "true",
+  "controlPlaneBasicAuthenticationCredentials": "alice:$2y$04$uSFHeslOj8BIBnGIAGgQMOKxhtgDmVPZWDmiBpBfNm4fSHvYLrajS:admins;bob:$pbkdf2-sha256$10000$c2FsdHNhbHRzYWx0MTIzNA$uiY/07IzO/sTdlAdTo+62emL5jyvq3AWAy/+BZsA0WY:readers, other; ; carol:$argon2id$v=19$m=64,t=1,p=1$c29tZXNhbHRzYWx0$KAgr7adyXIxiF4XivPcTX1DrntZc3VUJ/j+sKDui3IY:mutators",
+  "controlPlaneAuthorizationEnabled": "true",
+  "controlPlaneScopeMapping": "admins=admin,readers=read,mutators=mutate",
+  "controlPlaneAuditEnabled": "true",
+  "proxySetupLogging": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "note": "no credentials: 401 with the Basic challenge (AllowInsecure invites them over plain HTTP)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/status",
+   "note": "status is not gated"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6c2VjcmV0"
+   },
+   "note": "a bcrypt ($2y$) user with the admins scope; the startup WARNs for each weak hash and for AllowInsecure"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6c2VjcmV0"
+   },
+   "note": "alice may mutate",
+   "body": {
+    "httpRequest": {
+     "path": "/basic"
+    },
+    "httpResponse": {
+     "body": "ok"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6d3Jvbmc="
+   },
+   "note": "a wrong password"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic bm9ib2R5OnNlY3JldA=="
+   },
+   "note": "an unknown user fails the same way"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic !!!"
+   },
+   "note": "not base64"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic bm9jb2xvbg=="
+   },
+   "note": "no colon"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Bearer abc"
+   },
+   "note": "another scheme: no basic header"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "Authorization": "Basic Ym9iOmh1bnRlcjI="
+   },
+   "note": "a PBKDF2 user with readers (and other) may read",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic Ym9iOmh1bnRlcjI="
+   },
+   "note": "but not mutate: 403"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic Y2Fyb2w6Y2Fyb2xwdw=="
+   },
+   "note": "an argon2id user with mutators"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/dashboard/",
+   "note": "the dashboard is gated with the challenge too"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/event-stream"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-03-26",
+     "capabilities": {},
+     "clientInfo": {
+      "name": "t",
+      "version": "1"
+     }
+    }
+   },
+   "note": "MCP answers its JSON-RPC 401 without a challenge"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6c2VjcmV0",
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/event-stream"
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-03-26",
+     "capabilities": {},
+     "clientInfo": {
+      "name": "t",
+      "version": "1"
+     }
+    }
+   },
+   "note": "and admits a Basic user",
+   "mask": [
+    "(?m)^mcp-session-id: .*$"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/audit",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6c2VjcmV0"
+   },
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\"",
+    " from \\S+ as "
+   ],
+   "note": "the verified-basic principals"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "failure 1 of the five free ones"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "failure 2 of the five free ones"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "failure 3 of the five free ones"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "failure 4 of the five free ones"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "the fifth failure blocks the address for a second"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "blocked: refused without checking the password"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic bm9ib2R5OnNlY3JldA=="
+   },
+   "note": "an unknown user is blocked too"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic !!!"
+   },
+   "note": "a malformed header is refused before the throttle"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6c2VjcmV0"
+   },
+   "note": "a credential already verified is admitted while its address is blocked"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic Y2Fyb2w6Y2Fyb2xwdw=="
+   },
+   "note": "carol, verified earlier, too"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "still blocked: a remembered admit does not clear the record"
+  },
+  {
+   "sleepMillis": 1200
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "the block over, the sixth failure blocks for two seconds"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6YmFk"
+   },
+   "note": "blocked for two"
+  }
+ ]
+}

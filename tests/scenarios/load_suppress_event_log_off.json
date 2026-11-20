@@ -1,0 +1,95 @@
+{
+ "properties": {
+  "loadGenerationEnabled": "true",
+  "loadGenerationSuppressEventLog": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "lsel-hit",
+    "httpRequest": {
+     "path": "/lsel/hit"
+    },
+    "httpResponse": {
+     "body": "hit"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "body": {
+    "name": "lsel",
+    "steps": [
+     {
+      "name": "self",
+      "request": {
+       "method": "GET",
+       "path": "/lsel/hit",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{port}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     {
+      "name": "dead",
+      "request": {
+       "method": "GET",
+       "path": "/lsel/dead",
+       "socketAddress": {
+        "host": "localhost",
+        "port": "{{deadport}}",
+        "scheme": "HTTP"
+       },
+       "headers": {
+        "Host": [
+         "{{deadhost}}"
+        ]
+       }
+      }
+     }
+    ],
+    "profile": {
+     "stages": [
+      {
+       "vus": 1,
+       "durationMillis": 20000
+      }
+     ]
+    },
+    "maxRequests": 2
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario/start",
+   "body": {
+    "name": "lsel"
+   },
+   "note": "load-generated requests logged on the driver"
+  },
+  {
+   "sleepMillis": 4000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "body": {
+    "path": "/lsel/.*"
+   }
+  }
+ ]
+}

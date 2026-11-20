@@ -1,0 +1,50 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/timedResetX",
+   "body": {"state": "A", "transitionAfterMs": 1500, "nextState": "B"},
+   "note": "timed transition, later cancelled by reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/timedResetY",
+   "body": {"state": "A", "transitionAfterMs": 1500, "nextState": "B"},
+   "note": "timed transition whose generation a later schedule reuses"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "cancelAllPendingTransitions clears the generations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/timedResetX",
+   "body": {"state": "A"},
+   "note": "back in the old transition's state, nothing scheduled"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/scenario/timedResetY",
+   "body": {"state": "A", "transitionAfterMs": 60000, "nextState": "C"},
+   "note": "a new schedule starts again at generation 1"
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario/timedResetX",
+   "note": "the cancelled transition did not fire"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/scenario/timedResetY",
+   "note": "the pre-reset transition fired: its generation equals the new one"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

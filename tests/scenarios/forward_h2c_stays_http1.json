@@ -1,0 +1,41 @@
+{
+ "properties": {
+  "forwardProxyHttp2Upgrade": "true",
+  "forwardProxyHttp2Enabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/h2c/up\"}, \"httpResponse\": {\"body\": \"up\"}}, {\"httpRequest\": {\"path\": \"/h2c/fwd\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/h2c/up\", \"secure\": false, \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}}}, {\"httpRequest\": {\"path\": \"/h2c/sock\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/h2c/up\", \"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}}}]",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "an HTTP/2 (prior knowledge) client, forwarded to a cleartext upstream",
+   "h2": true,
+   "method": "GET",
+   "path": "/h2c/fwd"
+  },
+  {
+   "note": "the same through a cleartext socketAddress",
+   "h2": true,
+   "method": "GET",
+   "path": "/h2c/sock"
+  },
+  {
+   "note": "an HTTP/1.1 client, forwarded to a cleartext upstream",
+   "method": "GET",
+   "path": "/h2c/fwd"
+  },
+  {
+   "note": "without TLS the forwarding client always speaks HTTP/1.1 (HttpClientInitializer: no h2c), whatever forwardProxyHttp2Upgrade/Enabled say; an HTTP/2 client's own x-http2-stream-id 1 goes along as a plain header",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/h2c/up"
+   }
+  }
+ ]
+}

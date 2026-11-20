@@ -1,0 +1,55 @@
+{
+ "source": "9.2.0 (#84): a held, complete request loses its Expect header.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/slow"
+     },
+     "httpResponse": {
+      "body": "slow",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 300
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/post"
+     },
+     "httpResponse": {
+      "body": "posted"
+     }
+    }
+   ]
+  },
+  {
+   "note": "one write: a slow request, then a complete POST carrying Expect: 100-continue behind it",
+   "text": true,
+   "tcp": [
+    {
+     "text": "GET /slow HTTP/1.1\r\nHost: {{host}}\r\n\r\nPOST /post HTTP/1.1\r\nHost: {{host}}\r\nExpect: 100-continue\r\nContent-Length: 4\r\n\r\nbody"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "what was recorded: the held request without its Expect header",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/post"
+   }
+  }
+ ]
+}

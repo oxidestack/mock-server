@@ -1,0 +1,242 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 714",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/ttl\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"a\"\n  },\n  \"id\" : \"ttl-a\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"timeUnit\" : \"SECONDS\",\n    \"timeToLive\" : 1\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/ttl-other\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"b\"\n  },\n  \"id\" : \"ttl-b\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"timeUnit\" : \"SECONDS\",\n    \"timeToLive\" : 1\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/live\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"live\"\n  },\n  \"id\" : \"live\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "two expectations that expire after a second (one on another path) and one that lives"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": ""
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 1"
+      ],
+      "body": "a",
+      "note": "before expiry: served"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation live: path did not match (  string or regex match failed expected:     /live    found:     /ttl )"
+      ],
+      "body": "",
+      "note": "after expiry: the scan meets both expired ones (ttl-b on another path too), logs them as not matching, and drops them on the scheduler"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 4"
+      ],
+      "body": "live"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - cleared logs that match:\n\n  {}\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ttl\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"a\"\n    },\n    \"id\" : \"ttl-a\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"body\" : \"a\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n for action:\n\n  {\n    \"body\" : \"a\"\n  }\n\n from expectation:\n\n  ttl-a\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n didn't match expectation \"ttl-a\"\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ttl\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"a\"\n    },\n    \"id\" : \"ttl-a\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - removed expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ttl\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"a\"\n    },\n    \"id\" : \"ttl-a\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  ttl-a\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n didn't match expectation \"ttl-b\"\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ttl-other\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"b\"\n    },\n    \"id\" : \"ttl-b\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - removed expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ttl-other\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"b\"\n    },\n    \"id\" : \"ttl-b\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  ttl-b\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n didn't match expectation \"live\":\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/live\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"live\"\n    },\n    \"id\" : \"live\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n because:\n\n  method matched\n  path didn't match: \n  \n    string or regex match failed expected:\n  \n      /live\n  \n     found:\n  \n      /ttl\n\n\n------------------------------------\n<timestamp> - closest expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/live\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"live\"\n    },\n    \"id\" : \"live\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n matched 9/10 fields for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - no expectation for:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ttl\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n returning response:\n\n  {\n    \"statusCode\" : 404,\n    \"reasonPhrase\" : \"Not Found\"\n  }\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/live\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/live\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/live\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"live\"\n    },\n    \"id\" : \"live\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"body\" : \"live\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/live\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n for action:\n\n  {\n    \"body\" : \"live\"\n  }\n\n from expectation:\n\n  live\n\n",
+      "note": "the oracle's scheduler threads race the request's own entries, so the entries are compared as a multiset"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - cleared logs that match:\n\n  {}\n\n------------------------------------\n<timestamp> - removed expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ttl-other\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"b\"\n    },\n    \"id\" : \"ttl-b\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  ttl-b\n\n------------------------------------\n<timestamp> - retrieved logs that match:\n\n  { }\n\n",
+      "note": "only ttl-b's removal: no request was made to its path"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[\n  {\n    \"logLevel\" : \"INFO\",\n    \"epochTime\" : <masked>,\n    \"timestamp\" : \"<timestamp>\",\n    \"type\" : \"CLEARED\",\n    \"correlationId\" : \"<uuid>\",\n    \"httpRequest\" : { },\n    \"messageFormat\" : \"cleared logs that match:{}\",\n    \"message\" : [\n      \"cleared logs that match:\",\n      \"\",\n      \"   {}\"\n    ],\n    \"arguments\" : [\n      \"{}\"\n    ]\n  },\n  {\n    \"logLevel\" : \"INFO\",\n    \"epochTime\" : <masked>,\n    \"timestamp\" : \"<timestamp>\",\n    \"type\" : \"REMOVED_EXPECTATION\",\n    \"correlationId\" : \"<uuid>\",\n    \"port\" : <port>,\n    \"httpRequest\" : {\n      \"path\" : \"/ttl-other\"\n    },\n    \"messageFormat\" : \"removed expectation:{}with id:{}\",\n    \"message\" : [\n      \"removed expectation:\",\n      \"\",\n      \"   {\",\n      \"      \\\"httpRequest\\\" : {\",\n      \"         \\\"path\\\" : \\\"/ttl-other\\\"\",\n      \"      },\",\n      \"      \\\"httpResponse\\\" : {\",\n      \"         \\\"body\\\" : \\\"b\\\"\",\n      \"      },\",\n      \"      \\\"id\\\" : \\\"ttl-b\\\",\",\n      \"      \\\"priority\\\" : 0,\",\n      \"      \\\"timeToLive\\\" : {\",\n      \"         \\\"timeUnit\\\" : \\\"SECONDS\\\",\",\n      \"         \\\"timeToLive\\\" : 1,\",\n      \"         \\\"endDate\\\" : 0\",\n      \"      },\",\n      \"      \\\"times\\\" : {\",\n      \"         \\\"unlimited\\\" : true\",\n      \"      }\",\n      \"   }\",\n      \"\",\n      \" with id:\",\n      \"\",\n      \"   ttl-b\"\n    ],\n    \"arguments\" : [\n      {\n        \"httpRequest\" : {\n          \"path\" : \"/ttl-other\"\n        },\n        \"httpResponse\" : {\n          \"body\" : \"b\"\n        },\n        \"id\" : \"ttl-b\",\n        \"priority\" : 0,\n        \"timeToLive\" : {\n          \"timeUnit\" : \"SECONDS\",\n          \"timeToLive\" : 1,\n          \"endDate\" : 0\n        },\n        \"times\" : {\n          \"unlimited\" : true\n        }\n      },\n      \"ttl-b\"\n    ]\n  },\n  {\n    \"logLevel\" : \"INFO\",\n    \"epochTime\" : <masked>,\n    \"timestamp\" : \"<timestamp>\",\n    \"type\" : \"RETRIEVED\",\n    \"correlationId\" : \"<uuid>\",\n    \"port\" : <port>,\n    \"httpRequest\" : { },\n    \"messageFormat\" : \"retrieved logs that match:{}\",\n    \"message\" : [\n      \"retrieved logs that match:\",\n      \"\",\n      \"   request\"\n    ],\n    \"arguments\" : [\n      \"request\"\n    ]\n  },\n  {\n    \"logLevel\" : \"INFO\",\n    \"epochTime\" : <masked>,\n    \"timestamp\" : \"<timestamp>\",\n    \"type\" : \"RETRIEVED\",\n    \"correlationId\" : \"<uuid>\",\n    \"port\" : <port>,\n    \"httpRequest\" : {\n      \"path\" : \"/ttl-other\"\n    },\n    \"messageFormat\" : \"retrieved logs that match:{}\",\n    \"message\" : [\n      \"retrieved logs that match:\",\n      \"\",\n      \"   /ttl-other\"\n    ],\n    \"arguments\" : [\n      \"/ttl-other\"\n    ]\n  }\n]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 222",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/live\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"live\"\n  },\n  \"id\" : \"live\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 247",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/ttl-c\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"c\"\n  },\n  \"id\" : \"ttl-c\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"timeUnit\" : \"SECONDS\",\n    \"timeToLive\" : 1\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "an expectation that expires, dropped by a listing"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": ""
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 222",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/live\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"live\"\n  },\n  \"id\" : \"live\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - cleared logs that match:\n\n  {}\n\n------------------------------------\n<timestamp> - removed expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ttl-c\"\n    },\n    \"httpResponse\" : {\n      \"body\" : \"c\"\n    },\n    \"id\" : \"ttl-c\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  ttl-c\n\n------------------------------------\n<timestamp> - retrieved 1 active expectations in json that match:\n\n  { }\n\n"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[\n  {\n    \"logLevel\" : \"INFO\",\n    \"epochTime\" : <masked>,\n    \"timestamp\" : \"<timestamp>\",\n    \"type\" : \"CLEARED\",\n    \"correlationId\" : \"<uuid>\",\n    \"httpRequest\" : { },\n    \"messageFormat\" : \"cleared logs that match:{}\",\n    \"message\" : [\n      \"cleared logs that match:\",\n      \"\",\n      \"   {}\"\n    ],\n    \"arguments\" : [\n      \"{}\"\n    ]\n  },\n  {\n    \"logLevel\" : \"INFO\",\n    \"epochTime\" : <masked>,\n    \"timestamp\" : \"<timestamp>\",\n    \"type\" : \"REMOVED_EXPECTATION\",\n    \"correlationId\" : \"<uuid>\",\n    \"port\" : <port>,\n    \"httpRequest\" : {\n      \"path\" : \"/ttl-c\"\n    },\n    \"messageFormat\" : \"removed expectation:{}with id:{}\",\n    \"message\" : [\n      \"removed expectation:\",\n      \"\",\n      \"   {\",\n      \"      \\\"httpRequest\\\" : {\",\n      \"         \\\"path\\\" : \\\"/ttl-c\\\"\",\n      \"      },\",\n      \"      \\\"httpResponse\\\" : {\",\n      \"         \\\"body\\\" : \\\"c\\\"\",\n      \"      },\",\n      \"      \\\"id\\\" : \\\"ttl-c\\\",\",\n      \"      \\\"priority\\\" : 0,\",\n      \"      \\\"timeToLive\\\" : {\",\n      \"         \\\"timeUnit\\\" : \\\"SECONDS\\\",\",\n      \"         \\\"timeToLive\\\" : 1,\",\n      \"         \\\"endDate\\\" : 0\",\n      \"      },\",\n      \"      \\\"times\\\" : {\",\n      \"         \\\"unlimited\\\" : true\",\n      \"      }\",\n      \"   }\",\n      \"\",\n      \" with id:\",\n      \"\",\n      \"   ttl-c\"\n    ],\n    \"arguments\" : [\n      {\n        \"httpRequest\" : {\n          \"path\" : \"/ttl-c\"\n        },\n        \"httpResponse\" : {\n          \"body\" : \"c\"\n        },\n        \"id\" : \"ttl-c\",\n        \"priority\" : 0,\n        \"timeToLive\" : {\n          \"timeUnit\" : \"SECONDS\",\n          \"timeToLive\" : 1,\n          \"endDate\" : 0\n        },\n        \"times\" : {\n          \"unlimited\" : true\n        }\n      },\n      \"ttl-c\"\n    ]\n  },\n  {\n    \"logLevel\" : \"INFO\",\n    \"epochTime\" : <masked>,\n    \"timestamp\" : \"<timestamp>\",\n    \"type\" : \"RETRIEVED\",\n    \"correlationId\" : \"<uuid>\",\n    \"port\" : <port>,\n    \"httpRequest\" : { },\n    \"messageFormat\" : \"retrieved 1 active expectations in json that match:{}\",\n    \"message\" : [\n      \"retrieved 1 active expectations in json that match:\",\n      \"\",\n      \"   request\"\n    ],\n    \"arguments\" : [\n      \"request\"\n    ]\n  },\n  {\n    \"logLevel\" : \"INFO\",\n    \"epochTime\" : <masked>,\n    \"timestamp\" : \"<timestamp>\",\n    \"type\" : \"RETRIEVED\",\n    \"correlationId\" : \"<uuid>\",\n    \"port\" : <port>,\n    \"httpRequest\" : { },\n    \"messageFormat\" : \"retrieved logs that match:{}\",\n    \"message\" : [\n      \"retrieved logs that match:\",\n      \"\",\n      \"   request\"\n    ],\n    \"arguments\" : [\n      \"request\"\n    ]\n  }\n]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": "",
+      "note": "an unfiltered clear's own entry goes with the next unfiltered clear"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 58",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - cleared logs that match:\n\n  {}\n\n"
+    }
+  ]
+}

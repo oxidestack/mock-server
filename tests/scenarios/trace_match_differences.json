@@ -1,0 +1,172 @@
+{
+ "source": "at TRACE, 8.0.0's `MatchDifference.addDifference(mockServerLogger, ...)` logs each difference a matcher records as a TRACE entry of its own (`string or regex match failed expected:{}found:{}` and kin), as it records it: in the data plane's fail-fast scan before each match result, in the closest match's non-fail-fast re-evaluation (`countMatchedApplicableFields`), in the closest-match hint's scan, and for each received request a control-plane filter (verify, retrieve) is matched against, including a failing verification's closest-match diff.",
+ "properties": {
+  "logLevel": "TRACE"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "method": "POST",
+      "path": "/tmd/a",
+      "headers": {
+       "x-h": [
+        "v1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "a"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/tmd/b"
+     },
+     "httpResponse": {
+      "body": "b"
+     }
+    },
+    {
+     "httpRequest": {
+      "method": "PUT",
+      "path": "/tmd/j",
+      "body": {
+       "type": "JSON",
+       "json": {
+        "a": 1
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "j"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/tmd/m",
+      "headers": {
+       "x-h": [
+        "v1"
+       ]
+      },
+      "queryStringParameters": {
+       "q": [
+        "1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "m"
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "matched after the other expectations failed fast; the matched one's header and query comparisons record differences on the way",
+   "method": "GET",
+   "path": "/tmd/m?q=1&r=2",
+   "headers": {
+    "x-h": [
+     "v1"
+    ],
+    "x-o": [
+     "o"
+    ]
+   }
+  },
+  {
+   "note": "a body mismatch",
+   "method": "PUT",
+   "path": "/tmd/j",
+   "body": "{\"a\": 2}"
+  },
+  {
+   "note": "unmatched: the scan, the closest match's re-evaluation and the hint's scan",
+   "method": "GET",
+   "path": "/tmd/c",
+   "headers": {
+    "x-h": [
+     "v2"
+    ]
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "method": "GET",
+   "path": "/tmd/b"
+  },
+  {
+   "method": "GET",
+   "path": "/tmd/z"
+  },
+  {
+   "note": "a passing verification: one entry for each received request the filter does not match",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/tmd/b"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "note": "a failing verification and its closest-match diff",
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/tmd/b"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/tmd/z"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ]
+  }
+ ]
+}

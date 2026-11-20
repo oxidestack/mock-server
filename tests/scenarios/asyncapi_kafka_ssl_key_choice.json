@@ -1,0 +1,240 @@
+{
+ "note": "a Kafka SSL key store (sslKeystoreLocation) holding several private keys, to a broker that requires a client certificate: the key DefaultSslEngineFactory's SunX509 key manager chooses for the issuers and signature schemes the server's CertificateRequest names (as asyncapi_mqtt_ssl_key_choice for MQTT). The load's consumer (consume) dials its bootstrap server at once with the same kafkaSecurity, so the server's log shows whether the handshake was accepted (the producer dials at construction too). Key stores: tests/files/asyncapi/mqtt-ssl/key-choice",
+ "properties": {
+  "tlsMutualAuthenticationRequired": "true",
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/tls/private-ca/ca-cert.pem"
+ },
+ "steps": [
+  {
+   "note": "reset: closes the previous load's clients and clears the log",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "Kafka (SSL, SunX509, the only key manager kafkaSecurity reaches): only a key issued by another CA: no key matches, the client sends no certificate and the server refuses, so no Kafka request arrives (first, so that no earlier load's producer is still dialing)",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "localhost:{{port}}",
+     "publishOnLoad": false,
+     "consume": true,
+     "kafkaSecurity": {
+      "securityProtocol": "SSL",
+      "sslKeystoreLocation": "{{files}}/asyncapi/mqtt-ssl/key-choice/other.p12",
+      "sslKeystorePassword": "changeit",
+      "sslTruststoreLocation": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+      "sslTruststorePassword": "changeit"
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "sleepMillis": 8000
+  },
+  {
+   "note": "the log: whether a client's first request reached the server (other.p12)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)^(?:.*?(received binary request):)?.*$",
+     "replace": "after the TLS handshake, the server ${1}",
+     "reason": "only whether the client's TLS handshake was accepted, so that its first Kafka request reached the server as a binary request; the rest of the log (the client id, retries, handshake faults) is not this scenario's subject"
+    }
+   ]
+  },
+  {
+   "note": "reset: closes the previous load's clients and clears the log",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "Kafka (SSL, SunX509, the only key manager kafkaSecurity reaches): a key issued by another CA, then one issued by the CA the server names: the issuers filter the keys, the second is presented and the handshake is accepted",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "localhost:{{port}}",
+     "publishOnLoad": false,
+     "consume": true,
+     "kafkaSecurity": {
+      "securityProtocol": "SSL",
+      "sslKeystoreLocation": "{{files}}/asyncapi/mqtt-ssl/key-choice/other-good.p12",
+      "sslKeystorePassword": "changeit",
+      "sslTruststoreLocation": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+      "sslTruststorePassword": "changeit"
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the log: whether a client's first request reached the server (other-good.p12)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)^(?:.*?(received binary request):)?.*$",
+     "replace": "after the TLS handshake, the server ${1}",
+     "reason": "only whether the client's TLS handshake was accepted, so that its first Kafka request reached the server as a binary request; the rest of the log (the client id, retries, handshake faults) is not this scenario's subject"
+    }
+   ],
+   "pollUntil": "received binary request"
+  },
+  {
+   "note": "reset: closes the previous load's clients and clears the log",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "Kafka (SSL, SunX509, the only key manager kafkaSecurity reaches): an expired key and a valid one, both from the server's CA: the oracle image's JDK SunX509 checks the certificates as X509KeyManagerImpl does, so the valid key ranks first though its HashMap puts \"expired\" before \"good\"",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "localhost:{{port}}",
+     "publishOnLoad": false,
+     "consume": true,
+     "kafkaSecurity": {
+      "securityProtocol": "SSL",
+      "sslKeystoreLocation": "{{files}}/asyncapi/mqtt-ssl/key-choice/expired-good.p12",
+      "sslKeystorePassword": "changeit",
+      "sslTruststoreLocation": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+      "sslTruststorePassword": "changeit"
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the log: whether a client's first request reached the server (expired-good.p12)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)^(?:.*?(received binary request):)?.*$",
+     "replace": "after the TLS handshake, the server ${1}",
+     "reason": "only whether the client's TLS handshake was accepted, so that its first Kafka request reached the server as a binary request; the rest of the log (the client id, retries, handshake faults) is not this scenario's subject"
+    }
+   ],
+   "pollUntil": "received binary request"
+  },
+  {
+   "note": "reset: closes the previous load's clients and clears the log",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "Kafka (SSL, SunX509, the only key manager kafkaSecurity reaches): a key whose extended key usage is serverAuth only, first in the HashMap: an extension mismatch ranks after a valid key",
+   "method": "PUT",
+   "path": "/mockserver/asyncapi",
+   "body": {
+    "spec": {
+     "asyncapi": "2.6.0",
+     "info": {
+      "title": "Ssl",
+      "version": "1"
+     },
+     "channels": {
+      "orders": {
+       "publish": {
+        "message": {
+         "payload": {
+          "type": "object"
+         }
+        }
+       }
+      }
+     }
+    },
+    "brokerConfig": {
+     "kafkaBootstrapServers": "localhost:{{port}}",
+     "publishOnLoad": false,
+     "consume": true,
+     "kafkaSecurity": {
+      "securityProtocol": "SSL",
+      "sslKeystoreLocation": "{{files}}/asyncapi/mqtt-ssl/key-choice/server-good.p12",
+      "sslKeystorePassword": "changeit",
+      "sslTruststoreLocation": "{{files}}/asyncapi/mqtt-ssl/trust.jks",
+      "sslTruststorePassword": "changeit"
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the log: whether a client's first request reached the server (server-good.p12)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(?s)^(?:.*?(received binary request):)?.*$",
+     "replace": "after the TLS handshake, the server ${1}",
+     "reason": "only whether the client's TLS handshake was accepted, so that its first Kafka request reached the server as a binary request; the rest of the log (the client id, retries, handshake faults) is not this scenario's subject"
+    }
+   ],
+   "pollUntil": "received binary request"
+  },
+  {
+   "note": "a reset closes the connections",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

@@ -1,0 +1,146 @@
+{
+  "source": "hand-written (generated from upstream's ProviderStreamFixtures): HttpActionHandlerStreamedLlmUsageTest's shouldSuggestIncludeUsageForAzureChatCompletionsButNotForAzureResponses, forwarded to this server's own mocks",
+  "properties": {
+    "metricsEnabled": "true",
+    "llmMetricsEnabled": "true",
+    "llmProvider": "AZURE_OPENAI"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "upstream-azure-chat",
+          "priority": 10,
+          "httpRequest": {
+            "method": "POST",
+            "path": "/openai/deployments/gpt-4o/chat/completions",
+            "headers": {
+              "x-case": [
+                "azure-chat"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "headers": {
+              "content-type": [
+                "text/event-stream"
+              ]
+            },
+            "body": "data: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"},\"logprobs\":null,\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-AJ2tUOPcPOlvJmFjy3nVbuLxKs1Yu\",\"object\":\"chat.completion.chunk\",\"created\":1728933352,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_6b68a8204b\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"
+          }
+        },
+        {
+          "id": "forward-azure-chat",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/client/azure-chat"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/openai/deployments/gpt-4o/chat/completions",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ],
+                "x-case": [
+                  "azure-chat"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "upstream-azure-responses",
+          "priority": 10,
+          "httpRequest": {
+            "method": "POST",
+            "path": "/openai/v1/responses",
+            "headers": {
+              "x-case": [
+                "azure-responses"
+              ]
+            }
+          },
+          "httpResponse": {
+            "statusCode": 200,
+            "headers": {
+              "content-type": [
+                "text/event-stream"
+              ]
+            },
+            "body": "event: response.created\ndata: {\"type\":\"response.created\",\"sequence_number\":0,\"response\":{\"id\":\"resp_67c9fdcecf488190bdd9a0409de3a1ec07b8b0ad4e5eb654\",\"object\":\"response\",\"created_at\":1741290958,\"status\":\"in_progress\",\"error\":null,\"incomplete_details\":null,\"instructions\":\"You are a helpful assistant.\",\"max_output_tokens\":null,\"model\":\"gpt-4.1-2025-04-14\",\"output\":[],\"parallel_tool_calls\":true,\"previous_response_id\":null,\"reasoning\":{\"effort\":null,\"summary\":null},\"store\":true,\"temperature\":1.0,\"text\":{\"format\":{\"type\":\"text\"}},\"tool_choice\":\"auto\",\"tools\":[{\"type\":\"function\",\"name\":\"report_usage\",\"description\":\"Report usage\",\"strict\":false,\"parameters\":{\"type\":\"object\",\"properties\":{\"usage\":{\"type\":\"object\"}},\"examples\":[{\"usage\":{\"input_tokens\":900000,\"output_tokens\":900000}}]}}],\"top_p\":1.0,\"truncation\":\"disabled\",\"usage\":null,\"user\":null,\"metadata\":{}}}\n\nevent: response.output_item.added\ndata: {\"type\":\"response.output_item.added\",\"sequence_number\":2,\"output_index\":0,\"item\":{\"id\":\"msg_67c9fdcf37fc8190ba82116e33fb28c507b8b0ad4e5eb654\",\"type\":\"message\",\"status\":\"in_progress\",\"role\":\"assistant\",\"content\":[]}}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"sequence_number\":4,\"item_id\":\"msg_67c9fdcf37fc8190ba82116e33fb28c507b8b0ad4e5eb654\",\"output_index\":0,\"content_index\":0,\"delta\":\"Hello there\",\"logprobs\":[]}\n\n"
+          }
+        },
+        {
+          "id": "forward-azure-responses",
+          "httpRequest": {
+            "method": "POST",
+            "path": "/client/azure-responses"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/openai/v1/responses",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ],
+                "x-case": [
+                  "azure-responses"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "Azure Chat Completions without usage: the include_usage hint",
+      "method": "POST",
+      "path": "/client/azure-chat",
+      "body": "{\"stream\":true}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "note": "Azure Responses without usage: no hint",
+      "method": "POST",
+      "path": "/client/azure-responses",
+      "body": "{\"model\":\"gpt-4o\",\"stream\":true}",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    {
+      "sleepMillis": 500,
+      "note": "a relayed stream is accounted once its relay has ended, which may be after the client read it"
+    },
+    {
+      "note": "the LLM token and cost counters",
+      "method": "GET",
+      "path": "/mockserver/metrics",
+      "mask": [
+        {
+          "regex": "(?m)^(?!(# (HELP|TYPE) )?mock_server_llm_)[^\\n]*\\n",
+          "replace": ""
+        },
+        "content-length: \\d+"
+      ]
+    },
+    {
+      "note": "the streamed-usage lines of the event log",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "(?s)(?:\\A|(?<=------------------------------------\\n))(?!\\S+ - (?:no token usage|the streamed ))(?:(?!------------------------------------).)*(?:------------------------------------\\n|\\z)",
+          "replace": "",
+          "reason": "every entry but the streamed-usage lines"
+        }
+      ]
+    }
+  ]
+}

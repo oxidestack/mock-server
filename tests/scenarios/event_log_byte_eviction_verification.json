@@ -1,0 +1,139 @@
+{
+ "source": "CircularConcurrentLinkedDequeTest.shouldAttributeByteEvictionsToTheByteBudget, shouldResetByteEvictedCountOnClear, shouldAttributeByteEvictionsOnMaxBytesShrink: an upper-bound verification after entries were evicted to stay within maxEventLogSizeInBytes fails, attributing them to the byte budget (evictedAtMaxEventLogSizeInBytes), a reset clears that count, and a budget shrunk through PUT /mockserver/configuration is tried last. Entries weigh as in event_log_max_size_bytes: 145 bytes per matched request.",
+ "properties": {
+  "maxEventLogSizeInBytes": "300",
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "budget-verify",
+    "httpRequest": {
+     "path": "/budget"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "a-very-long-response-body"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/budget",
+   "body": "0123456789012345678901234567890123456789"
+  },
+  {
+   "method": "POST",
+   "path": "/budget",
+   "body": "0123456789012345678901234567890123456789",
+   "note": "the byte budget evicts the oldest entries"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/other"
+    },
+    "times": {
+     "atMost": 0
+    }
+   },
+   "note": "an upper bound cannot be proven: the evictions are reported against maxEventLogSizeInBytes"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/budget"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "note": "a lower bound is still proven"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "note": "the VERIFICATION_FAILED entry and its argument",
+   "mask": [
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/other"
+    },
+    "times": {
+     "atMost": 0
+    }
+   },
+   "note": "the byte-evicted count restarts at the reset: only what was evicted since is reported"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxEventLogSizeInBytes": 100
+   },
+   "note": "a budget below one request's weight",
+   "mask": [
+    {
+     "regex": "(\"(?:(?:actionHandler|clientNioEventLoop|nioEventLoop|webSocketClientEventLoop)ThreadCount|maxOpenAiResponsesSizeInBytes)\" : )\\d+",
+     "replace": "${1}0",
+     "reason": "derived from the processors and memory of the machine that runs the server"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "budget-verify",
+    "httpRequest": {
+     "path": "/budget"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "a-very-long-response-body"
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/budget",
+   "body": "0123456789012345678901234567890123456789"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/other"
+    },
+    "times": {
+     "atMost": 0
+    }
+   },
+   "note": "whether the shrunk budget evicted anything"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  }
+ ]
+}

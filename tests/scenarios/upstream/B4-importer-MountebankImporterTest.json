@@ -1,0 +1,96 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) importer-MountebankImporterTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "428a3979c7a1",
+   "note": "supportsSingleImposterForm (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mountebank",
+   "body": "{ \"protocol\": \"https\", \"port\": 443, \"stubs\": [\n  { \"predicates\": [ { \"equals\": { \"path\": \"/x\" } } ],\n    \"responses\": [ { \"is\": { \"statusCode\": 200, \"body\": \"ok\" } } ] } ] }\n",
+   "note": "supportsSingleImposterForm (importer): MountebankImporter mountebank",
+   "case": "428a3979c7a1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "a0bc20bad5dd",
+   "note": "mapsContainsBodyAndProxyResponse (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mountebank",
+   "body": "{\n  \"imposters\": [\n    {\n      \"port\": 4545,\n      \"protocol\": \"http\",\n      \"name\": \"orders api\",\n      \"stubs\": [\n        {\n          \"predicates\": [\n            { \"equals\": { \"method\": \"GET\", \"path\": \"/orders\" } },\n            { \"deepEquals\": { \"query\": { \"status\": \"open\" } } },\n            { \"matches\": { \"headers\": { \"Accept\": \"application/.*\" } } }\n          ],\n          \"responses\": [\n            {\n              \"is\": {\n                \"statusCode\": 200,\n                \"headers\": { \"Content-Type\": \"application/json\" },\n                \"body\": { \"orders\": [1, 2] }\n              },\n              \"_behaviors\": { \"wait\": 300, \"repeat\": 2 }\n            }\n          ]\n        },\n        {\n          \"predicates\": [\n            { \"contains\": { \"body\": \"urgent\" } },\n            { \"exists\": { \"headers\": { \"X-Api-Version\": true } } }\n          ],\n          \"responses\": [\n            { \"proxy\": { \"to\": \"http://downstream.example.com:9000\", \"mode\": \"proxyOnce\" } }\n          ]\n        },\n        {\n          \"predicates\": [ { \"equals\": { \"path\": \"/cycle\" } } ],\n          \"responses\": [\n            { \"is\": { \"statusCode\": 200, \"body\": \"first\" } },\n            { \"is\": { \"statusCode\": 200, \"body\": \"second\" } }\n          ]\n        },\n        {\n          \"predicates\": [ { \"equals\": { \"path\": \"/boom\" } } ],\n          \"responses\": [ { \"fault\": \"CONNECTION_RESET_BY_PEER\" } ]\n        },\n        {\n          \"predicates\": [ { \"equals\": { \"path\": \"/js\" } } ],\n          \"responses\": [ { \"inject\": \"function (request) { return { body: 'x' }; }\" } ]\n        }\n      ]\n    },\n    {\n      \"port\": 5555,\n      \"protocol\": \"tcp\",\n      \"stubs\": [ { \"responses\": [ { \"is\": { \"data\": \"raw\" } } ] } ]\n    }\n  ]\n}\n",
+   "note": "mapsContainsBodyAndProxyResponse (importer): MountebankImporter mountebank",
+   "case": "a0bc20bad5dd"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "5e952b00afa0",
+   "note": "rejectsBlankAndInvalidInput (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mountebank",
+   "body": "",
+   "note": "rejectsBlankAndInvalidInput (importer): MountebankImporter mountebank",
+   "case": "5e952b00afa0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "1b5fee301d01",
+   "note": "rejectsBlankAndInvalidInput (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mountebank",
+   "body": "{ \"foo\": 1 }",
+   "note": "rejectsBlankAndInvalidInput (importer): MountebankImporter mountebank",
+   "case": "1b5fee301d01"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "02530584ce62",
+   "note": "warnsOnCompoundPredicate (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mountebank",
+   "body": "{ \"protocol\": \"http\", \"port\": 6000, \"stubs\": [\n  { \"predicates\": [ { \"or\": [ { \"equals\": { \"path\": \"/a\" } } ] } ],\n    \"responses\": [ { \"is\": { \"statusCode\": 200 } } ] } ] }\n",
+   "note": "warnsOnCompoundPredicate (importer): MountebankImporter mountebank",
+   "case": "02530584ce62"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "960233abc040",
+   "note": "warnsThatExactPredicatesBecomeCaseSensitiveAndMakesRegexPredicatesCaseInsensitive (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mountebank",
+   "body": "{ \"protocol\": \"http\", \"port\": 7000, \"stubs\": [\n  { \"predicates\": [\n      { \"equals\": { \"path\": \"/Case\" } },\n      { \"matches\": { \"headers\": { \"X-Env\": \"PROD\" } } } ],\n    \"responses\": [ { \"is\": { \"statusCode\": 200 } } ] } ] }\n",
+   "note": "warnsThatExactPredicatesBecomeCaseSensitiveAndMakesRegexPredicatesCaseInsensitive (importer): MountebankImporter mountebank",
+   "case": "960233abc040"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c6049a58217f",
+   "note": "warnsThatExactPredicatesBecomeCaseSensitiveAndMakesRegexPredicatesCaseInsensitive (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mountebank",
+   "body": "{ \"protocol\": \"http\", \"port\": 7001, \"stubs\": [\n  { \"predicates\": [ { \"equals\": { \"path\": \"/Case\" }, \"caseSensitive\": true } ],\n    \"responses\": [ { \"is\": { \"statusCode\": 200 } } ] } ] }\n",
+   "note": "warnsThatExactPredicatesBecomeCaseSensitiveAndMakesRegexPredicatesCaseInsensitive (importer): MountebankImporter mountebank",
+   "case": "c6049a58217f"
+  }
+ ]
+}

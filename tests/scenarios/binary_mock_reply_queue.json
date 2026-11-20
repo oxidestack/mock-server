@@ -1,0 +1,15 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "note": "a delayed reply, an undelayed one, and two that answer with nothing (empty data, no data)", "mask": ["\"id\" : \"[0-9a-f-]+\""], "body": [
+    {"httpRequest": {"binaryData": "c2xvdw=="}, "binaryResponse": {"binaryData": "U0xPVw==", "delay": {"timeUnit": "MILLISECONDS", "value": 400}}},
+    {"httpRequest": {"binaryData": "ZmFzdA=="}, "binaryResponse": {"binaryData": "RkFTVA=="}},
+    {"httpRequest": {"binaryData": "SAAAAAQ="}, "binaryResponse": {"binaryData": ""}},
+    {"httpRequest": {"binaryData": "YwAAAAQ="}, "binaryResponse": {}},
+    {"httpRequest": {"binaryData": "UwAAAAQ="}, "binaryResponse": {"binaryData": "WgAAAAVJ"}}
+  ]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "note": "how an empty and an absent binaryData are kept", "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"tcp": ["c2xvdw==", "ZmFzdA=="], "chunkMillis": 100, "note": "BinaryResponseDelayIntegrationTest: the delayed reply first, the later one held behind it, the connection kept"},
+  {"tcp": ["SAAAAAQ=", "UwAAAAQ=", "YwAAAAQ=", "UwAAAAQ="], "chunkMillis": 300, "note": "BinarySessionMockingIntegrationTest: a message with no reply writes nothing and keeps the connection open"},
+  {"sleepMillis": 300},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "note": "returning nothing, as the binary mock response is empty", "mask": ["content-length: \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"]},
+  {"method": "PUT", "path": "/mockserver/reset"}
+]}

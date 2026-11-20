@@ -1,0 +1,64 @@
+{
+ "source": "a configured CA with a ml-dsa-87 key (tests/files/x509/tostring/ca-forms): whether the server takes it and what its DEBUG/TRACE CA entries print; socketConnectionTimeoutInMillis bounds the first handshake, whose certificate generation took over the default 20 s on a loaded machine",
+ "properties": {
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false",
+  "socketConnectionTimeoutInMillis": "120000",
+  "certificateAuthorityCertificate": "{{files}}/x509/tostring/ca-forms/ml-dsa-87.pem",
+  "certificateAuthorityPrivateKey": "{{files}}/x509/tostring/ca-forms/ml-dsa-87-key.pem"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "first inbound TLS connection: the server's context loads the bundled CA and logs the certificates in use",
+   "tcp": [
+    {
+     "text": "GET /ca/debug HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "DEBUG: the X509 entry with the certificate's toString, the key path, the CA and leaf serials (the leaf's is random)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]",
+     "reason": "Netty's random channel id and the container's addresses"
+    },
+    {
+     "regex": "(and certificate serial:\\n\\n  )\\d+",
+     "replace": "${1}<random>"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - created new X509\\n.*?\\n-{36}\\n",
+     "replace": "\n",
+     "reason": "the leaf BouncyCastle prints is random (key, serial, dates, signature)"
+    },
+    {
+     "regex": "(?s)^(.*subject:\\n\\n  [^\\n]*CN=localhost\\n\\n-+\\n).*$",
+     "replace": "${1}(the rest: the request served over TLS)"
+    },
+    {
+     "regex": "(?m)^(\\s+)(?:1080|<port>): ",
+     "replace": "${1}1080: ",
+     "reason": "the signature's hex dump has a 0x1080 offset line, which the harness would read as the oracle's port 1080"
+    }
+   ]
+  }
+ ]
+}

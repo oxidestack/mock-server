@@ -1,0 +1,28 @@
+{
+ "note": "with localBoundIP blank the oracle's listener is Netty's new InetSocketAddress(port), a dual-stack [::]:1080 (its container's /proc/net/tcp6 lists 0438 on ::), so it answers on ::1 as well as 127.0.0.1. Recorded by a self-dial inside the oracle's container: the Docker VM forwards the published port on the host's 127.0.0.1 only, so a request from the host to [::1] cannot reach it, while the container's lo carries ::1. Both the bare and the bracketed IPv6 literal are dialed; the forwarded Host header is the oracle's host:port join, '::1:1080'",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/v6/target\"}, \"httpResponse\": {\"body\": \"reached over ipv6\"}}, {\"httpRequest\": {\"path\": \"/v6/bare\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/v6/target\", \"socketAddress\": {\"host\": \"::1\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}}}, {\"httpRequest\": {\"path\": \"/v6/brackets\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/v6/target\", \"socketAddress\": {\"host\": \"[::1]\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}}}]"
+  },
+  {
+   "note": "the server dials itself on [::1]",
+   "method": "GET",
+   "path": "/v6/bare"
+  },
+  {
+   "note": "the same with the bracketed literal",
+   "method": "GET",
+   "path": "/v6/brackets"
+  },
+  {
+   "note": "both arrived on the IPv6 loopback",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/v6/target"
+   }
+  }
+ ]
+}

@@ -1,0 +1,46 @@
+{
+  "source": "the tier each property is read from when more than one sets it, on a launched process. maxExpectations: system property and environment; maxLogEntries: system property and properties file; maxWebSocketExpectations: properties file and environment; corsMaxAgeInSeconds: all three; maxHeaderSize: environment only; maxSocketTimeout: properties file only; metricsEnabled: system property only; maxFutureTimeout: a blank properties-file value over an environment value; socketConnectionTimeout: a blank system property over an environment value. Everything else is the default.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.maxExpectations=1111",
+    "-Dmockserver.maxLogEntries=1212",
+    "-Dmockserver.corsMaxAgeInSeconds=11",
+    "-Dmockserver.metricsEnabled=true",
+    "-Dmockserver.socketConnectionTimeout="
+  ],
+  "env": {
+    "MOCKSERVER_MAX_EXPECTATIONS": "3333",
+    "MOCKSERVER_MAX_WEB_SOCKET_EXPECTATIONS": "600",
+    "MOCKSERVER_CORS_MAX_AGE_IN_SECONDS": "33",
+    "MOCKSERVER_MAX_HEADER_SIZE": "30000",
+    "MOCKSERVER_MAX_FUTURE_TIMEOUT": "70000",
+    "MOCKSERVER_SOCKET_CONNECTION_TIMEOUT": "15000"
+  },
+  "propertyFile": "mockserver.maxLogEntries=2121\nmockserver.maxWebSocketExpectations=400\nmockserver.corsMaxAgeInSeconds=22\nmockserver.maxSocketTimeout=25000\nmockserver.maxFutureTimeout=\n",
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 500
+  },
+  "timeoutSecs": 150,
+  "afterReady": [
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "compareBody": "configuration"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

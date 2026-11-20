@@ -1,0 +1,136 @@
+{
+ "properties": {
+  "maxRequestBodySize": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "a plain body over the limit",
+   "tcp": [
+    {
+     "text": "POST /plain-over HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: text/plain\r\nContent-Length: 400\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "cHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "gzip: 230 bytes on the wire, 200000 decoded",
+   "tcp": [
+    {
+     "text": "POST /huge HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nContent-Length: 230\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE+3BMQEAAADCoKzrX8IM/kABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK8Bm1Np4EANAwA="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "gzip chunked: 230 bytes on the wire, 200000 decoded",
+   "tcp": [
+    {
+     "text": "POST /huge-chunked HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: text/plain\r\nContent-Encoding: gzip\r\nTransfer-Encoding: chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "ZTYNCh+LCAAAAAAAAhPtwTEBAAAAwqCs61/CDP5AAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACvAZtTaeBADQMADQowDQoNCg=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "gzip with a Content-Length: 36 bytes on the wire, 1008 decoded",
+   "tcp": [
+    {
+     "text": "POST /big-length HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nContent-Length: 36\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWylayUkocBaNgFAx7oFQLABW0+NLwAwAA"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "gzip chunked: 36 bytes on the wire, 1008 decoded",
+   "tcp": [
+    {
+     "text": "POST /big-chunked HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nTransfer-Encoding: chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MjQNCh+LCAAAAAAAAhOrVspWslJKHAWjYBQMe6BUCwAVtPjS8AMAAA0KMA0KDQo="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "Transfer-Encoding: gzip, chunked, 1008 decoded",
+   "tcp": [
+    {
+     "text": "POST /big-te HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nTransfer-Encoding: gzip, chunked\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "MjQNCh+LCAAAAAAAAhOrVspWslJKHAWjYBQMe6BUCwAVtPjS8AMAAA0KMA0KDQo="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "h2: gzip over the limit once decoded",
+   "h2": true,
+   "method": "POST",
+   "path": "/big-h2",
+   "headers": {
+    "content-type": "application/json",
+    "content-encoding": "gzip"
+   },
+   "bodyBase64": "H4sIAAAAAAACE6tWylayUkocBaNgFAx7oFQLABW0+NLwAwAA"
+  },
+  {
+   "note": "h2: gzip with a content-length over the limit once decoded",
+   "h2": true,
+   "method": "POST",
+   "path": "/big-h2-length",
+   "headers": {
+    "content-type": "application/json",
+    "content-encoding": "gzip",
+    "content-length": "36"
+   },
+   "bodyBase64": "H4sIAAAAAAACE6tWylayUkocBaNgFAx7oFQLABW0+NLwAwAA"
+  },
+  {
+   "note": "gzip under the limit once decoded",
+   "tcp": [
+    {
+     "text": "POST /small HTTP/1.1\r\nHost: {{host}}\r\nX-Before: a\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nContent-Length: 37\r\nX-After: b\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVGqBQDRQQnYEQAAAA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "keep-alive: gzip over the limit once decoded, then a second request on the connection, which the lingering close after the 413 discards (sent 500 ms later: 20 ms after the body, a cold oracle had not started the close yet and still read it)",
+   "tcp": [
+    {
+     "text": "POST /big-keepalive HTTP/1.1\r\nHost: {{host}}\r\nContent-Type: application/json\r\nContent-Encoding: gzip\r\nContent-Length: 36\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWylayUkocBaNgFAx7oFQLABW0+NLwAwAA",
+    {
+     "text": "GET /after HTTP/1.1\r\nHost: {{host}}\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/(big|small|after).*"
+   },
+   "note": "recorded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/(big|plain).*"
+   },
+   "note": "log",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,322 @@
+{
+ "properties": {
+  "forwardProxyDeniedHosts": "127.0.0.1",
+  "socketConnectionTimeoutInMillis": "500"
+ },
+ "steps": [
+  {
+   "note": "a deny list holding a loopback address",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/f/v4"
+     },
+     "httpForward": {
+      "host": "127.0.0.1",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/other-loopback"
+     },
+     "httpForward": {
+      "host": "127.0.0.5",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/v6"
+     },
+     "httpForward": {
+      "host": "::1",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/wildcard"
+     },
+     "httpForward": {
+      "host": "0.0.0.0",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/wildcard-v6"
+     },
+     "httpForward": {
+      "host": "::",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/localhost"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/f/private"
+     },
+     "httpForward": {
+      "host": "10.0.0.1",
+      "port": 9
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/hook/0"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "hooked"
+     },
+     "afterActions": [
+      {
+       "httpRequest": {
+        "path": "/hooked",
+        "headers": {
+         "Host": [
+          "{{deadhost}}"
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "httpForward to 127.0.0.1: listed",
+   "method": "GET",
+   "path": "/f/v4"
+  },
+  {
+   "note": "httpForward to 127.0.0.5: a listed loopback covers every address that reaches this host",
+   "method": "GET",
+   "path": "/f/other-loopback"
+  },
+  {
+   "note": "httpForward to ::1: the other family's loopback",
+   "method": "GET",
+   "path": "/f/v6"
+  },
+  {
+   "note": "httpForward to 0.0.0.0: the wildcard address",
+   "method": "GET",
+   "path": "/f/wildcard"
+  },
+  {
+   "note": "httpForward to ::: the IPv6 wildcard",
+   "method": "GET",
+   "path": "/f/wildcard-v6"
+  },
+  {
+   "note": "httpForward to localhost: a name resolving to loopback, named with its address",
+   "method": "GET",
+   "path": "/f/localhost"
+  },
+  {
+   "note": "httpForward to 10.0.0.1: not denied",
+   "method": "GET",
+   "path": "/f/private"
+  },
+  {
+   "note": "the forward refusals",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/f/.*"
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ],
+   "compare": "unordered"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "an upgrade relayed to 127.0.0.1: listed",
+   "method": "GET",
+   "path": "/f/v4",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to 127.0.0.5: a listed loopback covers every address that reaches this host",
+   "method": "GET",
+   "path": "/f/other-loopback",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to ::1: the other family's loopback",
+   "method": "GET",
+   "path": "/f/v6",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to 0.0.0.0: the wildcard address",
+   "method": "GET",
+   "path": "/f/wildcard",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to ::: the IPv6 wildcard",
+   "method": "GET",
+   "path": "/f/wildcard-v6",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to localhost: a name resolving to loopback, named with its address",
+   "method": "GET",
+   "path": "/f/localhost",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "an upgrade relayed to 10.0.0.1: not denied",
+   "method": "GET",
+   "path": "/f/private",
+   "headers": {
+    "Upgrade": "websocket",
+    "Connection": "Upgrade",
+    "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+    "Sec-WebSocket-Version": "13"
+   },
+   "mask": [
+    {
+     "regex": "(unable to connect to upstream WebSocket server [^ ]+) - .*",
+     "replace": "$1 - <connect failure>",
+     "reason": "the OS connect error text differs between the oracle's JVM and ours"
+    }
+   ]
+  },
+  {
+   "note": "unmatched, proxied to Host {{deadhost}}",
+   "method": "GET",
+   "path": "/proxied",
+   "headers": {
+    "Host": "{{deadhost}}"
+   }
+  },
+  {
+   "note": "replay to Host {{deadhost}}",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/replayed",
+    "headers": {
+     "Host": [
+      "{{deadhost}}"
+     ]
+    }
+   }
+  },
+  {
+   "note": "an after-action webhook to Host {{deadhost}}",
+   "method": "GET",
+   "path": "/hook/0"
+  },
+  {
+   "note": "the webhooks are sent after the response",
+   "sleepMillis": 1500
+  },
+  {
+   "note": "the relay, proxy, replay and webhook refusals",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "mask": [
+    "^content-length: \\d+$"
+   ],
+   "compare": "unordered"
+  }
+ ]
+}

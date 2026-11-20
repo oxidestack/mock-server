@@ -1,0 +1,33 @@
+{
+ "steps": [
+  {
+   "note": "JSON body matchers with and without matchNumbersAsStrings, numbers and strings expected",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"method": "POST", "path": "/numbers/on", "body": {"type": "JSON", "json": {"id": 1, "price": 1.5, "list": [1, 2]}, "matchNumbersAsStrings": true}}, "httpResponse": {"body": "numbers on"}},
+    {"httpRequest": {"method": "POST", "path": "/numbers/off", "body": {"type": "JSON", "json": {"id": 1, "price": 1.5, "list": [1, 2]}}}, "httpResponse": {"body": "numbers off"}},
+    {"httpRequest": {"method": "POST", "path": "/strings/on", "body": {"type": "JSON", "json": {"id": "1", "price": "1.5"}, "matchNumbersAsStrings": true}}, "httpResponse": {"body": "strings on"}},
+    {"httpRequest": {"method": "POST", "path": "/strings/off", "body": {"type": "JSON", "json": {"id": "1", "price": "1.5"}, "matchNumbersAsStrings": false}}, "httpResponse": {"body": "strings off"}},
+    {"httpRequest": {"method": "POST", "path": "/strict/on", "body": {"type": "JSON", "json": {"id": 1, "price": 1.5}, "matchType": "STRICT", "matchNumbersAsStrings": true}}, "httpResponse": {"body": "strict on"}},
+    {"httpRequest": {"method": "POST", "path": "/string/on", "body": {"type": "JSON", "json": "{\"id\": 10, \"big\": 12345678901234567890}", "matchNumbersAsStrings": true}}, "httpResponse": {"body": "string json on"}}
+   ]
+  },
+  {"note": "numbers as numbers, flag on", "method": "POST", "path": "/numbers/on", "body": {"id": 1, "price": 1.5, "list": [1, 2]}},
+  {"note": "strings for numbers, flag on", "method": "POST", "path": "/numbers/on", "body": {"id": "1", "price": "1.5", "list": ["1", "2"]}},
+  {"note": "one string for a number, flag on", "method": "POST", "path": "/numbers/on", "body": {"id": "1", "price": 1.5, "list": [1, 2]}},
+  {"note": "doubles for integers, flag on", "method": "POST", "path": "/numbers/on", "body": {"id": 1.0, "price": 1.50, "list": [1.0, 2e0]}},
+  {"note": "exponent forms, flag on", "method": "POST", "path": "/numbers/on", "body": "{\"id\": 1E0, \"price\": 15e-1, \"list\": [10e-1, 2]}"},
+  {"note": "a different number, flag on", "method": "POST", "path": "/numbers/on", "body": {"id": 2, "price": 1.5, "list": [1, 2]}},
+  {"note": "numbers as numbers, flag off", "method": "POST", "path": "/numbers/off", "body": {"id": 1, "price": 1.5, "list": [1, 2]}},
+  {"note": "strings for numbers, flag off", "method": "POST", "path": "/numbers/off", "body": {"id": "1", "price": "1.5", "list": ["1", "2"]}},
+  {"note": "doubles for integers, flag off", "method": "POST", "path": "/numbers/off", "body": {"id": 1.0, "price": 1.50, "list": [1.0, 2e0]}},
+  {"note": "strings as strings, flag on", "method": "POST", "path": "/strings/on", "body": {"id": "1", "price": "1.5"}},
+  {"note": "numbers for strings, flag on", "method": "POST", "path": "/strings/on", "body": {"id": 1, "price": 1.5}},
+  {"note": "numbers for strings, flag off", "method": "POST", "path": "/strings/off", "body": {"id": 1, "price": 1.5}},
+  {"note": "doubles for integers, STRICT, flag on", "method": "POST", "path": "/strict/on", "body": {"id": 1.0, "price": 1.50}},
+  {"note": "strings for numbers, STRICT, flag on", "method": "POST", "path": "/strict/on", "body": {"id": "1", "price": "1.5"}},
+  {"note": "a JSON string matcher, a double for an integer and a big integer as a double", "method": "POST", "path": "/string/on", "body": "{\"id\": 10.0, \"big\": 1.2345678901234567890E19}"},
+  {"note": "a JSON string matcher, strings for numbers", "method": "POST", "path": "/string/on", "body": "{\"id\": \"10\", \"big\": \"12345678901234567890\"}"}
+ ]
+}

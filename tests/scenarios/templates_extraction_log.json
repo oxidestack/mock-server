@@ -1,0 +1,167 @@
+{
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/tel/xpath-nobody"
+          },
+          "httpResponseTemplate": {
+            "templateType": "MUSTACHE",
+            "template": "{\"statusCode\": 200, \"body\": \"[{{#xPath}}/a/b{{/xPath}}]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/jsonpath-nobody"
+          },
+          "httpResponseTemplate": {
+            "templateType": "MUSTACHE",
+            "template": "{\"statusCode\": 200, \"body\": \"[{{#jsonPath}}$.a{{/jsonPath}}{{jsonPathResult}}]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/xpath-badexpr"
+          },
+          "httpResponseTemplate": {
+            "templateType": "MUSTACHE",
+            "template": "{\"statusCode\": 200, \"body\": \"[{{#xPath}}/a[{{/xPath}}]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/xpath-nomatch"
+          },
+          "httpResponseTemplate": {
+            "templateType": "MUSTACHE",
+            "template": "{\"statusCode\": 200, \"body\": \"[{{#xPath}}/a/c{{/xPath}}]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/jsonpath-null"
+          },
+          "httpResponseTemplate": {
+            "templateType": "MUSTACHE",
+            "template": "{\"statusCode\": 200, \"body\": \"[{{#jsonPath}}$.n{{/jsonPath}}{{jsonPathResult}}]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/jsonpath-deepmissing"
+          },
+          "httpResponseTemplate": {
+            "templateType": "MUSTACHE",
+            "template": "{\"statusCode\": 200, \"body\": \"[{{#jsonPath}}$.x.y{{/jsonPath}}{{jsonPathResult}}]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/jsonpath-scan"
+          },
+          "httpResponseTemplate": {
+            "templateType": "MUSTACHE",
+            "template": "{\"statusCode\": 200, \"body\": \"[{{#jsonPath}}$..zz{{/jsonPath}}{{jsonPathResult}}]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/jsonpath-badjson"
+          },
+          "httpResponseTemplate": {
+            "templateType": "MUSTACHE",
+            "template": "{\"statusCode\": 200, \"body\": \"[{{#jsonPath}}$.a{{/jsonPath}}{{jsonPathResult}}]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/velocity-xpath"
+          },
+          "httpResponseTemplate": {
+            "templateType": "VELOCITY",
+            "template": "{\"statusCode\": 200, \"body\": \"[$xPath.find('/a/b')]\"}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/tel/velocity-jsonpath"
+          },
+          "httpResponseTemplate": {
+            "templateType": "VELOCITY",
+            "template": "{\"statusCode\": 200, \"body\": \"[$jsonPath.find('$.missing')]\"}"
+          }
+        }
+      ],
+      "maxMillis": 30000
+    },
+    {
+      "method": "GET",
+      "path": "/tel/xpath-nobody"
+    },
+    {
+      "method": "GET",
+      "path": "/tel/jsonpath-nobody"
+    },
+    {
+      "method": "POST",
+      "path": "/tel/xpath-badexpr",
+      "body": "<a><b>x</b></a>"
+    },
+    {
+      "method": "POST",
+      "path": "/tel/xpath-nomatch",
+      "body": "<a><b>x</b></a>"
+    },
+    {
+      "method": "POST",
+      "path": "/tel/jsonpath-null",
+      "body": {
+        "n": null
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/tel/jsonpath-deepmissing",
+      "body": {
+        "a": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/tel/jsonpath-scan",
+      "body": {
+        "a": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/tel/jsonpath-badjson",
+      "body": "{not json"
+    },
+    {
+      "method": "POST",
+      "path": "/tel/velocity-xpath",
+      "body": {
+        "a": 1
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/tel/velocity-jsonpath",
+      "body": {
+        "a": 1
+      }
+    },
+    {
+      "note": "extraction failures",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "dashboard-push", "httpRequest": {"path": "/dash/pushed"}, "httpResponse": {"statusCode": 202, "body": "pushed"}}},
+    {"wsOpen": "ui", "path": "/_mockserver_ui_websocket", "note": "the dashboard socket"},
+    {"wsDrain": "ui", "note": "the first frame, which the oracle sends late or not at all"},
+    {"method": "GET", "path": "/dash/pushed", "headers": {"x-case": "pushed"}},
+    {"wsDrain": "ui", "until": "x-case", "waitMillis": 6000, "note": "the new request is pushed without being asked for"},
+    {"wsDrain": "ui", "note": "any later push of the same change"},
+    {"wsSend": "ui", "text": "{}", "note": "an empty matcher"},
+    {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"], "note": "the view after the push"},
+    {"sleepMillis": 1500},
+    {"method": "PUT", "path": "/mockserver/clear", "body": {"path": "/dash/pushed"}, "note": "clearing pushes too"},
+    {"wsDrain": "ui", "until": "CLEARED","waitMillis": 6000, "note": "the clear is pushed"},
+    {"wsDrain": "ui", "note": "any later push of the same change"},
+    {"wsSend": "ui", "text": "{}", "note": "an empty matcher"},
+    {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"], "note": "the view after the clear"},
+    {"wsDrain": "ui"},
+    {"wsSend": "ui", "text": "not json", "note": "a matcher that is not JSON: logged as an ERROR, and answered"},
+    {"wsRead": "ui", "until": "^\\{\"error\"", "countSkipped": false, "note": "the error (the ERROR entry's push may come first)"},
+    {"wsDrain": "ui", "note": "the ERROR entry's push, before or after the error"},
+    {"wsSend": "ui", "text": "{}", "note": "an empty matcher"},
+    {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}", {"regex": "_throwable_value\".*?\"\\]\\}", "replace": "_throwable_value<masked: JVM stack frames, docs/divergences.md>"}], "note": "the view with the ERROR entry"},
+    {"wsClose": "ui"}
+  ]
+}

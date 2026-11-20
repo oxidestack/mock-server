@@ -1,0 +1,150 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 771",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"dnsResponse\" : {\n    \"answerRecords\" : [ {\n      \"name\" : \"once.example.com\",\n      \"ttl\" : 60,\n      \"type\" : \"A\",\n      \"value\" : \"10.0.0.1\"\n    } ]\n  },\n  \"httpRequest\" : {\n    \"dnsName\" : \"once.example.com\",\n    \"dnsType\" : \"A\"\n  },\n  \"id\" : \"dns-once\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"dnsResponse\" : {\n    \"answerRecords\" : [ {\n      \"name\" : \"ttl.example.com\",\n      \"ttl\" : 60,\n      \"type\" : \"A\",\n      \"value\" : \"10.0.0.2\"\n    } ]\n  },\n  \"httpRequest\" : {\n    \"dnsName\" : \"ttl.example.com\",\n    \"dnsType\" : \"A\"\n  },\n  \"id\" : \"dns-ttl\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"timeUnit\" : \"SECONDS\",\n    \"timeToLive\" : 1\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "a DNS expectation for one query, and one that expires after a second"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": ""
+    },
+    {
+      "udp": "AQGFgAABAAEAAAAABG9uY2UHZXhhbXBsZQNjb20AAAEAAQRvbmNlB2V4YW1wbGUDY29tAAABAAEAAAA8AAQKAAAB",
+      "note": "answered, which uses it up"
+    },
+    {
+      "udp": "AQKFgwABAAAAAAAABG9uY2UHZXhhbXBsZQNjb20AAAEAAQ==",
+      "note": "NXDOMAIN: the used-up one stays (DNS never ends its response in progress), the expired one is dropped"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - cleared logs that match:\n\n  {}\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"dnsClass\" : \"IN\",\n    \"dnsName\" : \"once.example.com.\",\n    \"dnsType\" : \"A\"\n  }\n\n matched expectation:\n\n  {\n    \"dnsResponse\" : {\n      \"answerRecords\" : [ {\n        \"name\" : \"once.example.com\",\n        \"ttl\" : 60,\n        \"type\" : \"A\",\n        \"value\" : \"10.0.0.1\"\n      } ]\n    },\n    \"httpRequest\" : {\n      \"dnsName\" : \"once.example.com\",\n      \"dnsType\" : \"A\"\n    },\n    \"id\" : \"dns-once\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"remainingTimes\" : 1\n    }\n  }\n\n------------------------------------\n<timestamp> - received DNS query for name:\n\n  once.example.com.\n\n type:\n\n  A\n\n class:\n\n  IN\n\n------------------------------------\n<timestamp> - returning DNS response with \n\n  1\n\n answer records\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"dnsClass\" : \"IN\",\n    \"dnsName\" : \"once.example.com.\",\n    \"dnsType\" : \"A\"\n  }\n\n didn't match expectation\n\n  {\n    \"dnsResponse\" : {\n      \"answerRecords\" : [ {\n        \"name\" : \"once.example.com\",\n        \"ttl\" : 60,\n        \"type\" : \"A\",\n        \"value\" : \"10.0.0.1\"\n      } ]\n    },\n    \"httpRequest\" : {\n      \"dnsName\" : \"once.example.com\",\n      \"dnsType\" : \"A\"\n    },\n    \"id\" : \"dns-once\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"remainingTimes\" : 0\n    }\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"dnsClass\" : \"IN\",\n    \"dnsName\" : \"once.example.com.\",\n    \"dnsType\" : \"A\"\n  }\n\n didn't match expectation\n\n  {\n    \"dnsResponse\" : {\n      \"answerRecords\" : [ {\n        \"name\" : \"ttl.example.com\",\n        \"ttl\" : 60,\n        \"type\" : \"A\",\n        \"value\" : \"10.0.0.2\"\n      } ]\n    },\n    \"httpRequest\" : {\n      \"dnsName\" : \"ttl.example.com\",\n      \"dnsType\" : \"A\"\n    },\n    \"id\" : \"dns-ttl\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - received DNS query for name:\n\n  once.example.com.\n\n type:\n\n  A\n\n class:\n\n  IN\n\n------------------------------------\n<timestamp> - removed expectation:\n\n  {\n    \"dnsResponse\" : {\n      \"answerRecords\" : [ {\n        \"name\" : \"ttl.example.com\",\n        \"ttl\" : 60,\n        \"type\" : \"A\",\n        \"value\" : \"10.0.0.2\"\n      } ]\n    },\n    \"httpRequest\" : {\n      \"dnsName\" : \"ttl.example.com\",\n      \"dnsType\" : \"A\"\n    },\n    \"id\" : \"dns-ttl\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  dns-ttl\n\n",
+      "note": "the removal is logged from the oracle's scheduler, racing the query's own entries"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - returning DNS response with \n\n  1\n\n answer records\n------------------------------------\n<timestamp> - removed expectation:\n\n  {\n    \"dnsResponse\" : {\n      \"answerRecords\" : [ {\n        \"name\" : \"ttl.example.com\",\n        \"ttl\" : 60,\n        \"type\" : \"A\",\n        \"value\" : \"10.0.0.2\"\n      } ]\n    },\n    \"httpRequest\" : {\n      \"dnsName\" : \"ttl.example.com\",\n      \"dnsType\" : \"A\"\n    },\n    \"id\" : \"dns-ttl\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"timeUnit\" : \"SECONDS\",\n      \"timeToLive\" : 1,\n      \"endDate\" : <masked>\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  dns-ttl\n\n",
+      "note": "the expired one's removal is about its DNS matcher, which only a DNS filter shows"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 376",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"dnsResponse\" : {\n    \"answerRecords\" : [ {\n      \"name\" : \"once.example.com\",\n      \"ttl\" : 60,\n      \"type\" : \"A\",\n      \"value\" : \"10.0.0.1\"\n    } ]\n  },\n  \"httpRequest\" : {\n    \"dnsName\" : \"once.example.com\",\n    \"dnsType\" : \"A\"\n  },\n  \"id\" : \"dns-once\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 0\n  }\n} ]"
+    },
+    {
+      "udp": "AQOFgwABAAAAAAAAA3R0bAdleGFtcGxlA2NvbQAAAQAB",
+      "note": "a query for the expired one: no expectation left"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 0",
+        "version: 9.2.0"
+      ],
+      "body": ""
+    },
+    {
+      "udp": "AQKFgwABAAAAAAAABG9uY2UHZXhhbXBsZQNjb20AAAEAAQ==",
+      "note": "the used-up one is still evaluated, as not matching, and kept"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 921",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - returning DNS response with \n\n  1\n\n answer records\n------------------------------------\n<timestamp> - cleared logs that match:\n\n  {}\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"dnsClass\" : \"IN\",\n    \"dnsName\" : \"once.example.com.\",\n    \"dnsType\" : \"A\"\n  }\n\n didn't match expectation\n\n  {\n    \"dnsResponse\" : {\n      \"answerRecords\" : [ {\n        \"name\" : \"once.example.com\",\n        \"ttl\" : 60,\n        \"type\" : \"A\",\n        \"value\" : \"10.0.0.1\"\n      } ]\n    },\n    \"httpRequest\" : {\n      \"dnsName\" : \"once.example.com\",\n      \"dnsType\" : \"A\"\n    },\n    \"id\" : \"dns-once\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"remainingTimes\" : 0\n    }\n  }\n\n------------------------------------\n<timestamp> - received DNS query for name:\n\n  once.example.com.\n\n type:\n\n  A\n\n class:\n\n  IN\n\n"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 376",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"dnsResponse\" : {\n    \"answerRecords\" : [ {\n      \"name\" : \"once.example.com\",\n      \"ttl\" : 60,\n      \"type\" : \"A\",\n      \"value\" : \"10.0.0.1\"\n    } ]\n  },\n  \"httpRequest\" : {\n    \"dnsName\" : \"once.example.com\",\n    \"dnsType\" : \"A\"\n  },\n  \"id\" : \"dns-once\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 0\n  }\n} ]"
+    }
+  ]
+}

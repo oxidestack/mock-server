@@ -1,0 +1,3154 @@
+{
+  "note": "X509 CRLs given as an OIDC private key whose nested encodings are corrupt at each level: X509CRLHolder reads with a lazily evaluating ASN1InputStream, so each definite-length SEQUENCE is a LazyEncodedSequence decoded only when a structure reads it, and its failure is an ASN1ParsingException (`malformed ASN.1: ...`) wrapped as malformed data; what no structure reads never fails. Record it on a freshly started oracle: once the JIT has compiled ASN1Sequence.getObjectAt, the oracle throws its ArrayIndexOutOfBoundsException without a message (OmitStackTraceInFastThrow).",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL valid, the shape the corrupt cases vary",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMH8waAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWhcNMjYwMTAxMDAwMDAwWjAUMBICAQUXDTI2MDEwMTAwMDAwMFqgDjAM\nMAoGA1UdFAQDAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList of version, signature and issuer only",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMDswJAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZTANBgkqhkiG\n9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList of signature, issuer and thisUpdate only",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMDANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAxMDAw\nMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        {
+          "regex": "\\{\\s*\"localizedMessage\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"message\" : \"Index \\d+ out of bounds for length \\d+\",\\s*\"stackTrace\" : <frames>\\s*\\}",
+          "replace": "{ }",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "ArrayIndexOutOfBoundsException(: Index \\d+ out of bounds for length \\d+)?",
+          "replace": "ArrayIndexOutOfBoundsException<aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        },
+        {
+          "regex": "(malformed data|encoded key spec not recognized): (null|Index \\d+ out of bounds for length \\d+)",
+          "replace": "$1: <aioobe>",
+          "reason": "the oracle's JVM throws BouncyCastle's ArrayIndexOutOfBoundsException with the JDK's message until its JIT compiles the throwing method, then a preallocated one without message or stack (OmitStackTraceInFastThrow): which one a step meets depends on JIT timing; ours is always the cold one"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEgwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAICAAE=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNAICAAEwDQYJKoZIhvcNAQELBQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQECAgABMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATAPBgkqhkiG9w0BAQsCAgABMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATARBgkqhkiG9w0BAQswBAICAAEwEDEOMAwGA1UEAwwFcHJvYmUXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAUMQ4wDAYDVQQDDAVwcm9iZQICAAEXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAUMRIwDAYDVQQDDAVwcm9iZQICAAEXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMAIBATANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDAgIAARcNMjYwMTAxMDAw\nMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFAwOQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAEAgIAATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHUwXgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjApMBICAQUXDTI2MDEwMTAwMDAwMFowEwICAAEXDTI2MDEwMTAwMDAw\nMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMAwwCgYDVR0UBAMCAQECAgABMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a non-minimal INTEGER first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBACAgABMAoGA1UdFAQDAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding a non-minimal INTEGER after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBAwCgYDVR0UBAMCAQECAgABMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a non-minimal INTEGER after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGowUwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAeMBwwCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQECAgABMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding a non-minimal INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFkwQgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqANMAswCQYDVR0UAgIAATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAIA\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEkwMgIAMA0GCSqGSIb3DQEBCwUAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAxMDEw\nMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQECADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwIBATANBgkqhkiG9w0BAQsCADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATAPBgkqhkiG9w0BAQswAgIAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATANBgkqhkiG9w0BAQsFADASMQ4wDAYDVQQDDAVwcm9iZQIAFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATANBgkqhkiG9w0BAQsFADASMRAwDAYDVQQDDAVwcm9iZQIAFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEUwLgIBATANBgkqhkiG9w0BAQsFADALMQkwBwYDVQQDAgAXDTI2MDEwMTAwMDAw\nMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjACAgAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHMwXAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAnMBICAQUXDTI2MDEwMTAwMDAwMFowEQIAFw0yNjAxMDEwMDAwMDBa\nMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMAwwCgYDVR0UBAMCAQECADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an empty INTEGER first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4CADAKBgNVHRQEAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding an empty INTEGER after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wCgYDVR0UBAMCAQECADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an empty INTEGER after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGgwUQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAcMBowCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQECADANBgkqhkiG9w0B\nAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding an empty INTEGER",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFcwQAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqALMAkwBwYDVR0UAgAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEgwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAYCgAE=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNAYCgAEwDQYJKoZIhvcNAQELBQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEGAoABMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATAPBgkqhkiG9w0BAQsGAoABMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATARBgkqhkiG9w0BAQswBAYCgAEwEDEOMAwGA1UEAwwFcHJvYmUXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAUMQ4wDAYDVQQDDAVwcm9iZQYCgAEXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAUMRIwDAYDVQQDDAVwcm9iZQYCgAEXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMAIBATANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDBgKAARcNMjYwMTAxMDAw\nMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFAwOQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAEBgKAATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHUwXgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjApMBICAQUXDTI2MDEwMTAwMDAwMFowEwYCgAEXDTI2MDEwMTAwMDAw\nMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMAwwCgYDVR0UBAMCAQEGAoABMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an OID with a leading 0x80 first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBAGAoABMAoGA1UdFAQDAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding an OID with a leading 0x80 after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBAwCgYDVR0UBAMCAQEGAoABMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an OID with a leading 0x80 after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGowUwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAeMBwwCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEGAoABMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding an OID with a leading 0x80",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFkwQgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqANMAswCQYDVR0UBgKAATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAYBgQ==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwYBgTANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEGAYEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNAIBATAOBgkqhkiG9w0BAQsGAYEwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATAQBgkqhkiG9w0BAQswAwYBgTAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMQ4wDAYDVQQDDAVwcm9iZQYBgRcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMREwDAYDVQQDDAVwcm9iZQYBgRcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwLwIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDBgGBFw0yNjAxMDEwMDAw\nMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME8wOAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjADBgGBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHQwXQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAoMBICAQUXDTI2MDEwMTAwMDAwMFowEgYBgRcNMjYwMTAxMDAwMDAw\nWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMAwwCgYDVR0UBAMCAQEGAYEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an OID ending mid-arc first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8GAYEwCgYDVR0UBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding an OID ending mid-arc after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wCgYDVR0UBAMCAQEGAYEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an OID ending mid-arc after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGkwUgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAdMBswCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEGAYEwDQYJKoZIhvcN\nAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding an OID ending mid-arc",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFgwQQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAMMAowCAYDVR0UBgGBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMA\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEkwMgMAMA0GCSqGSIb3DQEBCwUAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAxMDEw\nMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEDADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwIBATANBgkqhkiG9w0BAQsDADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATAPBgkqhkiG9w0BAQswAgMAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATANBgkqhkiG9w0BAQsFADASMQ4wDAYDVQQDDAVwcm9iZQMAFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATANBgkqhkiG9w0BAQsFADASMRAwDAYDVQQDDAVwcm9iZQMAFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEUwLgIBATANBgkqhkiG9w0BAQsFADALMQkwBwYDVQQDAwAXDTI2MDEwMTAwMDAw\nMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjACAwAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHMwXAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAnMBICAQUXDTI2MDEwMTAwMDAwMFowEQMAFw0yNjAxMDEwMDAwMDBa\nMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMAwwCgYDVR0UBAMCAQEDADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an empty BIT STRING first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4DADAKBgNVHRQEAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding an empty BIT STRING after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wCgYDVR0UBAMCAQEDADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an empty BIT STRING after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGgwUQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAcMBowCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEDADANBgkqhkiG9w0B\nAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding an empty BIT STRING",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFcwQAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqALMAkwBwYDVR0UAwAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEgwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMCCAA=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNAMCCAAwDQYJKoZIhvcNAQELBQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEDAggAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATAPBgkqhkiG9w0BAQsDAggAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATARBgkqhkiG9w0BAQswBAMCCAAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAUMQ4wDAYDVQQDDAVwcm9iZQMCCAAXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAUMRIwDAYDVQQDDAVwcm9iZQMCCAAXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMAIBATANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDAwIIABcNMjYwMTAxMDAw\nMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFAwOQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAEAwIIADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHUwXgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjApMBICAQUXDTI2MDEwMTAwMDAwMFowEwMCCAAXDTI2MDEwMTAwMDAw\nMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMAwwCgYDVR0UBAMCAQEDAggAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a BIT STRING with 8 pad bits first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBADAggAMAoGA1UdFAQDAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding a BIT STRING with 8 pad bits after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBAwCgYDVR0UBAMCAQEDAggAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a BIT STRING with 8 pad bits after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGowUwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAeMBwwCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEDAggAMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding a BIT STRING with 8 pad bits",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFkwQgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqANMAswCQYDVR0UAwIIADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAQFAA==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwQFADANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEEBQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNAIBATAOBgkqhkiG9w0BAQsEBQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATAQBgkqhkiG9w0BAQswAwQFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMQ4wDAYDVQQDDAVwcm9iZQQFABcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMREwDAYDVQQDDAVwcm9iZQQFABcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwLwIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDBAUAFw0yNjAxMDEwMDAw\nMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME8wOAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjADBAUAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHQwXQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAoMBICAQUXDTI2MDEwMTAwMDAwMFowEgQFABcNMjYwMTAxMDAwMDAw\nWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMAwwCgYDVR0UBAMCAQEEBQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a length past its container first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8EBQAwCgYDVR0UBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding a length past its container after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wCgYDVR0UBAMCAQEEBQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a length past its container after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGkwUgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAdMBswCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEEBQAwDQYJKoZIhvcN\nAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding a length past its container",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFgwQQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAMMAowCAYDVR0UBAUAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAR/AA==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwR/ADANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEEfwAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNAIBATAOBgkqhkiG9w0BAQsEfwAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATAQBgkqhkiG9w0BAQswAwR/ADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMQ4wDAYDVQQDDAVwcm9iZQR/ABcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMREwDAYDVQQDDAVwcm9iZQR/ABcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwLwIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDBH8AFw0yNjAxMDEwMDAw\nMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME8wOAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjADBH8AMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHQwXQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAoMBICAQUXDTI2MDEwMTAwMDAwMFowEgR/ABcNMjYwMTAxMDAwMDAw\nWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMAwwCgYDVR0UBAMCAQEEfwAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a length past the input first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8EfwAwCgYDVR0UBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding a length past the input after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wCgYDVR0UBAMCAQEEfwAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a length past the input after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGkwUgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAdMBswCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEEfwAwDQYJKoZIhvcN\nAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding a length past the input",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFgwQQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAMMAowCAYDVR0UBH8AMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEgwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAASAAAA=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNASAAAAwDQYJKoZIhvcNAQELBQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEEgAAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATAPBgkqhkiG9w0BAQsEgAAAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATARBgkqhkiG9w0BAQswBASAAAAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAUMQ4wDAYDVQQDDAVwcm9iZQSAAAAXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAUMRIwDAYDVQQDDAVwcm9iZQSAAAAXDTI2\nMDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMAIBATANBgkqhkiG9w0BAQsFADANMQswCQYDVQQDBIAAABcNMjYwMTAxMDAw\nMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFAwOQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAEBIAAADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHUwXgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjApMBICAQUXDTI2MDEwMTAwMDAwMFowEwSAAAAXDTI2MDEwMTAwMDAw\nMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMAwwCgYDVR0UBAMCAQEEgAAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an indefinite-length primitive first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBAEgAAAMAoGA1UdFAQDAgEBMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding an indefinite-length primitive after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF4wRwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqASMBAwCgYDVR0UBAMCAQEEgAAAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an indefinite-length primitive after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGowUwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAeMBwwCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEEgAAAMA0GCSqGSIb3\nDQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding an indefinite-length primitive",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFkwQgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqANMAswCQYDVR0UBIAAADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAB8FAA==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMx8FADANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEfBQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNAIBATAOBgkqhkiG9w0BAQsfBQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATAQBgkqhkiG9w0BAQswAx8FADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMQ4wDAYDVQQDDAVwcm9iZR8FABcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMREwDAYDVQQDDAVwcm9iZR8FABcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwLwIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDHwUAFw0yNjAxMDEwMDAw\nMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME8wOAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjADHwUAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHQwXQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAoMBICAQUXDTI2MDEwMTAwMDAwMFowEh8FABcNMjYwMTAxMDAwMDAw\nWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMAwwCgYDVR0UBAMCAQEfBQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a high tag number below 31 first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8fBQAwCgYDVR0UBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding a high tag number below 31 after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wCgYDVR0UBAMCAQEfBQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a high tag number below 31 after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGkwUgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAdMBswCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEfBQAwDQYJKoZIhvcN\nAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding a high tag number below 31",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFgwQQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAMMAowCAYDVR0UHwUAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAAA\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEkwMgAAMA0GCSqGSIb3DQEBCwUAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAxMDEw\nMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEAADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwIBATANBgkqhkiG9w0BAQsAADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATAPBgkqhkiG9w0BAQswAgAAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATANBgkqhkiG9w0BAQsFADASMQ4wDAYDVQQDDAVwcm9iZQAAFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATANBgkqhkiG9w0BAQsFADASMRAwDAYDVQQDDAVwcm9iZQAAFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEUwLgIBATANBgkqhkiG9w0BAQsFADALMQkwBwYDVQQDAAAXDTI2MDEwMTAwMDAw\nMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjACAAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHMwXAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAnMBICAQUXDTI2MDEwMTAwMDAwMFowEQAAFw0yNjAxMDEwMDAwMDBa\nMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMAwwCgYDVR0UBAMCAQEAADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an end-of-contents marker first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4AADAKBgNVHRQEAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding an end-of-contents marker after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wCgYDVR0UBAMCAQEAADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an end-of-contents marker after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGgwUQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAcMBowCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEAADANBgkqhkiG9w0B\nAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding an end-of-contents marker",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFcwQAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqALMAkwBwYDVR0UAAAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAA8A\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEkwMg8AMA0GCSqGSIb3DQEBCwUAMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAxMDEw\nMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEPADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwIBATANBgkqhkiG9w0BAQsPADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATAPBgkqhkiG9w0BAQswAg8AMBAxDjAMBgNVBAMMBXByb2JlFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATANBgkqhkiG9w0BAQsFADASMQ4wDAYDVQQDDAVwcm9iZQ8AFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEwwNQIBATANBgkqhkiG9w0BAQsFADASMRAwDAYDVQQDDAVwcm9iZQ8AFw0yNjAx\nMDEwMDAwMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEUwLgIBATANBgkqhkiG9w0BAQsFADALMQkwBwYDVQQDDwAXDTI2MDEwMTAwMDAw\nMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME4wNwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjACDwAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHMwXAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAnMBICAQUXDTI2MDEwMTAwMDAwMFowEQ8AFw0yNjAxMDEwMDAwMDBa\nMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMAwwCgYDVR0UBAMCAQEPADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an unknown universal tag first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4PADAKBgNVHRQEAwIBATANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding an unknown universal tag after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFwwRQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAQMA4wCgYDVR0UBAMCAQEPADANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding an unknown universal tag after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGgwUQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAcMBowCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEPADANBgkqhkiG9w0B\nAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding an unknown universal tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFcwQAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqALMAkwBwYDVR0UDwAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL outer signature a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEcwMwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAUBAA==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList version a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwUBADANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL TBSCertList trailing a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UBAMCAQEFAQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL signature algorithm a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEswNAIBATAOBgkqhkiG9w0BAQsFAQAwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEw\nMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL signature algorithm parameters holding a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATAQBgkqhkiG9w0BAQswAwUBADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMQ4wDAYDVQQDDAVwcm9iZQUBABcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN holding a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME0wNgIBATANBgkqhkiG9w0BAQsFADATMREwDAYDVQQDDAVwcm9iZQUBABcNMjYw\nMTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer attribute holding a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEYwLwIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDBQEAFw0yNjAxMDEwMDAw\nMDBaMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked certificates holding a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nME8wOAIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjADBQEAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL revoked entry holding a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMHQwXQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAoMBICAQUXDTI2MDEwMTAwMDAwMFowEgUBABcNMjYwMTAxMDAwMDAw\nWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions tag holding a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMAwwCgYDVR0UBAMCAQEFAQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a two-octet NULL first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8FAQAwCgYDVR0UBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extensions holding a two-octet NULL after an extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMF0wRgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqARMA8wCgYDVR0UBAMCAQEFAQAwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extensions holding a two-octet NULL after a repeated extension",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGkwUgIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAdMBswCgYDVR0UBAMCAQEwCgYDVR0UBAMCAQEFAQAwDQYJKoZIhvcN\nAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension holding a two-octet NULL",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFgwQQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAMMAowCAYDVR0UBQEAMA0GCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL TBSCertList length past the CertificateList",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowfwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer length past the TBSCertList",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMDswJAIBATANBgkqhkiG9w0BAQsFADAgMQ4wDAYDVQQDDAVwcm9iZTANBgkqhkiG\n9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer length past the TBSCertList with a thisUpdate",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwIBATANBgkqhkiG9w0BAQsFADAwMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL issuer RDN length past the issuer",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEowMwIBATANBgkqhkiG9w0BAQsFADAQMSAwDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjANBgkqhkiG9w0BAQsFAAMEAAECAw==\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension length past the extensions",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFowQwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwQAYDVR0UBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL revoked entry length past the list",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMGAwSQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWjAUMEACAQUXDTI2MDEwMTAwMDAwMFowDQYJKoZIhvcNAQELBQADBAAB\nAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL extension id a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFowQwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCjADAgEBBAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL extension value a SEQUENCE in the tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMFowQwIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZRcNMjYwMTAx\nMDAwMDAwWqAOMAwwCgYDVR0UMAMCAQEwDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "X509 CRL issuer RDN element a SEQUENCE as signature id",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEIwKwIBATAFMAMCAQEwEDEOMAwGA1UEAwwFcHJvYmUXDTI2MDEwMTAwMDAwMFow\nDQYJKoZIhvcNAQELBQADBAABAgM=\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "X509 CRL thisUpdate a SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN X509 CRL-----\nMEAwKQIBATANBgkqhkiG9w0BAQsFADAQMQ4wDAYDVQQDDAVwcm9iZTADAgEBMA0G\nCSqGSIb3DQEBCwUAAwQAAQID\n-----END X509 CRL-----\n"
+      }
+    },
+    {
+      "note": "the entries with their throwables (JVM frames masked)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "an empty clear type is ALL",
+   "method": "PUT",
+   "path": "/mockserver/clear?type="
+  },
+  {
+   "note": "a schema-invalid retrieve filter: HttpState.retrieve logs it before HttpRequestHandler does",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": 5
+   }
+  },
+  {
+   "note": "an unknown expectation id",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "id": "nope"
+   }
+  },
+  {
+   "note": "a blank expectation id",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "id": "  "
+   }
+  },
+  {
+   "note": "clear logs each failure once, as HttpRequestHandler",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": 5
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "id": "nope"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOGS",
+   "body": {
+    "id": ""
+   }
+  },
+  {
+   "note": "a filter that is not JSON",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": "{\"path\": \"/a\","
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": "{\"path\": \"/a\","
+  },
+  {
+   "note": "an unknown type or format is logged by HttpState as the enum's IllegalArgumentException",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=bogus"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?format=bogus"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=logs"
+  },
+  {
+   "note": "what was logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  }
+ ]
+}

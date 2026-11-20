@@ -1,0 +1,9 @@
+{"steps": [
+  {"note": "list modules while disabled", "method": "GET", "path": "/mockserver/wasm/modules"},
+  {"note": "upload while disabled", "method": "PUT", "path": "/mockserver/wasm/modules?name=m", "bodyFile": "wasm/match.wasm"},
+  {"note": "delete while disabled", "method": "DELETE", "path": "/mockserver/wasm/modules?name=m"},
+  {"note": "test while disabled", "method": "POST", "path": "/mockserver/wasm/test", "body": {"module": "{{base64:wasm/match.wasm}}"}},
+  {"note": "a WASM body expectation is still accepted", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/amount", "body": {"type": "WASM", "moduleName": "m"}}, "httpResponse": {"body": "big"}}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "and never matches", "method": "POST", "path": "/amount", "body": "{\"amount\": 5000}"}
+]}

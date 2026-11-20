@@ -1,0 +1,590 @@
+{
+ "source": "hand-written: webhook httpRequestTemplate (upstream 6b790bfed, TemplatedWebhookIntegrationTest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/hook/.*"
+     },
+     "httpResponse": {
+      "statusCode": 202
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/velocity"
+     },
+     "httpResponse": {
+      "body": "triggered"
+     },
+     "afterActions": [
+      {
+       "httpRequestTemplate": {
+        "template": "{ \"method\": \"POST\", \"path\": \"/hook/velocity/$!request.headers['orderid'][0]\", \"headers\": [ { \"name\": \"Host\", \"values\": [ \"localhost:{{port}}\" ] }, { \"name\": \"X-Order\", \"values\": [ \"$!request.headers['orderid'][0]\" ] } ], \"body\": \"received $!request.method $!request.path with $!request.body\" }",
+        "templateType": "VELOCITY"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/mustache"
+     },
+     "httpResponse": {
+      "body": "triggered"
+     },
+     "afterActions": [
+      {
+       "httpRequestTemplate": {
+        "template": "{ \"method\": \"POST\", \"path\": \"/hook/mustache/{{ request.headers.orderid.0 }}\", \"headers\": [ { \"name\": \"Host\", \"values\": [ \"localhost:{{port}}\" ] }, { \"name\": \"X-Order\", \"values\": [ \"{{ request.headers.orderid.0 }}\" ] } ], \"body\": \"received {{ request.method }} {{ request.path }} with {{ request.body }}\" }",
+        "templateType": "MUSTACHE"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/javascript"
+     },
+     "httpResponse": {
+      "body": "triggered"
+     },
+     "afterActions": [
+      {
+       "httpRequestTemplate": {
+        "template": "return { 'method': 'POST', 'path': '/hook/javascript/' + request.headers['orderid'][0], 'headers': [ { 'name': 'Host', 'values': [ 'localhost:{{port}}' ] } ] };",
+        "templateType": "JAVASCRIPT"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/documented"
+     },
+     "httpResponse": {
+      "body": "triggered"
+     },
+     "afterActions": [
+      {
+       "httpRequestTemplate": {
+        "template": "{ \"method\": \"POST\", \"path\": \"/hook/orders/$!esc.url($request.headers['orderid'][0])/created\", \"headers\": { \"Host\": [ \"localhost:{{port}}\" ], \"Content-Type\": [ \"application/json\" ] }, \"body\": { \"received\": \"$!esc.java($request.body)\" } }",
+        "templateType": "VELOCITY"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/velocity-error"
+     },
+     "httpResponse": {
+      "body": "triggered"
+     },
+     "afterActions": [
+      {
+       "httpRequestTemplate": {
+        "template": "#if( broken",
+        "templateType": "VELOCITY"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/invalid"
+     },
+     "httpResponse": {
+      "body": "triggered"
+     },
+     "afterActions": [
+      {
+       "httpRequestTemplate": {
+        "template": "not a request",
+        "templateType": "VELOCITY"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/untyped"
+     },
+     "httpResponse": {
+      "body": "never"
+     },
+     "beforeActions": [
+      {
+       "failurePolicy": "FAIL_FAST",
+       "httpRequestTemplate": {
+        "template": "{ \"path\": \"/hook/untyped\", \"headers\": { \"Host\": [ \"localhost:{{port}}\" ] } }"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/before"
+     },
+     "httpResponse": {
+      "body": "triggered"
+     },
+     "beforeActions": [
+      {
+       "failurePolicy": "FAIL_FAST",
+       "httpRequestTemplate": {
+        "template": "{ \"method\": \"PUT\", \"path\": \"/hook/before/$!request.headers['orderid'][0]\", \"headers\": [ { \"name\": \"Host\", \"values\": [ \"localhost:{{port}}\" ] }, { \"name\": \"X-Order\", \"values\": [ \"$!request.headers['orderid'][0]\" ] } ] }",
+        "templateType": "VELOCITY"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/before-invalid"
+     },
+     "httpResponse": {
+      "body": "never"
+     },
+     "beforeActions": [
+      {
+       "failurePolicy": "FAIL_FAST",
+       "httpRequestTemplate": {
+        "template": "not a request",
+        "templateType": "VELOCITY"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/before-best"
+     },
+     "httpResponse": {
+      "body": "served anyway"
+     },
+     "beforeActions": [
+      {
+       "httpRequestTemplate": {
+        "template": "{{#broken}}",
+        "templateType": "MUSTACHE"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/before-javascript"
+     },
+     "httpResponse": {
+      "body": "never"
+     },
+     "beforeActions": [
+      {
+       "failurePolicy": "FAIL_FAST",
+       "httpRequestTemplate": {
+        "template": "return { 'method': 'POST', 'path': '/hook/javascript/' + request.headers['orderid'][0], 'headers': [ { 'name': 'Host', 'values': [ 'localhost:{{port}}' ] } ] };",
+        "templateType": "JAVASCRIPT"
+       }
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/before-async"
+     },
+     "httpResponse": {
+      "body": "triggered"
+     },
+     "beforeActions": [
+      {
+       "blocking": false,
+       "httpRequestTemplate": {
+        "template": "{ \"method\": \"POST\", \"path\": \"/hook/before-async/$!request.headers['orderid'][0]\", \"headers\": [ { \"name\": \"Host\", \"values\": [ \"localhost:{{port}}\" ] }, { \"name\": \"X-Order\", \"values\": [ \"$!request.headers['orderid'][0]\" ] } ], \"body\": \"received $!request.method $!request.path with $!request.body\" }",
+        "templateType": "VELOCITY"
+       }
+      }
+     ]
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/velocity"
+   },
+   "note": "the template echoes like an httpTemplate"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/untyped"
+   },
+   "note": "no templateType echoes as none"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVA",
+   "body": {
+    "path": "/before"
+   },
+   "note": "Java code: withHttpRequestTemplate"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JAVA",
+   "body": {
+    "path": "/mustache"
+   },
+   "note": "Java code of an after-action template"
+  },
+  {
+   "method": "POST",
+   "path": "/velocity",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "Velocity after-action",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/hook/velocity/A-1"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "pollUntil": "^$",
+   "note": "the webhook has arrived"
+  },
+  {
+   "method": "POST",
+   "path": "/mustache",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "Mustache after-action",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/hook/mustache/A-1"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "pollUntil": "^$",
+   "note": "the webhook has arrived"
+  },
+  {
+   "method": "POST",
+   "path": "/documented",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "1\" }, \"socketAddress\": { \"host\": \"attacker.example\", \"port\": 80 }, \"x\": \"y",
+   "note": "the documented webhook, the body escaped",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/hook/orders/A-1/created"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "pollUntil": "^$",
+   "note": "the webhook has arrived"
+  },
+  {
+   "wsOpen": "ui",
+   "path": "/_mockserver_ui_websocket",
+   "note": "the dashboard socket: its pushes show the fire-and-forget webhooks' failures without logging anything (a LOGS poll logs a RETRIEVED entry its own filter and the next read's match)"
+  },
+  {
+   "wsDrain": "ui",
+   "note": "the first frame, which the oracle sends late or not at all"
+  },
+  {
+   "method": "POST",
+   "path": "/javascript",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "JavaScript after-action: no GraalJS",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "wsDrain": "ui",
+   "until": "JAVASCRIPT webhook template failed",
+   "waitMillis": 30000,
+   "note": "waits for the push of /javascript's fire-and-forget webhook failure WARN"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/javascript"
+   },
+   "note": "log of /javascript, once the fire-and-forget webhook has failed (read here, so the next request's entries come after)",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/velocity-error",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "Velocity after-action that fails to parse",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "wsDrain": "ui",
+   "until": "VELOCITY webhook template failed",
+   "waitMillis": 30000,
+   "note": "waits for the push of /velocity-error's fire-and-forget webhook failure WARN"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/velocity-error"
+   },
+   "note": "log of /velocity-error, once the fire-and-forget webhook has failed (read here, so the next request's entries come after)",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/invalid",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "after-action whose output is not a request",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "wsDrain": "ui",
+   "until": "webhook template rendered output that is not a valid request",
+   "waitMillis": 30000,
+   "note": "waits for the push of /invalid's fire-and-forget webhook failure WARN"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/invalid"
+   },
+   "note": "log of /invalid, once the fire-and-forget webhook has failed (read here, so the next request's entries come after)",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "wsClose": "ui"
+  },
+  {
+   "method": "POST",
+   "path": "/untyped",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "FAIL_FAST before-action without templateType",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/untyped"
+   },
+   "note": "log of /untyped",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/before",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "blocking before-action template sent before the response",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/before-invalid",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "FAIL_FAST before-action whose output is not a request",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/before-invalid"
+   },
+   "note": "log of /before-invalid",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/before-best",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "best-effort before-action failing: served anyway",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/before-best"
+   },
+   "note": "log of /before-best",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/before-javascript",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "FAIL_FAST JavaScript before-action",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/before-javascript"
+   },
+   "note": "log of /before-javascript",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/before-async",
+   "headers": {
+    "orderid": "A-1"
+   },
+   "body": "order body",
+   "note": "non-blocking before-action template",
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/hook/before-async/A-1"
+    },
+    "times": {
+     "atLeast": 1
+    }
+   },
+   "pollUntil": "^$",
+   "note": "the webhook has arrived"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/hook/.*"
+   },
+   "note": "webhook traffic",
+   "compare": "json",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  }
+ ]
+}

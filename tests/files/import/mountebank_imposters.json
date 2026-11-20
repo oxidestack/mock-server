@@ -1,0 +1,57 @@
+{
+  "imposters": [
+    {
+      "port": 4545,
+      "protocol": "http",
+      "name": "orders api",
+      "stubs": [
+        {
+          "predicates": [
+            { "equals": { "method": "GET", "path": "/orders" } },
+            { "deepEquals": { "query": { "status": "open" } } },
+            { "matches": { "headers": { "Accept": "application/.*" } } }
+          ],
+          "responses": [
+            {
+              "is": {
+                "statusCode": 200,
+                "headers": { "Content-Type": "application/json" },
+                "body": { "orders": [1, 2] }
+              },
+              "_behaviors": { "wait": 300, "repeat": 2 }
+            }
+          ]
+        },
+        {
+          "predicates": [
+            { "contains": { "body": "urgent" } },
+            { "exists": { "headers": { "X-Api-Version": true } } }
+          ],
+          "responses": [
+            { "proxy": { "to": "http://downstream.example.com:9000", "mode": "proxyOnce" } }
+          ]
+        },
+        {
+          "predicates": [ { "equals": { "path": "/cycle" } } ],
+          "responses": [
+            { "is": { "statusCode": 200, "body": "first" } },
+            { "is": { "statusCode": 200, "body": "second" } }
+          ]
+        },
+        {
+          "predicates": [ { "equals": { "path": "/boom" } } ],
+          "responses": [ { "fault": "CONNECTION_RESET_BY_PEER" } ]
+        },
+        {
+          "predicates": [ { "equals": { "path": "/js" } } ],
+          "responses": [ { "inject": "function (request) { return { body: 'x' }; }" } ]
+        }
+      ]
+    },
+    {
+      "port": 5555,
+      "protocol": "tcp",
+      "stubs": [ { "responses": [ { "is": { "data": "raw" } } ] } ]
+    }
+  ]
+}

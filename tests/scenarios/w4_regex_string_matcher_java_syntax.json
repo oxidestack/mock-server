@@ -1,0 +1,2506 @@
+{
+ "source": "RegexStringMatcher compiles a value with Pattern.compile(value, DOTALL | CASE_INSENSITIVE | UNICODE_CASE) and calls matches(): Java-only syntax accepted, Rust-only syntax refused, Java's ASCII-only \\w/\\d/\\s and Unicode case folding; and the control-plane reverse step",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "expectation 0: body REGEX a*+a",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-0",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm0",
+     "body": {
+      "type": "REGEX",
+      "regex": "a*+a"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 0"
+    }
+   }
+  },
+  {
+   "note": "case 0.0: 'a*+a' against 'aaa'",
+   "method": "POST",
+   "path": "/rsm0",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aaa"
+  },
+  {
+   "note": "case 0.1: 'a*+a' against 'a'",
+   "method": "POST",
+   "path": "/rsm0",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a"
+  },
+  {
+   "note": "expectation 1: body REGEX a++b",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-1",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm1",
+     "body": {
+      "type": "REGEX",
+      "regex": "a++b"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 1"
+    }
+   }
+  },
+  {
+   "note": "case 1.0: 'a++b' against 'aab'",
+   "method": "POST",
+   "path": "/rsm1",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aab"
+  },
+  {
+   "note": "expectation 2: body REGEX (?>a|ab)c",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-2",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm2",
+     "body": {
+      "type": "REGEX",
+      "regex": "(?>a|ab)c"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 2"
+    }
+   }
+  },
+  {
+   "note": "case 2.0: '(?>a|ab)c' against 'abc'",
+   "method": "POST",
+   "path": "/rsm2",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "case 2.1: '(?>a|ab)c' against 'ac'",
+   "method": "POST",
+   "path": "/rsm2",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ac"
+  },
+  {
+   "note": "expectation 3: body REGEX [a-z&&[^aeiou]]+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-3",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm3",
+     "body": {
+      "type": "REGEX",
+      "regex": "[a-z&&[^aeiou]]+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 3"
+    }
+   }
+  },
+  {
+   "note": "case 3.0: '[a-z&&[^aeiou]]+' against 'bcd'",
+   "method": "POST",
+   "path": "/rsm3",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "bcd"
+  },
+  {
+   "note": "case 3.1: '[a-z&&[^aeiou]]+' against 'bad'",
+   "method": "POST",
+   "path": "/rsm3",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "bad"
+  },
+  {
+   "note": "expectation 4: body REGEX [a-c[x-z]]+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-4",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm4",
+     "body": {
+      "type": "REGEX",
+      "regex": "[a-c[x-z]]+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 4"
+    }
+   }
+  },
+  {
+   "note": "case 4.0: '[a-c[x-z]]+' against 'abxz'",
+   "method": "POST",
+   "path": "/rsm4",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abxz"
+  },
+  {
+   "note": "case 4.1: '[a-c[x-z]]+' against 'm'",
+   "method": "POST",
+   "path": "/rsm4",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "m"
+  },
+  {
+   "note": "expectation 5: body REGEX \\p{javaLowerCase}+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-5",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm5",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{javaLowerCase}+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 5"
+    }
+   }
+  },
+  {
+   "note": "case 5.0: '\\\\p{javaLowerCase}+' against 'abc'",
+   "method": "POST",
+   "path": "/rsm5",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "case 5.1: '\\\\p{javaLowerCase}+' against 'ABC'",
+   "method": "POST",
+   "path": "/rsm5",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ABC"
+  },
+  {
+   "note": "expectation 6: body REGEX \\p{IsAlphabetic}+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-6",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm6",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{IsAlphabetic}+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 6"
+    }
+   }
+  },
+  {
+   "note": "case 6.0: '\\\\p{IsAlphabetic}+' against 'héllo'",
+   "method": "POST",
+   "path": "/rsm6",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "héllo"
+  },
+  {
+   "note": "expectation 7: body REGEX \\p{InGreek}+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-7",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm7",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{InGreek}+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 7"
+    }
+   }
+  },
+  {
+   "note": "case 7.0: '\\\\p{InGreek}+' against 'αβγ'",
+   "method": "POST",
+   "path": "/rsm7",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "αβγ"
+  },
+  {
+   "note": "case 7.1: '\\\\p{InGreek}+' against 'abc'",
+   "method": "POST",
+   "path": "/rsm7",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "expectation 8: body REGEX \\p{Lu}+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-8",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm8",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{Lu}+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 8"
+    }
+   }
+  },
+  {
+   "note": "case 8.0: '\\\\p{Lu}+' against 'ABC'",
+   "method": "POST",
+   "path": "/rsm8",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ABC"
+  },
+  {
+   "note": "case 8.1: '\\\\p{Lu}+' against 'abc'",
+   "method": "POST",
+   "path": "/rsm8",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "expectation 9: body REGEX \\p{Alpha}+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-9",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm9",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{Alpha}+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 9"
+    }
+   }
+  },
+  {
+   "note": "case 9.0: '\\\\p{Alpha}+' against 'abc'",
+   "method": "POST",
+   "path": "/rsm9",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "case 9.1: '\\\\p{Alpha}+' against 'é'",
+   "method": "POST",
+   "path": "/rsm9",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "é"
+  },
+  {
+   "note": "expectation 10: body REGEX \\Qa.b\\E",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-10",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm10",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\Qa.b\\E"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 10"
+    }
+   }
+  },
+  {
+   "note": "case 10.0: '\\\\Qa.b\\\\E' against 'a.b'",
+   "method": "POST",
+   "path": "/rsm10",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a.b"
+  },
+  {
+   "note": "case 10.1: '\\\\Qa.b\\\\E' against 'axb'",
+   "method": "POST",
+   "path": "/rsm10",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "axb"
+  },
+  {
+   "note": "expectation 11: body REGEX x\\Qa.b",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-11",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm11",
+     "body": {
+      "type": "REGEX",
+      "regex": "x\\Qa.b"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 11"
+    }
+   }
+  },
+  {
+   "note": "case 11.0: 'x\\\\Qa.b' against 'xa.b'",
+   "method": "POST",
+   "path": "/rsm11",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "xa.b"
+  },
+  {
+   "note": "case 11.1: 'x\\\\Qa.b' against 'xaxb'",
+   "method": "POST",
+   "path": "/rsm11",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "xaxb"
+  },
+  {
+   "note": "expectation 12: body REGEX \\x{1F600}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-12",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm12",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\x{1F600}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 12"
+    }
+   }
+  },
+  {
+   "note": "case 12.0: '\\\\x{1F600}' against '😀'",
+   "method": "POST",
+   "path": "/rsm12",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "😀"
+  },
+  {
+   "note": "expectation 13: body REGEX \\N{LATIN SMALL LETTER E WITH ACUTE}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-13",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm13",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\N{LATIN SMALL LETTER E WITH ACUTE}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 13"
+    }
+   }
+  },
+  {
+   "note": "case 13.0: '\\\\N{LATIN SMALL LETTER E WITH ACUTE}' against 'é'",
+   "method": "POST",
+   "path": "/rsm13",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "é"
+  },
+  {
+   "note": "case 13.1: '\\\\N{LATIN SMALL LETTER E WITH ACUTE}' against 'É'",
+   "method": "POST",
+   "path": "/rsm13",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "É"
+  },
+  {
+   "note": "expectation 14: body REGEX x\\h+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-14",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm14",
+     "body": {
+      "type": "REGEX",
+      "regex": "x\\h+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 14"
+    }
+   }
+  },
+  {
+   "note": "case 14.0: 'x\\\\h+' against 'x \\t'",
+   "method": "POST",
+   "path": "/rsm14",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "x \t"
+  },
+  {
+   "note": "case 14.1: 'x\\\\h+' against 'x\\xa0'",
+   "method": "POST",
+   "path": "/rsm14",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "x "
+  },
+  {
+   "note": "expectation 15: body REGEX a\\vb",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-15",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm15",
+     "body": {
+      "type": "REGEX",
+      "regex": "a\\vb"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 15"
+    }
+   }
+  },
+  {
+   "note": "case 15.0: 'a\\\\vb' against 'a\\x0bb'",
+   "method": "POST",
+   "path": "/rsm15",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a\u000bb"
+  },
+  {
+   "note": "case 15.1: 'a\\\\vb' against 'a\\nb'",
+   "method": "POST",
+   "path": "/rsm15",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a\nb"
+  },
+  {
+   "note": "expectation 16: body REGEX a\\Rb",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-16",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm16",
+     "body": {
+      "type": "REGEX",
+      "regex": "a\\Rb"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 16"
+    }
+   }
+  },
+  {
+   "note": "case 16.0: 'a\\\\Rb' against 'a\\r\\nb'",
+   "method": "POST",
+   "path": "/rsm16",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a\r\nb"
+  },
+  {
+   "note": "case 16.1: 'a\\\\Rb' against 'a\\u2028b'",
+   "method": "POST",
+   "path": "/rsm16",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a b"
+  },
+  {
+   "note": "expectation 17: body REGEX \\X",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-17",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm17",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\X"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 17"
+    }
+   }
+  },
+  {
+   "note": "case 17.0: '\\\\X' against 'é'",
+   "method": "POST",
+   "path": "/rsm17",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "é"
+  },
+  {
+   "note": "case 17.1: '\\\\X' against 'ab'",
+   "method": "POST",
+   "path": "/rsm17",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ab"
+  },
+  {
+   "note": "expectation 18: body REGEX a\\Z",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-18",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm18",
+     "body": {
+      "type": "REGEX",
+      "regex": "a\\Z"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 18"
+    }
+   }
+  },
+  {
+   "note": "case 18.0: 'a\\\\Z' against 'a'",
+   "method": "POST",
+   "path": "/rsm18",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a"
+  },
+  {
+   "note": "case 18.1: 'a\\\\Z' against 'a\\n'",
+   "method": "POST",
+   "path": "/rsm18",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a\n"
+  },
+  {
+   "note": "expectation 19: body REGEX a$",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-19",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm19",
+     "body": {
+      "type": "REGEX",
+      "regex": "a$"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 19"
+    }
+   }
+  },
+  {
+   "note": "case 19.0: 'a$' against 'a'",
+   "method": "POST",
+   "path": "/rsm19",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a"
+  },
+  {
+   "note": "case 19.1: 'a$' against 'a\\n'",
+   "method": "POST",
+   "path": "/rsm19",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a\n"
+  },
+  {
+   "note": "expectation 20: body REGEX \\Gabc",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-20",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm20",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\Gabc"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 20"
+    }
+   }
+  },
+  {
+   "note": "case 20.0: '\\\\Gabc' against 'abc'",
+   "method": "POST",
+   "path": "/rsm20",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "expectation 21: body REGEX (?<y>a)\\k<y>",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-21",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm21",
+     "body": {
+      "type": "REGEX",
+      "regex": "(?<y>a)\\k<y>"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 21"
+    }
+   }
+  },
+  {
+   "note": "case 21.0: '(?<y>a)\\\\k<y>' against 'aa'",
+   "method": "POST",
+   "path": "/rsm21",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aa"
+  },
+  {
+   "note": "case 21.1: '(?<y>a)\\\\k<y>' against 'ab'",
+   "method": "POST",
+   "path": "/rsm21",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ab"
+  },
+  {
+   "note": "expectation 22: body REGEX (a)\\2",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-22",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm22",
+     "body": {
+      "type": "REGEX",
+      "regex": "(a)\\2"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 22"
+    }
+   }
+  },
+  {
+   "note": "case 22.0: '(a)\\\\2' against 'a'",
+   "method": "POST",
+   "path": "/rsm22",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a"
+  },
+  {
+   "note": "case 22.1: '(a)\\\\2' against 'aa'",
+   "method": "POST",
+   "path": "/rsm22",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aa"
+  },
+  {
+   "note": "expectation 23: body REGEX \\0101",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-23",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm23",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\0101"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 23"
+    }
+   }
+  },
+  {
+   "note": "case 23.0: '\\\\0101' against 'A'",
+   "method": "POST",
+   "path": "/rsm23",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "A"
+  },
+  {
+   "note": "case 23.1: '\\\\0101' against 'B'",
+   "method": "POST",
+   "path": "/rsm23",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "B"
+  },
+  {
+   "note": "expectation 24: body REGEX a\\cAb",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-24",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm24",
+     "body": {
+      "type": "REGEX",
+      "regex": "a\\cAb"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 24"
+    }
+   }
+  },
+  {
+   "note": "case 24.0: 'a\\\\cAb' against 'a\\x01b'",
+   "method": "POST",
+   "path": "/rsm24",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a\u0001b"
+  },
+  {
+   "note": "expectation 25: body REGEX \\e",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-25",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm25",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\e"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 25"
+    }
+   }
+  },
+  {
+   "note": "case 25.0: '\\\\e' against '\\x1b'",
+   "method": "POST",
+   "path": "/rsm25",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "\u001b"
+  },
+  {
+   "note": "expectation 26: body REGEX [\\w&&\\D]+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-26",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm26",
+     "body": {
+      "type": "REGEX",
+      "regex": "[\\w&&\\D]+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 26"
+    }
+   }
+  },
+  {
+   "note": "case 26.0: '[\\\\w&&\\\\D]+' against 'abc'",
+   "method": "POST",
+   "path": "/rsm26",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "case 26.1: '[\\\\w&&\\\\D]+' against 'a1'",
+   "method": "POST",
+   "path": "/rsm26",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a1"
+  },
+  {
+   "note": "expectation 27: body REGEX (?-i)abc",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-27",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm27",
+     "body": {
+      "type": "REGEX",
+      "regex": "(?-i)abc"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 27"
+    }
+   }
+  },
+  {
+   "note": "case 27.0: '(?-i)abc' against 'ABC'",
+   "method": "POST",
+   "path": "/rsm27",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ABC"
+  },
+  {
+   "note": "case 27.1: '(?-i)abc' against 'abc'",
+   "method": "POST",
+   "path": "/rsm27",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "expectation 28: body REGEX (?x) a b # comment",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-28",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm28",
+     "body": {
+      "type": "REGEX",
+      "regex": "(?x) a b # comment"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 28"
+    }
+   }
+  },
+  {
+   "note": "case 28.0: '(?x) a b # comment' against 'ab'",
+   "method": "POST",
+   "path": "/rsm28",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ab"
+  },
+  {
+   "note": "expectation 29: body REGEX (?U)\\w+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-29",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm29",
+     "body": {
+      "type": "REGEX",
+      "regex": "(?U)\\w+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 29"
+    }
+   }
+  },
+  {
+   "note": "case 29.0: '(?U)\\\\w+' against 'héllo'",
+   "method": "POST",
+   "path": "/rsm29",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "héllo"
+  },
+  {
+   "note": "expectation 30: body REGEX \\w+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-30",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm30",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\w+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 30"
+    }
+   }
+  },
+  {
+   "note": "case 30.0: '\\\\w+' against 'héllo'",
+   "method": "POST",
+   "path": "/rsm30",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "héllo"
+  },
+  {
+   "note": "case 30.1: '\\\\w+' against 'hello'",
+   "method": "POST",
+   "path": "/rsm30",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "hello"
+  },
+  {
+   "note": "expectation 31: body REGEX \\d+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-31",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm31",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\d+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 31"
+    }
+   }
+  },
+  {
+   "note": "case 31.0: '\\\\d+' against '١٢'",
+   "method": "POST",
+   "path": "/rsm31",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "١٢"
+  },
+  {
+   "note": "case 31.1: '\\\\d+' against '12'",
+   "method": "POST",
+   "path": "/rsm31",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "12"
+  },
+  {
+   "note": "expectation 32: body REGEX a\\sb",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-32",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm32",
+     "body": {
+      "type": "REGEX",
+      "regex": "a\\sb"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 32"
+    }
+   }
+  },
+  {
+   "note": "case 32.0: 'a\\\\sb' against 'a\\xa0b'",
+   "method": "POST",
+   "path": "/rsm32",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a b"
+  },
+  {
+   "note": "case 32.1: 'a\\\\sb' against 'a b'",
+   "method": "POST",
+   "path": "/rsm32",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a b"
+  },
+  {
+   "note": "expectation 33: body REGEX [[:alpha:]]",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-33",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm33",
+     "body": {
+      "type": "REGEX",
+      "regex": "[[:alpha:]]"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 33"
+    }
+   }
+  },
+  {
+   "note": "case 33.0: '[[:alpha:]]' against ':'",
+   "method": "POST",
+   "path": "/rsm33",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": ":"
+  },
+  {
+   "note": "case 33.1: '[[:alpha:]]' against 'b'",
+   "method": "POST",
+   "path": "/rsm33",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "b"
+  },
+  {
+   "note": "expectation 34: body REGEX x{,3}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-34",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm34",
+     "body": {
+      "type": "REGEX",
+      "regex": "x{,3}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 34"
+    }
+   }
+  },
+  {
+   "note": "case 34.0: 'x{,3}' against 'x{,3}'",
+   "method": "POST",
+   "path": "/rsm34",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "x{,3}"
+  },
+  {
+   "note": "case 34.1: 'x{,3}' against 'xx'",
+   "method": "POST",
+   "path": "/rsm34",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "xx"
+  },
+  {
+   "note": "expectation 35: body REGEX a{2,1}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-35",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm35",
+     "body": {
+      "type": "REGEX",
+      "regex": "a{2,1}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 35"
+    }
+   }
+  },
+  {
+   "note": "case 35.0: 'a{2,1}' against 'aa'",
+   "method": "POST",
+   "path": "/rsm35",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aa"
+  },
+  {
+   "note": "expectation 36: body REGEX []a]",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-36",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm36",
+     "body": {
+      "type": "REGEX",
+      "regex": "[]a]"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 36"
+    }
+   }
+  },
+  {
+   "note": "case 36.0: '[]a]' against ']'",
+   "method": "POST",
+   "path": "/rsm36",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "]"
+  },
+  {
+   "note": "case 36.1: '[]a]' against 'a'",
+   "method": "POST",
+   "path": "/rsm36",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a"
+  },
+  {
+   "note": "expectation 37: body REGEX [^]a]",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-37",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm37",
+     "body": {
+      "type": "REGEX",
+      "regex": "[^]a]"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 37"
+    }
+   }
+  },
+  {
+   "note": "case 37.0: '[^]a]' against 'b'",
+   "method": "POST",
+   "path": "/rsm37",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "b"
+  },
+  {
+   "note": "case 37.1: '[^]a]' against ']'",
+   "method": "POST",
+   "path": "/rsm37",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "]"
+  },
+  {
+   "note": "expectation 38: body REGEX a{1}+b",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-38",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm38",
+     "body": {
+      "type": "REGEX",
+      "regex": "a{1}+b"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 38"
+    }
+   }
+  },
+  {
+   "note": "case 38.0: 'a{1}+b' against 'ab'",
+   "method": "POST",
+   "path": "/rsm38",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ab"
+  },
+  {
+   "note": "expectation 39: body REGEX a+(?<=a{1,3})b",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-39",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm39",
+     "body": {
+      "type": "REGEX",
+      "regex": "a+(?<=a{1,3})b"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 39"
+    }
+   }
+  },
+  {
+   "note": "case 39.0: 'a+(?<=a{1,3})b' against 'aab'",
+   "method": "POST",
+   "path": "/rsm39",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aab"
+  },
+  {
+   "note": "expectation 40: body REGEX a+(?<=a+)b",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-40",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm40",
+     "body": {
+      "type": "REGEX",
+      "regex": "a+(?<=a+)b"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 40"
+    }
+   }
+  },
+  {
+   "note": "case 40.0: 'a+(?<=a+)b' against 'aab'",
+   "method": "POST",
+   "path": "/rsm40",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aab"
+  },
+  {
+   "note": "expectation 41: body REGEX \\u00e9t\\x41",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-41",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm41",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\u00e9t\\x41"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 41"
+    }
+   }
+  },
+  {
+   "note": "case 41.0: '\\\\u00e9t\\\\x41' against 'étA'",
+   "method": "POST",
+   "path": "/rsm41",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "étA"
+  },
+  {
+   "note": "expectation 42: body REGEX (?<n>a)(?P<m>b)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-42",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm42",
+     "body": {
+      "type": "REGEX",
+      "regex": "(?<n>a)(?P<m>b)"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 42"
+    }
+   }
+  },
+  {
+   "note": "case 42.0: '(?<n>a)(?P<m>b)' against 'ab'",
+   "method": "POST",
+   "path": "/rsm42",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ab"
+  },
+  {
+   "note": "expectation 43: body REGEX [a-z--m]",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-43",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm43",
+     "body": {
+      "type": "REGEX",
+      "regex": "[a-z--m]"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 43"
+    }
+   }
+  },
+  {
+   "note": "case 43.0: '[a-z--m]' against '-'",
+   "method": "POST",
+   "path": "/rsm43",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "-"
+  },
+  {
+   "note": "case 43.1: '[a-z--m]' against 'm'",
+   "method": "POST",
+   "path": "/rsm43",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "m"
+  },
+  {
+   "note": "expectation 44: body REGEX [a-z~~m]",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-44",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm44",
+     "body": {
+      "type": "REGEX",
+      "regex": "[a-z~~m]"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 44"
+    }
+   }
+  },
+  {
+   "note": "case 44.0: '[a-z~~m]' against '~'",
+   "method": "POST",
+   "path": "/rsm44",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "~"
+  },
+  {
+   "note": "case 44.1: '[a-z~~m]' against 'b'",
+   "method": "POST",
+   "path": "/rsm44",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "b"
+  },
+  {
+   "note": "expectation 45: body REGEX a\\<b",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-45",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm45",
+     "body": {
+      "type": "REGEX",
+      "regex": "a\\<b"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 45"
+    }
+   }
+  },
+  {
+   "note": "case 45.0: 'a\\\\<b' against 'a<b'",
+   "method": "POST",
+   "path": "/rsm45",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a<b"
+  },
+  {
+   "note": "expectation 46: body REGEX a\\b{start}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-46",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm46",
+     "body": {
+      "type": "REGEX",
+      "regex": "a\\b{start}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 46"
+    }
+   }
+  },
+  {
+   "note": "case 46.0: 'a\\\\b{start}' against 'a'",
+   "method": "POST",
+   "path": "/rsm46",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a"
+  },
+  {
+   "note": "expectation 47: body REGEX x[^a]",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-47",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm47",
+     "body": {
+      "type": "REGEX",
+      "regex": "x[^a]"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 47"
+    }
+   }
+  },
+  {
+   "note": "case 47.0: 'x[^a]' against 'x\\n'",
+   "method": "POST",
+   "path": "/rsm47",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "x\n"
+  },
+  {
+   "note": "expectation 48: body REGEX k.",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-48",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm48",
+     "body": {
+      "type": "REGEX",
+      "regex": "k."
+     }
+    },
+    "httpResponse": {
+     "body": "matched 48"
+    }
+   }
+  },
+  {
+   "note": "case 48.0: 'k.' against 'Kx'",
+   "method": "POST",
+   "path": "/rsm48",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "Kx"
+  },
+  {
+   "note": "case 48.1: 'k.' against 'Kx'",
+   "method": "POST",
+   "path": "/rsm48",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "Kx"
+  },
+  {
+   "note": "expectation 49: body REGEX ſ.",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-49",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm49",
+     "body": {
+      "type": "REGEX",
+      "regex": "ſ."
+     }
+    },
+    "httpResponse": {
+     "body": "matched 49"
+    }
+   }
+  },
+  {
+   "note": "case 49.0: 'ſ.' against 'Sx'",
+   "method": "POST",
+   "path": "/rsm49",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "Sx"
+  },
+  {
+   "note": "case 49.1: 'ſ.' against 'sx'",
+   "method": "POST",
+   "path": "/rsm49",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "sx"
+  },
+  {
+   "note": "expectation 50: body REGEX ǅ.",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-50",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm50",
+     "body": {
+      "type": "REGEX",
+      "regex": "ǅ."
+     }
+    },
+    "httpResponse": {
+     "body": "matched 50"
+    }
+   }
+  },
+  {
+   "note": "case 50.0: 'ǅ.' against 'ǆx'",
+   "method": "POST",
+   "path": "/rsm50",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ǆx"
+  },
+  {
+   "note": "case 50.1: 'ǅ.' against 'Ǆx'",
+   "method": "POST",
+   "path": "/rsm50",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "Ǆx"
+  },
+  {
+   "note": "expectation 51: body REGEX ß.",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-51",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm51",
+     "body": {
+      "type": "REGEX",
+      "regex": "ß."
+     }
+    },
+    "httpResponse": {
+     "body": "matched 51"
+    }
+   }
+  },
+  {
+   "note": "case 51.0: 'ß.' against 'SSx'",
+   "method": "POST",
+   "path": "/rsm51",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "SSx"
+  },
+  {
+   "note": "case 51.1: 'ß.' against 'ẞx'",
+   "method": "POST",
+   "path": "/rsm51",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ẞx"
+  },
+  {
+   "note": "expectation 52: body REGEX ß",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-52",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm52",
+     "body": {
+      "type": "REGEX",
+      "regex": "ß"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 52"
+    }
+   }
+  },
+  {
+   "note": "case 52.0: 'ß' against 'ẞ'",
+   "method": "POST",
+   "path": "/rsm52",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ẞ"
+  },
+  {
+   "note": "expectation 53: body REGEX [ß]",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-53",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm53",
+     "body": {
+      "type": "REGEX",
+      "regex": "[ß]"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 53"
+    }
+   }
+  },
+  {
+   "note": "case 53.0: '[ß]' against 'ẞ'",
+   "method": "POST",
+   "path": "/rsm53",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ẞ"
+  },
+  {
+   "note": "expectation 54: body REGEX [ı-ı]x",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-54",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm54",
+     "body": {
+      "type": "REGEX",
+      "regex": "[ı-ı]x"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 54"
+    }
+   }
+  },
+  {
+   "note": "case 54.0: '[ı-ı]x' against 'ix'",
+   "method": "POST",
+   "path": "/rsm54",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ix"
+  },
+  {
+   "note": "case 54.1: '[ı-ı]x' against 'Ix'",
+   "method": "POST",
+   "path": "/rsm54",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "Ix"
+  },
+  {
+   "note": "expectation 55: body REGEX [ẞ-ẟ]x",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-55",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm55",
+     "body": {
+      "type": "REGEX",
+      "regex": "[ẞ-ẟ]x"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 55"
+    }
+   }
+  },
+  {
+   "note": "case 55.0: '[ẞ-ẟ]x' against 'ßx'",
+   "method": "POST",
+   "path": "/rsm55",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ßx"
+  },
+  {
+   "note": "expectation 56: body REGEX İ.",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-56",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm56",
+     "body": {
+      "type": "REGEX",
+      "regex": "İ."
+     }
+    },
+    "httpResponse": {
+     "body": "matched 56"
+    }
+   }
+  },
+  {
+   "note": "case 56.0: 'İ.' against 'ix'",
+   "method": "POST",
+   "path": "/rsm56",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ix"
+  },
+  {
+   "note": "case 56.1: 'İ.' against 'Ix'",
+   "method": "POST",
+   "path": "/rsm56",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "Ix"
+  },
+  {
+   "note": "expectation 57: body REGEX ᾀ.",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-57",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm57",
+     "body": {
+      "type": "REGEX",
+      "regex": "ᾀ."
+     }
+    },
+    "httpResponse": {
+     "body": "matched 57"
+    }
+   }
+  },
+  {
+   "note": "case 57.0: 'ᾀ.' against 'ᾈx'",
+   "method": "POST",
+   "path": "/rsm57",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ᾈx"
+  },
+  {
+   "note": "expectation 58: body REGEX café",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-58",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm58",
+     "body": {
+      "type": "REGEX",
+      "regex": "café"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 58"
+    }
+   }
+  },
+  {
+   "note": "case 58.0: 'café' against 'CAFÉ'",
+   "method": "POST",
+   "path": "/rsm58",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "CAFÉ"
+  },
+  {
+   "note": "case 58.1: 'café' against 'café'",
+   "method": "POST",
+   "path": "/rsm58",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "café"
+  },
+  {
+   "note": "expectation 59: body REGEX été",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-59",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm59",
+     "body": {
+      "type": "REGEX",
+      "regex": "été"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 59"
+    }
+   }
+  },
+  {
+   "note": "case 59.0: 'été' against 'ÉTÉ'",
+   "method": "POST",
+   "path": "/rsm59",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ÉTÉ"
+  },
+  {
+   "note": "expectation 60: body REGEX a**",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-60",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm60",
+     "body": {
+      "type": "REGEX",
+      "regex": "a**"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 60"
+    }
+   }
+  },
+  {
+   "note": "case 60.0: 'a**' against 'a'",
+   "method": "POST",
+   "path": "/rsm60",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a"
+  },
+  {
+   "note": "expectation 61: body REGEX a{2}{3}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-61",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm61",
+     "body": {
+      "type": "REGEX",
+      "regex": "a{2}{3}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 61"
+    }
+   }
+  },
+  {
+   "note": "case 61.0: 'a{2}{3}' against 'aaaaaa'",
+   "method": "POST",
+   "path": "/rsm61",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aaaaaa"
+  },
+  {
+   "note": "case 61.1: 'a{2}{3}' against 'aa'",
+   "method": "POST",
+   "path": "/rsm61",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aa"
+  },
+  {
+   "note": "expectation 62: body REGEX (?i:A)(?-i:B)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-62",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm62",
+     "body": {
+      "type": "REGEX",
+      "regex": "(?i:A)(?-i:B)"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 62"
+    }
+   }
+  },
+  {
+   "note": "case 62.0: '(?i:A)(?-i:B)' against 'ab'",
+   "method": "POST",
+   "path": "/rsm62",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ab"
+  },
+  {
+   "note": "case 62.1: '(?i:A)(?-i:B)' against 'aB'",
+   "method": "POST",
+   "path": "/rsm62",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aB"
+  },
+  {
+   "note": "expectation 63: body REGEX \\p{gc=Ll}\\p{sc=Greek}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-63",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm63",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{gc=Ll}\\p{sc=Greek}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 63"
+    }
+   }
+  },
+  {
+   "note": "case 63.0: '\\\\p{gc=Ll}\\\\p{sc=Greek}' against 'aα'",
+   "method": "POST",
+   "path": "/rsm63",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aα"
+  },
+  {
+   "note": "expectation 64: body REGEX \\p{block=Basic Latin}+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-64",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm64",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{block=Basic Latin}+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 64"
+    }
+   }
+  },
+  {
+   "note": "case 64.0: '\\\\p{block=Basic Latin}+' against 'ab'",
+   "method": "POST",
+   "path": "/rsm64",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ab"
+  },
+  {
+   "note": "expectation 65: body REGEX \\p{IsLatin}\\p{IsDigit}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-65",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm65",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{IsLatin}\\p{IsDigit}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 65"
+    }
+   }
+  },
+  {
+   "note": "case 65.0: '\\\\p{IsLatin}\\\\p{IsDigit}' against 'a1'",
+   "method": "POST",
+   "path": "/rsm65",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a1"
+  },
+  {
+   "note": "expectation 66: body REGEX \\p{javaJavaIdentifierStart}\\p{Punct}",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-66",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm66",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\p{javaJavaIdentifierStart}\\p{Punct}"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 66"
+    }
+   }
+  },
+  {
+   "note": "case 66.0: '\\\\p{javaJavaIdentifierStart}\\\\p{Punct}' against '$!'",
+   "method": "POST",
+   "path": "/rsm66",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "$!"
+  },
+  {
+   "note": "expectation 67: body REGEX [\\p{L}&&[^\\p{Lu}]]+",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-67",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm67",
+     "body": {
+      "type": "REGEX",
+      "regex": "[\\p{L}&&[^\\p{Lu}]]+"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 67"
+    }
+   }
+  },
+  {
+   "note": "case 67.0: '[\\\\p{L}&&[^\\\\p{Lu}]]+' against 'ab'",
+   "method": "POST",
+   "path": "/rsm67",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "ab"
+  },
+  {
+   "note": "case 67.1: '[\\\\p{L}&&[^\\\\p{Lu}]]+' against 'aB'",
+   "method": "POST",
+   "path": "/rsm67",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "aB"
+  },
+  {
+   "note": "expectation 68: body REGEX \\bfoo\\B.",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-68",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm68",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\bfoo\\B."
+     }
+    },
+    "httpResponse": {
+     "body": "matched 68"
+    }
+   }
+  },
+  {
+   "note": "case 68.0: '\\\\bfoo\\\\B.' against 'foox'",
+   "method": "POST",
+   "path": "/rsm68",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "foox"
+  },
+  {
+   "note": "expectation 69: body REGEX a|ab|abc",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-69",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm69",
+     "body": {
+      "type": "REGEX",
+      "regex": "a|ab|abc"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 69"
+    }
+   }
+  },
+  {
+   "note": "case 69.0: 'a|ab|abc' against 'abc'",
+   "method": "POST",
+   "path": "/rsm69",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abc"
+  },
+  {
+   "note": "expectation 70: body REGEX (a|ab)(c|bcd)(d*)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-70",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm70",
+     "body": {
+      "type": "REGEX",
+      "regex": "(a|ab)(c|bcd)(d*)"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 70"
+    }
+   }
+  },
+  {
+   "note": "case 70.0: '(a|ab)(c|bcd)(d*)' against 'abcd'",
+   "method": "POST",
+   "path": "/rsm70",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "abcd"
+  },
+  {
+   "note": "expectation 71: body REGEX \\1(a)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "rsm-71",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/rsm71",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\1(a)"
+     }
+    },
+    "httpResponse": {
+     "body": "matched 71"
+    }
+   }
+  },
+  {
+   "note": "case 71.0: '\\\\1(a)' against 'a'",
+   "method": "POST",
+   "path": "/rsm71",
+   "headers": {
+    "content-type": "text/plain; charset=utf-8"
+   },
+   "body": "a"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "cp-0",
+    "httpRequest": {
+     "path": "/cpa"
+    },
+    "httpResponse": {
+     "body": "cp 0"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "cp-1",
+    "httpRequest": {
+     "path": "/cpb"
+    },
+    "httpResponse": {
+     "body": "cp 1"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "cp-2",
+    "httpRequest": {
+     "path": "/cpé"
+    },
+    "httpResponse": {
+     "body": "cp 2"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "cp-3",
+    "httpRequest": {
+     "path": "/cq[a-z&&[^b]]"
+    },
+    "httpResponse": {
+     "body": "cp 3"
+    }
+   }
+  },
+  {
+   "note": "control plane path filter '/cp[a-z&&[^b]]'",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/cp[a-z&&[^b]]"
+   }
+  },
+  {
+   "note": "control plane path filter '/cp\\\\p{javaLowerCase}'",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/cp\\p{javaLowerCase}"
+   }
+  },
+  {
+   "note": "control plane path filter '/CPÉ'",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/CPÉ"
+   }
+  },
+  {
+   "note": "control plane path filter '/cp\\\\Qa'",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/cp\\Qa"
+   }
+  },
+  {
+   "note": "control plane path filter '/cq\\\\Qc\\\\E'",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/cq\\Qc\\E"
+   }
+  },
+  {
+   "note": "control plane path filter '/cp(?<x>a)\\\\k<x>'",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/cp(?<x>a)\\k<x>"
+   }
+  },
+  {
+   "note": "control plane path filter '/cq[a-c&&[^b]]'",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": {
+    "path": "/cq[a-c&&[^b]]"
+   }
+  }
+ ]
+}

@@ -1,0 +1,77 @@
+{
+ "source": "InboundConnectionIdleTimeoutIntegrationTest's shouldNotCloseConnectTunnelThatHasSwitchedProtocols and shouldNotCloseConnectTunnelWhileAResponseIsDelayedBehindAnAbandonedRequest (b765b8271). An empty httpError abandons its exchange and leaves the connection open, and the requests pipelined behind it (or sent later) are still answered; any 101 response written makes the connection long-lived (HttpExchangeTracker), directly or inside a CONNECT tunnel. Each tcp step reads for two seconds after its last chunk: closed means the server closed it within them",
+ "properties": {
+  "inboundConnectionIdleTimeoutMillis": "600",
+  "startupWarmup": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/held"
+     },
+     "httpError": {}
+    },
+    {
+     "httpRequest": {
+      "path": "/slow"
+     },
+     "httpResponse": {
+      "body": "slow but sure",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 900
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/upgrade"
+     },
+     "httpResponse": {
+      "statusCode": 101,
+      "headers": {
+       "Upgrade": ["custom"],
+       "Connection": ["Upgrade"]
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/upgrade-with-body"
+     },
+     "httpResponse": {
+      "statusCode": 101,
+      "headers": {
+       "Upgrade": ["custom"]
+      },
+      "body": "after the head"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/upgrade-websocket-version"
+     },
+     "httpResponse": {
+      "statusCode": 101,
+      "headers": {
+       "Upgrade": ["custom"],
+       "Sec-WebSocket-Version": ["13"]
+      },
+      "body": "never written"
+     }
+    }
+   ]
+  },
+  {"note": "a delayed response pipelined behind an abandoned request is answered; then idle", "tcp": [{"text": "GET /held HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\nGET /slow HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"}], "text": true},
+  {"note": "a request sent after an abandoned one is answered", "tcp": [{"text": "GET /held HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"}, {"text": "GET /slow HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"}], "chunkMillis": 200, "text": true},
+  {"note": "the same inside a CONNECT tunnel", "tcp": [{"text": "CONNECT localhost:{{port}} HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"}, {"text": "GET /held HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\nGET /slow HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"}], "chunkMillis": 200, "text": true},
+  {"note": "a 101 response makes the connection long-lived: it stays open past the timeout", "tcp": [{"text": "GET /upgrade HTTP/1.1\r\nHost: localhost:{{port}}\r\nConnection: Upgrade\r\nUpgrade: custom\r\n\r\n"}], "text": true},
+  {"note": "the same inside a CONNECT tunnel", "tcp": [{"text": "CONNECT localhost:{{port}} HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"}, {"text": "GET /upgrade HTTP/1.1\r\nHost: localhost:{{port}}\r\nConnection: Upgrade\r\nUpgrade: custom\r\n\r\n"}], "chunkMillis": 200, "text": true},
+  {"note": "a 101 without Sec-WebSocket-Version keeps its content-length and body (HttpResponseEncoder.isContentAlwaysEmpty)", "tcp": [{"text": "GET /upgrade-with-body HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"}], "text": true},
+  {"note": "one with it has neither", "tcp": [{"text": "GET /upgrade-websocket-version HTTP/1.1\r\nHost: localhost:{{port}}\r\n\r\n"}], "text": true}
+ ]
+}

@@ -1,0 +1,30 @@
+{
+ "note": "RequestMatchersStateBackendTest, RequestMatchersReconcileParityTest: maxExpectations=2 evicts the oldest expectation by insertion order, an update keeps its place, an evicted id stops resolving, reset empties the store.",
+ "properties": {
+  "maxExpectations": "2"
+ },
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "a", "httpRequest": {"path": "/a"}, "httpResponse": {"body": "a"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "b", "httpRequest": {"path": "/b"}, "httpResponse": {"body": "b"}}},
+  {"note": "the third evicts a", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "c", "httpRequest": {"path": "/c"}, "httpResponse": {"body": "c"}}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"method": "GET", "path": "/a"},
+  {"method": "GET", "path": "/b"},
+  {"note": "an evicted id no longer resolves (expectationRequestDefinitions is cleaned up)", "method": "PUT", "path": "/mockserver/verify", "body": {"expectationId": {"id": "a"}, "times": {"atLeast": 0}}},
+  {"method": "PUT", "path": "/mockserver/verify", "body": {"expectationId": {"id": "b"}, "times": {"atLeast": 1}}},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "a", "httpRequest": {"path": "/a"}, "httpResponse": {"body": "a-v1"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "b", "httpRequest": {"path": "/b"}, "httpResponse": {"body": "b"}}},
+  {"note": "an update keeps a's insertion position", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "a", "httpRequest": {"path": "/a"}, "httpResponse": {"body": "a-v2"}}},
+  {"note": "so the next add evicts a, not b", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "c", "httpRequest": {"path": "/c"}, "httpResponse": {"body": "c"}}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"method": "GET", "path": "/a"},
+  {"method": "GET", "path": "/c"},
+  {"note": "several in one request: the oldest go first", "method": "PUT", "path": "/mockserver/expectation", "body": [{"id": "d", "httpRequest": {"path": "/d"}, "httpResponse": {"body": "d"}}, {"id": "e", "httpRequest": {"path": "/e"}, "httpResponse": {"body": "e"}}, {"id": "f", "httpRequest": {"path": "/f"}, "httpResponse": {"body": "f"}}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "clear by id then add: room again", "method": "PUT", "path": "/mockserver/clear?type=EXPECTATIONS", "body": {"id": "e"}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "g", "httpRequest": {"path": "/g"}, "httpResponse": {"body": "g"}}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"}
+ ]
+}

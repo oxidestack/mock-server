@@ -1,0 +1,36 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "\n\n   \n{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/only\"},\"httpResponse\":{\"statusCode\":200}}\n\n",
+   "note": "shouldSkipBlankLines"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"PUT\",\"path\":\"/round/trip\",\"body\":\"body\\nwith\\nnewlines\"},\"httpResponse\":{\"statusCode\":202,\"body\":\"resp\"}}",
+   "note": "shouldRoundTripFromPersistenceSerializer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/a\"},\"httpResponse\":{\"statusCode\":200}}\n{\"httpRequest\":{\"path\"\n{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/b\"},\"httpResponse\":{\"statusCode\":200}}",
+   "note": "shouldSkipMalformedLineInTheMiddleAndImportTheRest"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "   \n\n  ",
+   "note": "blank archive in the body reads the disk archive",
+   "mask": [
+    "found at [^ ]+",
+    "content-length: [0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES"
+  }
+ ]
+}

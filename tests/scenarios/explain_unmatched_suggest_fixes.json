@@ -1,0 +1,328 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "e-path",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/orders/"
+     },
+     "httpResponse": {
+      "body": "list"
+     }
+    },
+    {
+     "id": "e-near",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/orders",
+      "headers": {
+       "x-key": [
+        "abc"
+       ],
+       "accept": [
+        "json"
+       ],
+       "x-absent": [
+        "1"
+       ]
+      },
+      "queryStringParameters": {
+       "page": [
+        "1"
+       ],
+       "size": [
+        "10"
+       ]
+      },
+      "body": {
+       "type": "JSON",
+       "json": {
+        "id": 1,
+        "name": "a",
+        "tags": [
+         "x"
+        ],
+        "any": "${json-unit.any-string}",
+        "gone": 1
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    },
+    {
+     "id": "e-strict",
+     "httpRequest": {
+      "method": "PUT",
+      "path": "/items/{id}",
+      "pathParameters": {
+       "id": [
+        "[0-9]+"
+       ]
+      },
+      "body": {
+       "type": "JSON",
+       "json": {
+        "a": 1
+       },
+       "matchType": "STRICT"
+      }
+     },
+     "httpResponse": {
+      "body": "s"
+     }
+    },
+    {
+     "id": "e-cookie",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/c",
+      "cookies": {
+       "session": "abc"
+      },
+      "headers": {
+       "x-gone": [
+        "1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "c"
+     }
+    },
+    {
+     "id": "e-string",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/c",
+      "body": "hello"
+     },
+     "httpResponse": {
+      "body": "s"
+     }
+    },
+    {
+     "id": "e-json-on-text",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/c",
+      "body": {
+       "type": "JSON",
+       "json": {
+        "a": 1
+       },
+       "contentType": "application/vnd+json"
+      }
+     },
+     "httpResponse": {
+      "body": "s"
+     }
+    },
+    {
+     "id": "e-secure",
+     "httpRequest": {
+      "path": "/c",
+      "secure": true,
+      "keepAlive": false,
+      "cookies": {
+       "other": "v",
+       "session": "zzz"
+      }
+     },
+     "httpResponse": {
+      "body": "s"
+     }
+    }
+   ]
+  },
+  {
+   "note": "header, query and JSON body near miss",
+   "method": "POST",
+   "path": "/orders?page=2&size=10",
+   "headers": {
+    "X-Key": [
+     "abd"
+    ],
+    "accept": [
+     "json"
+    ],
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "id": 2,
+    "name": "a",
+    "tags": [
+     "y"
+    ],
+    "any": "q",
+    "extra": true
+   }
+  },
+  {
+   "note": "fixes for the header, query and body near miss",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1,
+    "suggestFixes": true
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "path parameter and strict body near miss",
+   "method": "PUT",
+   "path": "/items/abc",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "a": 2,
+    "b": 3
+   }
+  },
+  {
+   "note": "fixes for the path parameter and strict body",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1,
+    "suggestFixes": true
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "cookie and text body near miss",
+   "method": "GET",
+   "path": "/c",
+   "headers": {
+    "Cookie": [
+     "session=xyz"
+    ],
+    "content-type": [
+     "text/plain"
+    ]
+   },
+   "body": "x"
+  },
+  {
+   "note": "fixes for cookies, string, JSON-on-text, secure and keep-alive",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1,
+    "suggestFixes": true
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "no body, no cookies",
+   "method": "GET",
+   "path": "/c",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "b": 2
+   }
+  },
+  {
+   "note": "fixes that remove cookies and headers",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1,
+    "suggestFixes": true
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "without suggestFixes",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "suggestFixes false",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 1,
+    "suggestFixes": false
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  },
+  {
+   "note": "suggestFixes as a string",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "body": {
+    "limit": 2,
+    "suggestFixes": "true"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ],
+   "compare": "json"
+  }
+ ]
+}

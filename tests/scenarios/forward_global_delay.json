@@ -1,0 +1,110 @@
+{
+ "source": "HttpActionHandler schedules every FORWARD* action with combineWithGlobalDelay(actionDelay) and rejectableIfDelayed (HttpActionHandler.java:618-675), so globalResponseDelayMillis delays a forward before it is sent, on top of its own delay, and the delayed forward is refused with the overload 503 when maxPendingDelayedResponses is full; the forwarded-to mock response on the same server is delayed again by its own write",
+ "properties": {
+  "globalResponseDelayMillis": "1500",
+  "maxPendingDelayedResponses": "1"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/fwd"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/now",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fwd-delayed"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/now",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      },
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 1000
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/now"
+     },
+     "httpResponse": {
+      "body": "now"
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "the forward waits the global delay before it is sent, and the mock it reaches waits it again",
+   "method": "GET",
+   "path": "/fwd",
+   "minMillis": 3000,
+   "maxMillis": 15000
+  },
+  {
+   "note": "a forward's own delay and the global delay add up",
+   "method": "GET",
+   "path": "/fwd-delayed",
+   "minMillis": 4000,
+   "maxMillis": 15000
+  },
+  {
+   "note": "a delayed mock response holds the only slot of maxPendingDelayedResponses",
+   "async": "held",
+   "maxMillis": 15000,
+   "method": "GET",
+   "path": "/now"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "the globally delayed forward is refused at once with the overload 503",
+   "method": "GET",
+   "path": "/fwd",
+   "maxMillis": 1000
+  },
+  {
+   "await": "held"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "((?:totalTimeIn|connectionTimeIn|connectionEstablished|requestStarted|responseReceived|timeToFirstByteIn)Millis\\\\?\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  }
+ ]
+}

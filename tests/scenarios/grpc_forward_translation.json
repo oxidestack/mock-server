@@ -1,0 +1,682 @@
+{
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream unary answer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "from upstream"
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /com.example.grpc.GreetingService/Greeting to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "unary call forwarded: re-encoded, decoded, re-framed",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "what the upstream received (protobuf, te: trailers, no x-grpc-* headers)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "the recorded exchange (JSON body, stamped service and method)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream client-streaming answer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/CollectGreetings",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "collected"
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /com.example.grpc.GreetingService/CollectGreetings to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/CollectGreetings"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "client-streaming call forwarded: three frames upstream",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/CollectGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNlAAAAAAUKA0JvYgAAAAAJCgdDaGFybGll"
+  },
+  {
+   "note": "the upstream's request carries the three messages",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream server-streaming answer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "grpcStreamResponse": {
+     "statusName": "OK",
+     "messages": [
+      {
+       "json": "{\"greeting\": \"one\"}"
+      },
+      {
+       "json": "{\"greeting\": \"two\"}"
+      }
+     ]
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /com.example.grpc.GreetingService/ListGreetings to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/ListGreetings"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "server-streaming call forwarded: two messages back",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "the recorded exchange has a JSON array body",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream NOT_FOUND",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "NOT_FOUND"
+      ],
+      "grpc-message": [
+       "paiement refusé"
+      ]
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /com.example.grpc.GreetingService/Greeting to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "non-OK status and a percent-encoded message are preserved",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "the recorded response has the numeric status and the decoded message",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream CRLF message",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status-name": [
+       "INTERNAL"
+      ],
+      "grpc-message": [
+       "line one\r\nline two\u0000 end"
+      ]
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /com.example.grpc.GreetingService/Greeting to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "control characters decoded from the upstream message are stripped",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "the recorded message",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream numeric status 42",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "grpc-status": [
+       "42"
+      ]
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /com.example.grpc.GreetingService/Greeting to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "an unmapped numeric status from the upstream",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream unary answer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "httpResponse": {
+     "statusCode": 200,
+     "body": {
+      "greeting": "from upstream"
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /com.example.grpc.GreetingService/Greeting to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "grpc-web call forwarded",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAUKA1dlYg=="
+  },
+  {
+   "note": "grpc-web-text call forwarded",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc-web-text"
+   },
+   "trailers": true,
+   "body": "AAAAAAYKBFRleHQ="
+  },
+  {
+   "note": "what the upstream received from the gRPC-Web calls",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream plain text body",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "httpResponse": {
+     "statusCode": 200,
+     "headers": {
+      "content-type": [
+       "text/plain"
+      ]
+     },
+     "body": "not protobuf"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /com.example.grpc.GreetingService/Greeting to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Greeting"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "an undecodable upstream answer",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear expectations and logs",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=ALL"
+  },
+  {
+   "note": "expectation: upstream plain http",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain",
+     "headers": {
+      "x-hop": [
+       "upstream"
+      ]
+     }
+    },
+    "priority": 10,
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "plain upstream"
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "expectation: forward /plain to itself with a marker",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ],
+       "x-hop": [
+        "upstream"
+       ]
+      }
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "note": "plain HTTP forward is untouched",
+   "method": "POST",
+   "path": "/plain",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"name\": \"Alice\"}"
+  },
+  {
+   "note": "the plain request upstream",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "clear descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  }
+ ],
+ "isolated": true
+}

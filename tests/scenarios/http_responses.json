@@ -1,0 +1,291 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/seq"
+     },
+     "httpResponses": [
+      {
+       "body": "one"
+      },
+      {
+       "statusCode": 201,
+       "body": "two",
+       "headers": {
+        "x": [
+         "2"
+        ]
+       }
+      },
+      {
+       "body": "three"
+      }
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/seq-explicit"
+     },
+     "httpResponses": [
+      {
+       "body": "a"
+      },
+      {
+       "body": "b"
+      }
+     ],
+     "responseMode": "SEQUENTIAL"
+    },
+    {
+     "httpRequest": {
+      "path": "/switch"
+     },
+     "httpResponses": [
+      {
+       "body": "first"
+      },
+      {
+       "body": "second"
+      },
+      {
+       "body": "third"
+      }
+     ],
+     "responseMode": "SWITCH",
+     "switchAfter": 2
+    },
+    {
+     "httpRequest": {
+      "path": "/switch-default"
+     },
+     "httpResponses": [
+      {
+       "body": "x"
+      },
+      {
+       "body": "y"
+      }
+     ],
+     "responseMode": "SWITCH"
+    },
+    {
+     "httpRequest": {
+      "path": "/random"
+     },
+     "httpResponses": [
+      {
+       "body": "only"
+      }
+     ],
+     "responseMode": "RANDOM"
+    },
+    {
+     "httpRequest": {
+      "path": "/weighted"
+     },
+     "httpResponses": [
+      {
+       "body": "heavy"
+      },
+      {
+       "body": "never"
+      }
+     ],
+     "responseMode": "WEIGHTED",
+     "responseWeights": [
+      1000000,
+      1
+     ]
+    },
+    {
+     "httpRequest": {
+      "path": "/limited"
+     },
+     "httpResponses": [
+      {
+       "body": "l1"
+      },
+      {
+       "body": "l2"
+      }
+     ],
+     "times": {
+      "remainingTimes": 3
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/both"
+     },
+     "httpResponse": {
+      "body": "single"
+     },
+     "httpResponses": [
+      {
+       "body": "multi"
+      }
+     ]
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/seq"
+  },
+  {
+   "method": "GET",
+   "path": "/seq"
+  },
+  {
+   "method": "GET",
+   "path": "/seq"
+  },
+  {
+   "method": "GET",
+   "path": "/seq"
+  },
+  {
+   "method": "GET",
+   "path": "/seq-explicit"
+  },
+  {
+   "method": "GET",
+   "path": "/seq-explicit"
+  },
+  {
+   "method": "GET",
+   "path": "/seq-explicit"
+  },
+  {
+   "method": "GET",
+   "path": "/seq",
+   "headers": {
+    "x-mockserver-response-index": "2"
+   },
+   "note": "forced index does not advance"
+  },
+  {
+   "method": "GET",
+   "path": "/seq",
+   "note": "next in rotation"
+  },
+  {
+   "method": "GET",
+   "path": "/seq",
+   "headers": {
+    "x-mockserver-response-index": "9"
+   },
+   "note": "out-of-range index rotates"
+  },
+  {
+   "method": "GET",
+   "path": "/seq",
+   "headers": {
+    "x-mockserver-response-index": "x"
+   },
+   "note": "non-numeric index rotates"
+  },
+  {
+   "method": "GET",
+   "path": "/switch"
+  },
+  {
+   "method": "GET",
+   "path": "/switch"
+  },
+  {
+   "method": "GET",
+   "path": "/switch"
+  },
+  {
+   "method": "GET",
+   "path": "/switch"
+  },
+  {
+   "method": "GET",
+   "path": "/switch"
+  },
+  {
+   "method": "GET",
+   "path": "/switch"
+  },
+  {
+   "method": "GET",
+   "path": "/switch-default"
+  },
+  {
+   "method": "GET",
+   "path": "/switch-default"
+  },
+  {
+   "method": "GET",
+   "path": "/switch-default"
+  },
+  {
+   "method": "GET",
+   "path": "/random"
+  },
+  {
+   "method": "GET",
+   "path": "/random"
+  },
+  {
+   "method": "GET",
+   "path": "/weighted"
+  },
+  {
+   "method": "GET",
+   "path": "/limited"
+  },
+  {
+   "method": "GET",
+   "path": "/limited"
+  },
+  {
+   "method": "GET",
+   "path": "/limited"
+  },
+  {
+   "method": "GET",
+   "path": "/limited"
+  },
+  {
+   "method": "GET",
+   "path": "/both"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "path": "/switch"
+   },
+   "note": "echoed",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/seq-explicit"
+   },
+   "note": "logged action",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}",
+     "replace": "<ts>"
+    }
+   ]
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}, "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", {"regex": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}", "replace": "<ts>"}], "body": {"path": "/seq-explicit"}}
+]
+}

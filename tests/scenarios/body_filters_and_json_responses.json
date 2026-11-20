@@ -1,0 +1,23 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/json_string"}, "httpResponse": {"body": {"type": "JSON", "json": "{\n    \"id\": 1,\n    \"price\": 12.50,\n    \"big\": 1.0E3\n}"}}}},
+  {"method": "GET", "path": "/json_string", "note": "JSON response body given as a string is re-serialised"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/json_raw"}, "httpResponse": {"headers": {"content-type": ["application/json; charset=utf-8"]}, "body": {"id": 1, "price": 12.50}}}},
+  {"method": "GET", "path": "/json_raw", "note": "raw JSON response body"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/json_typed_object"}, "httpResponse": {"body": {"type": "JSON", "json": {"id": 1, "price": 12.5, "name": "σπίτι"}}}}},
+  {"method": "GET", "path": "/json_typed_object", "note": "typed JSON response body given as an object (the Java client's form)"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/json_client", "body": "some_body"}, "httpResponse": {"statusCode": 202, "body": {"id": 1, "price": 12.50}}}},
+  {"method": "POST", "path": "/json_client", "body": "some_body", "note": "the Java client's raw JSON response body, no content type (upstream shouldReturnJsonResponseWithJsonWithUTF8)"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [{"httpRequest": {"body": {"type": "XPATH", "xpath": "/bookstore/book[year=2005]/price"}}, "httpResponse": {"body": "some_body1"}}, {"httpRequest": {"body": {"type": "XPATH", "xpath": "/bookstore/book[year=2006]/price"}}, "httpResponse": {"body": "some_body2"}}]},
+  {"method": "PUT", "path": "/mockserver/clear", "body": {"body": {"type": "XPATH", "xpath": "/bookstore/book[year=2005]/price"}}, "note": "clear by an identical xpath body matcher"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "note": "only the other xpath expectation is left"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [{"httpRequest": {"body": {"type": "PARAMETERS", "parameters": {"bodyParameterNameOne": ["bodyParameterValueOne"]}}}, "httpResponse": {"body": "some_body1"}}, {"httpRequest": {"body": {"type": "PARAMETERS", "parameters": {"bodyParameterNameTwo": ["bodyParameterValueTwo"]}}}, "httpResponse": {"body": "some_body2"}}]},
+  {"method": "PUT", "path": "/mockserver/clear", "body": {"body": {"type": "PARAMETERS", "parameters": {"bodyParameterNameOne": ["bodyParameterValueOne"]}}}, "note": "clear by an identical params body matcher"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "note": "only the other params expectation is left"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [{"httpRequest": {"body": {"type": "JSON_SCHEMA", "jsonSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}}}, "httpResponse": {"body": "some_body1"}}, {"httpRequest": {"body": {"type": "JSON_SCHEMA", "jsonSchema": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}}}, "httpResponse": {"body": "some_body2"}}]},
+  {"method": "PUT", "path": "/mockserver/clear", "body": {"body": {"type": "JSON_SCHEMA", "jsonSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}}}, "note": "clear by an identical schema body matcher"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "note": "only the other schema expectation is left"},
+  {"method": "PUT", "path": "/mockserver/reset"}
+]}

@@ -1,0 +1,56 @@
+{
+  "note": "MainCliTest.shouldApplyDevModeDefaults: run --dev starts with devMode on and its 1000-entry caps for maxLogEntries and maxExpectations, read back from GET /mockserver/configuration",
+  "target": "both",
+  "args": [
+    "run",
+    "-p",
+    "{{serverPort}}",
+    "--dev"
+  ],
+  "env": {
+    "SERVER_PORT": "",
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "timeoutSecs": 90,
+  "afterReady": [
+    {
+      "awaitAnswerMillis": 20000
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "ownHost": true,
+        "expectStatus": 200,
+        "expectBodyContains": "\"devMode\" : true"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "ownHost": true,
+        "expectStatus": 200,
+        "expectBodyContains": "\"maxExpectations\" : 1000,"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/configuration",
+        "ownHost": true,
+        "expectStatus": 200,
+        "expectBodyContains": "\"maxLogEntries\" : 1000,"
+      }
+    }
+  ],
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "mockserver.devMode=true"
+    ]
+  }
+}

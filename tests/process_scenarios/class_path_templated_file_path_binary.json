@@ -1,0 +1,84 @@
+{
+  "note": "a templatedFilePath FILE body reads its rendered path from the class path roots (mockServer.classPath) before the working directory, as TemplatedFilePathGuard.readConfined does with ClassLoader.getResource: a directory root's file must lie under the root's copy of the base directory, a jar entry is read by exactly the checked name; the refusals answer the same 500 as an unreadable file",
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCK_SERVER_CLASS_PATH": "{{scratch}}/classes:{{scratch}}/lib/resources.jar"
+  },
+  "files": {
+    "lib/resources.jar": {
+      "from": "classpath/resources.jar"
+    },
+    "classes/views/alice.txt": "alice from a class path directory",
+    "classes/views/nested/carol.txt": "carol from a nested class path directory",
+    "classes/secret.txt": "class path secret"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "body": "[{\"httpRequest\": {\"path\": \"/view\"}, \"httpResponse\": {\"body\": {\"type\": \"FILE\", \"filePath\": \"views/{{ request.queryStringParameters.name.0 }}.txt\", \"contentType\": \"text/plain\", \"templateType\": \"MUSTACHE\", \"templatedFilePath\": true}}}, {\"httpRequest\": {\"path\": \"/jar\"}, \"httpResponse\": {\"body\": {\"type\": \"FILE\", \"filePath\": \"jarred/{{ request.queryStringParameters.name.0 }}.txt\", \"contentType\": \"text/plain\", \"templateType\": \"MUSTACHE\", \"templatedFilePath\": true}}}]",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/view?name=alice",
+        "expectStatus": 200,
+        "expectBodyContains": "alice from a class path directory"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/view?name=nested%2Fcarol",
+        "expectStatus": 200,
+        "expectBodyContains": "carol from a nested class path directory"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/view?name=..%2Fsecret",
+        "expectStatus": 500,
+        "expectBodyContains": "Error reading file for response body"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/view?name=missing",
+        "expectStatus": 500,
+        "expectBodyContains": "Error reading file for response body"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/jar?name=hello",
+        "expectStatus": 200,
+        "expectBodyContains": "hello from a jar"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/jar?name=..%2Fjarred%2Fhello",
+        "expectStatus": 500,
+        "expectBodyContains": "Error reading file for response body"
+      }
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true
+  }
+}

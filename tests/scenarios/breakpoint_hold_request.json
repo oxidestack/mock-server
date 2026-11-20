@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {"wsOpen": "bp", "headers": {"X-CLIENT-REGISTRATION-ID": "bp-request-client"}, "note": "callback WebSocket under a fixed client id"},
+    {"wsRead": "bp", "note": "the client id message"},
+    {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/held"}, "httpResponse": {"statusCode": 200, "body": "from the expectation"}}},
+    {"method": "PUT", "path": "/mockserver/breakpoint/matcher", "body": {"httpRequest": {"path": "/held"}, "phases": ["REQUEST"], "clientId": "bp-request-client"}},
+    {"method": "GET", "path": "/held", "headers": {"x-case": "continue"}, "async": "held", "note": "held until the client decides"},
+    {"wsRead": "bp", "capture": {"body": true, "as": "held"}, "mask": ["(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"], "note": "the held request"},
+    {"wsSend": "bp", "envelope": {"type": "org.mockserver.model.HttpRequest", "value": "{{capture:held}}"}, "note": "CONTINUE: the request sent back unchanged"},
+    {"await": "held", "note": "answered by the expectation"},
+    {"wsRead": "bp", "waitMillis": 500, "note": "nothing more is held"},
+    {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "body": {"path": "/held"}, "note": "the request as recorded"}
+  ]
+}

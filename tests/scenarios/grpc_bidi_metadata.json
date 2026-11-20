@@ -1,0 +1,1642 @@
+{
+ "properties": {
+  "grpcBidiStreamingEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: x-tenant-id acme",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "x-tenant-id": [
+       "acme"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "metadata header matches",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "metadata value differs",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "other"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "metadata header absent",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: padded binary metadata",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "x-trace-bin": [
+       "AQIDBA=="
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "unpadded binary metadata on the wire",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-trace-bin": "AQIDBA"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: a pseudo-header as an ordinary header",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      ":path": [
+       "/com.example.grpc.GreetingService/Chat"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "a pseudo-header is not an ordinary header",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: the synthesized gRPC headers",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "content-type": [
+       "application/grpc"
+      ],
+      "x-grpc-service": [
+       "com.example.grpc.GreetingService"
+      ],
+      "x-grpc-method": [
+       "Chat"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "synthesized headers match",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: content-type only",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "content-type": [
+       "application/grpc"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "no content-type: synthesized",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: no header constraints",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "no constraints match",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme",
+    "user-agent": "grpc-java-netty/1.82.2"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: x-flag !literal",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "x-flag": [
+       "!literal"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "a value beginning with ! is literal",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-flag": "!literal"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: x-flag literal",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "x-flag": [
+       "literal"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "and not read as a negation",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-flag": "!literal"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: a forged service",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "x-grpc-service": [
+       "com.example.evil.OtherService"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "a forged service name does not match",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-grpc-service": "com.example.evil.OtherService",
+    "x-grpc-method": "Evil"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: the derived service",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "x-grpc-service": [
+       "com.example.grpc.GreetingService"
+      ],
+      "x-grpc-method": [
+       "Chat"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "only the path-derived service is on the request",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-grpc-service": "com.example.evil.OtherService",
+    "x-grpc-method": "Evil"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation elsewhere",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/some.other.Service/Method"
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "no expectation matches: the fallback chain",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "a non-gRPC h2 request under the multiplex pipeline",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "what matching saw on the fallback chain",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 1",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 1",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 2",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme|host)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 2",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 3",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme|host|content-type)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 3",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 4",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 4",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 5",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-tenant-id)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 5",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 6",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-tenant-id|x-http2-stream-id)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 6",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 7",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-tenant-id|x-http2-stream-id|transfer-encoding)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 7",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 8",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-tenant-id|x-http2-stream-id|transfer-encoding|x-grpc-service)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 8",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/com.example.grpc.GreetingService/Chat"
+   }
+  },
+  {
+   "note": "bidi expectation: order probe 9",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-tenant-id|x-http2-stream-id|transfer-encoding|x-grpc-service|x-grpc-method)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"echo\"}"
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "note": "order probe 9",
+   "h2": true,
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-tenant-id": "acme"
+   },
+   "trailers": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 0, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 1, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 2, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host|content-type)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 3, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 4, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-custom)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 5, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-custom|x-http2-stream-id)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 6, body ''",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 0, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 1, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 2, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host|content-type)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 3, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 4, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-custom)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 5, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear all expectations",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS"
+  },
+  {
+   "note": "plain probe expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain/h2",
+     "headers": {
+      "(x-http2-scheme|host|content-type|te|x-custom|x-http2-stream-id)": [
+       ".*"
+      ],
+      "x-absent": [
+       "x"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "note": "plain order probe 6, body 'abc'",
+   "h2": true,
+   "method": "POST",
+   "path": "/plain/h2",
+   "headers": {
+    "content-type": "text/plain",
+    "te": "trailers",
+    "x-custom": "1"
+   },
+   "trailers": true,
+   "bodyBase64": "YWJj"
+  },
+  {
+   "note": "clear descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  }
+ ]
+}

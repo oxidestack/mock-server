@@ -1,0 +1,55 @@
+{
+  "note": "JWKSet.parse skips a key of an unsupported kty (RFC 7517 section 5), so the handler is built",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "jwks.json": "{\"keys\": [{\"kty\": \"XYZ\"}]}"
+  },
+  "propertyFile": "mockserver.controlPlaneJWTAuthenticationRequired=true\nmockserver.controlPlaneJWTAuthenticationJWKSource={{scratch}}/jwks.json\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - no authorization header found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - no authorization header found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - no authorization header found"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "exception building JWT validator for:": 0,
+      "authentication handler could not be created": 0
+    }
+  }
+}

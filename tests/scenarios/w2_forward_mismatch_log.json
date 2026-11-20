@@ -1,0 +1,345 @@
+{
+ "properties": {
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "cookies-then-query",
+     "httpRequest": {
+      "path": "/mm/cookies",
+      "cookies": {
+       "c": "v"
+      },
+      "queryStringParameters": {
+       "q": [
+        "1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "id": "cookie-fails",
+     "httpRequest": {
+      "path": "/mm/cookie-fails",
+      "cookies": {
+       "c": "v"
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "id": "matching-key",
+     "httpRequest": {
+      "path": "/mm/matching-key",
+      "headers": {
+       "keyMatchStyle": "MATCHING_KEY",
+       "X-M": [
+        "a"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "id": "matching-key-notted",
+     "httpRequest": {
+      "path": "/mm/matching-key-notted",
+      "headers": {
+       "keyMatchStyle": "MATCHING_KEY",
+       "!X-Gone": [
+        ".*"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "id": "matching-key-missing",
+     "httpRequest": {
+      "path": "/mm/matching-key-missing",
+      "headers": {
+       "keyMatchStyle": "MATCHING_KEY",
+       "X-Need": [
+        "1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "id": "numeric",
+     "httpRequest": {
+      "path": "/mm/numeric",
+      "headers": {
+       "X-N": [
+        "> 5"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "id": "accept",
+     "httpRequest": {
+      "path": "/mm/accept",
+      "headers": {
+       "Accept": [
+        "accept:application/json"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "id": "notted-key",
+     "httpRequest": {
+      "path": "/mm/notted-key",
+      "headers": {
+       "!X-Forbidden": [
+        ".*"
+       ]
+      },
+      "queryStringParameters": {
+       "q": [
+        "1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    },
+    {
+     "id": "debug",
+     "httpRequest": {
+      "path": "/mm/debug",
+      "headers": {
+       "X-A": [
+        "1"
+       ]
+      },
+      "cookies": {
+       "c": "v"
+      },
+      "queryStringParameters": {
+       "q": [
+        "1"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": "x"
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "cookies match, query fails",
+   "method": "GET",
+   "path": "/mm/cookies",
+   "headers": {
+    "Cookie": "a=b; c=v"
+   }
+  },
+  {
+   "note": "a cookie fails",
+   "method": "GET",
+   "path": "/mm/cookie-fails",
+   "headers": {
+    "Cookie": "a=b; c=w"
+   }
+  },
+  {
+   "note": "matching key, every value must match",
+   "method": "GET",
+   "path": "/mm/matching-key",
+   "headers": {
+    "X-M": "a",
+    "X-Other": "b"
+   }
+  },
+  {
+   "note": "matching key, a second value fails",
+   "method": "GET",
+   "path": "/mm/matching-key?x=1",
+   "headers": {
+    "X-M": "b"
+   }
+  },
+  {
+   "note": "matching key, a notted key present",
+   "method": "GET",
+   "path": "/mm/matching-key-notted",
+   "headers": {
+    "X-Gone": "1"
+   }
+  },
+  {
+   "note": "matching key, key missing",
+   "method": "GET",
+   "path": "/mm/matching-key-missing",
+   "headers": {
+    "X-Other": "1"
+   }
+  },
+  {
+   "note": "numeric comparison fails",
+   "method": "GET",
+   "path": "/mm/numeric",
+   "headers": {
+    "X-N": "3",
+    "X-Z": "z"
+   }
+  },
+  {
+   "note": "numeric comparison matches",
+   "method": "GET",
+   "path": "/mm/numeric?nope=1",
+   "headers": {
+    "X-N": "7"
+   }
+  },
+  {
+   "note": "accept directive fails",
+   "method": "GET",
+   "path": "/mm/accept",
+   "headers": {
+    "Accept": "text/html"
+   }
+  },
+  {
+   "note": "accept directive matches, wildcard",
+   "method": "GET",
+   "path": "/mm/accept",
+   "headers": {
+    "Accept": "application/*;q=0.5, text/html"
+   }
+  },
+  {
+   "note": "notted key absent, query fails",
+   "method": "GET",
+   "path": "/mm/notted-key",
+   "headers": {
+    "X-B": "2"
+   }
+  },
+  {
+   "note": "debugMismatch, several headers",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "method": "GET",
+    "path": "/mm/debug",
+    "headers": {
+     "Alpha": [
+      "a"
+     ],
+     "Zeta": [
+      "z"
+     ],
+     "X-B": [
+      "2"
+     ]
+    },
+    "cookies": {
+     "d": "w"
+    },
+    "queryStringParameters": {
+     "q": [
+      "2"
+     ]
+    }
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "note": "debugMismatch, headers and cookies match after failed comparisons",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "method": "GET",
+    "path": "/mm/debug",
+    "headers": {
+     "Alpha": [
+      "a"
+     ],
+     "Zeta": [
+      "z"
+     ],
+     "X-A": [
+      "1"
+     ]
+    },
+    "cookies": {
+     "c": "v"
+    },
+    "queryStringParameters": {
+     "q": [
+      "2"
+     ]
+    }
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "note": "an unmatched request with several headers",
+   "method": "GET",
+   "path": "/mm/debug",
+   "headers": {
+    "Alpha": "a",
+    "Zeta": "z",
+    "X-B": "2"
+   }
+  },
+  {
+   "note": "explainUnmatched",
+   "method": "PUT",
+   "path": "/mockserver/explainUnmatched",
+   "compare": "json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z",
+    "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+    "content-length: \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(\\d+|<port>)"
+   ]
+  },
+  {
+   "note": "log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/mm/.*"
+   }
+  }
+ ]
+}

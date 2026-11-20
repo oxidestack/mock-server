@@ -1,0 +1,91 @@
+{
+ "properties": {
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/persistence_file_watcher_roundtrip.json",
+  "initializationJsonPath": "{{scratch}}/persistence_file_watcher_roundtrip.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the persisted file is also the watched initialisation file"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "one",
+    "httpRequest": {
+     "path": "/simpleFirst"
+    },
+    "httpResponse": {
+     "body": "some first response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "two",
+    "httpRequest": {
+     "path": "/simpleSecond"
+    },
+    "httpResponse": {
+     "body": "some second response"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "three",
+    "httpRequest": {
+     "path": "/simpleThird"
+    },
+    "httpResponse": {
+     "body": "some third response"
+    }
+   }
+  },
+  {
+   "sleepMillis": 1500
+  },
+  {
+   "readFile": "{{scratch}}/persistence_file_watcher_roundtrip.json",
+   "note": "written by the server after the three adds"
+  },
+  {
+   "note": "an external edit (compact JSON): the reload must not be written back over it",
+   "writeFile": {
+    "path": "{{scratch}}/persistence_file_watcher_roundtrip.json",
+    "content": "[{\"id\":\"one\",\"httpRequest\":{\"path\":\"/simpleFirst\"},\"httpResponse\":{\"body\":\"some first response\"}},{\"id\":\"two\",\"httpRequest\":{\"path\":\"/simpleSecondUpdated\"},\"httpResponse\":{\"body\":\"some second updated response\"}},{\"id\":\"four\",\"httpRequest\":{\"path\":\"/simpleFourth\"},\"httpResponse\":{\"body\":\"some fourth response\"}}]"
+   }
+  },
+  {
+   "sleepMillis": 2500
+  },
+  {
+   "readFile": "{{scratch}}/persistence_file_watcher_roundtrip.json",
+   "note": "still the external edit byte for byte"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "and the expectations are the edited file's"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/persistence_file_watcher_roundtrip.json",
+    "content": "[ ]"
+   },
+   "note": "leave the file empty for the next run"
+  },
+  {
+   "sleepMillis": 1500
+  }
+ ]
+}

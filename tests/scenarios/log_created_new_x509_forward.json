@@ -1,0 +1,122 @@
+{
+ "source": "at TRACE, 8.0.0's NettySslContextFactory.createClientSslContext generates a leaf (buildAndSavePrivateKeyAndX509Certificate, when its factory has none) as it builds the forwarding client's TLS context, and logs `created new X509{}with SAN Domain Names{}and IPs{}` there and then, not at the next server handshake.",
+ "properties": {
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "maxMillis": 60000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/fx/b"
+    },
+    "httpResponse": {
+     "body": "b"
+    }
+   },
+   "maxMillis": 60000,
+   "note": "maxMillis: a property-scoped oracle on a loaded machine can take longer than 10 s to answer its first requests and TLS forwards"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/fx/tls"
+    },
+    "httpOverrideForwardedRequest": {
+     "httpRequest": {
+      "path": "/fx/b",
+      "secure": true,
+      "headers": {
+       "Host": [
+        "localhost:{{port}}"
+       ]
+      }
+     }
+    }
+   },
+   "maxMillis": 60000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "maxMillis": 60000
+  },
+  {
+   "note": "the first TLS forward: the forwarding client's context is built first and generates its own leaf, then the forwarded connection's handshake sets up the server's",
+   "method": "GET",
+   "path": "/fx/tls",
+   "maxMillis": 60000
+  },
+  {
+   "note": "again: both contexts are built, no new leaf",
+   "method": "GET",
+   "path": "/fx/tls",
+   "maxMillis": 60000
+  },
+  {
+   "sleepMillis": 1000
+  },
+  {
+   "note": "TRACE LOGS: two `created new X509` entries, one per factory: the forwarding client's, logged as its context is built (right after its CA load, before the forwarded connection's `adding TLS decoders`), then the server's at the handshake; the second forward mints none. The forwarded requests' entries race the forwarding ones': unordered; the random parts of the certificates are masked",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(serialNumber\\\" : \\\")\\d{1,20}\\\"",
+     "replace": "${1}<random 64-bit>\\\""
+    },
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "(disconnected and closed socket )\\S+",
+     "replace": "${1}<local address>"
+    },
+    {
+     "regex": "(SerialNumber: )\\d{1,20}\\n",
+     "replace": "${1}<random 64-bit>\n"
+    },
+    {
+     "regex": "((?:Start|Final) Date: )[A-Z][a-z]{2} [A-Z][a-z]{2} \\d\\d \\d\\d:\\d\\d:\\d\\d GMT \\d{4}",
+     "replace": "${1}<date>"
+    },
+    {
+     "regex": "(RSA Public Key \\[)[0-9a-f:]{59}(\\],\\[56:66:d1:a4\\]\\n +modulus: )[89a-f][0-9a-f]{511}\\n",
+     "replace": "${1}<fingerprint>${2}<2048-bit modulus>\n"
+    },
+    {
+     "regex": "(Signature: )[0-9a-f]{40}(\\n +[0-9a-f]{2,40})+",
+     "replace": "${1}<signature>"
+    },
+    {
+     "regex": "(and certificate serial:\\n\\n  )\\d{1,20}\\n",
+     "replace": "${1}<random 64-bit>\n"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - string or regex match failed expected:\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - streaming decision:\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    },
+    {
+     "regex": "(\"[A-Za-z]+Millis\" : )\\d+",
+     "replace": "${1}<ms>"
+    }
+   ],
+   "compare": "unordered"
+  }
+ ]
+}

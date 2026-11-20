@@ -1,0 +1,377 @@
+{
+ "source": "PUT /mockserver/template/test (upstream #25, #82, #85)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\"statusCode\": 200, \"headers\": {\"x\": [\"$request.method\"]}, \"body\": \"$request.path\"}",
+    "request": {
+     "method": "POST",
+     "path": "/a"
+    }
+   },
+   "note": "velocity success",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "velocity",
+    "actionType": "forward_template",
+    "template": "{\"path\": \"$request.path\", \"headers\": {\"Host\": [\"x\"]}}",
+    "request": {
+     "path": "/b"
+    }
+   },
+   "note": "velocity forward template, case-insensitive type names",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "#if( \n{\"statusCode\": 200}"
+   },
+   "note": "velocity syntax error: line and column",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "#foreach($i in [1..2])\n$request.path.substring(5)#end"
+   },
+   "note": "velocity method throws",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\"statusCode\": \"x\"}"
+   },
+   "note": "velocity invalid output",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\"statusCode\": 5}"
+   },
+   "note": "status code out of range: the hint",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "#if(false)x#end"
+   },
+   "note": "blank output",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "{\"statusCode\": 200, \"body\": \"$request.nope $foo $!bar ${baz} $request.method.nope()\"}\n#set($x = $missing)"
+   },
+   "note": "velocity unresolved references",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "$scenario.set(\"S\", \"B\"){\"statusCode\": 200, \"body\": \"$scenario.get(\"S\")\"}"
+   },
+   "note": "scenario.set is reported, not applied",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "MUSTACHE",
+    "template": "{\"statusCode\": 200, \"body\": \"{{request.path}} {{reqest.path}} {{foo}}\n{{bar}} {{foo}}\"}",
+    "request": {
+     "path": "/m"
+    }
+   },
+   "note": "mustache success with unresolved variables",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "MUSTACHE",
+    "template": "{\"statusCode\": 200, \"body\": \"{{#scenario.get}}S{{/scenario.get}}\"}"
+   },
+   "note": "mustache reads the unchanged scenario state",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "MUSTACHE",
+    "template": "{{#a}}\nx"
+   },
+   "note": "mustache syntax error: line only",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "MUSTACHE",
+    "template": "hello {{x}}"
+   },
+   "note": "mustache invalid output, warning too",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "MUSTACHE",
+    "actionType": "FORWARD_TEMPLATE",
+    "template": "{\"path\": 5}"
+   },
+   "note": "mustache forward invalid request",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "JAVASCRIPT",
+    "template": "return {statusCode: 200};"
+   },
+   "note": "javascript: no GraalJS",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "X",
+    "template": "a"
+   },
+   "note": "unknown templateType",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY"
+   },
+   "note": "no template",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "  "
+   },
+   "note": "blank template",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "actionType": "x",
+    "template": "a"
+   },
+   "note": "unknown actionType",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "a",
+    "request": {
+     "path": 5,
+     "foo": 1
+    }
+   },
+   "note": "invalid request",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "a",
+    "request": "str"
+   },
+   "note": "request not an object",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": "{a",
+   "note": "body not JSON",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "body": [
+    1
+   ],
+   "note": "body not an object",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/template/test",
+   "note": "no body",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "nothing reached the event log",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/sc"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"$scenario.get(\"S\")\"}"
+    }
+   },
+   "note": "scenario S still Started",
+   "mask": [
+    "content-length: \\d+",
+    "\"durationMillis\" : \\d+",
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/sc",
+   "note": "Started"
+  },
+  {
+   "method": "PUT",
+   "path": "/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "a"
+   },
+   "note": "no bare alias"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/template/test",
+   "body": {
+    "templateType": "VELOCITY",
+    "template": "a"
+   },
+   "note": "PUT only"
+  }
+ ]
+}

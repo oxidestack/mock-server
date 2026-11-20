@@ -1,0 +1,10 @@
+{
+ "source": "updating an expectation by id keeps the rate limit it was created with (found by the ratelimit harvest)",
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "rl-upsert", "httpRequest": {"path": "/rl-upsert"}, "httpResponse": {"statusCode": 200}, "rateLimit": {"name": "rl-upsert-acct", "limit": 1, "windowMillis": 60000}}, "note": "created with a fixed window of 1"},
+  {"method": "GET", "path": "/rl-upsert", "note": "allowed"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "rl-upsert", "httpRequest": {"path": "/rl-upsert"}, "httpResponse": {"statusCode": 200}, "rateLimit": {"algorithm": "token_bucket", "name": "rl-upsert-bucket", "burst": 5, "refillPerSecond": 0.001}}, "note": "updated with a token bucket of 5"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "note": "the rate limit retrieved"},
+  {"method": "GET", "path": "/rl-upsert", "note": "refused by the first rate limit", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <epoch seconds>"}, {"regex": "^retry-after: (59|60)$", "replace": "retry-after: <seconds left in the window>"}]}
+ ]
+}

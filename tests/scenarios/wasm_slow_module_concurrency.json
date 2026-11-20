@@ -1,0 +1,84 @@
+{
+ "source": "WasmRuntime.callWithinBudget runs a module on a worker pool of its own (mockserver-wasm-exec); while one request waits on a module that runs out its whole budget, other requests and control-plane writes are answered at once",
+ "properties": {
+  "wasmEnabled": "true",
+  "wasmExecutionTimeoutMillis": "3000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=match-loop-408",
+   "bodyFile": "wasm/units/match-loop.wasm"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/slow",
+     "body": {
+      "type": "WASM",
+      "moduleName": "match-loop-408"
+     }
+    },
+    "httpResponse": {
+     "body": "never: the module fails closed"
+    }
+   },
+   "note": "the first expectation after startup can take seconds on a loaded machine (the oracle loads its schemas)",
+   "maxMillis": 30000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/fast"
+    },
+    "httpResponse": {
+     "body": "fast"
+    }
+   }
+  },
+  {
+   "note": "a request held by the looping module for the whole budget",
+   "async": "slow",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/slow",
+   "body": "x"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "meanwhile a plain request is answered at once",
+   "method": "GET",
+   "path": "/fast",
+   "maxMillis": 1500
+  },
+  {
+   "note": "meanwhile an expectation is created at once",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 1500,
+   "body": {
+    "httpRequest": {
+     "path": "/later"
+    },
+    "httpResponse": {
+     "body": "later"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/later",
+   "maxMillis": 1500
+  },
+  {
+   "note": "the held request fails closed once the budget is spent",
+   "await": "slow"
+  }
+ ]
+}

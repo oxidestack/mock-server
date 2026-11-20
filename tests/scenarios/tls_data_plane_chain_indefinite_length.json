@@ -1,0 +1,19 @@
+{
+ "note": "tlsMutualAuthenticationCertificateChain as BER with indefinite lengths, the server forwarding to itself: a certificate the chain signed is accepted",
+ "properties": {
+  "tlsMutualAuthenticationCertificateChain": "{{files}}/x509/mtls/ca-indefinite.der",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/x509/mtls/client.pem;{{files}}/x509/mtls/client-key.pem"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\", \"secure\": true}, \"httpResponseTemplate\": {\"templateType\": \"MUSTACHE\", \"template\": \"{ \\\"statusCode\\\": 200, \\\"body\\\": \\\"{{request.clientCertificateChain}}\\\" }\"}}, {\"httpRequest\": {\"path\": \"/forwarded\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target\", \"secure\": true, \"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTPS\"}}}}]"
+  },
+  {
+   "note": "a certificate the chain signed is accepted",
+   "method": "GET",
+   "path": "/forwarded"
+  }
+ ]
+}

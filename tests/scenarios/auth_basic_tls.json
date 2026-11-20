@@ -1,0 +1,71 @@
+{
+ "source": "socketConnectionTimeoutInMillis bounds the first handshake's certificate generation",
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "controlPlaneBasicAuthenticationRequired": "true",
+  "controlPlaneBasicAuthenticationUsersFile": "{{files}}/auth/basic_users.txt"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "without TLS and without AllowInsecure there is no challenge"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6c2VjcmV0"
+   },
+   "note": "and right credentials are refused in the clear"
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/clear HTTP/1.1\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "awaitBytes": 12,
+   "note": "over TLS the 401 carries the challenge"
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/clear HTTP/1.1\r\nAuthorization: Basic YWxpY2U6c2VjcmV0\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "awaitBytes": 12,
+   "note": "a $2b$ user from the users file (comments, blank lines and padding skipped)"
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/clear HTTP/1.1\r\nAuthorization: Basic YWxpY2U6d3Jvbmc=\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "awaitBytes": 12,
+   "note": "a wrong password over TLS"
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/clear HTTP/1.1\r\nAuthorization: Basic ZGF2ZTpkYXZlcHc=\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "awaitBytes": 12,
+   "note": "a $pbkdf2-sha512$ user with i=, padded base64"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "headers": {
+    "Authorization": "Basic YWxpY2U6c2VjcmV0"
+   },
+   "note": "a credential verified over TLS is still refused in the clear"
+  }
+ ]
+}

@@ -1,0 +1,174 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) openapi-OpenAPIConverterCorrectnessTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e3a5edffb109",
+   "note": "shouldGenerateCompleteExampleWhenSomePropertiesLackExample (openapi): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "---\nopenapi: 3.0.0\ninfo:\n  version: 1.0.0\n  title: Partial Property Example\npaths:\n  /widget:\n    get:\n      operationId: getWidget\n      responses:\n        '200':\n          description: a widget\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Widget'\ncomponents:\n  schemas:\n    Widget:\n      type: object\n      properties:\n        id:\n          type: integer\n          example: 42\n        name:\n          type: string\n          example: gadget\n        # 'colour', 'tags' and 'status' deliberately have NO example, so resolveSchemaExample yields null\n        # for them. The generated example must still be COMPLETE — these properties must appear with a\n        # generated sample (a scalar, an array, the first enum value) rather than being silently dropped.\n        colour:\n          type: string\n        tags:\n          type: array\n          items:\n            type: string\n        status:\n          type: string\n          enum:\n            - available\n            - pending\n"
+   },
+   "note": "shouldGenerateCompleteExampleWhenSomePropertiesLackExample (openapi): openapi",
+   "case": "e3a5edffb109"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldGenerateCompleteExampleWhenSomePropertiesLackExample (openapi): expectations",
+   "case": "e3a5edffb109"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8a6f6e86c869",
+   "note": "shouldRenderFormatDateExampleAsIsoStringNotEpochMillis (openapi): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "openapi: 3.0.3\ninfo: { title: Date repro, version: '1.0' }\npaths:\n  /thing:\n    get:\n      operationId: getThing\n      responses:\n        '200':\n          description: ok\n          content:\n            application/json:\n              schema: { $ref: '#/components/schemas/Thing' }\ncomponents:\n  schemas:\n    Thing:\n      type: object\n      required: [paymentDate]\n      properties:\n        paymentDate:\n          type: string\n          format: date\n          example: '2021-01-30'\n"
+   },
+   "note": "shouldRenderFormatDateExampleAsIsoStringNotEpochMillis (openapi): openapi",
+   "case": "8a6f6e86c869"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldRenderFormatDateExampleAsIsoStringNotEpochMillis (openapi): expectations",
+   "case": "8a6f6e86c869"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f149820d1faa",
+   "note": "shouldNotLeakUnresolvableRefIntoBody (openapi): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "---\nopenapi: 3.0.0\ninfo:\n  version: 1.0.0\n  title: Unresolvable Ref Example\npaths:\n  /thing:\n    get:\n      operationId: getThing\n      responses:\n        '200':\n          description: a thing\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  id:\n                    type: integer\n                  nested:\n                    type: object\n              example:\n                id: 7\n                # an internal $ref that resolveRef cannot resolve (no such component);\n                # must NOT leak a literal {\"$ref\": ...} node into the body (Fix 3)\n                nested:\n                  $ref: '#/components/examples/doesNotExist'\ncomponents:\n  examples: {}\n"
+   },
+   "note": "shouldNotLeakUnresolvableRefIntoBody (openapi): openapi",
+   "case": "f149820d1faa"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldNotLeakUnresolvableRefIntoBody (openapi): expectations",
+   "case": "f149820d1faa"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "df4bdb2e0ce6",
+   "note": "shouldDisambiguateCollidingOperationIds (openapi): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "---\nopenapi: 3.1.0\ninfo:\n  version: 1.0.0\n  title: OperationId Collision\npaths:\n  /foo:\n    get:\n      # author operationId deliberately equal to the synthesized id of GET /bar below\n      operationId: \"GET /bar\"\n      responses:\n        '200':\n          description: foo response\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  source:\n                    type: string\n                    example: foo\n  /bar:\n    get:\n      # no operationId - synthesized as \"GET /bar\", colliding with /foo's author id\n      responses:\n        '201':\n          description: bar response\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  source:\n                    type: string\n                    example: bar\n  /widget:\n    post:\n      # author operationId deliberately equal to the synthesized id of the webhook below\n      operationId: \"POST webhook:itemEvent\"\n      responses:\n        '202':\n          description: widget response\nwebhooks:\n  itemEvent:\n    post:\n      # no operationId - synthesized as \"POST webhook:itemEvent\", colliding with /widget above\n      responses:\n        '200':\n          description: webhook response\n"
+   },
+   "note": "shouldDisambiguateCollidingOperationIds (openapi): openapi",
+   "case": "df4bdb2e0ce6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldDisambiguateCollidingOperationIds (openapi): expectations",
+   "case": "df4bdb2e0ce6"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "aedda2198c2d",
+   "note": "shouldUseRequestedExampleNameWhenPresent (openapi): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "---\nopenapi: 3.0.0\ninfo:\n  version: 1.0.0\n  title: Swagger Petstore\n  license:\n    name: MIT\nservers:\n  - url: http://petstore.swagger.io/v1\npaths:\n  /pets:\n    get:\n      summary: List all pets\n      operationId: listPets\n      tags:\n        - pets\n      parameters:\n        - name: limit\n          in: query\n          description: How many items to return at one time (max 100)\n          required: false\n          schema:\n            type: integer\n            format: int32\n      responses:\n        '200':\n          description: A paged array of pets\n          headers:\n            x-next:\n              description: A link to the next page of responses\n              schema:\n                type: string\n              examples:\n                two:\n                  value: \"/pets?query=752cd724e0d7&page=2\"\n                end:\n                  value: \"\"\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Pets'\n              example:\n                - id: 1\n                  name: Scruffles\n                  tag: dog\n                - id: 2\n                  name: Goldie\n                  tag: fish\n\n        '500':\n          description: unexpected error\n          headers:\n            x-code:\n              description: The error code\n              schema:\n                type: integer\n                format: int32\n                example: 90\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n    post:\n      summary: Create a pet\n      operationId: createPets\n      tags:\n        - pets\n      requestBody:\n        description: a pet\n        required: true\n        content:\n          application/json:\n            schema:\n              $ref: '#/components/schemas/Pet'\n          '*/*':\n            schema:\n              $ref: '#/components/schemas/Pet'\n      responses:\n        '201':\n          description: Null response\n        '400':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        '500':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n  /pets/{petId}:\n    get:\n      summary: Info for a specific pet\n      operationId: showPetById\n      tags:\n        - pets\n      parameters:\n        - name: petId\n          in: path\n          required: true\n          description: The id of the pet to retrieve\n          schema:\n            type: string\n        - in: header\n          name: X-Request-ID\n          schema:\n            type: string\n            format: uuid\n          required: true\n      responses:\n        '200':\n          description: Expected response to a valid request\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Pet'\n              examples:\n                Crumble:\n                  value:\n                    id: 2\n                    name: Crumble\n                    tag: dog\n                Boots:\n                  value:\n                    id: 3\n                    name: Boots\n                    tag: cat\n        '500':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\ncomponents:\n  schemas:\n    Pet:\n      type: object\n      required:\n        - id\n        - name\n      properties:\n        id:\n          type: integer\n          format: int64\n        name:\n          type: string\n        tag:\n          type: string\n      example:\n        id: 1\n        name: Scruffles\n        tag: dog\n    Pets:\n      type: array\n      items:\n        $ref: '#/components/schemas/Pet'\n    Error:\n      type: object\n      required:\n        - code\n        - message\n      properties:\n        code:\n          type: integer\n          format: int32\n        message:\n          type: string\n",
+    "operationsAndResponses": {
+     "showPetById": {
+      "statusCode": "200",
+      "exampleName": "Boots"
+     }
+    }
+   },
+   "note": "shouldUseRequestedExampleNameWhenPresent (openapi): openapi",
+   "case": "aedda2198c2d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldUseRequestedExampleNameWhenPresent (openapi): expectations",
+   "case": "aedda2198c2d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c62325a1c175",
+   "note": "shouldFallBackWhenRequestedExampleNameAbsent (openapi): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "---\nopenapi: 3.0.0\ninfo:\n  version: 1.0.0\n  title: Swagger Petstore\n  license:\n    name: MIT\nservers:\n  - url: http://petstore.swagger.io/v1\npaths:\n  /pets:\n    get:\n      summary: List all pets\n      operationId: listPets\n      tags:\n        - pets\n      parameters:\n        - name: limit\n          in: query\n          description: How many items to return at one time (max 100)\n          required: false\n          schema:\n            type: integer\n            format: int32\n      responses:\n        '200':\n          description: A paged array of pets\n          headers:\n            x-next:\n              description: A link to the next page of responses\n              schema:\n                type: string\n              examples:\n                two:\n                  value: \"/pets?query=752cd724e0d7&page=2\"\n                end:\n                  value: \"\"\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Pets'\n              example:\n                - id: 1\n                  name: Scruffles\n                  tag: dog\n                - id: 2\n                  name: Goldie\n                  tag: fish\n\n        '500':\n          description: unexpected error\n          headers:\n            x-code:\n              description: The error code\n              schema:\n                type: integer\n                format: int32\n                example: 90\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n    post:\n      summary: Create a pet\n      operationId: createPets\n      tags:\n        - pets\n      requestBody:\n        description: a pet\n        required: true\n        content:\n          application/json:\n            schema:\n              $ref: '#/components/schemas/Pet'\n          '*/*':\n            schema:\n              $ref: '#/components/schemas/Pet'\n      responses:\n        '201':\n          description: Null response\n        '400':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        '500':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n  /pets/{petId}:\n    get:\n      summary: Info for a specific pet\n      operationId: showPetById\n      tags:\n        - pets\n      parameters:\n        - name: petId\n          in: path\n          required: true\n          description: The id of the pet to retrieve\n          schema:\n            type: string\n        - in: header\n          name: X-Request-ID\n          schema:\n            type: string\n            format: uuid\n          required: true\n      responses:\n        '200':\n          description: Expected response to a valid request\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Pet'\n              examples:\n                Crumble:\n                  value:\n                    id: 2\n                    name: Crumble\n                    tag: dog\n                Boots:\n                  value:\n                    id: 3\n                    name: Boots\n                    tag: cat\n        '500':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\ncomponents:\n  schemas:\n    Pet:\n      type: object\n      required:\n        - id\n        - name\n      properties:\n        id:\n          type: integer\n          format: int64\n        name:\n          type: string\n        tag:\n          type: string\n      example:\n        id: 1\n        name: Scruffles\n        tag: dog\n    Pets:\n      type: array\n      items:\n        $ref: '#/components/schemas/Pet'\n    Error:\n      type: object\n      required:\n        - code\n        - message\n      properties:\n        code:\n          type: integer\n          format: int32\n        message:\n          type: string\n",
+    "operationsAndResponses": {
+     "showPetById": {
+      "statusCode": "200",
+      "exampleName": "Nonexistent"
+     }
+    }
+   },
+   "note": "shouldFallBackWhenRequestedExampleNameAbsent (openapi): openapi",
+   "case": "c62325a1c175"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldFallBackWhenRequestedExampleNameAbsent (openapi): expectations",
+   "case": "c62325a1c175"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "b1fa8d0ec50c",
+   "note": "shouldFallBackToDefinedResponseWhenRequestedStatusCodeAbsent (openapi): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/openapi",
+   "body": {
+    "specUrlOrPayload": "---\nopenapi: 3.0.0\ninfo:\n  version: 1.0.0\n  title: Swagger Petstore\n  license:\n    name: MIT\nservers:\n  - url: http://petstore.swagger.io/v1\npaths:\n  /pets:\n    get:\n      summary: List all pets\n      operationId: listPets\n      tags:\n        - pets\n      parameters:\n        - name: limit\n          in: query\n          description: How many items to return at one time (max 100)\n          required: false\n          schema:\n            type: integer\n            format: int32\n      responses:\n        '200':\n          description: A paged array of pets\n          headers:\n            x-next:\n              description: A link to the next page of responses\n              schema:\n                type: string\n              examples:\n                two:\n                  value: \"/pets?query=752cd724e0d7&page=2\"\n                end:\n                  value: \"\"\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Pets'\n              example:\n                - id: 1\n                  name: Scruffles\n                  tag: dog\n                - id: 2\n                  name: Goldie\n                  tag: fish\n\n        '500':\n          description: unexpected error\n          headers:\n            x-code:\n              description: The error code\n              schema:\n                type: integer\n                format: int32\n                example: 90\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n    post:\n      summary: Create a pet\n      operationId: createPets\n      tags:\n        - pets\n      requestBody:\n        description: a pet\n        required: true\n        content:\n          application/json:\n            schema:\n              $ref: '#/components/schemas/Pet'\n          '*/*':\n            schema:\n              $ref: '#/components/schemas/Pet'\n      responses:\n        '201':\n          description: Null response\n        '400':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        '500':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n  /pets/{petId}:\n    get:\n      summary: Info for a specific pet\n      operationId: showPetById\n      tags:\n        - pets\n      parameters:\n        - name: petId\n          in: path\n          required: true\n          description: The id of the pet to retrieve\n          schema:\n            type: string\n        - in: header\n          name: X-Request-ID\n          schema:\n            type: string\n            format: uuid\n          required: true\n      responses:\n        '200':\n          description: Expected response to a valid request\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Pet'\n              examples:\n                Crumble:\n                  value:\n                    id: 2\n                    name: Crumble\n                    tag: dog\n                Boots:\n                  value:\n                    id: 3\n                    name: Boots\n                    tag: cat\n        '500':\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\n        default:\n          description: unexpected error\n          content:\n            application/json:\n              schema:\n                $ref: '#/components/schemas/Error'\ncomponents:\n  schemas:\n    Pet:\n      type: object\n      required:\n        - id\n        - name\n      properties:\n        id:\n          type: integer\n          format: int64\n        name:\n          type: string\n        tag:\n          type: string\n      example:\n        id: 1\n        name: Scruffles\n        tag: dog\n    Pets:\n      type: array\n      items:\n        $ref: '#/components/schemas/Pet'\n    Error:\n      type: object\n      required:\n        - code\n        - message\n      properties:\n        code:\n          type: integer\n          format: int32\n        message:\n          type: string\n",
+    "operationsAndResponses": {
+     "showPetById": "418"
+    }
+   },
+   "note": "shouldFallBackToDefinedResponseWhenRequestedStatusCodeAbsent (openapi): openapi",
+   "case": "b1fa8d0ec50c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldFallBackToDefinedResponseWhenRequestedStatusCodeAbsent (openapi): expectations",
+   "case": "b1fa8d0ec50c"
+  }
+ ]
+}

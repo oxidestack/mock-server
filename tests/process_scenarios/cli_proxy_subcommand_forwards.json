@@ -1,0 +1,49 @@
+{
+  "note": "MainCliTest.shouldProxyToHttpsUrlViaProxySubcommand: proxy --to <url> forwards an unmatched request. The server forwards to itself; the expectation matches only the forwarded copy, which carries MockServer's x-forwarded-by loop marker",
+  "target": "both",
+  "pickPort": true,
+  "args": [
+    "proxy",
+    "--to",
+    "http://127.0.0.1:{{serverPort}}",
+    "-p",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "SERVER_PORT": "",
+    "MOCK_SERVER_NO_BROWSER": "1"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "timeoutSecs": 90,
+  "afterReady": [
+    {
+      "awaitAnswerMillis": 20000
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"httpRequest\": {\"path\": \"/forwarded\", \"headers\": {\"x-forwarded-by\": [\"MockServer_.*\"]}}, \"httpResponse\": {\"body\": \"proxied_via_proxy_cmd\"}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/forwarded",
+        "ownHost": true,
+        "expectStatus": 200,
+        "expectBodyContains": "proxied_via_proxy_cmd"
+      }
+    }
+  ],
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      "proxyRemoteHost=127.0.0.1"
+    ]
+  }
+}

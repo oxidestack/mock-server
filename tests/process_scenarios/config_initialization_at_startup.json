@@ -1,0 +1,46 @@
+{
+  "source": "initializationJsonPath (environment tier) and initializationOpenAPIPath (properties-file tier) loaded at startup; the active expectations list both, in order, and GET /mockserver/config names each path with its tier. An OpenAPI expectation's id is openapi:<title>_<hash>:<operationId>, the hash being the first 16 hex digits of the SHA-256 of specUrlOrPayload (OpenApiSyncPlanner.specKeyFromHash), here the spec's absolute path: it differs per checkout, so it is masked like a port.",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_INITIALIZATION_JSON_PATH": "{{files}}/init/expectations.json"
+  },
+  "propertyFile": "mockserver.initializationOpenAPIPath={{files}}/init/openapi.yaml\n",
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "timeoutSecs": 150,
+  "bodyMask": [
+    {
+      "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+      "replace": "<uuid>"
+    },
+    {
+      "regex": "openapi:init_[0-9a-f]{16}:",
+      "replace": "openapi:init_<sha-256 of the spec path>:"
+    }
+  ],
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+        "compareBody": "expectations"
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/mockserver/config",
+        "compareBody": "config"
+      }
+    }
+  ],
+  "expect": {
+    "running": true
+  }
+}

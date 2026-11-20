@@ -1,0 +1,55 @@
+{
+  "note": "an EC JWK whose x5c certificate carries the same key as a compressed point (BouncyCastle decompresses it)",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "jwks.json": "{\"keys\": [{\"kty\": \"EC\", \"crv\": \"P-256\", \"x\": \"czDQTQyg_Ql8JrS5Bz3SzvvnZ3Tvnt-j8w-7m7ozqHQ\", \"y\": \"2dn5ALJtDhzOem4xtzb3q5ZRKHmgy4k73GUMVLnApg8\", \"x5c\": [\"MIICJjCCAY+gAwIBAgIUWNEBEw/5zssru4niMq05gTuDJ6owDQYJKoZIhvcNAQELBQAwMjELMAkGA1UEBhMCR0IxEzARBgNVBAoMCk1vY2tTZXJ2ZXIxDjAMBgNVBAMMBXJzIGNhMB4XDTI2MTAwNzA3NDY1OVoXDTM2MTAwNDA3NDY1OVowMjELMAkGA1UEBhMCR0IxEzARBgNVBAoMCk1vY2tTZXJ2ZXIxDjAMBgNVBAMMBXJzIGNhMDkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDIgADczDQTQyg/Ql8JrS5Bz3SzvvnZ3Tvnt+j8w+7m7ozqHSjgZ8wgZwwEgYDVR0TAQH/BAgwBgEB/wIBATAOBgNVHQ8BAf8EBAMCAYYwIAYDVR0lAQH/BBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMCMCAGA1UdDgEB/wQWBBSmKWNZxd+o3/Cs/p6KD2+P4FctjDAyBgNVHREBAf8EKDAmgglsb2NhbGhvc3SHBH8AAAGBBWFAYi5jhgxodHRwOi8veC55L3owDQYJKoZIhvcNAQELBQADgYEAvzofdUG++78NoKw5+SFIz42aMKl/Db36fnqPqNeItMcTwZMsswVyk5TcyenUuUY61ntdOj2mngjOFPn4kJrwNaQ5Ew3bk2tcYgi0+PIoFSqo46t0OJ+4TUYsijMheS4OK7IknCQJOpwxhy70j14fl/Qwi2uMw5Pmbs1TKBc88OA=\"]}]}"
+  },
+  "propertyFile": "mockserver.controlPlaneJWTAuthenticationRequired=true\nmockserver.controlPlaneJWTAuthenticationJWKSource={{scratch}}/jwks.json\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - no authorization header found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - no authorization header found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - no authorization header found"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "exception building JWT validator for:": 0,
+      "authentication handler could not be created": 0
+    }
+  }
+}

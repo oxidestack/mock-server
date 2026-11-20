@@ -1,0 +1,564 @@
+{
+  "steps": [
+    {
+      "wsOpen": "bp",
+      "headers": {
+        "X-CLIENT-REGISTRATION-ID": "bp-frames-client"
+      }
+    },
+    {
+      "wsRead": "bp"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/ws-out"
+          },
+          "httpWebSocketResponse": {
+            "messages": [
+              {
+                "text": "one"
+              },
+              {
+                "text": "two"
+              },
+              {
+                "text": "three"
+              }
+            ],
+            "closeConnection": false
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/ws-out-2"
+          },
+          "httpWebSocketResponse": {
+            "messages": [
+              {
+                "text": "a"
+              },
+              {
+                "text": "b"
+              },
+              {
+                "text": "c"
+              }
+            ],
+            "closeConnection": false
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/ws-out-3"
+          },
+          "httpWebSocketResponse": {
+            "messages": [
+              {
+                "text": "x"
+              },
+              {
+                "text": "y"
+              },
+              {
+                "text": "z"
+              }
+            ],
+            "closeConnection": false
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/ws-in"
+          },
+          "httpWebSocketResponse": {
+            "matchers": [
+              {
+                "frameType": "TEXT",
+                "textMatcher": "first",
+                "responses": [
+                  {
+                    "text": "saw first"
+                  }
+                ]
+              },
+              {
+                "frameType": "TEXT",
+                "textMatcher": "second",
+                "responses": [
+                  {
+                    "text": "saw second"
+                  }
+                ]
+              },
+              {
+                "frameType": "TEXT",
+                "textMatcher": "changed",
+                "responses": [
+                  {
+                    "text": "saw changed"
+                  }
+                ]
+              },
+              {
+                "frameType": "TEXT",
+                "textMatcher": "third",
+                "responses": [
+                  {
+                    "text": "saw third"
+                  }
+                ]
+              },
+              {
+                "frameType": "TEXT",
+                "textMatcher": "fourth",
+                "responses": [
+                  {
+                    "text": "saw fourth"
+                  }
+                ]
+              },
+              {
+                "frameType": "TEXT",
+                "textMatcher": "injected",
+                "responses": [
+                  {
+                    "text": "saw injected"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/breakpoint/matcher",
+      "body": {
+        "httpRequest": {
+          "path": "/ws-out.*"
+        },
+        "phases": [
+          "RESPONSE_STREAM"
+        ],
+        "clientId": "bp-frames-client"
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/breakpoint/matcher",
+      "body": {
+        "httpRequest": {
+          "path": "/ws-in"
+        },
+        "phases": [
+          "INBOUND_STREAM"
+        ],
+        "clientId": "bp-frames-client"
+      }
+    },
+    {
+      "wsOpen": "out",
+      "path": "/ws-out",
+      "note": "a mock WebSocket whose three messages are held"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "f0"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "frame 0, OUTBOUND"
+    },
+    {
+      "wsRead": "out",
+      "waitMillis": 300,
+      "note": "parked until the client decides"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:f0}}",
+          "action": "CONTINUE"
+        }
+      }
+    },
+    {
+      "wsRead": "out",
+      "note": "the original message"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "f1"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "frame 1, held only now"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:f1}}",
+          "action": "MODIFY",
+          "body": "VFdP"
+        }
+      }
+    },
+    {
+      "wsRead": "out",
+      "note": "the replacement"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "f2"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "frame 2"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:f2}}",
+          "action": "INJECT",
+          "body": "ZXh0cmE="
+        }
+      }
+    },
+    {
+      "wsRead": "out",
+      "note": "the frame"
+    },
+    {
+      "wsRead": "out",
+      "note": "then the injected bytes"
+    },
+    {
+      "wsRead": "bp",
+      "waitMillis": 300,
+      "note": "the injected frame is not held"
+    },
+    {
+      "wsClose": "out"
+    },
+    {
+      "wsOpen": "out2",
+      "path": "/ws-out-2"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "g0"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "a second stream, numbered from 0"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:g0}}",
+          "action": "DROP"
+        }
+      }
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "g1"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "frame 1 after a dropped frame"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:g1}}",
+          "action": "CLOSE"
+        }
+      }
+    },
+    {
+      "wsRead": "out2",
+      "waitMillis": 2000,
+      "note": "the dropped frame never arrives; CLOSE ends the stream"
+    },
+    {
+      "wsRead": "bp",
+      "waitMillis": 300,
+      "note": "nothing after CLOSE is held"
+    },
+    {
+      "wsOpen": "in",
+      "path": "/ws-in"
+    },
+    {
+      "wsSend": "in",
+      "text": "first"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "h0"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "an INBOUND frame"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:h0}}",
+          "action": "CONTINUE"
+        }
+      }
+    },
+    {
+      "wsRead": "in",
+      "note": "the matcher saw the original"
+    },
+    {
+      "wsSend": "in",
+      "text": "second"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "h1"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "INBOUND frame 1"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:h1}}",
+          "action": "MODIFY",
+          "body": "Y2hhbmdlZA=="
+        }
+      }
+    },
+    {
+      "wsRead": "in",
+      "note": "the matcher saw the replacement"
+    },
+    {
+      "wsSend": "in",
+      "text": "third"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "h2"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "INBOUND frame 2"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:h2}}",
+          "action": "DROP"
+        }
+      }
+    },
+    {
+      "wsRead": "in",
+      "waitMillis": 500,
+      "note": "a dropped inbound frame reaches no matcher"
+    },
+    {
+      "wsSend": "in",
+      "text": "fourth"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "h3"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "INBOUND frame 3"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:h3}}",
+          "action": "INJECT",
+          "body": "aW5qZWN0ZWQ="
+        }
+      }
+    },
+    {
+      "wsRead": "in",
+      "note": "the frame"
+    },
+    {
+      "wsRead": "in",
+      "note": "then the injected one"
+    },
+    {
+      "wsClose": "in"
+    },
+    {
+      "wsOpen": "in2",
+      "path": "/ws-in"
+    },
+    {
+      "wsSend": "in2",
+      "text": "first"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "i0"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "a second inbound stream"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:i0}}",
+          "action": "CLOSE"
+        }
+      }
+    },
+    {
+      "wsRead": "in2",
+      "waitMillis": 2000,
+      "note": "INBOUND CLOSE ends the session"
+    },
+    {
+      "wsOpen": "out3",
+      "path": "/ws-out-3"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "k0"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "frame 0"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:k0}}",
+          "action": "PAUSE"
+        }
+      }
+    },
+    {
+      "wsRead": "out3",
+      "note": "an unknown action continues"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "k1"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "frame 1"
+    },
+    {
+      "wsSend": "bp",
+      "envelope": {
+        "type": "org.mockserver.serialization.model.StreamFrameDecisionDTO",
+        "value": {
+          "correlationId": "{{capture:k1}}",
+          "action": "MODIFY"
+        }
+      }
+    },
+    {
+      "wsRead": "out3",
+      "note": "MODIFY without a body continues"
+    },
+    {
+      "wsRead": "bp",
+      "capture": {
+        "bodyRegex": "\"correlationId\":\"([^\"]+)\"",
+        "as": "k2"
+      },
+      "mask": [
+        "(?<=\"requestTimestamp\":)\\d+"
+      ],
+      "note": "frame 2"
+    },
+    {
+      "wsClose": "bp",
+      "note": "the breakpoint client disconnects while a frame is held"
+    },
+    {
+      "wsRead": "out3",
+      "waitMillis": 3000,
+      "note": "the held frame continues"
+    },
+    {
+      "wsClose": "out3"
+    }
+  ]
+}

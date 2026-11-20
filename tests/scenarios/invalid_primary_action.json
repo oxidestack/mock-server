@@ -1,0 +1,412 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "[bad, ok]: the add stops at bad",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "bad",
+     "httpRequest": {
+      "path": "/bad"
+     },
+     "httpResponse": {
+      "body": "a"
+     },
+     "httpResponseTemplate": {
+      "template": "x",
+      "templateType": "VELOCITY"
+     },
+     "priority": 10
+    },
+    {
+     "id": "ok",
+     "httpRequest": {
+      "path": "/ok"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    }
+   ]
+  },
+  {
+   "note": "only bad is stored",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "the ok one was never added",
+   "method": "GET",
+   "path": "/ok"
+  },
+  {
+   "note": "no match while a priority-10 bad expectation is stored",
+   "method": "GET",
+   "path": "/nothing"
+  },
+  {
+   "note": "no created entry for bad",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  },
+  {
+   "note": "adding another expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "ok2",
+    "httpRequest": {
+     "path": "/ok2"
+    },
+    "httpResponse": {
+     "body": "ok2"
+    }
+   }
+  },
+  {
+   "note": "bad dropped silently",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "no removed entry for bad",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  },
+  {
+   "note": "a bad one alone",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad2",
+    "httpRequest": {
+     "path": "/bad2"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "clear by a matcher over the bad one",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/bad2"
+   }
+  },
+  {
+   "note": "bad2 removed",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "another bad one",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad3",
+    "httpRequest": {
+     "path": "/bad3"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "clear by id over the bad one",
+   "method": "PUT",
+   "path": "/mockserver/clear?type=expectations",
+   "body": {
+    "id": "bad3"
+   }
+  },
+  {
+   "note": "bad3 removed",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "removed entries and exceptions",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+   ]
+  },
+  {
+   "note": "an ok one first in match order",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "ok4",
+    "httpRequest": {
+     "path": "/x/ok"
+    },
+    "httpResponse": {
+     "body": "ok4"
+    },
+    "priority": 5
+   }
+  },
+  {
+   "note": "a bad one after it",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad4",
+    "httpRequest": {
+     "path": "/x/bad"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "clear matching both, ok first",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/x/.*"
+   }
+  },
+  {
+   "note": "both gone",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "ok first in match order again",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "ok5",
+    "httpRequest": {
+     "path": "/y/ok"
+    },
+    "httpResponse": {
+     "body": "ok5"
+    },
+    "priority": 5
+   }
+  },
+  {
+   "note": "bad after it",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad5",
+    "httpRequest": {
+     "path": "/y/bad"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "reset with ok first in match order",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "empty after reset",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "two bad ones in a row",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad6",
+    "httpRequest": {
+     "path": "/z/bad6"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "second bad one",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad7",
+    "httpRequest": {
+     "path": "/z/bad7"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "both stored",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "reset over two bad ones",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "the second one stays",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "updating the stored bad one",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad7",
+    "httpRequest": {
+     "path": "/z/bad7-again"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "unchanged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "reset over the remaining bad one",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "reset again",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "empty",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "a bad one, then a scenario state set",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad8",
+    "httpRequest": {
+     "path": "/s/bad8"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "setting a scenario state",
+   "method": "PUT",
+   "path": "/mockserver/scenario/s",
+   "body": {
+    "state": "X"
+   }
+  },
+  {
+   "note": "bad8 dropped by the scenario write",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  },
+  {
+   "note": "an expectation moving scenario t",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "mover",
+    "httpRequest": {
+     "path": "/s/move"
+    },
+    "httpResponse": {
+     "body": "moved"
+    },
+    "scenarioName": "t",
+    "scenarioState": "Started",
+    "newScenarioState": "Y"
+   }
+  },
+  {
+   "note": "a bad one after it",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "bad9",
+    "httpRequest": {
+     "path": "/s/bad9"
+    },
+    "httpResponse": {
+     "body": "a"
+    },
+    "httpResponseTemplate": {
+     "template": "x",
+     "templateType": "VELOCITY"
+    }
+   }
+  },
+  {
+   "note": "a match moves the scenario",
+   "method": "GET",
+   "path": "/s/move"
+  },
+  {
+   "note": "bad9 dropped by the transition",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON"
+  }
+ ]
+}

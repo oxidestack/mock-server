@@ -1,0 +1,31 @@
+# org.mockserver.collections.CircularPriorityQueueTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldNotAllowAddingMoreThenMaximumNumberOfEntriesWhenUsingAdd  http:max_expectations_eviction, rust:src/state_backend/memory.rs::expectation_store_evicts_oldest_by_insertion_on_overflow  # the expectation store's queue under maxExpectations
+shouldSortOrder  http:match_order_index  # match order: priority descending, then creation
+shouldSortOrderAndRemove  http:match_order_index, http:max_expectations_eviction  # order after a clear by id
+shouldSortExpectationOrderSamePriorityInsertedInOrder  http:match_order_index  # equal priority: the one created first wins
+shouldSortExpectationOrderSamePriorityInsertedOutOfOrder  http:match_order_index
+shouldSortExpectationOrderDifferentIdsButConsistentWithTimeInsertedInOrderAndPriority  http:match_order_index
+shouldSortExpectationOrderDifferentPriorityButConsistentWithTimeInsertedInOrder  http:match_order_index  # priority beats creation order
+shouldSortExpectationOrderDifferentPriorityButConsistentWithTimeInsertedOutOfOrder  http:match_order_index
+shouldSortExpectationOrderDifferentPriorityInconsistentWithTimeInsertedOutOfOrder  http:match_order_index
+shouldSortExpectationOrderDifferentPriorityGroupsLargerQueue  http:match_order_index, http:upstream/B1-HttpStateTest  # retrieve lists active expectations in match order
+shouldReturnCachedListBetweenMutationsAndInvalidateCacheOnMutation  n/a  # the sorted-list cache, a performance detail; its correctness is the ordering above
+shouldRemove  http:max_expectations_eviction  # clear by id frees room
+shouldFireEvictionListenerExactlyOncePerOverflowEvictedElement  http:max_expectations_eviction  # the listener cleans expectationRequestDefinitions: an evicted id no longer resolves
+shouldNotFireEvictionListenerOnExplicitRemoveOrReplace  http:max_expectations_eviction  # an update or a clear is no eviction
+shouldRestoreNoOpEvictionListenerWhenSetToNull  n/a  # a Java listener setter
+shouldPreserveEvictionPositionAcrossReplaceValue  http:max_expectations_eviction, rust:src/state_backend/memory.rs::expectation_store_in_place_update_does_not_move_insertion_order  # an update keeps the insertion position
+shouldFireEvictionListenerWithReplacedValueNotStaleOriginal  http:max_expectations_eviction  # evicting an updated expectation removes its current definition
+shouldEvictEldestElementsImmediatelyWhenMaxSizeShrunk  rust:src/state_backend/memory.rs::expectation_store_set_max_size_shrinks_immediately
+shouldNotEvictWhenMaxSizeGrown  gap  # no scenario raises maxExpectations at runtime and checks nothing is evicted
+shouldReportSizeAccuratelyAcrossAddsAndRemovesWithoutEviction  n/a  # the queue's size counter
+shouldReportSizeAccuratelyAfterEviction  n/a  # the queue's size counter
+shouldPreserveSortOrderAcrossLargeNoEvictionBatch  http:upstream/B4-RequestMatchersBatchLoadOrderingTest  # a batch keeps match order
+shouldEvictOldestToStayWithinByteBudget  http:max_expectations_size_in_bytes  # adds past maxExpectationsSizeInBytes evict the eldest by insertion, not priority
+shouldNotEvictByBytesWhenBudgetIsHugeNegativeControl  http:max_expectations_size_in_bytes  # a budget of 1000000000 evicts nothing
+shouldDisableByteBoundWhenMaxBytesIsZeroButStillTrackTotal  http:max_expectations_size_in_bytes  # with 0 nothing is evicted and mock_server_expectations_bytes still sums the weights
+shouldRetainASingleOverBudgetElement  http:max_expectations_size_in_bytes  # a shrink to 1000 keeps the newest expectation, over the budget
+shouldKeepTotalBytesExactAcrossReplaceAndRemove  http:max_expectations_size_in_bytes  # mock_server_expectations_bytes after an update in place, evictions and a clear by id
+shouldEvictImmediatelyWhenByteBudgetShrunk  http:max_expectations_size_in_bytes  # a PUT /mockserver/configuration lowering the budget evicts at once

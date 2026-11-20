@@ -1,0 +1,77 @@
+{
+ "source": "9.2.0 (#74, #84): held requests behind a response that makes no progress for inboundConnectionIdleTimeoutMillis close the connection (nothing is answered) and are counted in mock_server_http1_pipelining_wedged_connections_total. The held request is handled as the connection closes (Http1PipeliningGate.channelInactive fires what it holds, as a decoder's decodeLast), so it is in the event log.",
+ "properties": {
+  "inboundConnectionIdleTimeoutMillis": "1000",
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/stuck"
+     },
+     "httpResponse": {
+      "body": "stuck",
+      "delay": {
+       "timeUnit": "SECONDS",
+       "value": 30
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fast"
+     },
+     "httpResponse": {
+      "body": "fast"
+     }
+    }
+   ]
+  },
+  {
+   "note": "one write: a response that never makes progress, and a request held behind it; the backstop closes the connection after the idle timeout, answering nothing",
+   "text": true,
+   "maxMillis": 6000,
+   "tcp": [
+    {
+     "text": "GET /stuck HTTP/1.1\r\nHost: {{host}}\r\n\r\nGET /fast HTTP/1.1\r\nHost: {{host}}\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "the held /fast is recorded as the connection closes",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/fast"
+   },
+   "pollUntil": "/fast"
+  },
+  {
+   "note": "and its exchange",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/fast"
+   }
+  },
+  {
+   "note": "the wedge counter",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?s)\\A.*(mock_server_http1_pipelining_wedged_connections_total \\S+).*\\z",
+     "replace": "${1}"
+    }
+   ]
+  }
+ ]
+}

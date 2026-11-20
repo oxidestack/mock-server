@@ -1,0 +1,53 @@
+{
+ "source": "the regex-timeout replay reads the pattern as Pattern.compile does, so a catastrophic pattern written in Java-only syntax (class intersection, \\h, \\p{javaLetter}, \\p{InBasic_Latin}, \\Q…\\E, a named group) passes regexMatchingTimeoutMillis (here 300) on a 40-character value and logs the WARN `regex evaluation timed out after {}ms for pattern:{}— treating as non-match`, in RegexStringMatcher (DOTALL | CASE_INSENSITIVE | UNICODE_CASE: an upper-case pattern letter folds) and in GraphQL's operationName (Pattern.compile(p)); a short value fails within the budget",
+ "properties": {"regexMatchingTimeoutMillis": "300"},
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"id": "intersection", "httpRequest": {"path": "/i([a-z&&[^b]]*a){25}"}, "httpResponse": {"body": "intersection"}},
+    {"id": "quoted", "httpRequest": {"path": "/\\Qq\\E(\\p{javaLetter}*A){25}"}, "httpResponse": {"body": "quoted"}},
+    {"id": "named", "httpRequest": {"path": "/n(?<x>\\h*a|.*a){25}"}, "httpResponse": {"body": "named"}},
+    {"id": "graphql", "httpRequest": {"path": "/graphql", "body": {"type": "GRAPHQL", "query": "query Q { a }", "operationName": "(\\p{InBasic_Latin}*a){25}"}}, "httpResponse": {"body": "graphql"}}
+   ]
+  },
+  {
+   "note": "class intersection: Java backtracking passes the budget",
+   "method": "GET",
+   "path": "/iaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "class intersection on a short path: no timeout",
+   "method": "GET",
+   "path": "/iab"
+  },
+  {
+   "note": "\\Q…\\E and \\p{javaLetter}, an upper-case A folded",
+   "method": "GET",
+   "path": "/qaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "named group with \\h",
+   "method": "GET",
+   "path": "/naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "GraphQL operationName with \\p{InBasic_Latin}",
+   "method": "POST",
+   "path": "/graphql",
+   "body": {"query": "query Q { a }", "operationName": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"}
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

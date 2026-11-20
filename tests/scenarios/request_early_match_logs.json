@@ -1,0 +1,247 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "early-get",
+     "httpRequest": {
+      "method": "GET",
+      "path": "/early",
+      "respondBeforeBody": true
+     },
+     "httpResponse": {
+      "statusCode": 201
+     }
+    },
+    {
+     "id": "plain-other",
+     "httpRequest": {
+      "path": "/other"
+     },
+     "httpResponse": {
+      "statusCode": 200
+     }
+    },
+    {
+     "id": "early-post",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/early",
+      "respondBeforeBody": true
+     },
+     "httpResponse": {
+      "statusCode": 202,
+      "body": "early"
+     }
+    },
+    {
+     "id": "early-post-second",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/early",
+      "respondBeforeBody": true
+     },
+     "httpResponse": {
+      "statusCode": 203
+     }
+    },
+    {
+     "id": "early-header",
+     "httpRequest": {
+      "path": "/missed",
+      "headers": {
+       "x-early": [
+        "yes"
+       ]
+      },
+      "respondBeforeBody": true
+     },
+     "httpResponse": {
+      "statusCode": 204
+     }
+    },
+    {
+     "id": "plain-missed",
+     "httpRequest": {
+      "path": "/missed"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "after the body"
+     }
+    }
+   ]
+  },
+  {
+   "note": "answered from the head: the early scan logs each respondBeforeBody expectation it tries, then the request",
+   "tcp": [
+    {
+     "text": "POST /early HTTP/1.1\r\nHost: {{host}}\r\nContent-Length: 5\r\nConnection: close\r\n\r\n"
+    },
+    {
+     "text": "hello"
+    }
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/early"
+   },
+   "note": "early match logs"
+  },
+  {
+   "note": "the early scan misses, so the head's mismatches precede the aggregated request's entries",
+   "tcp": [
+    {
+     "text": "POST /missed HTTP/1.1\r\nHost: {{host}}\r\nX-Early: no\r\nContent-Length: 5\r\nConnection: close\r\n\r\n"
+    },
+    {
+     "text": "hello"
+    }
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/missed"
+   },
+   "note": "early miss logs"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "forward-decoded",
+     "httpRequest": {
+      "path": "/fwd"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/target",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "target",
+     "httpRequest": {
+      "path": "/target"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "target"
+     }
+    },
+    {
+     "id": "te",
+     "httpRequest": {
+      "path": "/te"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "te"
+     }
+    }
+   ]
+  },
+  {
+   "note": "a body decoded from Transfer-Encoding: gzip, chunked, forwarded",
+   "tcp": [
+    {
+     "text": "POST /fwd HTTP/1.1\r\nHost: {{host}}\r\nContent-Type: application/json\r\nTransfer-Encoding: gzip, chunked\r\nConnection: close\r\n\r\n"
+    },
+    "MjUNCh+LCAAAAAAAAhOrVspIzcnJV7JSKs8vyklRqgUA0UEJ2BEAAAANCjANCg0K"
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "note": "a body decoded from Transfer-Encoding: gzip with a Content-Length, forwarded",
+   "tcp": [
+    {
+     "text": "POST /fwd HTTP/1.1\r\nHost: {{host}}\r\nContent-Type: application/json\r\nTransfer-Encoding: gzip\r\nContent-Length: 37\r\nConnection: close\r\n\r\n"
+    },
+    "H4sIAAAAAAACE6tWykjNyclXslIqzy/KSVGqBQDRQQnYEQAAAA=="
+   ],
+   "chunkMillis": 20
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "what was received and what was forwarded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "te",
+    "httpRequest": {
+     "path": "/te"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "te"
+    }
+   }
+  },
+  {
+   "note": "Transfer-Encoding without chunked and without Content-Length: no body",
+   "tcp": [
+    {
+     "text": "POST /te HTTP/1.1\r\nHost: {{host}}\r\nContent-Type: text/plain\r\nTransfer-Encoding: identity\r\nConnection: close\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "Transfer-Encoding over HTTP/1.0 fails the decoder after the headers",
+   "tcp": [
+    {
+     "text": "POST /te HTTP/1.0\r\nHost: {{host}}\r\nContent-Type: text/plain\r\nTransfer-Encoding: gzip\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "chunked over HTTP/1.0 fails it too",
+   "tcp": [
+    {
+     "text": "POST /te HTTP/1.0\r\nHost: {{host}}\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "decoder failures and the requests",
+   "mask": [
+    {
+     "regex": "(closing connection from:\\n\\n  )/\\S+",
+     "replace": "${1}<client address>",
+     "reason": "the client's socket address: the oracle sees the Docker bridge's"
+    }
+   ]
+  }
+ ]
+}

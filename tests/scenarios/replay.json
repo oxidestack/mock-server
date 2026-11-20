@@ -1,0 +1,227 @@
+{
+ "steps": [
+  {
+   "note": "no body",
+   "method": "PUT",
+   "path": "/mockserver/replay"
+  },
+  {
+   "note": "blank body",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": "   ",
+   "headers": {
+    "content-type": "application/json"
+   }
+  },
+  {
+   "note": "empty request: no Host to send it to",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {}
+  },
+  {
+   "note": "a request without Host or socketAddress",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "method": "GET",
+    "path": "/x",
+    "queryStringParameters": {
+     "q": [
+      "1"
+     ]
+    }
+   }
+  },
+  {
+   "note": "body not JSON",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": "not json",
+   "headers": {
+    "content-type": "application/json"
+   }
+  },
+  {
+   "note": "an array is not a request",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": [
+    1
+   ]
+  },
+  {
+   "note": "a method that is not a string",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "method": 5
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/target",
+     "headers": {
+      "x-h": [
+       "v"
+      ]
+     },
+     "body": "hello"
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "headers": {
+      "x-a": [
+       "1"
+      ],
+      "Set-Cookie": [
+       "session=abc; Path=/"
+      ]
+     },
+     "body": {
+      "json": {
+       "ok": true
+      }
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plain"
+    },
+    "httpResponse": {
+     "statusCode": 202,
+     "reasonPhrase": "Taken",
+     "body": "plain text"
+    }
+   }
+  },
+  {
+   "note": "replayed to its Host",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "method": "POST",
+    "path": "/target",
+    "headers": {
+     "Host": [
+      "{{host}}"
+     ],
+     "x-h": [
+      "v"
+     ],
+     "Content-Length": [
+      "999"
+     ],
+     "Connection": [
+      "close"
+     ]
+    },
+    "body": "hello"
+   }
+  },
+  {
+   "note": "replayed to its socketAddress, which wins over Host",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"method\": \"POST\", \"path\": \"/target\", \"headers\": {\"Host\": [\"{{deadhost}}\"], \"x-h\": [\"v\"]}, \"body\": \"hello\", \"socketAddress\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}"
+  },
+  {
+   "note": "the bare alias, a plain text answer with its own reason phrase",
+   "method": "PUT",
+   "path": "/replay",
+   "body": {
+    "path": "/plain",
+    "headers": {
+     "Host": [
+      "{{host}}"
+     ]
+    }
+   }
+  },
+  {
+   "note": "wrapped in httpRequest",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "httpRequest": {
+     "path": "/plain",
+     "headers": {
+      "Host": [
+       "{{host}}"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "note": "no expectation matches: the target's 404 comes back",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/nothing",
+    "headers": {
+     "Host": [
+      "{{host}}"
+     ]
+    }
+   }
+  },
+  {
+   "note": "a target that refuses the connection",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/x",
+    "headers": {
+     "Host": [
+      "{{deadhost}}"
+     ]
+    }
+   }
+  },
+  {
+   "note": "a target that does not resolve",
+   "method": "PUT",
+   "path": "/mockserver/replay",
+   "body": {
+    "path": "/x",
+    "headers": {
+     "Host": [
+      "no-such-host.invalid"
+     ]
+    }
+   }
+  },
+  {
+   "note": "GET is not the replay route",
+   "method": "GET",
+   "path": "/mockserver/replay"
+  },
+  {
+   "note": "what the targets received",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/target"
+   }
+  },
+  {
+   "note": "the log: the failures and what the targets did",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

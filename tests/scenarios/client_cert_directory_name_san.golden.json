@@ -1,0 +1,95 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/t-nomatch\",\n    \"secure\" : true,\n    \"clientCertificate\" : {\n      \"subject\" : \"no such name\"\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"unexpected\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForward\" : {\n    \"host\" : \"localhost\",\n    \"port\" : <port>,\n    \"scheme\" : \"HTTPS\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/t.*\",\n    \"secure\" : false\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/t-dns\",\n    \"secure\" : true,\n    \"clientCertificate\" : {\n      \"subject\" : \"dns.example\"\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"dns name\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/t-regex\",\n    \"secure\" : true,\n    \"clientCertificate\" : {\n      \"subject\" : \".*second dir.*\"\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"regex over a directory name\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/t-first\",\n    \"secure\" : true,\n    \"clientCertificate\" : {\n      \"subject\" : \"1.2.840.113549.1.9.1=#160f646972406578616d706c652e636f6d,CN=Dir\\\\=Name\\\\;x,OU=Unit\\\\+Plus,O=Acme\\\\, Inc,ST=England,C=GB\"\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"first directory name, RFC 2253 with an e-mail attribute as hex\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/t-second\",\n    \"secure\" : true,\n    \"clientCertificate\" : {\n      \"subject\" : \"CN=second dir,1.2.3.4=#0c06637573746f6d,L=Leeds,STREET=1 Main St,2.5.4.5=#13053132333435,UID=user1,DC=com,DC=example\"\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"second directory name\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/t-not\",\n    \"secure\" : true,\n    \"clientCertificate\" : {\n      \"subject\" : \"!dns.example\"\n    }\n  },\n  \"httpResponse\" : {\n    \"body\" : \"unexpected: a negation must hold for every candidate\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]",
+      "note": "secure requests to /t... answer from the expectations below; plain ones are forwarded over TLS to this server, presenting a leaf whose subject alternative names are a DNS name and two directory names"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: clientCertificate did not match (  client certificate subject match failed expected:     no such name    found:     [dirname-client.example, CN=dirname-client.example,O=Fixture, dns.example, 1.2.840.1135..."
+      ],
+      "body": "",
+      "note": "no candidate matches: the hint (the first-created of the closest expectations) lists the candidates"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 8"
+      ],
+      "body": "dns name",
+      "note": "the DNS name"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 27"
+      ],
+      "body": "regex over a directory name",
+      "note": "a regex over the second directory name"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 62"
+      ],
+      "body": "first directory name, RFC 2253 with an e-mail attribute as hex",
+      "note": "the first directory name exactly, as X500Principal.getName() prints it"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 21"
+      ],
+      "body": "second directory name",
+      "note": "the second directory name exactly, unknown attribute types as DER hex"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: path did not match (  string or regex match failed expected:     /t-nomatch    found:     /t-not )"
+      ],
+      "body": "",
+      "note": "a negated subject fails when any candidate equals it"
+    },
+    {
+      "status": 406,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 619",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "Request not found at least 2 times, expected:<{\n  \"path\" : \"/t-nomatch\",\n  \"secure\" : true\n}> but was found 0 times among 12 total requests\n\nclosest match diff:\n  clientCertificate:\n      client certificate match failed - request presented no client certificate chain but expectation requires one\n\n\nverification summary:\n  expected at least 2 times but matched 0 times among 12 recorded requests\n  closest non-matching requests (fewest differing fields first):\n    1. GET /t-nomatch differs in: clientCertificate\n    2. GET /t-nomatch differs in: clientCertificate\n    3. GET /t-not differs in: path, clientCertificate\n",
+      "note": "verification failure: the closest recorded request is the first, plain, one"
+    }
+  ]
+}

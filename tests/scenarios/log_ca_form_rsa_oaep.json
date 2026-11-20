@@ -1,0 +1,59 @@
+{
+ "source": "a configured CA with an RSA key under the OAEP OID 1.2.840.113549.1.1.7 (NULL parameters) (tests/files/x509/tostring/ca-forms, AliasFormsGen.java), paired with the bundled RSA CA certificate the JDK reads: whether the oracle takes the key and the certificate, what the DEBUG/TRACE CA entries print and whether leaves are generated; socketConnectionTimeoutInMillis bounds the first handshake",
+ "properties": {
+  "logLevel": "TRACE",
+  "proxySetupLogging": "false",
+  "socketConnectionTimeoutInMillis": "120000",
+  "certificateAuthorityCertificate": "{{files}}/x509/tostring/bundled_ca.pem",
+  "certificateAuthorityPrivateKey": "{{files}}/x509/tostring/ca-forms/rsa-oaep-key.pem"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "first inbound TLS connection: the server's context loads the bundled CA and logs the certificates in use",
+   "tcp": [
+    {
+     "text": "GET /ca/debug HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "DEBUG and TRACE: the X509 entry with the certificate's toString and the key entry with the key's toString, the key path, the CA and leaf serials (the leaf's is random)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]",
+     "reason": "Netty's random channel id and the container's addresses"
+    },
+    {
+     "regex": "(and certificate serial:\\n\\n  )\\d+",
+     "replace": "${1}<random>"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - created new X509\\n.*?\\n-{36}\\n",
+     "replace": "\n",
+     "reason": "the leaf BouncyCastle prints is random (key, serial, dates, signature)"
+    },
+    {
+     "regex": "(?s)^(.*subject:\\n\\n  [^\\n]*CN=localhost\\n\\n-+\\n).*$",
+     "replace": "${1}(the rest: the request served over TLS)"
+    }
+   ]
+  }
+ ]
+}

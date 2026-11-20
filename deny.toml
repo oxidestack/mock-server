@@ -1,0 +1,139 @@
+# cargo-deny: the CNCF third-party licence policy over the Cargo graph. The `licenses` CI job on both
+# forges runs `cargo deny --locked check licenses`; third_party/ (data outside Cargo) is checked by
+# tools/check-third-party.sh against third_party/MANIFEST, which reads its allowlist from this file.
+#
+# Policy: cncf/foundation policies-guidance/allowed-third-party-license-policy.md (read 2026-10-28). Code is
+# Apache-2.0; a third-party component under any other licence is approved automatically only if it is fully licensable
+# under the policy's allowlist. Anything else needs a Governing Board exception, recorded in
+# cncf/foundation license-exceptions/exceptions.json (exceptions.cncf.io; read 2026-10-28, its lastUpdated 2026-09-07).
+#
+# Rules for this file:
+# - `allow` is the policy's allowlist, verbatim (its one non-SPDX entry, the Go patent grant, cannot occur in a Cargo
+#   graph), plus Apache-2.0. Never add a licence to it: a component outside it goes under `exceptions`, by crate and
+#   exact version, with the CNCF exception it relies on, or "none" and what settles it. A version bump of an
+#   excepted crate fails the job until its entry is reviewed and moved.
+# - "none" entries are known gaps, not approvals: the project needs a CNCF exception or another dependency for each
+#   before a Sandbox application.
+
+[graph]
+# Every feature of every workspace crate, so an optional dependency cannot hide.
+all-features = true
+
+[licenses]
+allow = [
+    "Apache-2.0",
+    "0BSD",
+    "BSD-2-Clause",
+    "BSD-2-Clause-FreeBSD",
+    "BSD-3-Clause",
+    "MIT",
+    "MIT-0",
+    "ISC",
+    "OpenSSL",
+    "OpenSSL-standalone",
+    "PSF-2.0",
+    "Python-2.0",
+    "Python-2.0.1",
+    "PostgreSQL",
+    "SSLeay-standalone",
+    "UPL-1.0",
+    "X11",
+    "Zlib",
+]
+# The list mirrors the policy rather than the graph, so an allowlisted licence nothing uses yet is expected.
+unused-allowed-license = "allow"
+# An exception that no longer matches a crate in the graph is stale: delete it with the dependency.
+unused-license-exception = "deny"
+# Licences read from LICENSE files rather than the manifest must match the SPDX text closely.
+confidence-threshold = 0.93
+# Dev-dependencies too: cargo-deny skips them by default, and the repository's CNCF scope is everything it uses.
+include-dev = true
+
+# The Mozilla CA bundle as packaged by rustls. CNCF exception exc-2022-04-12-011 (cncf/foundation#172, all CNCF
+# projects) approves webpki-roots under MPL-2.0; 1.x is relicensed CDLA-Permissive-2.0 (the CCADB data's licence),
+# which neither that exception nor the allowlist names. CNCF status: none for CDLA-Permissive-2.0.
+[[licenses.exceptions]]
+# Dev-dependency: a unit test in src/asyncapi/tls.rs asserts the default trust is the JDK cacerts, not these roots.
+crate = "webpki-roots@1.0.9"
+allow = ["CDLA-Permissive-2.0"]
+[[licenses.exceptions]]
+# reqwest -> rustls-platform-verifier (the platform verifier's fallback roots).
+crate = "webpki-root-certs@1.0.9"
+allow = ["CDLA-Permissive-2.0"]
+
+# Unlicense: rumqttc's `websocket` feature (MQTT over WebSockets). CNCF status: none (the only Unlicense entry in
+# exceptions.json is client9/misspell).
+[[licenses.exceptions]]
+crate = "ws_stream_tungstenite@0.15.0"
+allow = ["Unlicense"]
+[[licenses.exceptions]]
+crate = "async_io_stream@0.3.3"
+allow = ["Unlicense"]
+[[licenses.exceptions]]
+crate = "pharos@0.5.3"
+allow = ["Unlicense"]
+
+# Unicode-3.0: ICU4X (idna -> url, jsonschema, reqwest, the AWS and Google SDKs, ...) and unicode-ident's tables
+# (proc-macro2, so every derive). CNCF status: none for Unicode-3.0 (the only Unicode exception is go-textseg under
+# Unicode-DFS-2016, exc-2026-02-18-001, cncf/foundation#1242).
+[[licenses.exceptions]]
+crate = "unicode-ident@1.0.26"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "icu_collections@2.3.0"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "icu_locale_core@2.3.0"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "icu_normalizer@2.3.0"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "icu_normalizer_data@2.3.0"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "icu_properties@2.3.0"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "icu_properties_data@2.3.0"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "icu_provider@2.3.1"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "litemap@0.8.3"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "potential_utf@0.1.6"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "tinystr@0.8.4"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "writeable@0.6.4"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "yoke@0.8.3"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "yoke-derive@0.8.3"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "zerofrom@0.1.8"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "zerofrom-derive@0.1.8"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "zerotrie@0.2.5"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "zerovec@0.11.8"
+allow = ["Unicode-3.0"]
+[[licenses.exceptions]]
+crate = "zerovec-derive@0.11.6"
+allow = ["Unicode-3.0"]
+
+[licenses.private]
+# Workspace crates are checked like any other; each declares its licence (the root package included).
+ignore = false

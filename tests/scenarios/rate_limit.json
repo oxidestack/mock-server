@@ -1,0 +1,148 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/window"
+     },
+     "httpResponse": {
+      "body": "ok"
+     },
+     "rateLimit": {
+      "limit": 2,
+      "windowMillis": 60000
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/bucket"
+     },
+     "httpResponse": {
+      "body": "ok"
+     },
+     "rateLimit": {
+      "algorithm": "token_bucket",
+      "burst": 1,
+      "refillPerSecond": 0.001,
+      "errorStatus": 503,
+      "retryAfter": "7"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/template"
+     },
+     "httpResponseTemplate": {
+      "template": "{\"statusCode\": 200, \"body\": \"templated\"}",
+      "templateType": "VELOCITY"
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 60000,
+      "algorithm": "fixed_window"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/window",
+   "note": "1"
+  },
+  {
+   "method": "GET",
+   "path": "/window",
+   "note": "2"
+  },
+  {
+   "method": "GET",
+   "path": "/window",
+   "note": "over the window limit",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: (5\\d|60)$",
+     "replace": "retry-after: <about 60>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/bucket",
+   "note": "bucket 1"
+  },
+  {
+   "method": "GET",
+   "path": "/bucket",
+   "note": "bucket empty",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: (5\\d|60)$",
+     "replace": "retry-after: <about 60>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/template",
+   "note": "template 1"
+  },
+  {
+   "method": "GET",
+   "path": "/template",
+   "note": "template over",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: (5\\d|60)$",
+     "replace": "retry-after: <about 60>"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {},
+    "rateLimit": {
+     "limit": 0,
+     "windowMillis": 10
+    }
+   },
+   "note": "limit 0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bad"
+    },
+    "httpResponse": {},
+    "rateLimit": {
+     "algorithm": "sliding"
+    }
+   },
+   "note": "unknown algorithm"
+  }
+ ]
+}

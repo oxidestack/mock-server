@@ -1,0 +1,126 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/target.*\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : \"from target\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForward\" : {\n    \"host\" : \"localhost\",\n    \"port\" : <port>,\n    \"scheme\" : \"HTTP\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/target/fwd\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 10,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/target/overridden\",\n      \"headers\" : {\n        \"X-Added\" : [ \"1\" ],\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fwd-override\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestModifier\" : {\n      \"headers\" : {\n        \"add\" : {\n          \"X-Mod\" : [ \"m\" ]\n        },\n        \"remove\" : [ \"X-Remove\" ]\n      },\n      \"path\" : {\n        \"regex\" : \"^/fwd-modify$\",\n        \"substitution\" : \"/target/modified\"\n      }\n    },\n    \"requestOverride\" : {\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    },\n    \"responseModifier\" : {\n      \"headers\" : {\n        \"add\" : {\n          \"X-Resp\" : [ \"r\" ]\n        }\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fwd-modify\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/target/legacy\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fwd-legacy\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpForward\" : {\n    \"host\" : \"localhost\",\n    \"port\" : <deadport>,\n    \"scheme\" : \"HTTP\"\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/fwd-dead\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11",
+        "x-target: yes"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "forward"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11",
+        "x-target: yes"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "override"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11",
+        "x-resp: r",
+        "x-target: yes"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "modifier"
+    },
+    {
+      "status": 203,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 11",
+        "x-target: yes"
+      ],
+      "body": "from target",
+      "reason": "Non-Authoritative Information",
+      "note": "legacy override"
+    },
+    {
+      "status": 502,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 101"
+      ],
+      "body": "upstream refused the connection: check the upstream is running and listening on the port forwarded to",
+      "note": "forward target down"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"body\" : \"payload\",\n  \"headers\" : {\n    \"content-length\" : [ \"7\" ],\n    \"Host\" : [ \"localhost:<port>\" ],\n    \"x-in\" : [ \"in\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"POST\",\n  \"path\" : \"/target/fwd\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"queryStringParameters\" : {\n    \"q\" : [ \"1\" ]\n  },\n  \"secure\" : false\n}, {\n  \"body\" : \"payload\",\n  \"headers\" : {\n    \"content-length\" : [ \"7\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-in\" : [ \"in\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"POST\",\n  \"path\" : \"/target/fwd\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"queryStringParameters\" : {\n    \"q\" : [ \"1\" ]\n  },\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"X-Added\" : [ \"1\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/overridden\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"X-Mod\" : [ \"m\" ],\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/modified\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ],\n    \"connection\" : [ \"keep-alive\" ],\n    \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/target/legacy\",\n  \"protocol\" : \"HTTP_1_1\",\n  \"secure\" : false\n} ]",
+      "note": "requests the target saw"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/target/fwd\",\n    \"queryStringParameters\" : {\n      \"q\" : [ \"1\" ]\n    },\n    \"headers\" : {\n      \"x-mockserver-forwarded-by\" : [ \"MockServer_<instance id>\" ],\n      \"x-in\" : [ \"in\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"7\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"payload\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"headers\" : {\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : \"from target\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/target/fwd\",\n    \"queryStringParameters\" : {\n      \"q\" : [ \"1\" ]\n    },\n    \"headers\" : {\n      \"x-in\" : [ \"in\" ],\n      \"content-length\" : [ \"7\" ],\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : \"payload\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : \"from target\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd-override\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : \"from target\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd-modify\",\n    \"headers\" : {\n      \"x-remove\" : [ \"gone\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ],\n      \"X-Resp\" : [ \"r\" ]\n    },\n    \"body\" : \"from target\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd-legacy\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : \"from target\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd-dead\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"<deadhost>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 502,\n    \"reasonPhrase\" : \"Bad Gateway\",\n    \"body\" : \"upstream refused the connection: check the upstream is running and listening on the port forwarded to\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n} ]",
+      "note": "exchanges"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"POST\",\n    \"path\" : \"/target/fwd\",\n    \"queryStringParameters\" : {\n      \"q\" : [ \"1\" ]\n    },\n    \"headers\" : {\n      \"x-in\" : [ \"in\" ],\n      \"Host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\",\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"payload\",\n      \"rawBytes\" : \"cGF5bG9hZA==\"\n    }\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"from target\",\n      \"rawBytes\" : \"ZnJvbSB0YXJnZXQ=\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd-override\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"from target\",\n      \"rawBytes\" : \"ZnJvbSB0YXJnZXQ=\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd-modify\",\n    \"headers\" : {\n      \"x-remove\" : [ \"gone\" ],\n      \"host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ],\n      \"X-Resp\" : [ \"r\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"from target\",\n      \"rawBytes\" : \"ZnJvbSB0YXJnZXQ=\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/fwd-legacy\",\n    \"headers\" : {\n      \"host\" : [ \"localhost:<port>\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 203,\n    \"reasonPhrase\" : \"Non-Authoritative Information\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"X-Target\" : [ \"yes\" ]\n    },\n    \"body\" : {\n      \"type\" : \"STRING\",\n      \"string\" : \"from target\",\n      \"rawBytes\" : \"ZnJvbSB0YXJnZXQ=\"\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"remainingTimes\" : 1\n  }\n} ]",
+      "note": "recorded expectations"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "headers": {
+    "Content-Type": "application/xml"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<definitions xmlns=\"http://schemas.xmlsoap.org/wsdl/\"\n             xmlns:soap=\"http://schemas.xmlsoap.org/wsdl/soap/\"\n             xmlns:tns=\"http://example.com/weather\"\n             targetNamespace=\"http://example.com/weather\"\n             name=\"WeatherService\">\n  <message name=\"GetWeatherRequest\"/>\n  <message name=\"GetWeatherResponse\"/>\n  <portType name=\"WeatherPortType\">\n    <operation name=\"GetWeather\">\n      <input message=\"tns:GetWeatherRequest\"/>\n      <output message=\"tns:GetWeatherResponse\"/>\n    </operation>\n  </portType>\n  <binding name=\"WeatherBinding\" type=\"tns:WeatherPortType\">\n    <soap:binding style=\"document\" transport=\"http://schemas.xmlsoap.org/soap/http\"/>\n    <operation name=\"GetWeather\">\n      <soap:operation soapAction=\"http://example.com/GetWeather\"/>\n      <input><soap:body use=\"literal\"/></input>\n      <output><soap:body use=\"literal\"/></output>\n    </operation>\n  </binding>\n  <service name=\"WeatherService\">\n    <port name=\"WeatherPort\" binding=\"tns:WeatherBinding\">\n      <soap:address location=\"http://localhost/ws/weather\"/>\n    </port>\n  </service>\n</definitions>",
+   "note": "soap 1.1"
+  },
+  {
+   "method": "POST",
+   "path": "/ws/weather",
+   "headers": {
+    "SOAPAction": "\"http://example.com/GetWeather\"",
+    "Content-Type": "text/xml"
+   },
+   "body": "<x/>",
+   "note": "matching action"
+  },
+  {
+   "method": "POST",
+   "path": "/ws/weather",
+   "headers": {
+    "SOAPAction": "other"
+   },
+   "body": "<x/>",
+   "note": "other action"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "headers": {
+    "Content-Type": "application/xml"
+   },
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<definitions xmlns=\"http://schemas.xmlsoap.org/wsdl/\"\n             xmlns:soap=\"http://schemas.xmlsoap.org/wsdl/soap12/\"\n             xmlns:tns=\"http://example.com/weather\"\n             targetNamespace=\"http://example.com/weather\"\n             name=\"WeatherService\">\n  <message name=\"GetWeatherRequest\"/>\n  <message name=\"GetWeatherResponse\"/>\n  <portType name=\"WeatherPortType\">\n    <operation name=\"GetWeather\">\n      <input message=\"tns:GetWeatherRequest\"/>\n      <output message=\"tns:GetWeatherResponse\"/>\n    </operation>\n  </portType>\n  <binding name=\"WeatherBinding\" type=\"tns:WeatherPortType\">\n    <soap:binding style=\"document\" transport=\"http://schemas.xmlsoap.org/soap/http\"/>\n    <operation name=\"GetWeather\">\n      <soap:operation />\n      <input><soap:body use=\"literal\"/></input>\n      <output><soap:body use=\"literal\"/></output>\n    </operation>\n  </binding>\n  <service name=\"WeatherService\">\n    <port name=\"WeatherPort\" binding=\"tns:WeatherBinding\">\n      <soap:address location=\"http://localhost/ws/weather\"/>\n    </port>\n  </service>\n</definitions>",
+   "note": "soap 1.2 without action"
+  },
+  {
+   "method": "POST",
+   "path": "/ws/weather",
+   "body": "<e><GetWeather/></e>",
+   "note": "matched by body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "<foo/>",
+   "note": "not wsdl"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "<definitions xmlns=\"http://schemas.xmlsoap.org/wsdl/\"/>",
+   "note": "no operations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/wsdl",
+   "body": "",
+   "note": "empty"
+  }
+ ],
+ "isolated": true
+}

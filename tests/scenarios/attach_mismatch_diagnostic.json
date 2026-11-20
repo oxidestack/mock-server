@@ -1,0 +1,125 @@
+{
+ "properties": {
+  "attachMismatchDiagnosticToResponse": "true"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/nothing",
+   "note": "no expectations: the header says so, no body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "diag-one",
+    "httpRequest": {
+     "method": "GET",
+     "path": "/diag"
+    },
+    "httpResponse": {
+     "statusCode": 200
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/other",
+   "note": "one field differs: header and JSON body next to the closest-match hint"
+  },
+  {
+   "method": "POST",
+   "path": "/other",
+   "note": "the method differs (fail-fast: one field)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "diag-two",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/json",
+     "headers": {
+      "x-want": [
+       "yes"
+      ]
+     },
+     "queryStringParameters": {
+      "q": [
+       "1"
+      ]
+     },
+     "body": {
+      "type": "JSON",
+      "json": {
+       "a": 1
+      }
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201
+    }
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/json",
+   "headers": {
+    "content-type": "application/json",
+    "x-want": "no"
+   },
+   "body": "{\"a\": 2}",
+   "note": "diag-one is as close (one field) and first"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "body": {
+    "path": "/other"
+   },
+   "note": "the event log keeps the plain 404"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON",
+   "body": {
+    "path": "/other"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "diag-once",
+    "httpRequest": {
+     "path": "/once"
+    },
+    "httpResponse": {
+     "statusCode": 200
+    },
+    "times": {
+     "remainingTimes": 1,
+     "unlimited": false
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/once"
+  },
+  {
+   "method": "GET",
+   "path": "/once",
+   "note": "the used-up expectation is the closest, with no differences"
+  },
+  {
+   "method": "GET",
+   "path": "/elsewhere"
+  }
+ ]
+}

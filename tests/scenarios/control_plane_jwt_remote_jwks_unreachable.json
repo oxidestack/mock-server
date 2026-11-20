@@ -1,0 +1,54 @@
+{
+ "source": "a JWK set URL nothing listens on fails every token with the retriever's IOException",
+ "properties": {
+  "controlPlaneJWTAuthenticationRequired": "true",
+  "controlPlaneJWTAuthenticationJWKSource": "http://{{deadhost}}/jwks"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x"
+    },
+    "httpResponse": {
+     "body": "some_body"
+    }
+   },
+   "note": "no credentials"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x"
+    },
+    "httpResponse": {
+     "body": "some_body"
+    }
+   },
+   "note": "the set cannot be fetched: connection refused",
+   "headers": {
+    "authorization": "Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6Im1vY2stc2VydmVyLXJzLXRlc3QtZWMyNTYiLCJ0eXAiOiJKV1QifQ.eyJleHAiOjQxMzM4OTQ0MDAsInN1YiI6ImVjMjU2LXN1YmplY3QifQ.Ddc3iYmi12KoPWbJYCRlHZhkgC_GdJmFkB2EMKta34JlfNkG1RP_aZbOUp2FPhtqCs0jr1Kg_bkck_Ku4iKX1A"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x"
+    },
+    "httpResponse": {
+     "body": "some_body"
+    }
+   },
+   "note": "without a kid the failure is the same (no set cached at all)",
+   "headers": {
+    "authorization": "Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjQxMzM4OTQ0MDAsInN1YiI6IngifQ.AAAA"
+   }
+  }
+ ]
+}

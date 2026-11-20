@@ -1,0 +1,185 @@
+{
+ "properties": {
+  "logLevel": "DEBUG"
+ },
+ "warmEventLoops": true,
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyBase64": "CvgDCg5ncmVldGluZy5wcm90bxIQY29tLmV4YW1wbGUuZ3JwYyIiCgxIZWxsb1JlcXVlc3QSEgoEbmFtZRgBIAEoCVIEbmFtZSIrCg1IZWxsb1Jlc3BvbnNlEhoKCGdyZWV0aW5nGAEgASgJUghncmVldGluZzLWAgoPR3JlZXRpbmdTZXJ2aWNlEksKCEdyZWV0aW5nEh4uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1JlcXVlc3QaHy5jb20uZXhhbXBsZS5ncnBjLkhlbGxvUmVzcG9uc2USUgoNTGlzdEdyZWV0aW5ncxIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlMAESVQoQQ29sbGVjdEdyZWV0aW5ncxIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlKAESSwoEQ2hhdBIeLmNvbS5leGFtcGxlLmdycGMuSGVsbG9SZXF1ZXN0Gh8uY29tLmV4YW1wbGUuZ3JwYy5IZWxsb1Jlc3BvbnNlKAEwAUIiChBjb20uZXhhbXBsZS5ncnBjQg5HcmVldGluZ1Byb3Rvc2IGcHJvdG8z",
+   "note": "the greeting service's descriptors"
+  },
+  {
+   "note": "a response body the output type does not take",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "grpc-unencodable",
+     "priority": 10,
+     "httpRequest": {
+      "path": "/com.example.grpc.GreetingService/ListGreetings",
+      "headers": {
+       "x-case": [
+        "unencodable"
+       ]
+      }
+     },
+     "grpcStreamResponse": {
+      "statusName": "OK",
+      "messages": [
+       {
+        "json": "{\"greeting\": \"one\"}"
+       },
+       {
+        "json": "not json"
+       }
+      ]
+     }
+    },
+    {
+     "id": "grpc-slow",
+     "priority": 10,
+     "httpRequest": {
+      "path": "/com.example.grpc.GreetingService/ListGreetings",
+      "headers": {
+       "x-case": [
+        "slow"
+       ]
+      }
+     },
+     "grpcStreamResponse": {
+      "statusName": "OK",
+      "messages": [
+       {
+        "json": "{\"greeting\": \"one\"}"
+       },
+       {
+        "json": "{\"greeting\": \"two\"}",
+        "delay": {
+         "timeUnit": "MILLISECONDS",
+         "value": 1000
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "grpc-bad",
+     "httpRequest": {
+      "path": "/com.example.grpc.GreetingService/Greeting"
+     },
+     "httpResponse": {
+      "body": "not json"
+     }
+    },
+    {
+     "id": "grpc-stream",
+     "httpRequest": {
+      "path": "/com.example.grpc.GreetingService/ListGreetings"
+     },
+     "grpcStreamResponse": {
+      "statusName": "OK",
+      "messages": [
+       {
+        "json": "{\"greeting\": \"one\"}"
+       },
+       {
+        "json": "{\"greeting\": \"two\"}"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "note": "an unknown method",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Nope",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "trailers": true
+  },
+  {
+   "note": "a truncated frame",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAoKBQ==",
+   "trailers": true
+  },
+  {
+   "note": "a response that does not convert",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Greeting",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "trailers": true
+  },
+  {
+   "note": "a stream of two messages",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "trailers": true
+  },
+  {
+   "note": "a stream whose second message does not encode",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-case": "unencodable"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "trailers": true
+  },
+  {
+   "note": "a stream the deadline ends after its first message",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/ListGreetings",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "x-case": "slow",
+    "grpc-timeout": "300m"
+   },
+   "bodyBase64": "AAAAAAcKBUFsaWNl",
+   "trailers": true
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "note": "the gRPC plane's entries",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    },
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  }
+ ]
+}

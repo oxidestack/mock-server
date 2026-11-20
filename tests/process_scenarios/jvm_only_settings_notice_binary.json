@@ -1,0 +1,45 @@
+{
+  "note": "one WARN line names the JVM-only settings that have no effect, after upstream's unknown-key warnings; a sensitive -D value inside JVM options is redacted; -Xmx in JAVA_TOOL_OPTIONS is honoured and left out; nioEventLoopThreadCount (map: the tokio worker count), useNativeTransport=false (a JVM-only setting that has an effect here: it turns off the Linux TCP_INFO write-progress check, as upstream's NIO fallback does) and velocityDisallowClassLoading=true (support) are not listed. A deliberate divergence: the oracle prints nothing here (docs/divergences.md)",
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.useNativeTransport=false",
+    "-Dmockserver.typoSysprop=1",
+    "-Dmockserver.velocityDisallowClassLoading=true"
+  ],
+  "env": {
+    "JAVA_TOOL_OPTIONS": "-Xmx256m -Djavax.net.ssl.keyStorePassword=secret",
+    "MOCKSERVER_ACTION_HANDLER_THREAD_COUNT": "3",
+    "MOCKSERVER_NIO_EVENT_LOOP_THREAD_COUNT": "2",
+    "MOCKSERVER_JAVASCRIPT_TEMPLATE_EXECUTION_TIMEOUT": "500"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/status",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    }
+  ],
+  "timeoutSecs": 60,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "[WARN] unrecognised MockServer configuration system property [mockserver.typoSysprop] - it is not a known configuration property and will be ignored (check for a typo)",
+      "[WARN] JVM-only settings have no effect in mock-server: [JAVA_TOOL_OPTIONS -Djavax.net.ssl.keyStorePassword=***REDACTED***, MOCKSERVER_ACTION_HANDLER_THREAD_COUNT=3, MOCKSERVER_JAVASCRIPT_TEMPLATE_EXECUTION_TIMEOUT=500]\n",
+      "started on port"
+    ],
+    "stdoutOccurrences": {
+      "JVM-only settings": 1
+    },
+    "stdoutNotContains": [
+      "secret"
+    ]
+  }
+}

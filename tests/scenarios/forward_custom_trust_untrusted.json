@@ -1,0 +1,9 @@
+{"source": "the control of forward_custom_trust_{der,p7b,indefinite}: under CUSTOM trust a CA file naming another CA (tests/files/x509/mtls/ca.pem) does not trust the peer's leaf (tests/files/x509/forward-trust/gen.sh), so the https forward fails",
+ "peer": true,
+ "peerProperties": {"certificateAuthorityCertificate": "{{files}}/x509/forward-trust/ca.pem", "certificateAuthorityPrivateKey": "{{files}}/x509/forward-trust/ca-key.pem", "x509CertificatePath": "{{files}}/x509/forward-trust/upstream.pem", "privateKeyPath": "{{files}}/x509/forward-trust/upstream-key.pem"},
+ "properties": {"forwardProxyTLSX509CertificatesTrustManagerType": "CUSTOM", "forwardProxyTLSCustomTrustX509Certificates": "{{files}}/x509/mtls/ca.pem"},
+ "steps": [
+  {"node": "peer", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "from the upstream"}}, "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": "{\"httpRequest\": {\"path\": \"/target\"}, \"httpForward\": {\"host\": \"{{peerhost}}\", \"port\": {{peerport}}, \"scheme\": \"HTTPS\"}}", "mask": ["\"id\" : \"[0-9a-f-]+\"", "\"host\" : \"[^\"]+\""]},
+  {"note": "the upstream's chain is not trusted: the forward fails", "method": "GET", "path": "/target"}
+]}

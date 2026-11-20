@@ -1,0 +1,80 @@
+{
+ "source": "NettyHttpClientUpstreamProxyFailureTest.shouldLogAnUnreachableProxyOnceAsAProxyConfigurationProblem (NettyHttpClient.proxyFailure). forwardSocksProxy's name does not resolve (plain and secure forwards: one proxy, one WARN)",
+ "properties": {
+  "forwardSocksProxy": "upstream-proxy-for-mockserver.invalid:3128"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/plain"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/target",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/secure"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/target",
+       "secure": true,
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "plain forward 1: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "plain forward 2: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "plain forward 3: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "secure forward 1: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/secure"
+  },
+  {
+   "note": "secure forward 2: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/secure"
+  },
+  {
+   "note": "secure forward 3: its proxy cannot be reached",
+   "method": "GET",
+   "path": "/secure"
+  },
+  {
+   "note": "one 'could not be reached' WARN per proxy address, however many forwards failed",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

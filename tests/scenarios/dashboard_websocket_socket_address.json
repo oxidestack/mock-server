@@ -1,0 +1,21 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/relay\"}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}, {\"httpRequest\": {\"path\": \"/relay\"}, \"httpWebSocketResponse\": {\"messages\": [{\"text\": \"hello\"}]}}]",
+   "note": "a counted plain forward to the server itself, then a WebSocket response for the relayed upgrade",
+   "mask": ["\"id\" : \"[0-9a-f-]+\""]
+  },
+  {
+   "tcp": ["R0VUIC9yZWxheSBIVFRQLzEuMQ0KSG9zdDogbG9jYWxob3N0DQpVcGdyYWRlOiB3ZWJzb2NrZXQNCkNvbm5lY3Rpb246IFVwZ3JhZGUNClNlYy1XZWJTb2NrZXQtS2V5OiBkR2hsSUhOaGJYQnNaU0J1YjI1alpRPT0NClNlYy1XZWJTb2NrZXQtVmVyc2lvbjogMTMNCg0K"],
+   "note": "a WebSocket passthrough through a matched httpForward"
+  },
+  {"sleepMillis": 500},
+  {"wsOpen": "ui", "path": "/_mockserver_ui_websocket", "note": "the dashboard socket"},
+  {"wsDrain": "ui", "note": "the first frame, which the oracle sends late or not at all"},
+  {"wsSend": "ui", "text": "{\"path\": \"/relay\"}", "note": "the relayed upgrade's entries"},
+  {"wsRead": "ui", "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}", "(?<=\"sec-websocket-key\":\\[\")[^\"]+"],"note": "the passthrough's 'to upstream:{}' argument is a socket address, shown json:true"},
+  {"wsClose": "ui"}
+ ]
+}

@@ -1,0 +1,90 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19762\"; ma=86400",
+        "connection: keep-alive",
+        "content-length: 960",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/slow\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"slow\",\n    \"delay\" : {\n      \"timeUnit\" : \"MILLISECONDS\",\n      \"value\" : 4000\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/fast\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"fast\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/slow-sse\"\n  },\n  \"httpSseResponse\" : {\n    \"events\" : [ {\n      \"data\" : \"late\",\n      \"delay\" : {\n        \"timeUnit\" : \"MILLISECONDS\",\n        \"value\" : 4000\n      }\n    } ]\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "streams": [
+        {
+          "frames": [],
+          "end": "timeout"
+        },
+        {
+          "frames": [
+            "HEADERS",
+            "DATA"
+          ],
+          "status": 200,
+          "headers": [
+            "server: mockserver-http3"
+          ],
+          "body": "fast",
+          "end": "fin"
+        }
+      ],
+      "note": "two streams on one connection, the delayed one first: the other is answered before the delay is over"
+    },
+    {
+      "streams": [
+        {
+          "frames": [
+            "HEADERS"
+          ],
+          "status": 200,
+          "headers": [
+            "cache-control: no-cache",
+            "content-type: text/event-stream",
+            "server: mockserver-http3"
+          ],
+          "end": "timeout"
+        },
+        {
+          "frames": [
+            "HEADERS",
+            "DATA"
+          ],
+          "status": 200,
+          "headers": [
+            "server: mockserver-http3"
+          ],
+          "body": "fast",
+          "end": "fin"
+        }
+      ],
+      "note": "an SSE event's delay holds up no other stream"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "alt-svc: h3=\":19762\"; ma=86400",
+        "connection: keep-alive",
+        "content-length: 582",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"headers\" : {\n    \"host\" : [ \"localhost:19762\" ]\n  },\n  \"method\" : \"GET\",\n  \"path\" : \"/slow\",\n  \"protocol\" : \"HTTP_3\",\n  \"secure\" : true\n}, {\n  \"headers\" : {\n    \"host\" : [ \"localhost:19762\" ]\n  },\n  \"method\" : \"GET\",\n  \"path\" : \"/fast\",\n  \"protocol\" : \"HTTP_3\",\n  \"secure\" : true\n}, {\n  \"headers\" : {\n    \"host\" : [ \"localhost:19762\" ]\n  },\n  \"method\" : \"GET\",\n  \"path\" : \"/slow-sse\",\n  \"protocol\" : \"HTTP_3\",\n  \"secure\" : true\n}, {\n  \"headers\" : {\n    \"host\" : [ \"localhost:19762\" ]\n  },\n  \"method\" : \"GET\",\n  \"path\" : \"/fast\",\n  \"protocol\" : \"HTTP_3\",\n  \"secure\" : true\n} ]",
+      "note": "all four requests were received"
+    }
+  ]
+}

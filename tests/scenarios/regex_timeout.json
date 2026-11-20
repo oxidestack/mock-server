@@ -1,0 +1,60 @@
+{
+ "source": "8.0.0 runs each RegexStringMatcher regex in MatchingTimeoutExecutor; java.util.regex backtracking on a catastrophic pattern (path `/(.*a){25}` vs a 40-character path) passes regexMatchingTimeoutMillis (a startup property, here 300), so a WARN `regex evaluation timed out after {}ms for pattern:{}— treating as non-match` is written in the scan, before the expectation's not-matched entry, and again in the closest expectation's re-evaluation, and the request does not match. A short input fails within the budget and logs no timeout; a normal regex still matches.",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "catastrophic",
+    "httpRequest": {
+     "path": "/(.*a){25}"
+    },
+    "httpResponse": {
+     "body": "catastrophic"
+    }
+   }
+  },
+  {
+   "note": "Java backtracking passes the 300 ms budget: no match",
+   "method": "GET",
+   "path": "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+  },
+  {
+   "note": "on a short path the same pattern fails within the budget: no timeout entry",
+   "method": "GET",
+   "path": "/ab"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "normal",
+    "httpRequest": {
+     "path": "/ok/(v[0-9]+)/.*"
+    },
+    "httpResponse": {
+     "body": "normal"
+    }
+   }
+  },
+  {
+   "note": "a normal regex is unaffected",
+   "method": "GET",
+   "path": "/ok/v1/items"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

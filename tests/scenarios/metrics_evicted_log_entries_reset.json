@@ -1,0 +1,21 @@
+{"source": "HttpState.reset runs RequestMatchers.reset, whose removeHttpRequestMatcher logs one `removed expectation` entry per active expectation before mockServerLog.reset(); on a full log (maxLogEntries) each of those evicts an entry and advances mock_server_evicted_log_entries_total, which the reset keeps",
+ "properties": {"metricsEnabled": "true"},
+ "steps": [
+  {"note": "start from an empty log, so the count does not depend on what start-up and the recorder logged", "method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/configuration", "body": {"maxLogEntries": 4}, "mask": [{"regex": "(?s)\\A\\{.*\\}\\z", "replace": "<configuration>", "reason": "the whole configuration, pinned by the configuration scenarios; actionHandlerThreadCount follows the host's cores"}, "content-length: \\d+"]},
+  {"note": "three expectations active", "method": "PUT", "path": "/mockserver/expectation", "body": [{"httpRequest": {"path": "/one"}, "httpResponse": {"body": "one"}}, {"httpRequest": {"path": "/two"}, "httpResponse": {"body": "two"}}, {"httpRequest": {"path": "/three"}, "httpResponse": {"body": "three"}}], "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]},
+  {"note": "the log filled to maxLogEntries", "method": "GET", "path": "/nothing/1"},
+  {"method": "GET", "path": "/nothing/2"},
+  {"method": "GET", "path": "/nothing/3"},
+  {"note": "evictions so far", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?(?:mock_server_(?:evicted_log_entries|event_log_retained_entries|event_log_max_retained_entries)))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "a reset with the three expectations still active", "method": "PUT", "path": "/mockserver/reset"},
+  {"note": "the three removals evicted three entries before the log was emptied", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?(?:mock_server_(?:evicted_log_entries|event_log_retained_entries|event_log_max_retained_entries)))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "the removals themselves were emptied with the log", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "mask": ["\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}", "content-length: \\d+"]}
+ ]
+}

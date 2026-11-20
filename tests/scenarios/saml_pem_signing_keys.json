@@ -1,0 +1,2265 @@
+{
+  "note": "SAML SSO/SLO signing with PEM keys the JWT path cannot sign with: EC keys on curves SunEC does not support sign through BouncyCastle (the signature masked to its length), PEM RSA keys fail with BouncyCastle's or SunRsaSign's chain.",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "secp256k1 (JDK CurveDB name), SEC1, ES256",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEIDi2YudyLD0i4K3GsQoQViTJlVy0K/ECwib0UZnYUMfSoAcGBSuBBAAK\noUQDQgAEt+DbhXInotcyKiQEjHAmHZAkR+vDDb0nOoK4vrQdF9vzhq690UDK2cia\n/IVPEcfAoNOGNdV0a/HiTu6leT9iHQ==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "secp256k1 PKCS#8 under ES512: the digest is truncated to the order's length",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGEAgEAMBAGByqGSM49AgEGBSuBBAAKBG0wawIBAQQgTBrEWPuBbk8eQdLuCNi1\n/FRri1ZYrJJnG5wF73WaWmShRANCAATY9ELdVcNFpFUwyf9OeIHoBobz7v5pHVMG\noWy4EhKsPzkcFS185BnZsz+3Ai23gbRbmrUadJotrjAEYXMfvDl/\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES512"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "secp224r1 under ES384",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMGgCAQEEHGWvoZinbXW15DSQheSTCsYM57VoGZkCf3E7W22gBwYFK4EEACGhPAM6\nAAQiHP77u6EZ52V3VjvqSlmPkHeCB4eh6d1GfzEO1gViW1lq9yTOa6JTC4mfIKM0\nQqBG1wmjp0Zuuw==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES384"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{76}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><56 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{76}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><56 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "secp160k1: a 161-bit order on a 160-bit field gives 21-byte halves",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMFECAQEEFQDjyqhWpVJzDi7FE781RLtB20Dcx6AHBgUrgQQACaEsAyoABCGPDkk7\nzOhDJdJn8BbJcyXbU/1fCNUOdLa3Xjew5DrZ5lWqWjQ+1LA=\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{56}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><42 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{56}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><42 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "secp112r1 under ES512",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMD4CAQEEDiMgb4MVb5f3SfHomZRNoAcGBSuBBAAGoSADHgAEUHsT6YfWTAfgNNlO\nj+VjHp57LUzbyIWunk8KXg==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES512"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{40}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><28 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{40}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><28 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "prime239v1 (X9.62)",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMHECAQEEHi0knC3pzfd/7t6iTzw+S9MuwMtSJ0PMA1UcV2YdAqAKBggqhkjOPQMB\nBKFAAz4ABARe0kyhQ7wgxb8gf2Qv5+I4+0iVRhbTIX1QGz3OfwJolN03ECxyDrAc\n+svA0EW7B8lChISyOp7cuKJUYQ==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{86}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><60 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{86}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><60 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "brainpoolP256r1 (a BouncyCastle-only name)",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMHgCAQEEIFET4mVz6LnU/B8Xa1A5xGo9DofoFySHtxgInNGwsHEBoAsGCSskAwMC\nCAEBB6FEA0IABD9XxB/JGXbL7QpKnNPfVboN60o4lFHYfU1VHfak3JiHlbfTGSAZ\nhbqhraUcsHmp2xtT8jKobwXUr+XdUzsIJWk=\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "brainpoolP160t1 under ES512",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMFQCAQEEFLCFIkawGVBEfhOQtmYBVURa+nL2oAsGCSskAwMCCAEBAqEsAyoABKhv\nrv48E6zf3oBz9kk8VUACEZmVIgQ7oQCLW5aFbGXIuxPjQuuszNQ=\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES512"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{56}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><40 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{56}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><40 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "brainpoolP512r1",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMIHaAgEBBEBlOymj/0gC9kaxqyqOdRiSgdRzZ+CMxLbGEjHvUrMZQJ86dHSKnEjL\n1pleImgNhet1gh8a+At/wt0PjUdqaMCtoAsGCSskAwMCCAEBDaGBhQOBggAEGWeh\n3tokc/e8qswsgHQSqZ9PuEqqDPEz044I1uMfWI+1GU2Ix5/bnsT1Wd4PP2nR3H2n\nsNQhnGPkkK82KFCsu1vHvoPrRJz9I2tw653jVo3IQJpClM72+rnGe26jpzzQhAk0\n4wDUgUWn0STsylBpiBQZL+p8jmeBxlkQHCiU2BY=\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES384"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{184}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><128 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{184}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><128 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "SM2's curve",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBG0wawIBAQQgsdUXqrPK1LeRrZnT\nD9N51ib3f7viB8XTa+F0TyjX1mmhRANCAASwJ3tab0Pv0k/vMeSwv/RUCMIrjJvW\nwvleB480pfByp5WGmh9jGemNEfBAndgak2io/iNRlZAe2PjXh7rQoajX\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "sect163k1: a binary field (NIST K-163)",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMFMCAQEEFQHxSb8mJAEuciz4PBRs5GUt07fw66AHBgUrgQQAAaEuAywABAY9E3xU\nZXduTmZH8IJkkf1JKHmZvAFVT1CErV6okDb8F/ekpQSurwXBkA==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{56}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><42 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{56}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><42 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "sect571r1 under ES384",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMIHuAgEBBEgDaGbWwnEUu2SAeRQ52ZQjTlNmZwxLj2A74+kfsAwAoIjnQu0NmXpV\nHkyNnjWS8+4PkrRqnw1b1yn2L812ZLjdGMruP4QqJVOgBwYFK4EEACehgZUDgZIA\nBAIsm/9rKXcq0ZNSy6+Eaq51yLYCytzRKqZHOp7Q+no0KcILMl79/PzSF4EeFbQB\nvA1rD40YexCob0IuAY10mG4ZqNKT6xGLtgSwhWoblGAyskMdJ/ckUbnwDdLB8Rxf\n9y6hvsFjOyb/9dV2K27V0vEziODcqETdoRYyywcK43YGTaa5pT2sR++Yu6JLytDe\nhw==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES384"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{204}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><144 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{204}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><144 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "c2pnb163v1: a pentanomial basis, BouncyCastle-only name",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMFYCAQEEFQH+EcIOrTxyw0c9fBWZ4RYh3ykl+qAKBggqhkjOPQMAAaEuAywABAQ7\nw1sNVJV1rXkY5SBbUT6WiV7/tAR4ZEg+a1lFGhh0nQ8HtkKet3WYKQ==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{56}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><42 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{56}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><42 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "c2tnb191v1: a trinomial basis",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMF8CAQEEGAfiJhVWx46WIioJiW3suf5kczPTXtQ5AqAKBggqhkjOPQMABaE0AzIA\nBCsTxCVGl2SFH6YQEKgq74ohT8i4tI+N923w9eLobD4VH8kCiD/Mm/v0D+90ZPVk\njQ==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES512"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{64}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><48 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{64}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><48 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "explicit secp256k1 parameters, SEC1",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMIIBUQIBAQQgtrOZe3o1j8bAPcWoS6nA/oXqlIZplFySlhL030fSj7SggeMwgeAC\nAQEwLAYHKoZIzj0BAQIhAP////////////////////////////////////7///wv\nMEQEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAABwRBBHm+Zn753LusVaBilc6HCwcCm/zbLc4o\n2VnygVsW+BeYSDradyajxGVdpPv8DhEIqP0XtEimhVQZnEfQj/sQ1LgCIQD/////\n///////////////+uq7c5q9IoDu/0l6M0DZBQQIBAaFEA0IABOuRTn5jMhxxRCuK\nnARCte5Dlumf6KSf21DVrmWLof9eZPS3wCptPZiezJ65rRqEIHhieKZQQ26ax8nZ\nVwahmhY=\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "explicit secp256k1 parameters, PKCS#8, ES384",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIB2DCBwaADAgECAgIBEjANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDDAp0aWNr\nZXQtMjc0MB4XDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowFTETMBEGA1UE\nAwwKdGlja2V0LTI3NDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABNsjB+Lq5VaB\nEazimCaf81er08M+yoSb0LK+Wt+rTLgKyMv/nJ5AWrZinkTe6pWbvCF+ZopkLdao\nEi8NSfXdkCUwDQYJKoZIhvcNAQELBQADggEBAIASb+3al9PAPTthMC4+Vs0t9A0L\nR/+EzrpE74kv/QB2m6mrEuh8uXujoyeMvEecdiFpsAGjyoYefEK3W4OutV+UDBt0\nwbSYrDozL58Olb1TSmQNvlDXrBG+Fvpdhy+JoZDUDUk2U2EIw9bpm5qBmbisKqli\nGPPlU2gyYCQ8L2b2tx5Ps/OXDPbyblUsDvLgqHLF6dDriW1y0qJaDgDgmxGT5qM4\ni/qaYKG6iLARXgtmsgbTJDQ5WwUQhGAaOC0onAD5n8d6/qy7d26CdlAjmOTaRBCD\n+ytT+YngEQ9cK+CF77AYPUGpsYZlmjvoCsQmOccJiBg51dpkYmRdqrg0iJM=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIBYQIBADCB7AYHKoZIzj0CATCB4AIBATAsBgcqhkjOPQEBAiEA////////////\n/////////////////////////v///C8wRAQgAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHBEEE\neb5mfvncu6xVoGKVzocLBwKb/NstzijZWfKBWxb4F5hIOtp3JqPEZV2k+/wOEQio\n/Re0SKaFVBmcR9CP+xDUuAIhAP////////////////////66rtzmr0igO7/SXozQ\nNkFBAgEBBG0wawIBAQQgtrOZe3o1j8bAPcWoS6nA/oXqlIZplFySlhL030fSj7Sh\nRANCAATrkU5+YzIccUQripwEQrXuQ5bpn+ikn9tQ1a5li6H/XmT0t8AqbT2Ynsye\nua0ahCB4YnimUENumsfJ2VcGoZoW\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES384"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an EC key on secp256k1 under RS256: the RSA signer names BouncyCastle's EC key class",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEIDi2YudyLD0i4K3GsQoQViTJlVy0K/ECwib0UZnYUMfSoAcGBSuBBAAK\noUQDQgAEt+DbhXInotcyKiQEjHAmHZAkR+vDDb0nOoK4vrQdF9vzhq690UDK2cia\n/IVPEcfAoNOGNdV0a/HiTu6leT9iHQ==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/sso"
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an EC key on sect163k1 under RS512",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN EC PRIVATE KEY-----\nMFMCAQEEFQHxSb8mJAEuciz4PBRs5GUt07fw66AHBgUrgQQAAaEuAywABAY9E3xU\nZXduTmZH8IJkkf1JKHmZvAFVT1CErV6okDb8F/ekpQSurwXBkA==\n-----END EC PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS512"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/sso"
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 256-bit RSA key: the DigestInfo does not fit, BouncyCastle's 'input data too large'",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIGrAgEAAiEA2KgctLqpqdORp9UmZU0m5Mu21FMRx8uv1k8i51gUpbECAwEAAQIh\nANMyBVGTyEHZEFpnaFdFfwur9FOqoBUvw1cbTxuOV+plAhEA7Q5tgmARgdgi+04L\nbrp7cwIRAOn4W9sP02/8KZwCIQB62UsCEDFo/HJcS8ngnwn6bm+Z9vkCECCcxLj5\nMMCoRmh/h3gYp5cCEQCDucrh/akLPL5VOxCsml1i\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/sso"
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 512-bit RSA key signs RS256",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIBPAIBAAJBANjLIjNnNVLvWpW9gMueg7/kSE0S+rXfyPeHRSqDyzLiYeq+h75A\nN4LcWllRzz8NJH6jNq9JIZzFiXWymUFeWJ8CAwEAAQJBAJABVwWIIB6oCab/yyb2\nc5OqwvAXlFvte+QYgbQ8+WQhTPE/w1UZWRGRSj/xPaW9qZyqi/tDyRm1qk4z01hK\nnlkCIQD42gxfZM5BUgKFodJYsgwnDiFDFSI+Xw7r0oLPjoTeTQIhAN8FV5xTy7jc\n0inoWdvtL2FEPNDCvz1wzKl7U8Sd+sCbAiEAv6P8P0J8bGVht9OlD9Ud8r2489ZE\nps/Bx+43+uuAe0kCIQDPdYS+IyULXj8SRNXyQ30jmfqIp+CGIvv/XH3cFKlBqQIg\nLmDUASEbnKJ3rICYx88ZNvKdLrTFey4vut5KwRsXezI=\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{94}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><64 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "but not RS384: SunRsaSign refuses it at initSign, BouncyCastle fails",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEA2MsiM2c1Uu9alb2A\ny56Dv+RITRL6td/I94dFKoPLMuJh6r6HvkA3gtxaWVHPPw0kfqM2r0khnMWJdbKZ\nQV5YnwIDAQABAkEAkAFXBYggHqgJpv/LJvZzk6rC8BeUW+175BiBtDz5ZCFM8T/D\nVRlZEZFKP/E9pb2pnKqL+0PJGbWqTjPTWEqeWQIhAPjaDF9kzkFSAoWh0liyDCcO\nIUMVIj5fDuvSgs+OhN5NAiEA3wVXnFPLuNzSKehZ2+0vYUQ80MK/PXDMqXtTxJ36\nwJsCIQC/o/w/QnxsZWG306UP1R3yvbjz1kSmz8HH7jf664B7SQIhAM91hL4jJQte\nPxJE1fJDfSOZ+oin4IYi+/9cfdwUqUGpAiAuYNQBIRuconesgJjHzxk28p0utMV7\nLi+63krBGxd7Mg==\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS384"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/sso"
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 504-bit RSA key (below SunRsaSign's 512): BouncyCastle signs, 63 bytes",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIBNQIBAAJAAKvXL0OPE3PlhIrvNmJ5+AwBh5A3Pz/KkZdirgJP/p99LipgEL5B\nanlGeVYl2JMiipUrouQ5IwR9sEYfSBnGuwIDAQABAj8+Ws4ewLs5Ue6fj5/3afTV\nPnTXowSDfFkKSteDpU1qvreZYV1Y5BrlBxoCX4uXscxqy6g7PULCaj3fnZgKX+EC\nIA2dn4wJkRWxHd0p3JwuqaTpNC0vd+WkzoajWJKCH4XrAiAMnumSCsprZpWYfhpp\nxIf04fj+VQjzOPl3YC9njVJ+cQIgC3q3R0PRlK5NdWeT3gHheW48VVROC8lVbmJN\njMg0d50CIAb0rpanC9kVuO1K0xPoFWaKBMln5H7or9VzVa0k3oqBAiAMQ3hdvNgk\na7wtXYwjLnSBQtNZeUFYzobjwpsY4SD9Rg==\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{90}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><63 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{90}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><63 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 2048-bit key with a wrong dp: SunRsaSign's CRT self-check",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEA4F3X4OBtjqT7gJueeAgrQxKz0PLVINp+3dwHqKCnhkfZT0g1\niK6bxvXRqKrWbtLCKUxNeJYK6FbDht79k26wbvuDcVrYVKBjSzL+6pjLyiBJC1FU\nmyjiSXKbFdwhCeLSRB+bRiszr+nsfOXu7wjszKLbi+rRheo1P2wYkjni8pLJ48F5\nByEqm342geMwoGX2CXvJd8KZQTo9frr5oRagt5D06N49P4ZEiEb01AArgGTnUOZZ\nU5yb5pqXiUHae439YD0XXmqPhQgaYiQZf26U8xgyuBW1GbYx2NGKE0zWPK6JjbFw\n0x2Rc93qaYPvzdfI1BGQemsQtp+IHejvwPxsqQIDAQABAoIBAB3yeKuT2Ru2irlG\nTDcSRA/+UZD8sJTjhRaA1WbdFq82LNvHtBmL0NAUJIliUB/XssHHZPnI8SjE1/FL\nF0aT+im+GXPKX+CfzdEOO/c9MMpIV+eSUfwpz1ZlXSzkRmam51DfdR6/CnWbAA1F\ntYgjRVQlEq/Qxmmc8sGF4Ju37UJaNE5uL8512SA03lPowRhBwitlu5+eNN6xhGFd\nDcHsKtu6U11TU2idWckdZAinp4RDtM0djtXXvOzg+nu/l5I3De+g4t9iQHpvHLo3\nyl0IHgugZloevTxaMpWfZougq1qGDItr4Fu5l2RPzqyFddXRvpgT0J+ToWaGO4Iu\n+5h1BxkCgYEA/rsijXsghDB6czt4/OFYumiffzcr7Q1yUNtpzhhxWRbXowFq58Ic\ngoK/YU5kksVGybs3bPzOZkJEfBrVb2ZMKCoxzR80mt71uWcuDJUdkJJL+8a8SHqy\nX3iVxh1kM4iJ9Sni/L8zJOpvjxm7kSXgkvMNu/UI37ZPZgTyrrhIBtUCgYEA4Xv7\n2IUe4PoJDxCI30zkKTN/iEyuIRszhE9XdWaNsr4dn++nZ7HdK1lifhVl+ih9rh4b\nytU+toJY5/JZplYxkkpJUXe0RQVfTGlhHazNCsP3KZFe0/g319MWHEh13xZgGos2\n+0vMt1AjVcGXodstjx1c888cTlmZIpF2gH99YIUCgYAr3uDhiv4bphnAtNJugwT7\n/b7ScxcOmY1BnbhINW94D3YN7dWSmpy8YXZCdPTfTjiVz7eI/rUxaWJQGXL+35ho\nJnQzRpeRwKqDRuDoa9oOpxONBjoxJWiJBsSMvU0fjvlrjs44B1nwlqul8qGaKvLV\nfCS2ZUok9UoRYPLG4pgNDwKBgGehO9X/GHn9cDxkNQOrqxDkgjB6TW0Zu0uLy35B\na85CYgsncaDOtf8+TW31F7Eo+toTLGLELtZigcnYMCuqYY4CZj/y6/7swSe1JtUk\nnffcqLOKBDMXWVLvyLGm+8VT20dXxCUqaSO2yQaYur/Ao+eqbxX+kdvQgfjJMdVM\nwqqhAoGABhpUePcvSsUEkO77kTXUNdcwO0iUkl4/O9LlOjmYKgIVS40UOPilcmCv\nk+vDPzXzTp/O8yZ0Quplsu1m57FffhxFCwhWl/rbdHaJIrkaXsK6Gy7aX0YtDBwh\nrlJ3oWzo8tgruj8K/NAOwO1ksYbVw25Qqi/yHYD1ARSD6l5bxgU=\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/sso"
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 511-bit key with a wrong dp: rounded up to 512 bits, SunRsaSign's CRT self-check",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIBOAIBAAJAWmepqzdp6J/S4Mw2NnkLSp1OSs7maVW4YN2zQ32UJhdFm1/dmLRV\nrTlW5cc62UkKaZ/eeLSSiCSu9Ya9aN98gwIDAQABAkAt+FppatMa6/JCRvUmO+TG\n+zhth8nYNDN+Zh2aqwejWkAeGTHrTsVRru0/Tj4X302ph7y7jMfTDUFQp8vm1+IJ\nAiEAxUREUO7agTOgmWw27m4H+HU8aLfUYbrNKs2AJHPNyY8CIHVSW5fvyhujBfpC\nloxsgNdhm2PYO4aaT2yijymSfRvNAiEAtZl++rKoXMDWW+cPOrf4hnYGwrBYyA9b\nyMed6/DfxWsCIAiwfuQz+G4vluPARtJDvw80xYORomcHytYq/BuCJA4JAiBgIHGR\np+A7sn7Ohrz9PH2baeAFHnqix4iU7O/wmcxW1Q==\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/sso"
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "the same key under RS384: too short, which fails first",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIBOAIBAAJAWmepqzdp6J/S4Mw2NnkLSp1OSs7maVW4YN2zQ32UJhdFm1/dmLRV\nrTlW5cc62UkKaZ/eeLSSiCSu9Ya9aN98gwIDAQABAkAt+FppatMa6/JCRvUmO+TG\n+zhth8nYNDN+Zh2aqwejWkAeGTHrTsVRru0/Tj4X302ph7y7jMfTDUFQp8vm1+IJ\nAiEAxUREUO7agTOgmWw27m4H+HU8aLfUYbrNKs2AJHPNyY8CIHVSW5fvyhujBfpC\nloxsgNdhm2PYO4aaT2yijymSfRvNAiEAtZl++rKoXMDWW+cPOrf4hnYGwrBYyA9b\nyMed6/DfxWsCIAiwfuQz+G4vluPARtJDvw80xYORomcHytYq/BuCJA4JAiBgIHGR\np+A7sn7Ohrz9PH2baeAFHnqix4iU7O/wmcxW1Q==\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS384"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/sso"
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 504-bit key with a wrong dp: BouncyCastle's check",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIBNQIBAAJAAMaOGQ0bR1QiIXSFMrKV0G+SpkG0Guw0xHUybp4iarSSlx3htnyz\nkq9EmB2Fm1MLy4orHygwlvYUL24FWjuwBQIDAQABAj877T9aWVVZ60M1q831YIoc\nYqKTSgymJfb1eFcymyihdtxXGCcSC2pQvAT/IjW1SPRQMXMqumuLOluQ8560CDEC\nIAyG02qu2vUtHwQvBFij2IZLA+nlHucJtkzp6+ISm0trAiAP2cCYtCan0hIB5wM8\nVNNSzI8VpSUeZfyOmXzDqoK+TwIgB5dEUme3Y8999ikPty9CrM6Uho5Dlbn68Mzo\nFk00MhcCIA7HR/sYfLIb+w4rBalKrX2VnBLiVylwjXmnQdxtLlmhAiADHkIDkubL\nuGE73zpt77NEWayu9Mo+Wqk/ZL7C9n8QOA==\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/sso"
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a wrong d with good CRT values signs",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIIEogIBAAKCAQEA4F3X4OBtjqT7gJueeAgrQxKz0PLVINp+3dwHqKCnhkfZT0g1\niK6bxvXRqKrWbtLCKUxNeJYK6FbDht79k26wbvuDcVrYVKBjSzL+6pjLyiBJC1FU\nmyjiSXKbFdwhCeLSRB+bRiszr+nsfOXu7wjszKLbi+rRheo1P2wYkjni8pLJ48F5\nByEqm342geMwoGX2CXvJd8KZQTo9frr5oRagt5D06N49P4ZEiEb01AArgGTnUOZZ\nU5yb5pqXiUHae439YD0XXmqPhQgaYiQZf26U8xgyuBW1GbYx2NGKE0zWPK6JjbFw\n0x2Rc93qaYPvzdfI1BGQemsQtp+IHejvwPxsqQIDAQABAoIBAB3yeKuT2Ru2irlG\nTDcSRA/+UZD8sJTjhRaA1WbdFq82LNvHtBmL0NAUJIliUB/XssHHZPnI8SjE1/FL\nF0aT+im+GXPKX+CfzdEOO/c9MMpIV+eSUfwpz1ZlXSzkRmam51DfdR6/CnWbAA1F\ntYgjRVQlEq/Qxmmc8sGF4Ju37UJaNE5uL8512SA03lPowRhBwitlu5+eNN6xhGFd\nDcHsKtu6U11TU2idWckdZAinp4RDtM0djtXXvOzg+nu/l5I3De+g4t9iQHpvHLo3\nyl0IHgugZloevTxaMpWfZougq1qGDItr4Fu5l2RPzqyFddXRvpgT0J+ToWaGO4Iu\n+5h1BxsCgYEA/rsijXsghDB6czt4/OFYumiffzcr7Q1yUNtpzhhxWRbXowFq58Ic\ngoK/YU5kksVGybs3bPzOZkJEfBrVb2ZMKCoxzR80mt71uWcuDJUdkJJL+8a8SHqy\nX3iVxh1kM4iJ9Sni/L8zJOpvjxm7kSXgkvMNu/UI37ZPZgTyrrhIBtUCgYEA4Xv7\n2IUe4PoJDxCI30zkKTN/iEyuIRszhE9XdWaNsr4dn++nZ7HdK1lifhVl+ih9rh4b\nytU+toJY5/JZplYxkkpJUXe0RQVfTGlhHazNCsP3KZFe0/g319MWHEh13xZgGos2\n+0vMt1AjVcGXodstjx1c888cTlmZIpF2gH99YIUCgYAr3uDhiv4bphnAtNJugwT7\n/b7ScxcOmY1BnbhINW94D3YN7dWSmpy8YXZCdPTfTjiVz7eI/rUxaWJQGXL+35ho\nJnQzRpeRwKqDRuDoa9oOpxONBjoxJWiJBsSMvU0fjvlrjs44B1nwlqul8qGaKvLV\nfCS2ZUok9UoRYPLG4pgNDQKBgGehO9X/GHn9cDxkNQOrqxDkgjB6TW0Zu0uLy35B\na85CYgsncaDOtf8+TW31F7Eo+toTLGLELtZigcnYMCuqYY4CZj/y6/7swSe1JtUk\nnffcqLOKBDMXWVLvyLGm+8VT20dXxCUqaSO2yQaYur/Ao+eqbxX+kdvQgfjJMdVM\nwqqhAoGABhpUePcvSsUEkO77kTXUNdcwO0iUkl4/O9LlOjmYKgIVS40UOPilcmCv\nk+vDPzXzTp/O8yZ0Quplsu1m57FffhxFCwhWl/rbdHaJIrkaXsK6Gy7aX0YtDBwh\nrlJ3oWzo8tgruj8K/NAOwO1ksYbVw25Qqi/yHYD1ARSD6l5bxgU=\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{368}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><256 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{368}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><256 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a non-CRT key signs",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIICOgIBADANBgkqhkiG9w0BAQEFAASCAiQwggIgAgEAAoIBAQDgXdfg4G2OpPuA\nm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIpTE14lgroVsOG\n3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJEH5tGKzOv6ex8\n5e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJe8l3wplBOj1+\nuvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1gPRdeao+FCBpi\nJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jUEZB6axC2n4gd\n6O/A/GypAgMBAAECggEAHfJ4q5PZG7aKuUZMNxJED/5RkPywlOOFFoDVZt0WrzYs\n28e0GYvQ0BQkiWJQH9eywcdk+cjxKMTX8UsXRpP6Kb4Zc8pf4J/N0Q479z0wykhX\n55JR/CnPVmVdLORGZqbnUN91Hr8KdZsADUW1iCNFVCUSr9DGaZzywYXgm7ftQlo0\nTm4vznXZIDTeU+jBGEHCK2W7n5403rGEYV0Nwewq27pTXVNTaJ1ZyR1kCKenhEO0\nzR2O1de87OD6e7+XkjcN76Di32JAem8cujfKXQgeC6BmWh69PFoylZ9mi6CrWoYM\ni2vgW7mXZE/OrIV11dG+mBPQn5OhZoY7gi77mHUHGQIBAAIBAAIBAAIBAAIBAA==\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS512"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{368}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><256 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{368}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><256 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a 1024-bit key signs RS512",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\nMIICXAIBAAKBgQC4iILypSLGmvcb5YVIvDeZSoeZXaapjsA/HdaRfDFbCEUbjaG7\njL3LFCeDGKF0mxwShPltNgVjQ5rUDmV2kDKADFWYyIrszPKpGhNqbxrUIqnidNvd\nipUaxxtMIk7QaPuDGpsnn8fGYAi9cVymLJcV1p5k186wAcuOJilr7jvBnwIDAQAB\nAoGAOqmbB0wb7Asjd0jVwDOlcSPSS50L+GcbEnWH2qQihI/yeDnkKl0pkL+NeA2C\ndjFBEVoYePFtcQry02roMnLQun0ej+B5Pl6o60Rdq91fj/8GpXZmetimv23loCpA\nd7dSpTn+H9+qQUqS9qZqWts7uDGyMfT7uIh3kOQmE3fbeFECQQDzVZ4fGjU/IdnP\nHSANDibyjFpM3/gVA81XJnV+zfv+3aMWAr62UXb23RbkTRkfhuPTeGm3O6b0ux80\nK3y5fjBjAkEAwiNhOeEv+URplbVV3xIXP1HMHk1SwYKObkwBhiDKSsdjXVgr/hqP\nJhO5Tz3iW029HXz7Qp1vxerwgmJN5SeIlQJBAIhA49Z0nWYpdUX1ABJvXz2ne5Ta\nQJa710o6fcYwXy+aOYzEoreCLEQVDpFt3mh55q5uGXwBif41nUZgJ2nSkBMCQFmn\nLwokpRvu7PeW8139o8C5DJNdz/7PROlIrld7ow/fflKoGkDRkRPbffNLN9JEVzZb\n9kiwHeL/eSwtK53MoPUCQDJXOda5rqClQlwXf3cWC0qMg/5TX7FZFMmlybr5eyi9\nXQHLSuAOXaAMJVzJB1PPXfc0zKWJ8SvujY9E1wlpVzs=\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS512"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{184}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><128 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{184}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><128 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an 8192-bit key signs",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "body": {
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICpDCCAYygAwIBAgICARIwDQYJKoZIhvcNAQELBQAwFTETMBEGA1UEAwwKdGlj\na2V0LTI3NDAeFw0yNjAxMDEwMDAwMDBaFw0zNTEyMzAwMDAwMDBaMBUxEzARBgNV\nBAMMCnRpY2tldC0yNzQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDg\nXdfg4G2OpPuAm554CCtDErPQ8tUg2n7d3AeooKeGR9lPSDWIrpvG9dGoqtZu0sIp\nTE14lgroVsOG3v2TbrBu+4NxWthUoGNLMv7qmMvKIEkLUVSbKOJJcpsV3CEJ4tJE\nH5tGKzOv6ex85e7vCOzMotuL6tGF6jU/bBiSOeLyksnjwXkHISqbfjaB4zCgZfYJ\ne8l3wplBOj1+uvmhFqC3kPTo3j0/hkSIRvTUACuAZOdQ5llTnJvmmpeJQdp7jf1g\nPRdeao+FCBpiJBl/bpTzGDK4FbUZtjHY0YoTTNY8romNsXDTHZFz3eppg+/N18jU\nEZB6axC2n4gd6O/A/GypAgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAKozAs6tsCT\nPvwNstoRsHUwvTz+P/WzlWtqNDkCFhHdGXMdvp4/Zc5lZ4arpQvx6cEEWnfeXnRk\nby2ryXCAXo/9FcNfdAaS4CyOS60rJIvYn+FdODQdL+p7WMqbocoxrKp2+4xx7xnT\nGaeEA5ZMzIcgVHwF4O0dCQk1dWfWkPkVksiYdg41ajjmKVQASsg7rDtNfysGzypU\n6UZpuqS3FBsfYINmd9moLThD8anYut+xdNgMx3EydvYGE7Ajozs5k/G7dv27qw0W\nxeYikWWucCZprLUmoyHBn5RgheXToORcWiG2BSVbdThmImDjO6j+PycEjbUzIeEP\nuGUUcmpkhGg=\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN RSA PRIVATE KEY-----\n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\n-----END RSA PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS384"
+      },
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{1470}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><1024 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/saml/logout",
+      "decodeBase64": "name=\"SAMLResponse\" value=\"([^\"]*)\"",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z",
+          "replace": "<instant>"
+        },
+        {
+          "regex": "<ds:DigestValue>[^<]*</ds:DigestValue>",
+          "replace": "<ds:DigestValue><masked></ds:DigestValue>"
+        },
+        {
+          "regex": "<ds:SignatureValue>[A-Za-z0-9+/=&#;\\n]{1470}</ds:SignatureValue>",
+          "replace": "<ds:SignatureValue><1024 bytes></ds:SignatureValue>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    }
+  ]
+}

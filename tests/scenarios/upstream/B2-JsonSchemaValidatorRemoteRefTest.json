@@ -1,0 +1,86 @@
+{
+ "source": "hand-authored from mockserver-core 8.0.0 JsonSchemaValidatorRemoteRefTest: the JUnit test calls JsonSchemaValidator in-process with no wire form of its own, so these steps translate its 5 cases into the JSON_SCHEMA body matcher on the data plane, which shares the same validator. shouldExposeRemoteRefsBlockedByDefault and the flag-only half of shouldAllowRemoteRefsWhenSystemPropertyOptIn assert a static getter directly and have no wire form either; both are ported as Rust unit tests instead (src/matcher/string.rs, src/matcher/body.rs).",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/internal-ref",
+      "body": {
+       "type": "JSON_SCHEMA",
+       "jsonSchema": {
+        "type": "object",
+        "definitions": {
+         "positiveInt": {
+          "type": "integer",
+          "minimum": 1
+         }
+        },
+        "properties": {
+         "count": {
+          "$ref": "#/definitions/positiveInt"
+         }
+        },
+        "required": [
+         "count"
+        ]
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "internal ref matched"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/remote-ref",
+      "body": {
+       "type": "JSON_SCHEMA",
+       "jsonSchema": {
+        "type": "object",
+        "properties": {
+         "value": {
+          "$ref": "http://192.0.2.1/external-schema.json"
+         }
+        },
+        "required": [
+         "value"
+        ]
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "remote ref matched"
+     }
+    }
+   ],
+   "note": "register: an internal-$ref schema (unaffected by the SSRF gate) and a remote-$ref schema (RFC 5737 TEST-NET-1, guaranteed non-routable — the point is that it is never actually contacted)"
+  },
+  {
+   "note": "shouldMatchSchemaUsingOnlyInternalRefsAsBefore: a schema with only internal ($ref: #/...) refs validates exactly as before the SSRF gate",
+   "method": "POST",
+   "path": "/internal-ref",
+   "body": {
+    "count": 3
+   }
+  },
+  {
+   "note": "shouldRejectNonMatchingBodyAgainstInternalRefSchemaAsBefore: a body violating the internal ref's minimum:1 is reported as a non-match, mentioning \"count\" — the gate changes nothing about internal-ref validation",
+   "method": "POST",
+   "path": "/internal-ref",
+   "body": {
+    "count": 0
+   }
+  },
+  {
+   "note": "shouldBlockRemoteRefByDefaultWithoutNetworkFetch: the remote $ref is never fetched (default deny, no opt-in) — the response comes back promptly (this step would hang/timeout if the server actually tried to reach 192.0.2.1) and the closest-match hint names the blocked reference instead of a connection failure",
+   "method": "POST",
+   "path": "/remote-ref",
+   "body": {
+    "value": 123
+   }
+  }
+ ]
+}

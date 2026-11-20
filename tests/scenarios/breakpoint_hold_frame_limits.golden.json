@@ -1,0 +1,134 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "ws": "bp",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket",
+        "x-client-registration-id: bp-frame-limits-client"
+      ]
+    },
+    {
+      "ws": "bp",
+      "type": "org.mockserver.serialization.model.WebSocketClientIdDTO",
+      "body": "{\"clientId\":\"bp-frame-limits-client\"}"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/ws-out\"\n  },\n  \"httpWebSocketResponse\" : {\n    \"closeConnection\" : false,\n    \"messages\" : [ {\n      \"text\" : \"one\"\n    }, {\n      \"text\" : \"two\"\n    } ]\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: 128",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"id\" : \"<uuid>\",\n  \"phases\" : [ \"RESPONSE_STREAM\" ],\n  \"clientId\" : \"bp-frame-limits-client\"\n}"
+    },
+    {
+      "ws": "first",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket"
+      ],
+      "note": "its frame 0 is held and never answered"
+    },
+    {
+      "ws": "bp",
+      "type": "org.mockserver.serialization.model.PausedStreamFrameDTO",
+      "body": "{\"body\":\"b25l\",\"breakpointId\":\"<uuid>\",\"correlationId\":\"<uuid>\",\"direction\":\"OUTBOUND\",\"phase\":\"RESPONSE_STREAM\",\"requestMethod\":\"GET\",\"requestPath\":\"/ws-out\",\"sequenceNumber\":0,\"streamId\":\"<uuid>-ws-stream\"}",
+      "note": "the held frame"
+    },
+    {
+      "ws": "second",
+      "status": 101,
+      "headers": [
+        "connection: upgrade",
+        "sec-websocket-accept: <accept>",
+        "upgrade: websocket"
+      ],
+      "note": "breakpointMaxHeld 1: this stream's frames go out unheld"
+    },
+    {
+      "ws": "second",
+      "body": "one",
+      "note": "frame 0 unheld"
+    },
+    {
+      "ws": "second",
+      "body": "two",
+      "note": "frame 1 unheld"
+    },
+    {
+      "ws": "bp",
+      "timeout": true,
+      "note": "nothing of the second stream was sent to the client"
+    },
+    {
+      "ws": "first",
+      "body": "one",
+      "note": "auto-continued after breakpointTimeoutMillis"
+    },
+    {
+      "ws": "bp",
+      "type": "org.mockserver.serialization.model.PausedStreamFrameDTO",
+      "body": "{\"body\":\"dHdv\",\"breakpointId\":\"<uuid>\",\"correlationId\":\"<uuid>\",\"direction\":\"OUTBOUND\",\"phase\":\"RESPONSE_STREAM\",\"requestMethod\":\"GET\",\"requestPath\":\"/ws-out\",\"sequenceNumber\":1,\"streamId\":\"<uuid>-ws-stream\"}",
+      "note": "the next frame of the first stream is held in its turn"
+    },
+    {
+      "ws": "first",
+      "body": "two",
+      "note": "auto-continued too"
+    },
+    {
+      "ws": "first",
+      "closed": true
+    },
+    {
+      "ws": "second",
+      "closed": true
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - resetting all expectations and request logs\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ws-out\"\n    },\n    \"httpWebSocketResponse\" : {\n      \"closeConnection\" : false,\n      \"messages\" : [ {\n        \"text\" : \"one\"\n      }, {\n        \"text\" : \"two\"\n      } ]\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-out\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-out\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ws-out\"\n    },\n    \"httpWebSocketResponse\" : {\n      \"closeConnection\" : false,\n      \"messages\" : [ {\n        \"text\" : \"one\"\n      }, {\n        \"text\" : \"two\"\n      } ]\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning WebSocket response for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-out\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n for action:\n\n  {\n    \"closeConnection\" : false,\n    \"messages\" : [ {\n      \"text\" : \"one\"\n    }, {\n      \"text\" : \"two\"\n    } ]\n  }\n\n from expectation:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-out\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-out\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n matched expectation:\n\n  {\n    \"httpRequest\" : {\n      \"path\" : \"/ws-out\"\n    },\n    \"httpWebSocketResponse\" : {\n      \"closeConnection\" : false,\n      \"messages\" : [ {\n        \"text\" : \"one\"\n      }, {\n        \"text\" : \"two\"\n      } ]\n    },\n    \"id\" : \"<uuid>\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n------------------------------------\n<timestamp> - returning WebSocket response for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/ws-out\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Upgrade\" : [ \"websocket\" ],\n      \"Sec-WebSocket-Version\" : [ \"13\" ],\n      \"Sec-WebSocket-Key\" : [ \"dGhlIHNhbXBsZSBub25jZQ==\" ],\n      \"Host\" : [ \"localhost:<port>\" ],\n      \"Connection\" : [ \"Upgrade\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n for action:\n\n  {\n    \"closeConnection\" : false,\n    \"messages\" : [ {\n      \"text\" : \"one\"\n    }, {\n      \"text\" : \"two\"\n    } ]\n  }\n\n from expectation:\n\n  <uuid>\n\n------------------------------------\n<timestamp> - stream frame WS dispatch cap reached (\n\n  1\n\n /\n\n  1\n\n ), skipping for stream=\n\n  <uuid>-ws-stream\n\n seq=\n\n  0\n\n------------------------------------\n<timestamp> - stream frame WS dispatch cap reached (\n\n  1\n\n /\n\n  1\n\n ), skipping for stream=\n\n  <uuid>-ws-stream\n\n seq=\n\n  1\n\n------------------------------------\n<timestamp> - stream frame WS dispatch auto-continued (timeout \n\n  5000\n\n ms) for stream=\n\n  <uuid>-ws-stream\n\n seq=\n\n  0\n\n------------------------------------\n<timestamp> - stream frame WS dispatch auto-continued (timeout \n\n  5000\n\n ms) for stream=\n\n  <uuid>-ws-stream\n\n seq=\n\n  1\n\n",
+      "note": "the cap and auto-continue lines"
+    }
+  ]
+}

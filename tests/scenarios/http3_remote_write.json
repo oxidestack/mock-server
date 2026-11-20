@@ -1,0 +1,70 @@
+{
+  "quic": true,
+  "properties": {
+    "http3Port": "19637"
+  },
+  "steps": [
+    {
+      "method": "GET",
+      "path": "/mockserver/http3status",
+      "pollUntil": "\"enabled\" ?: ?true",
+      "note": "wait for the HTTP/3 server"
+    },
+    {
+      "h3": true,
+      "method": "GET",
+      "path": "/warm-up",
+      "note": "lets the oracle's startup logging finish"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "note": "the oracle may log its startup entries after the opening reset: reset again"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "id": "h3-remote-write",
+        "httpRequest": {
+          "method": "POST",
+          "path": "/api/v1/write",
+          "headers": {
+            "content-encoding": ["snappy"],
+            "x-prometheus-remote-write-version": ["0.1.0"]
+          },
+          "body": {
+            "type": "BINARY",
+            "base64Bytes": "CkwKIwoIX19uYW1lX18SF3JlbW90ZV93cml0ZV90ZXN0X3RvdGFsChMKCXRyYW5zcG9ydBIGSFRUUF8zEhAJAAAAAAAAHEAQgICzwZwzCk4KJQoIX19uYW1lX18SGXJlbW90ZV93cml0ZV90ZXN0X2NyZWF0ZWQKEwoJdHJhbnNwb3J0EgZIVFRQXzMSEAkAAAAA3jnaQRCAgLPBnDM="
+          }
+        },
+        "httpResponse": {
+          "statusCode": 204
+        }
+      },
+      "note": "ForwardContentEncodingIntegrationTest.assertRemoteWriteMocked: a remote-write receiver matching the decoded WriteRequest"
+    },
+    {
+      "h3": true,
+      "method": "POST",
+      "path": "/api/v1/write",
+      "headers": {
+        "content-type": "application/x-protobuf",
+        "content-encoding": "snappy",
+        "x-prometheus-remote-write-version": "0.1.0",
+        "user-agent": "Prometheus/3.0.0",
+        "content-length": "112"
+      },
+      "bodyBase64": "ngHwPwpMCiMKCF9fbmFtZV9fEhdyZW1vdGVfd3JpdGVfdGVzdF90b3RhbAoTCgl0cmFuc3BvcnQSBkhUVFBfMxIQCQASAQAwHEAQgICzwZwzCk4KJSpOAAAZRk4AGGNyZWF0ZWRuUAAM3jnaQRpQAA==",
+      "note": "a raw-block snappy WriteRequest (with copy elements) over HTTP/3 is answered by the expectation"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+      "body": {
+        "path": "/api/v1/write"
+      },
+      "note": "the recorded body is the decoded WriteRequest, the original body the snappy block"
+    }
+  ]
+}

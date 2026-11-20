@@ -1,0 +1,62 @@
+{
+  "note": "a PEM block with a character outside Base64 fails the decoder",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "ca.pem": "-----BEGIN CERTIFICATE-----\nMAMC!!AQU=\n-----END CERTIFICATE-----\n"
+  },
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{scratch}}/ca.pem\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane authentication is enabled but incorrectly configured"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "control plane authentication is enabled but the authentication handler could not be created - denying all control plane requests until the configuration is corrected\njava.lang.RuntimeException: Exception reading X509 from PEM file {{scratch}}/ca.pem\n",
+      "Caused by: java.lang.RuntimeException: Exception creating X509 from PEM\n",
+      "Caused by: java.security.cert.CertificateException: java.io.IOException: java.lang.IllegalArgumentException: Illegal base64 character 21\n",
+      "Caused by: java.io.IOException: java.lang.IllegalArgumentException: Illegal base64 character 21\n",
+      "Caused by: java.lang.IllegalArgumentException: Illegal base64 character 21\n"
+    ],
+    "stdoutOccurrences": {
+      "exception building JWT validator for:": 0,
+      "authentication handler could not be created": 1
+    }
+  }
+}

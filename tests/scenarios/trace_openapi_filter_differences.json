@@ -1,0 +1,144 @@
+{
+ "source": "at TRACE, an OpenAPI filter (retrieve, clear) meeting a received request, a log entry's request or a plain HTTP expectation writes the `string or regex match failed` difference entries of each operation matcher it tries (HttpRequestsPropertiesMatcher.matches builds a MatchDifference at TRACE when given none).",
+ "properties": {
+  "logLevel": "TRACE"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "p",
+    "httpRequest": {
+     "path": "/p"
+    },
+    "httpResponse": {
+     "body": "p"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "q",
+    "httpRequest": {
+     "method": "POST",
+     "path": "/q"
+    },
+    "httpResponse": {
+     "body": "q"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "d",
+    "httpRequest": {
+     "method": "DELETE"
+    },
+    "httpResponse": {
+     "body": "d"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/p"
+  },
+  {
+   "method": "POST",
+   "path": "/q"
+  },
+  {
+   "method": "DELETE",
+   "path": "/def"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"d\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/def\": {\"post\": {\"operationId\": \"postDef\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+   },
+   "note": "each received request: every operation's first failing field, until one matches"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"d\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/def\": {\"post\": {\"operationId\": \"postDef\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+   },
+   "note": "each plain HTTP expectation, as the request the entries are about"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"d\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/def\": {\"post\": {\"operationId\": \"postDef\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"d\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/def\": {\"post\": {\"operationId\": \"postDef\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "every entry so far"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "the filter meets the log's other entries too",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"d\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/def\": {\"post\": {\"operationId\": \"postDef\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"d\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/def\": {\"post\": {\"operationId\": \"postDef\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "specUrlOrPayload": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"d\", \"version\": \"1\"}, \"paths\": {\"/abc\": {\"get\": {\"operationId\": \"getAbc\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}, \"/def\": {\"post\": {\"operationId\": \"postDef\", \"responses\": {\"200\": {\"description\": \"ok\"}}}}}}"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    }
+   ],
+   "note": "after the clears"
+  }
+ ]
+}

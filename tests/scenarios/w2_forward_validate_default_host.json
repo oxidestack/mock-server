@@ -1,0 +1,39 @@
+{
+ "properties": {
+  "forwardDefaultHostHeader": "configured.example:9999"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"upstream\", \"httpRequest\": {\"path\": \"/pets\"}, \"httpResponse\": {\"statusCode\": 201}}, {\"id\": \"fv\", \"priority\": 10, \"times\": {\"remainingTimes\": 1}, \"httpRequest\": {\"method\": \"POST\", \"path\": \"/pets\", \"headers\": {\"Host\": [\"front.example\"]}}, \"httpForwardValidateAction\": {\"specUrlOrPayload\": \"{\\\"openapi\\\":\\\"3.0.0\\\",\\\"info\\\":{\\\"version\\\":\\\"1.0.0\\\",\\\"title\\\":\\\"Pets\\\"},\\\"paths\\\":{\\\"/pets\\\":{\\\"get\\\":{\\\"operationId\\\":\\\"listPets\\\",\\\"parameters\\\":[{\\\"name\\\":\\\"limit\\\",\\\"in\\\":\\\"query\\\",\\\"schema\\\":{\\\"type\\\":\\\"integer\\\"}}],\\\"responses\\\":{\\\"200\\\":{\\\"description\\\":\\\"pets\\\",\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}}}}},\\\"post\\\":{\\\"operationId\\\":\\\"createPets\\\",\\\"requestBody\\\":{\\\"required\\\":true,\\\"content\\\":{\\\"application/json\\\":{\\\"schema\\\":{\\\"$ref\\\":\\\"#/components/schemas/Pet\\\"}}}},\\\"responses\\\":{\\\"201\\\":{\\\"description\\\":\\\"created\\\"}}}}},\\\"components\\\":{\\\"schemas\\\":{\\\"Pet\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"id\\\",\\\"name\\\"],\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"integer\\\"},\\\"name\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\", \"host\": \"localhost\", \"port\": {{port}}, \"validateRequest\": false, \"validateResponse\": false}}, {\"id\": \"fwf\", \"priority\": 10, \"times\": {\"remainingTimes\": 1}, \"httpRequest\": {\"method\": \"GET\", \"path\": \"/pets\", \"headers\": {\"Host\": [\"front.example\"]}}, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"body\": \"fb\"}}}]"
+  },
+  {
+   "note": "validate action forward",
+   "method": "POST",
+   "path": "/pets",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "forward-with-fallback always names its target",
+   "method": "GET",
+   "path": "/pets",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "note": "what the upstream received",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/pets"
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  }
+ ]
+}

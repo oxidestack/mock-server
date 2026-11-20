@@ -1,0 +1,92 @@
+{
+ "properties": {
+  "openAPIResponseValidation": "true",
+  "enforceResponseValidationForMocks": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "mrv-invalid",
+     "httpRequest": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+      "operationId": "somePath"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"not-a-number\"}"
+     }
+    },
+    {
+     "id": "mrv-valid",
+     "httpRequest": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json",
+      "operationId": "listPets"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "[{\"id\": 1, \"name\": \"rex\"}]"
+     }
+    },
+    {
+     "id": "mrv-no-operation",
+     "httpRequest": {
+      "specUrlOrPayload": "{{files}}/openapi/openapi_petstore_example.json"
+     },
+     "httpResponse": {
+      "statusCode": 418,
+      "body": "not validated without an operationId"
+     }
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/v1/some/path",
+   "note": "the invalid response becomes a 502",
+   "headers": {
+    "X-Request-ID": "4f3c2a1e-7b6d-4c5e-9f8a-1b2c3d4e5f60"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/v1/pets",
+   "note": "a valid response is untouched"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/pets",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"id\": 1, \"name\": \"rex\"}",
+   "note": "no operationId: no validation"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "body": {
+    "path": "/v1/some/path"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON",
+   "body": {
+    "path": "/v1/some/path"
+   }
+  }
+ ]
+}

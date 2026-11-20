@@ -1,0 +1,31 @@
+{
+  "properties": {
+    "redactSecretsInLog": "true"
+  },
+  "steps": [
+    {
+      "note": "a binary expectation",
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {"id": "bin-long", "httpRequest": {"binaryData": "AAECAwQFBgcICQoLDA0ODxAREhM="}, "binaryResponse": {"binaryData": "BQY="}}
+      ]
+    },
+    {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+    {"note": "answered by bin-long", "tcp": ["AAECAwQFBgcICQoLDA0ODxAREhM="]},
+    {"sleepMillis": 500},
+    {"wsOpen": "ui", "path": "/_mockserver_ui_websocket", "note": "the dashboard socket"},
+    {"wsDrain": "ui", "note": "the first frame, which the oracle sends late or not at all"},
+    {"wsSend": "ui", "text": "{}", "note": "every entry"},
+    {
+      "wsRead": "ui",
+      "note": "the BINARY row says bytes redacted, and its message is masked",
+      "mask": ["\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"],
+      "capture": [
+        {"bodyRegex": "\"first\":\"BINARY\".*?\"key\":\"([0-9a-f-]+)_request\"", "as": "binId"}
+      ]
+    },
+    {"wsClose": "ui"},
+    {"note": "the binary entry's request, masked", "method": "GET", "path": "/mockserver/logEntryBody?id={{capture:binId}}&part=request"}
+  ]
+}

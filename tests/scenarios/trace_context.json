@@ -1,0 +1,130 @@
+{
+ "properties": {
+  "otelPropagateTraceContext": "true",
+  "otelGenerateTraceId": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/traced"
+     },
+     "httpResponse": {
+      "body": "traced",
+      "headers": {
+       "x-own": [
+        "1"
+       ]
+      }
+     }
+    }
+   ],
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/traced",
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ],
+   "headers": {
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    "tracestate": "vendor=value"
+   },
+   "note": "inbound context echoed with its tracestate"
+  },
+  {
+   "method": "GET",
+   "path": "/traced",
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ],
+   "note": "no traceparent: a generated context"
+  },
+  {
+   "method": "GET",
+   "path": "/traced",
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ],
+   "headers": {
+    "traceparent": "00-abc-def-01"
+   },
+   "note": "an invalid traceparent sets nothing and generates nothing"
+  },
+  {
+   "method": "GET",
+   "path": "/traced",
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ],
+   "headers": {
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00-extra"
+   },
+   "note": "extra parts ignored"
+  },
+  {
+   "method": "GET",
+   "path": "/traced",
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ],
+   "headers": {
+    "traceparent": "  00-4BF92F3577B34DA6A3CE929D0E0E4736-00f067aa0ba902b7-01  ",
+    "tracestate": ""
+   },
+   "note": "trimmed, case kept, empty tracestate dropped"
+  },
+  {
+   "method": "GET",
+   "path": "/unmatched",
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ],
+   "headers": {
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+   },
+   "note": "a 404 carries it too"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "headers": {
+    "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+   },
+   "mask": [
+    {
+     "regex": "00-(?!4bf92f3577b34da6a3ce929d0e0e4736)[0-9a-f]{32}-[0-9a-f]{16}-01",
+     "replace": "<generated>"
+    }
+   ],
+   "note": "control plane responses carry it"
+  }
+ ]
+}

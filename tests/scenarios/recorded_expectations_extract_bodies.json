@@ -1,0 +1,73 @@
+{
+ "properties": {
+  "recordedBodyFilesDirectory": "{{scratch}}/recorded_expectations_extract_bodies"
+ },
+ "steps": [
+  {
+   "deleteFile": "{{scratch}}/recorded_expectations_extract_bodies/*",
+   "note": "start without files left by an earlier run"
+  },
+  {
+   "deleteFile": "{{scratch}}/recorded_expectations_extract_bodies"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "bodyFile": "import/recording_extract_bodies.ndjson",
+   "note": "recording archive"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&extractBodiesLargerThan=abc",
+   "note": "threshold not a number, with a directory"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&extractBodiesLargerThan=10",
+   "note": "bodies over 10 bytes move to SHA-256-named files"
+  },
+  {
+   "listFiles": "{{scratch}}/recorded_expectations_extract_bodies/*",
+   "note": "one file per distinct body, extension from the content type, no temporary file left"
+  },
+  {
+   "readFile": "{{scratch}}/recorded_expectations_extract_bodies/f0c3397ebaf9db69ee248b54427796fac2e3e7704b782e71d0220d1f603a85c1.txt",
+   "note": "the file holds the body"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&extractBodiesLargerThan=10&repeatsAsScenarios=true",
+   "note": "again: existing files reused, sequence bodies extracted"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&extractBodiesLargerThan=0&format=JAVA",
+   "note": "threshold zero, java"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&extractBodiesLargerThan=1000",
+   "note": "nothing larger: no files, no log"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&extractBodiesLargerThan=10&format=LOG_ENTRIES",
+   "note": "log entries are not extracted",
+   "mask": [
+    "\"epochTime\" : \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "log messages"
+  },
+  {
+   "deleteFile": "{{scratch}}/recorded_expectations_extract_bodies/*",
+   "note": "clean up"
+  },
+  {
+   "deleteFile": "{{scratch}}/recorded_expectations_extract_bodies"
+  }
+ ]
+}

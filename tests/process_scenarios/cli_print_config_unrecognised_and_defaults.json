@@ -1,0 +1,34 @@
+{
+  "note": "upstream #46, #115, 9.1.0: --print-config ends a property set away from its default with `(default: ...)`, then lists the unrecognised keys, names only, with the key each was probably meant to be or how to set a system-property-only knob",
+  "target": "both",
+  "args": [
+    "--print-config"
+  ],
+  "env": {
+    "SERVER_PORT": "",
+    "MOCKSERVER_MAX_EXPECTATIONS": "4242",
+    "MOCKSERVER_MAX_EXPECTATIONZ": "1",
+    "MOCKSERVER_CANDIDATE_INDEX_THRESHOLD": "5",
+    "MOCKSERVER_TOTALLY_UNKNOWN_THING": "x"
+  },
+  "readiness": {
+    "exit": true
+  },
+  "timeoutSecs": 60,
+  "expect": {
+    "running": false,
+    "exitCode": 0,
+    "stdoutInOrder": [
+      "  mockserver.maxExpectations = 4242   [environment-variable]   (default: 15000)",
+      "  mockserver.metricsEnabled = false   [default]",
+      "Unrecognised configuration, ignored (names only):",
+      "  MOCKSERVER_CANDIDATE_INDEX_THRESHOLD   [environment variable]   read only as a system property: set -Dmockserver.candidateIndexThreshold instead",
+      "  MOCKSERVER_MAX_EXPECTATIONZ   [environment variable]   did you mean MOCKSERVER_MAX_EXPECTATIONS?",
+      "  MOCKSERVER_TOTALLY_UNKNOWN_THING   [environment variable]"
+    ],
+    "stdoutNotContains": [
+      "MOCKSERVER_TOTALLY_UNKNOWN_THING   [environment variable]   ",
+      "started on port"
+    ]
+  }
+}

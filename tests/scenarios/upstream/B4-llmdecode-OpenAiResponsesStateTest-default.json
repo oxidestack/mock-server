@@ -1,0 +1,164 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) llmdecode-OpenAiResponsesStateTest-default (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "019b49587135",
+   "note": "instructionsAreNotCarriedIntoAChainedTurn (llmdecode): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/v1/responses\",\"body\":\"{\\\"model\\\":\\\"gpt-4o\\\",\\\"instructions\\\":\\\"Be verbose.\\\",\\\"previous_response_id\\\":\\\"resp_a887e3325e754ec087e3325e\\\",\\\"input\\\":\\\"again\\\"}\"},\"httpResponse\":{\"statusCode\":200}}\n",
+   "note": "instructionsAreNotCarriedIntoAChainedTurn (llmdecode): import",
+   "mask": [
+    {
+     "regex": "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+     "replace": "\"x-mockserver-response-time-ms\" : [ \"<n>\" ]"
+    }
+   ],
+   "case": "019b49587135"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "instructionsAreNotCarriedIntoAChainedTurn (llmdecode): json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "019b49587135"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=fine-tune",
+   "note": "instructionsAreNotCarriedIntoAChainedTurn (llmdecode): fine-tune",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "019b49587135"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f90b1e41a3dc",
+   "note": "requestWithoutPreviousResponseIdIsNotChained (llmdecode): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/v1/responses\",\"body\":\"{\\\"model\\\":\\\"gpt-4o\\\",\\\"input\\\":\\\"standalone\\\"}\"},\"httpResponse\":{\"statusCode\":200}}\n",
+   "note": "requestWithoutPreviousResponseIdIsNotChained (llmdecode): import",
+   "mask": [
+    {
+     "regex": "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+     "replace": "\"x-mockserver-response-time-ms\" : [ \"<n>\" ]"
+    }
+   ],
+   "case": "f90b1e41a3dc"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "requestWithoutPreviousResponseIdIsNotChained (llmdecode): json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "f90b1e41a3dc"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=fine-tune",
+   "note": "requestWithoutPreviousResponseIdIsNotChained (llmdecode): fine-tune",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "f90b1e41a3dc"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "419c5ff1822e",
+   "note": "chainsConversationViaPreviousResponseId (llmdecode): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording",
+   "body": "{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/v1/responses\",\"body\":\"{\\\"model\\\":\\\"gpt-4o\\\",\\\"input\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"and its population?\\\"}],\\\"previous_response_id\\\":\\\"resp_418e77da03b842f08e77da03\\\"}\"},\"httpResponse\":{\"statusCode\":200}}\n",
+   "note": "chainsConversationViaPreviousResponseId (llmdecode): import",
+   "mask": [
+    {
+     "regex": "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+     "replace": "\"x-mockserver-response-time-ms\" : [ \"<n>\" ]"
+    }
+   ],
+   "case": "419c5ff1822e"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport",
+   "note": "chainsConversationViaPreviousResponseId (llmdecode): json",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "419c5ff1822e"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=fine-tune",
+   "note": "chainsConversationViaPreviousResponseId (llmdecode): fine-tune",
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "\"generatedAt\" : \"[^\"]+\"",
+     "replace": "\"generatedAt\" : \"<time>\""
+    },
+    {
+     "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z",
+     "replace": "<ts>"
+    }
+   ],
+   "case": "419c5ff1822e"
+  }
+ ]
+}

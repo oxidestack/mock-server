@@ -1,0 +1,13 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+    {"httpRequest": {"path": "/t"}, "httpResponse": {"body": "hello", "trailers": {"x-checksum": ["abc123"], "x-signature": ["deadbeef"]}}},
+    {"httpRequest": {"path": "/t-empty"}, "httpResponse": {"trailers": {"x-checksum": ["abc123"]}}},
+    {"httpRequest": {"path": "/t-204"}, "httpResponse": {"statusCode": 204, "body": "x", "trailers": {"x-t": ["1"]}}}
+  ], "mask": ["\"id\" : \"[^\"]+\""]},
+  {"note": "response trailers reach an h2 client as trailers (ResponseTrailersHttp2ConversionTest)", "h2": true, "method": "GET", "path": "/t", "trailers": true},
+  {"note": "frames: body then a trailing HEADERS frame ending the stream", "h2raw": {"method": "GET", "path": "/t"}},
+  {"note": "trailers without a body over h2", "h2": true, "method": "GET", "path": "/t-empty", "trailers": true},
+  {"note": "frames: trailers without a body", "h2raw": {"method": "GET", "path": "/t-empty"}},
+  {"note": "204 with body and trailers over h2", "h2": true, "method": "GET", "path": "/t-204", "trailers": true},
+  {"note": "frames: 204 with body and trailers", "h2raw": {"method": "GET", "path": "/t-204"}}
+]}

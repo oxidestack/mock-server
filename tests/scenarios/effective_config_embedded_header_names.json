@@ -1,0 +1,22 @@
+{
+ "source": "ConfigurationValueRedactionTest header-name rules (Api-Key, X-Passwd, X-Signature, X-Hub-Signature-256, X-Hmac, Authentication, X-JWT, X-Session-Id, X-Otp, X-Auth, pwd, salt, X-Bearer, Cookie) through GET /mockserver/config: each credential-bearing header's value is masked, its neighbours stay readable.",
+ "properties": {
+  "prometheusRemoteWriteHeaders": "Api-Key=NRAK-secret,X-Passwd=hunter2,X-Signature=s1,X-Hub-Signature-256=s2,X-Hmac=s3,Authentication=s4,X-JWT=s5,X-Session-Id=s6,X-Otp=s7,X-Auth=s8,pwd=s9,salt=s10,X-Bearer=s11,Cookie=s12,X-Scope-OrgID=tenant-a,X-Custom=abc"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/config",
+   "mask": [
+    {
+     "regex": "\\{\"name\":\"mockserver\\.(dashboardAnalyticsDistribution|dashboardAnalyticsEndpoint|dashboardAnalyticsKey|propertyFile|proxySetupLogging)\",\"value\":\"[^\"]*\",\"source\":\"[^\"]*\"(,\"default\":\"[^\"]*\")?\\}",
+     "replace": "<image-env>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  }
+ ]
+}

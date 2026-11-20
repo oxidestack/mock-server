@@ -1,0 +1,138 @@
+{
+ "source": "an unmatched request whose closest expectation holds a catastrophic regex (`(.*a){10}$`) answers its 404 and closest-match hint within a few regexMatchingTimeoutMillis budgets (a startup property, here 300), whatever field the regex sits in: the hint's re-evaluation must run under the server's budget, not the 5000 ms default. Each request step allows 3000 ms (`maxMillis`); one evaluation at the default budget alone outlives it.",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "headers": {
+      "x-catastrophic": [
+       "(.*a){10}$"
+      ]
+     }
+    },
+    "httpResponse": {
+     "body": "header"
+    }
+   }
+  },
+  {
+   "note": "header value",
+   "method": "GET",
+   "path": "/header",
+   "headers": {
+    "x-catastrophic": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+   },
+   "maxMillis": 3000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/(.*a){10}$"
+    },
+    "httpResponse": {
+     "body": "path"
+    }
+   }
+  },
+  {
+   "note": "path",
+   "method": "GET",
+   "path": "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+   "maxMillis": 3000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "queryStringParameters": {
+      "q": [
+       "(.*a){10}$"
+      ]
+     }
+    },
+    "httpResponse": {
+     "body": "query"
+    }
+   }
+  },
+  {
+   "note": "query parameter",
+   "method": "GET",
+   "path": "/query?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+   "maxMillis": 3000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "cookies": {
+      "c": "(.*a){10}$"
+     }
+    },
+    "httpResponse": {
+     "body": "cookie"
+    }
+   }
+  },
+  {
+   "note": "cookie",
+   "method": "GET",
+   "path": "/cookie",
+   "headers": {
+    "cookie": "c=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+   },
+   "maxMillis": 3000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "body": {
+      "type": "REGEX",
+      "regex": "(.*a){10}$"
+     }
+    },
+    "httpResponse": {
+     "body": "body"
+    }
+   }
+  },
+  {
+   "note": "regex body",
+   "method": "POST",
+   "path": "/body",
+   "body": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+   "maxMillis": 3000
+  }
+ ]
+}

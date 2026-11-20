@@ -1,0 +1,7 @@
+# org.mockserver.persistence.RecordedRequestsPersistenceWiringTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldWireRecordedRequestConsumerAndFlushAtEndOfBatchBeforeStop  http:persist_recorded_requests  # served exchanges reach the archive while the server runs
+shouldPersistBothForwardedAndMockedExchanges  http:persist_recorded_requests  # a mocked and a forwarded exchange, an unmatched request not archived
+shouldImportFromDiskAnExchangeRecordedEarlierInTheSameUnfinishedBatch  n/a  # parks the event-log consumer mid-batch with latches; a request and an immediate import over the wire would only race
+shouldFlushEachRecordedExchangeWhenEventProcessingIsSynchronous  n/a  # a synchronous MockServerEventLog is the WAR/servlet deployment; mock-server has no such mode

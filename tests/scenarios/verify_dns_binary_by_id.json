@@ -1,0 +1,376 @@
+{
+  "properties": {
+    "dnsEnabled": "true",
+    "dnsPort": "18553"
+  },
+  "steps": [
+    {
+      "note": "a DNS expectation and a binary one",
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "id": "dns-a",
+          "httpRequest": {
+            "dnsName": "api.example.com",
+            "dnsType": "A"
+          },
+          "dnsResponse": {
+            "answerRecords": [
+              {
+                "name": "api.example.com",
+                "type": "A",
+                "value": "10.0.0.1",
+                "ttl": 60
+              }
+            ]
+          }
+        },
+        {
+          "id": "bin-1",
+          "httpRequest": {
+            "binaryData": "CQgHBgUEAwIBAA=="
+          },
+          "binaryResponse": {
+            "binaryData": "AQIDBA=="
+          }
+        }
+      ]
+    },
+    {
+      "note": "a DNS definition with an HTTP response: matched, but it answers nothing",
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "id": "dns-none",
+        "httpRequest": {
+          "dnsName": "none.example.com"
+        },
+        "httpResponse": {
+          "statusCode": 200
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clear?type=LOG"
+    },
+    {
+      "note": "answered by dns-a",
+      "udp": "AQEBAAABAAAAAAAAA2FwaQdleGFtcGxlA2NvbQAAAQAB"
+    },
+    {
+      "note": "answered by bin-1",
+      "tcp": [
+        "CQgHBgUEAwIBAA=="
+      ]
+    },
+    {
+      "note": "matched by dns-none, which has no DNS response: NXDOMAIN, no expectation id",
+      "udp": "AQIBAAABAAAAAAAABG5vbmUHZXhhbXBsZQNjb20AAAEAAQ=="
+    },
+    {
+      "sleepMillis": 300
+    },
+    {
+      "note": "by the DNS expectation's id",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "expectationId": {
+          "id": "dns-a"
+        },
+        "times": {
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "note": "by the binary expectation's id",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "expectationId": {
+          "id": "bin-1"
+        },
+        "times": {
+          "atLeast": 1,
+          "atMost": 1
+        }
+      }
+    },
+    {
+      "note": "an expectation without a DNS response answered nothing",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "expectationId": {
+          "id": "dns-none"
+        },
+        "times": {
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "note": "by id, too few: the answered requests listed",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "expectationId": {
+          "id": "dns-a"
+        },
+        "times": {
+          "atLeast": 2
+        }
+      }
+    },
+    {
+      "note": "by a DNS definition",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "dnsName": "api.example.com",
+          "dnsType": "A"
+        },
+        "times": {
+          "atLeast": 1,
+          "atMost": 1
+        }
+      }
+    },
+    {
+      "note": "an unanswered query is still received",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "dnsName": "none.example.com"
+        },
+        "times": {
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "note": "by a binary definition",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "binaryData": "CQgHBgUEAwIBAA=="
+        },
+        "times": {
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "note": "not found: every recorded request listed, DNS and binary ones too",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "dnsName": "other.example.com"
+        },
+        "times": {
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "note": "an HTTP filter counts no DNS or binary request",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/x"
+        },
+        "times": {
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "note": "nor does the empty filter",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {},
+        "times": {
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "note": "with a response: 400",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "dnsName": "api.example.com",
+          "dnsType": "A"
+        },
+        "httpResponse": {
+          "statusCode": 200
+        }
+      }
+    },
+    {
+      "note": "by disposition: 400",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "binaryData": "CQgHBgUEAwIBAA=="
+        },
+        "disposition": "MOCKED"
+      }
+    },
+    {
+      "note": "by id with a response: 400",
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "expectationId": {
+          "id": "bin-1"
+        },
+        "httpResponse": {
+          "statusCode": 200
+        }
+      }
+    },
+    {
+      "note": "a sequence of ids",
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "expectationIds": [
+          {
+            "id": "dns-a"
+          },
+          {
+            "id": "bin-1"
+          }
+        ]
+      }
+    },
+    {
+      "note": "a sequence of ids out of order",
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "expectationIds": [
+          {
+            "id": "bin-1"
+          },
+          {
+            "id": "dns-a"
+          }
+        ]
+      }
+    },
+    {
+      "note": "a sequence of definitions",
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "dnsName": "api.example.com",
+            "dnsType": "A"
+          },
+          {
+            "binaryData": "CQgHBgUEAwIBAA=="
+          },
+          {
+            "dnsName": "none.example.com"
+          }
+        ]
+      }
+    },
+    {
+      "note": "a sequence of definitions out of order",
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "binaryData": "CQgHBgUEAwIBAA=="
+          },
+          {
+            "dnsName": "api.example.com",
+            "dnsType": "A"
+          }
+        ]
+      }
+    },
+    {
+      "note": "a sequence with responses: 400",
+      "method": "PUT",
+      "path": "/mockserver/verifySequence",
+      "body": {
+        "httpRequests": [
+          {
+            "dnsName": "api.example.com",
+            "dnsType": "A"
+          }
+        ],
+        "httpResponses": [
+          {
+            "statusCode": 200
+          }
+        ]
+      }
+    },
+    {
+      "note": "recorded requests by a DNS filter: the DNS queries",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS",
+      "body": {
+        "dnsName": "api.example.com"
+      }
+    },
+    {
+      "note": "by a binary filter: the binary messages",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS",
+      "body": {
+        "binaryData": "CQgHBgUEAwIBAA=="
+      }
+    },
+    {
+      "note": "unfiltered: HTTP requests only",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS"
+    },
+    {
+      "note": "by a DNS filter, as log entries",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS&format=LOG_ENTRIES",
+      "body": {
+        "dnsName": "none.example.com"
+      },
+      "mask": [
+        "(\"epochTime\" : )\\d+"
+      ]
+    },
+    {
+      "note": "active expectations by a binary filter: only the binary one",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+      "body": {
+        "binaryData": "CQgHBgUEAwIBAA=="
+      }
+    },
+    {
+      "note": "the verification entries",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+      ]
+    }
+  ]
+}

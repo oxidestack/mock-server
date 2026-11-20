@@ -1,0 +1,88 @@
+{
+ "properties": {
+  "socketConnectionTimeoutInMillis": "120000",
+  "proxySetupLogging": "false",
+  "dynamicallyCreateCertificateAuthorityCertificate": "true",
+  "directoryToSaveDynamicSSLCertificate": "{{scratch}}/tls_dynamic_ca_lazy_files"
+ },
+ "isolated": true,
+ "steps": [
+  {
+   "note": "after the start the dynamic CA is not on disk yet",
+   "readFile": "{{scratch}}/tls_dynamic_ca_lazy_files/CertificateAuthorityCertificate.pem"
+  },
+  {
+   "readFile": "{{scratch}}/tls_dynamic_ca_lazy_files/PKCS8CertificateAuthorityPrivateKey.pem"
+  },
+  {
+   "sleepMillis": 3000
+  },
+  {
+   "note": "nothing writes it in the background either (8.0.0 writes it shortly after the start under proxySetupLogging, the standalone default)",
+   "readFile": "{{scratch}}/tls_dynamic_ca_lazy_files/CertificateAuthorityCertificate.pem"
+  },
+  {
+   "note": "plain HTTP on the control plane and the data plane uses no CA",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/ca/lazy"
+    },
+    "httpResponse": {
+     "body": "lazy"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/ca/lazy"
+  },
+  {
+   "readFile": "{{scratch}}/tls_dynamic_ca_lazy_files/CertificateAuthorityCertificate.pem"
+  },
+  {
+   "note": "the first inbound TLS connection builds the server's context, which generates and writes the CA",
+   "tcp": [
+    {
+     "text": "GET /ca/lazy HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "tls": true,
+   "text": true,
+   "awaitBytes": 12,
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "now both files are there (their content is random)",
+   "readFile": "{{scratch}}/tls_dynamic_ca_lazy_files/CertificateAuthorityCertificate.pem",
+   "mask": [
+    {
+     "regex": "(?s)^(-----BEGIN [A-Z ]+-----\\n).*(-----END [A-Z ]+-----)\\n?$",
+     "replace": "${1}<random>\n${2}"
+    }
+   ]
+  },
+  {
+   "readFile": "{{scratch}}/tls_dynamic_ca_lazy_files/PKCS8CertificateAuthorityPrivateKey.pem",
+   "mask": [
+    {
+     "regex": "(?s)^(-----BEGIN [A-Z ]+-----\\n).*(-----END [A-Z ]+-----)\\n?$",
+     "replace": "${1}<random>\n${2}"
+    }
+   ]
+  },
+  {
+   "note": "remove the generated CA for the next run",
+   "deleteFile": "{{scratch}}/tls_dynamic_ca_lazy_files/PKCS8CertificateAuthorityPrivateKey.pem"
+  },
+  {
+   "deleteFile": "{{scratch}}/tls_dynamic_ca_lazy_files/CertificateAuthorityCertificate.pem"
+  }
+ ]
+}

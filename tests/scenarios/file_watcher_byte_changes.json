@@ -1,0 +1,51 @@
+{
+ "properties": {
+  "initializationJsonPath": "{{scratch}}/file_watcher_byte_changes.json",
+  "watchInitializationJson": "true",
+  "watchInitializationJsonPollPeriodMillis": "500"
+ },
+ "steps": [
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_byte_changes.json",
+    "content": "[{\"id\":\"big\",\"httpRequest\":{\"path\":\"/big\"},\"httpResponse\":{\"body\":\"{{repeat:200000:a}}\"}},{\"id\":\"tail\",\"httpRequest\":{\"path\":\"/tail\"},\"httpResponse\":{\"body\":\"v1 café\"}}]",
+    "replace": true
+   },
+   "note": "a watched file over 192 KiB (three of FileWatcher's 64 KiB buffers), its last expectation at the very end"
+  },
+  {
+   "method": "GET",
+   "path": "/tail",
+   "pollUntil": "^v1 café$",
+   "note": "loaded"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_byte_changes.json",
+    "content": "[{\"id\":\"big\",\"httpRequest\":{\"path\":\"/big\"},\"httpResponse\":{\"body\":\"{{repeat:200000:a}}\"}},{\"id\":\"tail\",\"httpRequest\":{\"path\":\"/tail\"},\"httpResponse\":{\"body\":\"v2 café\"}}]",
+    "replace": true
+   },
+   "note": "shouldDetectAChangeToTheFinalByteOfAMultiBufferFile: one byte changed, a dozen bytes from the end"
+  },
+  {
+   "method": "GET",
+   "path": "/tail",
+   "pollUntil": "^v2 café$",
+   "note": "reloaded"
+  },
+  {
+   "writeFile": {
+    "path": "{{scratch}}/file_watcher_byte_changes.json",
+    "content": "[{\"id\":\"big\",\"httpRequest\":{\"path\":\"/big\"},\"httpResponse\":{\"body\":\"{{repeat:200000:a}}\"}},{\"id\":\"tail\",\"httpRequest\":{\"path\":\"/tail\"},\"httpResponse\":{\"body\":\"v2 cafè\"}}]",
+    "replace": true
+   },
+   "note": "shouldDetectAChangeConfinedToBytesAboveSevenBits: only the second byte of one UTF-8 character changes (C3 A9 to C3 A8), same length"
+  },
+  {
+   "method": "GET",
+   "path": "/tail",
+   "pollUntil": "^v2 cafè$",
+   "note": "reloaded"
+  }
+ ]
+}

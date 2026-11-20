@@ -1,0 +1,740 @@
+{
+ "properties": {
+  "jsonSchemaAllowRemoteRefs": "true"
+ },
+ "peer": true,
+ "steps": [
+  {
+   "note": "serve /ext/pet.json",
+   "node": "peer",
+   "maxMillis": 30000,
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/ext/pet.json"
+    },
+    "httpResponse": {
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": {
+      "json": {
+       "type": "object",
+       "required": [
+        "name"
+       ],
+       "properties": {
+        "name": {
+         "type": "string",
+         "minLength": 2
+        },
+        "age": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "tag": {
+         "enum": [
+          "a",
+          "b"
+         ]
+        },
+        "code": {
+         "pattern": "^[A-Z]+$"
+        }
+       },
+       "additionalProperties": false
+      }
+     }
+    }
+   }
+  },
+  {
+   "note": "serve /ext/defs.json",
+   "node": "peer",
+   "maxMillis": 30000,
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/ext/defs.json"
+    },
+    "httpResponse": {
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": {
+      "json": {
+       "definitions": {
+        "pet": {
+         "$ref": "pet.json"
+        },
+        "id": {
+         "type": "integer"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "note": "serve /ext/text.json",
+   "node": "peer",
+   "maxMillis": 30000,
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/ext/text.json"
+    },
+    "httpResponse": {
+     "headers": {
+      "content-type": [
+       "text/plain"
+      ]
+     },
+     "body": "hello"
+    }
+   }
+  },
+  {
+   "note": "serve /ext/unbuilt.json",
+   "node": "peer",
+   "maxMillis": 30000,
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/ext/unbuilt.json"
+    },
+    "httpResponse": {
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": {
+      "json": {
+       "minimum": "x"
+      }
+     }
+    }
+   }
+  },
+  {
+   "note": "serve /ext/idd.json",
+   "node": "peer",
+   "maxMillis": 30000,
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "GET",
+     "path": "/ext/idd.json"
+    },
+    "httpResponse": {
+     "headers": {
+      "content-type": [
+       "application/json"
+      ]
+     },
+     "body": {
+      "json": {
+       "$id": "http://example.com/other/idd.json",
+       "properties": {
+        "a": {
+         "$ref": "#/definitions/n"
+        }
+       },
+       "definitions": {
+        "n": {
+         "type": "number"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "note": "match /whole",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/whole",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$ref": "http://{{peeraddress}}/ext/pet.json"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /whole"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /fragment",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/fragment",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$ref": "http://{{peeraddress}}/ext/defs.json#/definitions/pet"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /fragment"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /nested",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/nested",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "type": "object",
+       "properties": {
+        "pet": {
+         "$ref": "http://{{peeraddress}}/ext/pet.json"
+        },
+        "id": {
+         "$ref": "http://{{peeraddress}}/ext/defs.json#/definitions/id"
+        }
+       }
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /nested"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /missing",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/missing",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$ref": "http://{{peeraddress}}/ext/missing.json"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /missing"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /deadhost",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/deadhost",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$ref": "http://{{deadhost}}/ext/missing.json"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /deadhost"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /text",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/text",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$ref": "http://{{peeraddress}}/ext/text.json"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /text"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /unbuilt",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/unbuilt",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$ref": "http://{{peeraddress}}/ext/unbuilt.json"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /unbuilt"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /badpointer",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/badpointer",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$ref": "http://{{peeraddress}}/ext/defs.json#/definitions/nope"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /badpointer"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /idd",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/idd",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$ref": "http://{{peeraddress}}/ext/idd.json"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /idd"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "match /relative",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/relative",
+     "body": {
+      "type": "JSON_SCHEMA",
+      "jsonSchema": {
+       "$id": "http://{{peeraddress}}/ext/root.json",
+       "$ref": "pet.json"
+      }
+     }
+    },
+    "httpResponse": {
+     "body": "matched /relative"
+    }
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "whole: valid",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/whole",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "rex"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "whole: name missing",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/whole",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {},
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "whole: name not a string",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/whole",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": 1
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "whole: several errors",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/whole",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "x",
+    "age": -1,
+    "tag": "c",
+    "code": "ab",
+    "extra": 1
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "fragment: through a relative ref in the remote document",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/fragment",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": 5
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "fragment: valid",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/fragment",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "rex"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "nested: errors under the instance path",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/nested",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "pet": {},
+    "id": "x"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "missing: the document is not found",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/missing",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "rex"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "deadhost: the document cannot be fetched",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/deadhost",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "rex"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "text: the document is not JSON",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/text",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "rex"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "unbuilt: the document cannot be built",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/unbuilt",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "rex"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "badpointer: the fragment does not resolve",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/badpointer",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "name": "rex"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "idd: a remote document with its own $id",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/idd",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {
+    "a": "x"
+   },
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "relative: a relative ref under a root $id",
+   "maxMillis": 30000,
+   "method": "POST",
+   "path": "/relative",
+   "headers": {
+    "content-type": [
+     "application/json"
+    ]
+   },
+   "body": {},
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  },
+  {
+   "note": "the log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=logs",
+   "mask": [
+    {
+     "regex": "http://[^/\"\\s\\\\]+/ext/",
+     "replace": "http://<peer>/ext/"
+    }
+   ]
+  }
+ ]
+}

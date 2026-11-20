@@ -1,0 +1,197 @@
+{
+  "properties": {
+    "maxSocketTimeoutInMillis": "2000"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/clte/up/cl5"
+          },
+          "httpResponse": {
+            "headers": {
+              "Content-Length": [
+                "5"
+              ],
+              "Transfer-Encoding": [
+                "chunked"
+              ],
+              "x-after": [
+                "1"
+              ]
+            },
+            "body": "hello"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/clte/up/cl3"
+          },
+          "httpResponse": {
+            "headers": {
+              "x-before": [
+                "1"
+              ],
+              "Transfer-Encoding": [
+                "Chunked"
+              ],
+              "Content-Length": [
+                "3"
+              ]
+            },
+            "body": "hello"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/clte/up/plain"
+          },
+          "httpResponse": {
+            "headers": {},
+            "body": "plain"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/clte/up/bare"
+          },
+          "httpResponse": {
+            "headers": {
+              "Content-Length": [
+                "5"
+              ],
+              "Transfer-Encoding": [
+                "chunked"
+              ]
+            },
+            "body": "hello"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/clte/fwd/cl5"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/clte/up/cl5",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/clte/fwd/cl3"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/clte/up/cl3",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/clte/fwd/plain"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/clte/up/plain",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/clte/fwd/bare"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/clte/up/bare",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "upstream answers Content-Length 5 and Transfer-Encoding chunked: Netty's decoder rejects the head (ContentLengthNotAllowedException); the aggregated invalid message keeps Content-Length, loses chunked, has no body",
+      "tcp": [
+        {
+          "text": "GET /clte/fwd/cl5 HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true,
+      "awaitBytes": 12
+    },
+    {
+      "note": "the pooled connection now discards everything it reads (BAD_MESSAGE): the next forward to the same upstream reaches it but its answer is swallowed, so it times out (maxSocketTimeoutInMillis 2000): 502",
+      "tcp": [
+        {
+          "text": "GET /clte/fwd/plain HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true,
+      "awaitBytes": 12
+    },
+    {
+      "note": "a fresh connection after the timeout closed the poisoned one: Chunked (any case) is dropped too; Content-Length and connection then go in the hop-by-hop filter, as x-before is left",
+      "tcp": [
+        {
+          "text": "GET /clte/fwd/cl3 HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true,
+      "awaitBytes": 12
+    },
+    {
+      "note": "so does cl3's connection: the next forward times out too",
+      "tcp": [
+        {
+          "text": "GET /clte/fwd/plain HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true,
+      "awaitBytes": 12
+    },
+    {
+      "note": "a fresh connection again: the bare pair, nothing left after the hop-by-hop filter, so the response keeps Content-Length 5 (and the upstream's connection header in the log)",
+      "tcp": [
+        {
+          "text": "GET /clte/fwd/bare HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true,
+      "awaitBytes": 12
+    },
+    {
+      "note": "the event log keeps the invalid responses as the client saw them",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "body": {
+        "path": "/clte/fwd/.*"
+      },
+      "mask": [
+        "\"(local|remote)Address\" : \"[^\"]*\""
+      ]
+    }
+  ]
+}

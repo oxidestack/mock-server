@@ -1,0 +1,116 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) helper-JwtTemplateHelperTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "50a90120eb71",
+   "note": "shouldGenerateJWKS (helper): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($jwt.jwks())\"}"
+    }
+   },
+   "note": "shouldGenerateJWKS (helper): template",
+   "case": "50a90120eb71"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested",
+   "note": "shouldGenerateJWKS (helper): request",
+   "mask": [
+    {
+     "regex": "^[\\w-]+\\.([\\w-]+)\\.[\\w-]+$",
+     "replace": "<per-process key>.$1.<signature>"
+    },
+    {
+     "regex": "\"n\" : \"[^\"]+\"",
+     "replace": "\"n\" : \"<per-process key>\""
+    }
+   ],
+   "case": "50a90120eb71"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "53e02b88fb0c",
+   "note": "shouldGenerateDefaultJWT (helper): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($jwt.generate())\"}"
+    }
+   },
+   "note": "shouldGenerateDefaultJWT (helper): template",
+   "case": "53e02b88fb0c"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested",
+   "note": "shouldGenerateDefaultJWT (helper): request",
+   "mask": [
+    {
+     "regex": "^[\\w-]+\\.([\\w-]+)\\.[\\w-]+$",
+     "replace": "<per-process key>.$1.<signature>"
+    },
+    {
+     "regex": "\"n\" : \"[^\"]+\"",
+     "replace": "\"n\" : \"<per-process key>\""
+    }
+   ],
+   "case": "53e02b88fb0c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "ac2047d32ff6",
+   "note": "shouldGenerateJWTWithCustomClaims (helper): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/harvested"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{\"statusCode\": 200, \"body\": \"$!esc.java($jwt.generate({'sub': 'test-subject', 'iss': 'https://test.example.com', 'scope': 'read write'}))\"}"
+    }
+   },
+   "note": "shouldGenerateJWTWithCustomClaims (helper): template",
+   "case": "ac2047d32ff6"
+  },
+  {
+   "method": "GET",
+   "path": "/harvested",
+   "note": "shouldGenerateJWTWithCustomClaims (helper): request",
+   "mask": [
+    {
+     "regex": "^[\\w-]+\\.([\\w-]+)\\.[\\w-]+$",
+     "replace": "<per-process key>.$1.<signature>"
+    },
+    {
+     "regex": "\"n\" : \"[^\"]+\"",
+     "replace": "\"n\" : \"<per-process key>\""
+    }
+   ],
+   "case": "ac2047d32ff6"
+  }
+ ]
+}

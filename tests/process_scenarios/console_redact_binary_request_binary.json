@@ -1,0 +1,35 @@
+{
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_LOG_LEVEL": "INFO",
+    "MOCKSERVER_REDACT_SECRETS_IN_LOG": "true"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "tcp": "UFJPUEZJTkQgL2RhdiBIVFRQLzEuMQ0KSG9zdDogbG9jYWxob3N0DQpBdXRob3JpemF0aW9uOiBCZWFyZXIgUFJPUEZJTkQtU0VDUkVULVRPS0VOLTk5OQ0KDQo="
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 30,
+  "expect": {
+    "running": true,
+    "stdoutContains": [
+      " received binary request:",
+      " no matching binary expectation for binary request:",
+      "***REDACTED***"
+    ],
+    "stdoutNotContains": [
+      "PROPFIND-SECRET-TOKEN-999",
+      "50524f5046494e442d5345435245542d544f4b454e2d393939"
+    ]
+  }
+}

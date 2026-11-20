@@ -1,0 +1,52 @@
+{
+ "source": "9.2.0 HttpWebSocketResponseActionHandler: a handshake whose Sec-WebSocket-Version Netty has no handshaker for is answered by sendUnsupportedVersionResponse (426, sec-websocket-version: 13) and the connection serves the request pipelined behind it (upstream Http1PipelinedExchangeEndCoverageIntegrationTest, WEBSOCKET_RESPONSE).",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/first"
+     },
+     "httpWebSocketResponse": {}
+    },
+    {
+     "httpRequest": {
+      "path": "/probe"
+     },
+     "httpResponse": {
+      "body": "probe answered"
+     }
+    }
+   ]
+  },
+  {
+   "note": "one write: an upgrade asking for version 99, then a request pipelined behind it",
+   "text": true,
+   "tcp": [
+    {
+     "text": "GET /first HTTP/1.1\r\nHost: {{host}}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 99\r\n\r\nGET /probe HTTP/1.1\r\nHost: {{host}}\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "an unknown version that is not a number either",
+   "text": true,
+   "tcp": [
+    {
+     "text": "GET /first HTTP/1.1\r\nHost: {{host}}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: thirteen\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "both requests were received",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS"
+  }
+ ]
+}

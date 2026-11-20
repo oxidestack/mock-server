@@ -1,0 +1,32 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/prefix/some/infix/path/postfix\"}, \"httpResponse\": {\"body\": \"target\"}}, {\"httpRequest\": {\"path\": \"/some/path\", \"secure\": false}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"headers\": {\"Host\": [\"localhost:{{port}}\"], \"overrideHeaderToReplace\": [\"originalValue\"], \"overrideHeaderToRemove\": [\"originalValue\"]}, \"cookies\": {\"overrideCookieToReplace\": \"originalValue\"}, \"body\": \"some_overridden_body\"}, \"requestModifier\": {\"path\": {\"regex\": \"^/(.+)/(.+)$\", \"substitution\": \"/prefix/$1/infix/$2/postfix\"}, \"headers\": {\"add\": {\"headerToAddOne\": [\"addedValue\"], \"headerToAddTwo\": [\"addedValue\"]}, \"replace\": {\"overrideHeaderToReplace\": [\"replacedValue\"], \"requestHeaderToReplace\": [\"replacedValue\"], \"extraHeaderToReplace\": [\"shouldBeIgnore\"]}, \"remove\": [\"overrideHeaderToRemove\", \"requestHeaderToRemove\"]}, \"cookies\": {\"add\": {\"cookieToAddOne\": \"addedValue\", \"cookieToAddTwo\": \"addedValue\"}, \"replace\": {\"overrideCookieToReplace\": \"replacedValue\", \"requestCookieToReplace\": \"replacedValue\", \"extraCookieToReplace\": \"shouldBeIgnore\"}, \"remove\": [\"overrideCookieToRemove\", \"requestCookieToRemove\"]}}}}]"
+  },
+  {
+   "method": "POST",
+   "path": "/some/path",
+   "headers": {
+    "x-test": "test_headers_and_body",
+    "requestHeaderToReplace": "originalValue",
+    "requestHeaderToRemove": "originalValue",
+    "Cookie": "requestCookieToReplace=replacedValue"
+   },
+   "body": "an_example_body_http",
+   "note": "override + modifier with cookies (upstream shouldForwardOverriddenRequestWithRequestModifier)"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/prefix/some/infix/path/postfix"
+   },
+   "note": "what the target received",
+   "mask": [
+    "\"(local|remote)Address\" : \"[^\"]*\""
+   ]
+  }
+ ]
+}

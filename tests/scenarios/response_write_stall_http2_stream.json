@@ -1,0 +1,49 @@
+{
+ "source": "Http2StreamWriteStallHandler resets an HTTP/2 stream (RST_STREAM CANCEL) whose response has data waiting in the flow controller that its client took none of for responseWriteStallTimeoutMillis, here a client that never returns flow-control window, and counts it in mock_server_response_write_stalls_total{protocol=http2,scope=stream} (MetricsTest#countsResponseWriteStallsUnderTheirProtocolAndScope)",
+ "properties": {
+  "metricsEnabled": "true",
+  "responseWriteStallTimeoutMillis": "1000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/stall"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"statusCode\": 200, \"body\": \"#foreach($i in [1..10000])aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa#end\"}"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "note": "a 1 MB response on a stream whose client never returns window: the first 65535 bytes, then a reset",
+   "h2raw": {
+    "method": "GET",
+    "path": "/stall",
+    "readMillis": 5000,
+    "dataLengths": true
+   }
+  },
+  {
+   "note": "one HTTP/2 stream reset",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_response_write_stalls)[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ]
+  }
+ ]
+}

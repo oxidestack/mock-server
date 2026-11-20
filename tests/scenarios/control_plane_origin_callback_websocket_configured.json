@@ -1,0 +1,48 @@
+{
+ "properties": {
+  "controlPlaneCorsAllowOrigin": "https://app.example.com",
+  "controlPlaneTrustedHostSuffixes": "k8s.example"
+ },
+ "steps": [
+  {
+   "note": "a listed origin upgrades",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: {{host}}\r\nOrigin: https://app.example.com\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\nX-CLIENT-REGISTRATION-ID: 0786-allowed\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "an unlisted origin is refused",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: {{host}}\r\nOrigin: https://attacker.example\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "a loopback origin is refused once the list is set",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: {{host}}\r\nOrigin: http://localhost:3000\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "a same-host page under a trusted suffix upgrades",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: mockserver.ns.svc.k8s.example:8443\r\nOrigin: http://mockserver.ns.svc.k8s.example:8443\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\nX-CLIENT-REGISTRATION-ID: 0786-trusted\r\n\r\n"
+    }
+   ]
+  },
+  {
+   "note": "a name merely containing the suffix is refused",
+   "tcp": [
+    {
+     "text": "GET /_mockserver_callback_websocket HTTP/1.1\r\nHost: mockserver.k8s.example.evil.com:8443\r\nOrigin: http://mockserver.k8s.example.evil.com:8443\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ]
+  }
+ ]
+}

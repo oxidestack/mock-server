@@ -1,0 +1,54 @@
+{
+  "note": "a 79-bit RSA key SunRsaSign refuses is built by BouncyCastle's key factory, which MockServer has registered",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "files": {
+    "ca.pem": "-----BEGIN CERTIFICATE-----\nMIICEjCCAXugAwIBAgIUWNEBEw/5zssru4niMq05gTuDJ6owDQYJKoZIhvcNAQEL\nBQAwMjELMAkGA1UEBhMCR0IxEzARBgNVBAoMCk1vY2tTZXJ2ZXIxDjAMBgNVBAMM\nBXJzIGNhMB4XDTI2MTAwNzA3NDY1OVoXDTM2MTAwNDA3NDY1OVowMjELMAkGA1UE\nBhMCR0IxEzARBgNVBAoMCk1vY2tTZXJ2ZXIxDjAMBgNVBAMMBXJzIGNhMCUwDQYJ\nKoZIhvcNAQEBBQADFAAwEQIKf////////////wIDAQABo4GfMIGcMBIGA1UdEwEB\n/wQIMAYBAf8CAQEwDgYDVR0PAQH/BAQDAgGGMCAGA1UdJQEB/wQWMBQGCCsGAQUF\nBwMBBggrBgEFBQcDAjAgBgNVHQ4BAf8EFgQUpiljWcXfqN/wrP6eig9vj+BXLYww\nMgYDVR0RAQH/BCgwJoIJbG9jYWxob3N0hwR/AAABgQVhQGIuY4YMaHR0cDovL3gu\neS96MA0GCSqGSIb3DQEBCwUAA4GBAL86H3VBvvu/DaCsOfkhSM+NmjCpfw29+n56\nj6jXiLTHE8GTLLMFcpOU3Mnp1LlGOtZ7XTo9pp4IzhT5+JCa8DWkORMN25NrXGII\ntPjyKBUqqOOrdDifuE1GLIozIXkuDiuyJJwkCTqcMYcu9I9eH5f0MItrjMOT5m7N\nUygXPPDg\n-----END CERTIFICATE-----\n"
+  },
+  "propertyFile": "mockserver.controlPlaneTLSMutualAuthenticationRequired=true\nmockserver.controlPlaneTLSMutualAuthenticationCAChain={{scratch}}/ca.pem\n",
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/retrieve",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates found"
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/clear",
+        "ownHost": true,
+        "expectStatus": 401,
+        "expectBodyContains": "Unauthorized for control plane - control plane request failed authentication no client certificates found"
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "authentication handler could not be created": 0
+    }
+  }
+}

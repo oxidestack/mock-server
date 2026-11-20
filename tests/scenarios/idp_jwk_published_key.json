@@ -1,0 +1,833 @@
+{
+  "note": "Keys the OIDC provider accepts at generate time although they are inconsistent: the JWKS publishes the key's own public part (JWK x/y or n/e, the certificate's key), tokens are signed with the private part and verified against the public one; an EC key off the algorithm's curve fails in generateJWK.",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an EC JWK whose d is not the private key of x/y is accepted; the JWKS publishes the JWK's own x/y",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-mismatch\", \"x\": \"X2erNvG54_uMGQcL_VJsJ7XWRBcpcvpvqYwE8Tl0P1Q\", \"y\": \"9t6-IH2qWTU_HHahkb8umi_q27HdgwK9WLDUB-8DBrI\", \"d\": \"6hcZLqQh8DUZXEHEtCi0mVvyQi6jtRuUtJ79ZmbVJUk\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "a token",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "ecmismatch"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token at userinfo: verified against the published public key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:ecmismatch}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token at introspection",
+      "method": "POST",
+      "path": "/introspect",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "token={{capture:ecmismatch}}",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a consistent EC JWK, as a control",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-p256\", \"x\": \"tKcE-R7XISCbOFqh1_FZGRFbF8BQtCjx1KW1jp5gog8\", \"y\": \"aDnKmtiTbVVcyHipo___81hapa_W6vNZSqww3Etu3N8\", \"d\": \"mMgvDz_dMJnPp8WKqXRphDXA6APClIUDp24taoVjwcM\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "a token",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "ecgood"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token at userinfo: verified against the published public key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:ecgood}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token at introspection",
+      "method": "POST",
+      "path": "/introspect",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "token={{capture:ecgood}}",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an RSA JWK whose dp is not d mod (p - 1) is accepted; the JWKS publishes its n/e",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"RSA\", \"kid\": \"rsa-bad-dp\", \"n\": \"mohzVGloeBdxpDQyd1JG_rw27BVqENyAlRyVAie28M3dEQGGJau-TH4eQhlIn__qnRWNoeu-0O_zJxnRRcya_Wf0imfdm9wOWUectDJ5_LSJ9mjsCESPTLFDVGZUZyf3ZmOxM4_1bG6z0M_hsw-djEOkNGq_E5sLFZjCPOEDVhKbRaWxsvf618ctAAOhWh3LTenS8-NXfBt0Gemjii5F2h8E4QjK4k9NG29AADralVwh-_1xC2F6EtTVgFhR4fpYil9EUDq4b31kicqxZTFpnHpYlUwU6LbqHTWaezkXsudaCaNrHbtmHshZB4ceMDrDvidPv1DZtmi2hIt0dNj2WQ\", \"e\": \"AQAB\", \"d\": \"CN9618bxo6uc79O7bhSAVRITiTy1iWBP1b_9YlFLdMotPlO7EyCoXZYEQMFY5S75lqltJ3X0z-RnLsCRvpM_9vroFKZgGBnrjP7KpaIcVQE8xrRBkTv2im3HMuppQD8QOoXQ3-gNLHuywXOePvzPjAU6QXQ7onGNkmDiDkLRQTjbYt0JffARTYW0ws_INAaXGOIxJhxJK0_bVwkqkQJssQ5kiF5O_TlCH01JeC1OBD9ZuRkcf225cYie9STkahuldZlSYpil2s8Si45ggJpAc1PhDwCwOWJ1TCxbak-ZoOfqvu7LyiX3Y7hL0B4zluCZjJuF9ta8_HZmtjY9EKok3Q\", \"p\": \"1M7V3Mv2tJO8GDQ_ycryw27A-0FSSahmny3IyG5J1CYg3oReKIyMOXz4VrkMKBWiQ2Qf69i7ZlkWUGXvjsZO_6HDDhdjqhGhGEU__JJqxHecSOPRF61v1S19SOygNBacGC_36X-uTl-FcXDCNrWpzxEHJWLwmay05-qlEqNbBsc\", \"q\": \"ueW9x4CDMm2-3hBfBPLqUze3TAJ5J_pqBYDyAnyh_5UrSEHw9CPPgLPMX57A4eD8M5nq4cBGGCFIYo86dpLJg67vWLgfnUSxr8ELJQHwI-n_kwA1lRJG1M7z36DCqgWi-P_dzMuUktYSs9t6s9aH8llf8IKPv2DBZr6SacjWed8\", \"dp\": \"IbBozN6BPM8SfOZwnrqBOg0jgeMyarS9Ij_2RDypdWtf0rozycmOPV-aVOhQk1vxZyfHoeeaqzY5QRsSFJEyWme6YFW1kmveC-CSo6JuQpII7MUcCdqMFLxx1ASZzAU0SuP1JELxTjjzACVwqYaSzlQMxI9oNXvQ29Iatdukgm0\", \"dq\": \"lEBExhqWBpyBEAWMUZ0MBMu1MTfzuU86SCNaXWNZqkMjHmAAMiNw81nwTf2EI19SojBIojq9a7b3TCqfXDqZ3JuhI2bLR5emANz570yJX4rYmDodgUHvHP3ifWBufjs6iks7bnyYgzWX-rm5NDyNdFeUbHEjBGO8OR0YFKbnbI8\", \"qi\": \"OkE8jLnhs2GWONLacnjqc-Ioytn5iQpMhoRjXeON24BHz1SED00PspxV_1IfP9pVZkp2x1A0Rp6pvbdt3MrqC4-TF0ergsxehYaxtydeAwcoEOK1Zyk3YQ0odp6GJvZjjs8FmH3BE-QHnri40t2CkaEMAlJKB8MB14amSY6yZ3I\"}",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the JDK's CRT signature fails its own check (RSA private key operation failed): the token callback throws, 404",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an RSA JWK whose CRT values belong to another key is accepted too",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"RSA\", \"kid\": \"rsa-other-primes\", \"n\": \"rqPFu5Tg70Wq6E2jxnaHtZyDKNTGOVb9AW9Ap2zUYzG_55-sR548uf3l4qDx-ZUbRPuXr6YHk5Dt6FoRgxJAxrofxOiqVOTepF4wmZoVgx4LZK3T6RMw3gr0P5EUmDY12d3EfDSt2vZl7MNNOueO8j1dAfAPxv0FiNzLRSGK80mnR0NnK-2h3TPKN065lZ0x4Jq0WSdDG1gQQJZkdwAyvBETUr6UGRs0AlgY3s7C-wapSM5TiNun-QvJTfFf--FL4bKzZVdYMlDYwMPXEKaRRCxiBb7T4YwMI7TWtw7cOQeN4TOLniyMkpw06cWSAxfNI5LeD6fBkdxBnmGRVpakHw\", \"e\": \"AQAB\", \"d\": \"IDTHpF5CVR3t9MVMrK7zPATPE1qZ670lD3yq2bVyPZDRKTADH3oJDOvL102DElnzG3eic5wUzZvuo-joTdmx5HQyo6ecsec7P-i24bzOts11oG2GJPeLDYfLn2Vr_N4SdEk3kQhN_5FtHoqt1W0aqYWzf0X8QuAqgyDkw6z56P-fvKmbMNmea6znWzZ9osSqMAdfLIDH_2nEs-1Neqv2Mxx4VOV6v51zgsqPnipPTwGkwnNF_1wcTJkCAxGnPoAgCVQW_2gayoLGCobq1NXBhQclZFoKQFfZgbjsUpoSZiA6kSInvHRgSBZz22hAF4lmNbWnk3RruyenQz15BtSloQ\", \"p\": \"-tAI5UC_SIGqZxw4cbxTa4320mOHVqLzUycYadibeX7ZNMDO_lgUrWVjqkjz-r3k_KcBdcz1PZirtfPi7xzp4czstv4VX-1f5RfJpf57WZUzJu329bPsDZeijwoQvvwqkNvX2T9pEu05QVlB4I4ReYpxx5mYmwUK59iWBpwBUgE\", \"q\": \"w5FUpYwkmOv9slYymn4cNaMVdN9HEHpOL-_qpIZLlidUgDekRvs_rvACeRX6CGanLelsT_fHTpf6U3RkPK32QrXOjtDsp4D_5Sj49pGdGwH_6OUbt9wCpHnL9-mgVSpjV8ZMCAtyoCfQGXHRrSsEgF-BlFryQA4LpYxbKDri7RU\", \"dp\": \"QxWLm43y27ja1BNnQXyGr3jcMK-wTkrtXCtTy1PFWfzEqeh8NOloNmys-KnkoAdUjQM6T8DPQ3dnThZ6d0w7fkqqcdOJ8gtyn7r6E2z6nx5Z_Sqe6F8EXypUr3-YtQyLcg1rMU9Vklti-giepyo4oFKYVjPN7oCtxw9WKVRmwgE\", \"dq\": \"idc1Qjm00dQDzF7U6-9XErcPuIBnJkYONdt0FuJRBFRUSsrtDtqn2DVyiMXkpWc1DjcoEHUkFVEpLwkqXVp_6CUcoazAII_bzTlDwQaBJTgTl6NkFgMMGcF-8g3I5D4sJwGtNT5cXGWzVzvR_awEUDcArgAsHtnHe7ehyIk4yME\", \"qi\": \"wtNkfttEz5tZyYluJVKlF_95IHtA3DNYP5r5FLTHgv5FeRHTYaEDb2TBcqb3SO_zXvjYDuFPIf9rY33Gui1FdqFGorfMOvssHza-GXP8w5fBK1aR523DKsjcqD9lrwEJPZ61-0BL9LugkJLJ05kjdLFdxyqYRrhUqXdOLHaZgOI\"}",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "signing fails the same way",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "a consistent RSA JWK, as a control",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"RSA\", \"kid\": \"rsa-good\", \"n\": \"qn2QtSRmLpEniT9Cak9EBcX6Kv8CW9hNmvMCIAjp5_0dzhW-TjZ6QhnkVjQ25sGxZI9xZbZcnl_ewuUgWy7FqWFoELS0ZFsQQNqV0IaSCdvj9X0fexWgy13RSBMoh3pPQY_xwMQ9DZw1dA-GluAitSyFxbai3LuQwQhMeeikP5qb8kVfgbXd9bIIW-6HFoYUewXiM7vMwXz4xGrC1m4_8QPu4_7mzvP2TdH4OYqbE8q6CAumajQSXAytS_UIcxPRwAvuE50gTP8TLthKJQnSDyCD1Sl7iNwGTZJvsSWlMH55J8ubCA42n5td364k_yDkGECA7kVgMJdDJeKvXV6stw\", \"e\": \"AQAB\", \"d\": \"H0KbtGMCq1opHiSvuE9lYQueZaDRXWbJP_Z7tsT7onJKMz3QYYXin9kggV_ciy4LqS0V9TjdPZrFfQXHC4EFdBusmZeQlfAOiF2r54qtH0qmvx3cllRuYauHkogUv9aAzrwmbxpsOWEhefDY1DQvmPmbY5erv_5SOdqcLyQlbZXOXEdUl916caMPSWrov2FQUMTqbyEmVApu0L9MjoieR9NsgEn7TKNIAaisk5XS_ygLVO96t3e9zGFYEaOsF9-e_N9MrMjcEVlakoaYuUZ8X683tBJFCoEIuvgfNe12Ks-vgFJrSa_THhNRnvLSzys-ynGpS9EoVt_XfholSBd77Q\", \"p\": \"4QnCVPjobiByYm8dlVaT1EX7RYrYbgUsi21lc9uyQgN8T4EkH7Tp4MMTrmEC2t_o9_iYZ6GKhxcBGZhWSN5s3a2cogHqnQwCsqP8DTHQr5_BuAG3aChg_ALMKyn2P-vpE8uxeVhO6zcN04Uc2JkflPJPVDFZkwb0P0KBJWp9IlM\", \"q\": \"wfKKwYVyEWELsHBoNcykZtRkCAU9SN-kL9-58GHlOtZYvHC5UV9_3wFA-9Xmvmcjdb_tHJ0AI6eomXb5GAX-6PvAH6i4jjiSilJ8eJqoZv-be69FnJyWn7qtVo-V_mq11dhOa4Yoy9z90bd0UccjxPHi_ebI1pFUkN5vftgjh40\", \"dp\": \"w3k1q5e2VgqrMSOxv8m_iTDsraCIlTC7W7U_3d6lPcBHV8wmc8AzM4Bf9SXhU_wRImx2_fWNHgD2fKQdtxg12mz21Kbzg00ufrwAsflme1c67znWdYw1ilJnxMqjUyz5fa9-zpfNnXVp9iT3RJHlo_zCubBQTW1J9jUvdy_D2G8\", \"dq\": \"N1D6CmAJPLO1Jcmpr06CxWFmdnMoG5TNu2nQGqORQcrI3FY6RN88FVrCMhG8EipQjtECy9pro7-58qtgOF3dao4DKgRxPv8brKACKFPUHCxjKE_BRv3SaBRSRBIH8dx1qFxdYYWONTb-ncX5QynNJernlwsv1SL2P6txmXgECjE\", \"qi\": \"WzLCu7GA2wef9smyLWPe-cgHIvlFXVSNBDQ9qlPBwds0sdMJKQsrdUucuhNZYer07Q262ZRy1gl8f5_xpNnkJyeNgsGFCDsisy8viO8SWBUqzxxthHNlcdsPBS9O0Nt4Cx37gXwKrgOUWxshXzOQgyjcFTwZFoMgpxToxpM1Y3c\"}",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "a token",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "rsagood"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token at userinfo: verified against the published public key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:rsagood}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token at introspection",
+      "method": "POST",
+      "path": "/introspect",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "token={{capture:rsagood}}",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an EC PEM key with the certificate of another P-256 key: the certificate's key is published",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg0OVa6n40RCidR9Nb\nTFC/Er4lOwRDbEoTGRZUUtOsKZihRANCAATmio0yeKrMdioTkHXRyuqLp5GuIp5n\nJnWrXzZ4ti7btrn9eygfS7zwVhw2wEq/SiR3bwkCGsCJdde/T+T7NlXa\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBAzCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAEH+9iV77OubqGMQfLkedMXQlPmD5uSKZGk4NoQd0T\nNEeEta4mHyKh/JLpQ/hkdSc14aOSrbBH3KpPwCXjLeoy0DAKBggqhkjOPQQDAgNH\nADBEAiAh/mKx1YLWoNW3K/igfFUGKzXEtNZzQ5kATSDqGYtmWwIgaRrCVCYiWkgD\n/hYNSjCG60aDlfKkSsukE68RaPfOge8=\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "ES256",
+        "keyId": "pem-other-cert"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "a token",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "pemother"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token at userinfo: verified against the published public key",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:pemother}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the token at introspection",
+      "method": "POST",
+      "path": "/introspect",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "token={{capture:pemother}}",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "an EC JWK on P-384 with ES256: generateJWK's ECKey builder finds x/y off P-256 (Exception creating JWK)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-384\", \"kid\": \"ec-p384\", \"x\": \"pagRAvCYhV4fC-pNTT2cjoguyRh1nZEV7QCxaM6I2Z73Od9J0RPtUsu3hYW8Kgu5\", \"y\": \"KhmOMG4NE4p7URqD0NtAziEE3WiqxPjXPDe7FLyr4GzMoSvXcSNyiWkBNY7rc0KD\", \"d\": \"iMDpuKXtkXbJqd3CWPE4uvTjP1ryAjpQCdJa2v8tvZqgWwIC91kuUeSWSm5Aurxv\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "P-256 with ES384",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-p256\", \"x\": \"tKcE-R7XISCbOFqh1_FZGRFbF8BQtCjx1KW1jp5gog8\", \"y\": \"aDnKmtiTbVVcyHipo___81hapa_W6vNZSqww3Etu3N8\", \"d\": \"mMgvDz_dMJnPp8WKqXRphDXA6APClIUDp24taoVjwcM\"}",
+        "signingAlgorithm": "ES384"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "P-521 with ES256",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-521\", \"kid\": \"ec-p521\", \"x\": \"AMGXExjqUvO8Ftw3bSv8C2h_Cyrt9plciX36hl8MdH6b51VfW64Thg2tbizpgi-QiZJOpyTOAwHsKaabvM6NzefC\", \"y\": \"AVkP0l6eO-yDrvqxdZiQ3g1Az_w9dt8ue6FlHoT60x4_1KUvdmJBViKDkFIdIhA8CaLbgXyzxo4abHc5973v-DYs\", \"d\": \"ABeVo_hMm30OhA0Qds-aoqqcti5U-rV9p4y_W0yOky4MSeyTQ3ystZMbXnQvzKp5AfloH_CslYKiUKoHd7umruQW\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "P-256 with ES512",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"P-256\", \"kid\": \"ec-p256\", \"x\": \"tKcE-R7XISCbOFqh1_FZGRFbF8BQtCjx1KW1jp5gog8\", \"y\": \"aDnKmtiTbVVcyHipo___81hapa_W6vNZSqww3Etu3N8\", \"d\": \"mMgvDz_dMJnPp8WKqXRphDXA6APClIUDp24taoVjwcM\"}",
+        "signingAlgorithm": "ES512"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "secp256k1 with ES256",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"secp256k1\", \"kid\": \"ec-k1\", \"x\": \"dtFPek-FwpCh5HqYPqqMS7eT2DbZpel8KU88iJPjIPk\", \"y\": \"C0B4w6uodpUzO9LRD2AtjVnln45gsJKHL9G-JUi-NPE\", \"d\": \"0H5ZViIYQfNlOZ58ZVnH0vWq7ndSxZkytesXUXeRMc4\"}",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "secp256k1 with RS256: the family check comes first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "jwkJson": "{\"kty\": \"EC\", \"crv\": \"secp256k1\", \"kid\": \"ec-k1\", \"x\": \"dtFPek-FwpCh5HqYPqqMS7eT2DbZpel8KU88iJPjIPk\", \"y\": \"C0B4w6uodpUzO9LRD2AtjVnln45gsJKHL9G-JUi-NPE\", \"d\": \"0H5ZViIYQfNlOZ58ZVnH0vWq7ndSxZkytesXUXeRMc4\"}",
+        "signingAlgorithm": "RS256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "an EC PEM key and certificate on P-384 with ES256",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDAJBS0KxZMDFEykdLI\nzZo/5HIh+QoBmPrL1zJqVa1L+ybGGOebbslNblLN3OHLDHahZANiAARDzJJMDsyJ\nHRdTvKjoBbNL+8Hmxl+5XTavGWjQSMewkq/pfbb5HkZXwWk6Dwqg9TdWxAOXgdG6\nbdnOm8dQLueYY85lx6673xeYFOBHgwP8lfwiLxhH/pLhEjgILpiySO0=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBQTCByKADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MHYwEAYHKoZI\nzj0CAQYFK4EEACIDYgAEQ8ySTA7MiR0XU7yo6AWzS/vB5sZfuV02rxlo0EjHsJKv\n6X22+R5GV8FpOg8KoPU3VsQDl4HRum3ZzpvHUC7nmGPOZceuu98XmBTgR4MD/JX8\nIi8YR/6S4RI4CC6YskjtMAoGCCqGSM49BAMCA2gAMGUCMQCLj5bSoeNldnyt8WGP\n0J6T1D/DMk0fE3lN+DQbpAURKlublFTYLKN69dB+/FAKb1ICMGsc80UdZae4Jg7n\nm7UGIY5AihPUn+CRKII01qEeiU4nIIPYulwGImTuLtiMQoog4w==\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "ES256"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entries and their throwable chains",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    }
+  ]
+}

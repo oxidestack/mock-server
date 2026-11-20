@@ -1,0 +1,17 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "v1", "httpRequest": {"path": "/one"}, "httpResponse": {"statusCode": 200, "body": "one"}}},
+  {"method": "GET", "path": "/one"},
+  {"note": "passes, times given", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/one"}, "times": {"atLeast": 1}}},
+  {"note": "passes, no times", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/one"}}},
+  {"note": "fails", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/two", "method": "GET"}, "times": {"atLeast": 2, "atMost": 3}}},
+  {"note": "by id", "method": "PUT", "path": "/mockserver/verify", "body": {"expectationId": {"id": "v1"}, "maximumNumberOfRequestToReturnInVerificationFailure": 5}},
+  {"note": "response passes", "method": "PUT", "path": "/mockserver/verify", "body": {"httpResponse": {"statusCode": 200}, "times": {"atLeast": 1}}},
+  {"note": "response fails", "method": "PUT", "path": "/mockserver/verify", "body": {"httpRequest": {"path": "/one"}, "httpResponse": {"statusCode": 500}, "times": {"atLeast": 1}}},
+  {"note": "sequence passes", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpRequests": [{"path": "/one"}]}},
+  {"note": "sequence fails", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpRequests": [{"path": "/one"}, {"path": "/two"}]}},
+  {"note": "response sequence", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpResponses": [{"statusCode": 200}]}},
+  {"note": "response sequence fails", "method": "PUT", "path": "/mockserver/verifySequence", "body": {"httpResponses": [{"statusCode": 201}]}},
+  {"note": "all logs", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "mask": ["\"(local|remote)Address\" : \"[^\"]*\""]},
+  {"note": "logs about /two", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/two"}},
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}], "body": {"path": "/two"}}
+]}

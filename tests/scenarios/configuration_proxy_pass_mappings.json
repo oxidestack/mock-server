@@ -1,0 +1,608 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "null until set: left out"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/api/",
+      "targetUri": "https://backend:8443/services/"
+     }
+    ]
+   },
+   "note": "a mapping: the target is taken apart"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": null
+   },
+   "note": "a null and a blank string leave the list alone"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": ""
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://h.example/",
+      "preserveHost": true
+     },
+     {
+      "pathPrefix": "/b",
+      "targetUri": "http://[::1]:81/p//"
+     }
+    ]
+   },
+   "note": "two mappings, preserveHost, an IPv6 host, a doubled trailing slash"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a"
+     }
+    ]
+   },
+   "note": "a mapping without a target"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "targetUri": "http://x"
+     }
+    ]
+   },
+   "note": "a mapping without a prefix"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": ""
+     }
+    ]
+   },
+   "note": "an empty target still parses: port 80"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "",
+      "targetUri": "http://x"
+     }
+    ]
+   },
+   "note": "an empty prefix is left out"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": null,
+      "targetUri": "http://x",
+      "preserveHost": null
+     }
+    ]
+   },
+   "note": "null members"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://x",
+      "targetHost": "other",
+      "targetPort": 9,
+      "targetPath": "/q",
+      "targetSecure": true
+     }
+    ]
+   },
+   "note": "derived members in the request are ignored"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://x",
+      "bogus": 1
+     }
+    ]
+   },
+   "note": "unknown members are ignored"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://x",
+      "preserveHost": "true"
+     }
+    ]
+   },
+   "note": "preserveHost as text"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://x",
+      "preserveHost": 1
+     }
+    ]
+   },
+   "note": "preserveHost as a number"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://x",
+      "preserveHost": "yes"
+     }
+    ]
+   },
+   "note": "preserveHost as a word fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://x",
+      "preserveHost": [
+       true
+      ]
+     }
+    ]
+   },
+   "note": "preserveHost as an array fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": 5
+     }
+    ]
+   },
+   "note": "a number target is its text"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": true,
+      "targetUri": "http://x"
+     }
+    ]
+   },
+   "note": "a boolean prefix is its text"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": [
+       "x"
+      ]
+     }
+    ]
+   },
+   "note": "an array target fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": [
+       "x"
+      ],
+      "targetUri": "http://x"
+     }
+    ]
+   },
+   "note": "an array prefix fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": {
+       "a": 1
+      },
+      "targetUri": "http://x"
+     }
+    ]
+   },
+   "note": "an object prefix fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "not a uri"
+     }
+    ],
+    "maxExpectations": 21
+   },
+   "note": "a target that is not a URI is stored; only printing it fails, so the update answers 400 yet applied"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "and the configuration cannot be read until the list is replaced",
+   "mask": [
+    "Configuration@[0-9a-f]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://h"
+     },
+     {
+      "pathPrefix": "/a",
+      "targetUri": "not a uri"
+     }
+    ]
+   },
+   "note": "a bad second mapping does the same"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "x"
+     }
+    ]
+   },
+   "note": "a relative target"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "/just/path/"
+     }
+    ]
+   },
+   "note": "a path-only target"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "https://u:p@h:0/p?q#f"
+     }
+    ]
+   },
+   "note": "user info, a query, a fragment and port 0 on https"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "HTTPS://H.Example:8443/A/B/"
+     }
+    ]
+   },
+   "note": "the scheme and host keep their case; https is any case"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "//h/p"
+     }
+    ]
+   },
+   "note": "a scheme-relative target"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "mailto:a@b"
+     }
+    ]
+   },
+   "note": "an opaque target"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://a_b/p"
+     }
+    ]
+   },
+   "note": "an underscore makes the authority registry-based: no host"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://h:99999/p"
+     }
+    ]
+   },
+   "note": "a port beyond 65535"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://h:/p"
+     }
+    ]
+   },
+   "note": "an empty port"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "ftp://h/p/"
+     }
+    ]
+   },
+   "note": "another scheme"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/a",
+      "targetUri": "http://h/%7Ex"
+     }
+    ]
+   },
+   "note": "an escape in the path is decoded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     null
+    ]
+   },
+   "note": "a null element stays"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {}
+    ]
+   },
+   "note": "an empty object"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     "a"
+    ]
+   },
+   "note": "a text element fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     5
+    ]
+   },
+   "note": "a number element fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     [
+      "a"
+     ]
+    ]
+   },
+   "note": "a nested array element fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": "x"
+   },
+   "note": "a text list fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": "[{\"pathPrefix\":\"/s\",\"targetUri\":\"http://s\"}]"
+   },
+   "note": "a JSON text list fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": 5
+   },
+   "note": "a number list fails"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": {
+     "pathPrefix": "/z",
+     "targetUri": "http://z"
+    }
+   },
+   "note": "one object alone is a list of one"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": {}
+   },
+   "note": "an empty object alone"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": []
+   },
+   "note": "an empty list clears it"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration",
+   "note": "cleared: left out again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": [
+     {
+      "pathPrefix": "/via/",
+      "targetUri": "http://{{deadhost}}/base/"
+     }
+    ]
+   },
+   "note": "the mappings forward a request under the prefix"
+  },
+  {
+   "method": "GET",
+   "path": "/via/x/y?q=1",
+   "note": "forwarded to the dead target"
+  },
+  {
+   "method": "GET",
+   "path": "/other",
+   "note": "outside the prefix"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "proxyPassMappings": []
+   },
+   "note": "cleared again"
+  },
+  {
+   "method": "GET",
+   "path": "/via/x/y?q=1",
+   "note": "no longer forwarded"
+  }
+ ]
+}

@@ -1,0 +1,865 @@
+{
+  "note": "OIDC and SAML IdPs given a PEM private key with a certificate of the other key family or of another EC curve: OIDC's generateJWK converts the certificate's key with the algorithm's key factory.",
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "EC key, RSA certificate, ES256: generateJWK's EC key factory refuses the RSA SubjectPublicKeyInfo",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg0OVa6n40RCidR9Nb\nTFC/Er4lOwRDbEoTGRZUUtOsKZihRANCAATmio0yeKrMdioTkHXRyuqLp5GuIp5n\nJnWrXzZ4ti7btrn9eygfS7zwVhw2wEq/SiR3bwkCGsCJdde/T+T7NlXa\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIICkTCCAXmgAwIBAgIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDDAF0MB4X\nDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowDDEKMAgGA1UEAwwBdDCCASIw\nDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKrC6ZgqQ/yq+upFQvXX4l+LDiXq\nPnQTd+qNluRw2zhIg9pPfH3oYfwcAP9go4d4zXNbc4pS1JiqieX8HMZIwciNN2wm\nKTUbOsS/2Ev8U66zHU67Gt7VHCTvuDpv82kkiPgd6lIIw+aCKUJeFUjKGPRRpPWe\nDF39R3oIrhjq/JjSwpEtUk+e86PEifsKWQZCCR2TIEDg31ZavkHLl5FNjZ9GDwe3\noYH/XQmxSXb7FW4yH7jFPy2jPrJsFKKDdMtlg/ArqzFEHUPbntNJFNisgw2r+uoe\nDhEwTEdelx1BRIbKKOhwYp2y+OcrtZkCJY9YDO+KInp7qyfL7fnagdJiyFkCAwEA\nATANBgkqhkiG9w0BAQsFAAOCAQEAaVneCfPBycuMFiiHCimtcHZloX+r21BbGykH\noVn6+sxfjPP0TA5QNkP2sr8/2RdEb6dllpQFzQUNYz/qRjJAl0aX9j+5Lpj4tSJl\nekoIz2HhpUTG+GCz0siZs1kZcQN39qlqIlTnmWNwV+D0DE/ln/7Hl9gWe+cYjF/u\nE7VwRk4Tfobf+PzA1v++32Xb4BcBvjTgF+LOo3WceklE9KsLsUJRlrJWnkGMjXR7\nAN9TOGMSC30qvvhDYdlClKJiMSCKRHfc4d22T0k/eYJ66hoNrUyM2iSXeY64hiTs\nAaaa3Tr09xQni1TOgyfONPiytFR+rVRwdDpH2pAba4q9Y3aU3w==\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "ES256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "EC key, RSA certificate, RS256: the private key's family check comes first",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg0OVa6n40RCidR9Nb\nTFC/Er4lOwRDbEoTGRZUUtOsKZihRANCAATmio0yeKrMdioTkHXRyuqLp5GuIp5n\nJnWrXzZ4ti7btrn9eygfS7zwVhw2wEq/SiR3bwkCGsCJdde/T+T7NlXa\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIICkTCCAXmgAwIBAgIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDDAF0MB4X\nDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowDDEKMAgGA1UEAwwBdDCCASIw\nDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKrC6ZgqQ/yq+upFQvXX4l+LDiXq\nPnQTd+qNluRw2zhIg9pPfH3oYfwcAP9go4d4zXNbc4pS1JiqieX8HMZIwciNN2wm\nKTUbOsS/2Ev8U66zHU67Gt7VHCTvuDpv82kkiPgd6lIIw+aCKUJeFUjKGPRRpPWe\nDF39R3oIrhjq/JjSwpEtUk+e86PEifsKWQZCCR2TIEDg31ZavkHLl5FNjZ9GDwe3\noYH/XQmxSXb7FW4yH7jFPy2jPrJsFKKDdMtlg/ArqzFEHUPbntNJFNisgw2r+uoe\nDhEwTEdelx1BRIbKKOhwYp2y+OcrtZkCJY9YDO+KInp7qyfL7fnagdJiyFkCAwEA\nATANBgkqhkiG9w0BAQsFAAOCAQEAaVneCfPBycuMFiiHCimtcHZloX+r21BbGykH\noVn6+sxfjPP0TA5QNkP2sr8/2RdEb6dllpQFzQUNYz/qRjJAl0aX9j+5Lpj4tSJl\nekoIz2HhpUTG+GCz0siZs1kZcQN39qlqIlTnmWNwV+D0DE/ln/7Hl9gWe+cYjF/u\nE7VwRk4Tfobf+PzA1v++32Xb4BcBvjTgF+LOo3WceklE9KsLsUJRlrJWnkGMjXR7\nAN9TOGMSC30qvvhDYdlClKJiMSCKRHfc4d22T0k/eYJ66hoNrUyM2iSXeY64hiTs\nAaaa3Tr09xQni1TOgyfONPiytFR+rVRwdDpH2pAba4q9Y3aU3w==\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "RS256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSA key, P-256 certificate, RS256: the RSA key factory reads the EC point as DER (first x byte 0xe6: Invalid lenByte)",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCqwumYKkP8qvrq\nRUL11+Jfiw4l6j50E3fqjZbkcNs4SIPaT3x96GH8HAD/YKOHeM1zW3OKUtSYqonl\n/BzGSMHIjTdsJik1GzrEv9hL/FOusx1Ouxre1Rwk77g6b/NpJIj4HepSCMPmgilC\nXhVIyhj0UaT1ngxd/Ud6CK4Y6vyY0sKRLVJPnvOjxIn7ClkGQgkdkyBA4N9WWr5B\ny5eRTY2fRg8Ht6GB/10JsUl2+xVuMh+4xT8toz6ybBSig3TLZYPwK6sxRB1D257T\nSRTYrIMNq/rqHg4RMExHXpcdQUSGyijocGKdsvjnK7WZAiWPWAzviiJ6e6sny+35\n2oHSYshZAgMBAAECggEADzmaMLxB/A71mLosrnU9ZIXmMMi6IUjUFghiRgNu9E14\n3hfcsnAr/lmz2BEye2NwtAKZImHgvSzlZylLmn1Fs98tbBnZ7jd7javKOfopLuge\n6pRhoLERFZT/EMzG/96nTLIEIKTR7KU5zwZK8Qa941i9M74P/bhVrWKFPUkEVQ6+\nS96S3Wh/1DdzByNzS29JiM/JHZv53LOHQsL38um2an/HqLB3cF/qAlo3e/ho6dLX\nIDkwXLMqI6jw+8vfDAjnGikhoQtfRmuxkmpy43p9bM6Ff9PbV4FzwFmKZNMA0H73\nYLwlNv9ppJFHRhJ9SdedZGsj/SQfFYo9fbbtJ0X3IQKBgQDSs8OrByHt47bdacej\nmmqhkpWbN0AiNFkfax1yJy9gTphidqZcI9K/l+Wagt8JwcS3gZQBXdKO09mjeTKV\nhYmvW8fXZUOQTZ5sBhPSGwZEU0nRVeCtuyxwomCbU2KZEexkIMXNvDgFvljFwqm2\nvUrUfGeM6dBkfA3mqtiOWMUx0QKBgQDPePWQuJ5DydVBpGsByg3MJq5xjqKA4naC\nsCj+nSlu28Jx0/6c2ttGClYiUn6apCs15UYBFVTckIedR6O/eyKn/OydfwD8Vs+0\nGwx7I9gsEskxarwi/s6Psgj6/rMgUrEyPpR4VNzOmZCPEJeG9PkzDzurlDDmwtEN\nXhURy22ICQKBgGSZ1hPDvQxzTC1dQye3I7BvZ6ULdUCfk+nvX8jQMsud2x4wHnAh\n3o8B/GuQjuN+s+kWIk+gt1bgiaqGxIMllj626KzMOb0dgkV7hV0s8AoRZk5f3X21\nv5srvEqNPqdtKlwIVclMU8dSQdpyfku1B5R6rYpXXNuNa6m16t3UPprxAoGBALw2\nUidYpBKA/dpPytdTslKaYLQZnifnyXTjVD0u29B6whm7JIatMDCI3fzC86Fb/usk\ns+31qQdygeRXgiAKF7VniEuUVJOWOVR9GUR4jvnkjOoslsH0f/TxoJ36Awv2mFMp\nXE0RR0KRIwf2GFBQ2eTNE+eiRv6Ai19iEyESd6npAn8x+2a7N3TRfCyuK+o4+ZTb\nP7q3XFi1xZRohsLwUi+08b7USkAqOW+BeQRIdaZYp+9fxT15uu30Z9cc2cgkFTsl\nCPqavUBUSt1iUNQ5qqzXXIk1U1cMqUu/v69BBgaKoIe+UxVrdYNVt+LLASJew1Bg\n+dQzK9bvv9+Ix6LS6R4K\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBDCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAE5oqNMniqzHYqE5B10crqi6eRriKeZyZ1q182eLYu\n27a5/XsoH0u88FYcNsBKv0okd28JAhrAiXXXv0/k+zZV2jAKBggqhkjOPQQDAgNI\nADBFAiEAvwF/leD/Wy5cxqkSxO/9FgECodzUAeVZM76LAXioWLcCIH4+3yYm8fJY\ngvlepxc3bJHlo592CeOpzXsq/jJ06H9P\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "RS256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSA key, P-256 certificate, ES256: family check",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCqwumYKkP8qvrq\nRUL11+Jfiw4l6j50E3fqjZbkcNs4SIPaT3x96GH8HAD/YKOHeM1zW3OKUtSYqonl\n/BzGSMHIjTdsJik1GzrEv9hL/FOusx1Ouxre1Rwk77g6b/NpJIj4HepSCMPmgilC\nXhVIyhj0UaT1ngxd/Ud6CK4Y6vyY0sKRLVJPnvOjxIn7ClkGQgkdkyBA4N9WWr5B\ny5eRTY2fRg8Ht6GB/10JsUl2+xVuMh+4xT8toz6ybBSig3TLZYPwK6sxRB1D257T\nSRTYrIMNq/rqHg4RMExHXpcdQUSGyijocGKdsvjnK7WZAiWPWAzviiJ6e6sny+35\n2oHSYshZAgMBAAECggEADzmaMLxB/A71mLosrnU9ZIXmMMi6IUjUFghiRgNu9E14\n3hfcsnAr/lmz2BEye2NwtAKZImHgvSzlZylLmn1Fs98tbBnZ7jd7javKOfopLuge\n6pRhoLERFZT/EMzG/96nTLIEIKTR7KU5zwZK8Qa941i9M74P/bhVrWKFPUkEVQ6+\nS96S3Wh/1DdzByNzS29JiM/JHZv53LOHQsL38um2an/HqLB3cF/qAlo3e/ho6dLX\nIDkwXLMqI6jw+8vfDAjnGikhoQtfRmuxkmpy43p9bM6Ff9PbV4FzwFmKZNMA0H73\nYLwlNv9ppJFHRhJ9SdedZGsj/SQfFYo9fbbtJ0X3IQKBgQDSs8OrByHt47bdacej\nmmqhkpWbN0AiNFkfax1yJy9gTphidqZcI9K/l+Wagt8JwcS3gZQBXdKO09mjeTKV\nhYmvW8fXZUOQTZ5sBhPSGwZEU0nRVeCtuyxwomCbU2KZEexkIMXNvDgFvljFwqm2\nvUrUfGeM6dBkfA3mqtiOWMUx0QKBgQDPePWQuJ5DydVBpGsByg3MJq5xjqKA4naC\nsCj+nSlu28Jx0/6c2ttGClYiUn6apCs15UYBFVTckIedR6O/eyKn/OydfwD8Vs+0\nGwx7I9gsEskxarwi/s6Psgj6/rMgUrEyPpR4VNzOmZCPEJeG9PkzDzurlDDmwtEN\nXhURy22ICQKBgGSZ1hPDvQxzTC1dQye3I7BvZ6ULdUCfk+nvX8jQMsud2x4wHnAh\n3o8B/GuQjuN+s+kWIk+gt1bgiaqGxIMllj626KzMOb0dgkV7hV0s8AoRZk5f3X21\nv5srvEqNPqdtKlwIVclMU8dSQdpyfku1B5R6rYpXXNuNa6m16t3UPprxAoGBALw2\nUidYpBKA/dpPytdTslKaYLQZnifnyXTjVD0u29B6whm7JIatMDCI3fzC86Fb/usk\ns+31qQdygeRXgiAKF7VniEuUVJOWOVR9GUR4jvnkjOoslsH0f/TxoJ36Awv2mFMp\nXE0RR0KRIwf2GFBQ2eTNE+eiRv6Ai19iEyESd6npAn8x+2a7N3TRfCyuK+o4+ZTb\nP7q3XFi1xZRohsLwUi+08b7USkAqOW+BeQRIdaZYp+9fxT15uu30Z9cc2cgkFTsl\nCPqavUBUSt1iUNQ5qqzXXIk1U1cMqUu/v69BBgaKoIe+UxVrdYNVt+LLASJew1Bg\n+dQzK9bvv9+Ix6LS6R4K\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBDCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAE5oqNMniqzHYqE5B10crqi6eRriKeZyZ1q182eLYu\n27a5/XsoH0u88FYcNsBKv0okd28JAhrAiXXXv0/k+zZV2jAKBggqhkjOPQQDAgNI\nADBFAiEAvwF/leD/Wy5cxqkSxO/9FgECodzUAeVZM76LAXioWLcCIH4+3yYm8fJY\ngvlepxc3bJHlo592CeOpzXsq/jJ06H9P\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "ES256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSA key, P-384 certificate, RS256: a short-form length (0x43) short of the end: extra data at the end",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCqwumYKkP8qvrq\nRUL11+Jfiw4l6j50E3fqjZbkcNs4SIPaT3x96GH8HAD/YKOHeM1zW3OKUtSYqonl\n/BzGSMHIjTdsJik1GzrEv9hL/FOusx1Ouxre1Rwk77g6b/NpJIj4HepSCMPmgilC\nXhVIyhj0UaT1ngxd/Ud6CK4Y6vyY0sKRLVJPnvOjxIn7ClkGQgkdkyBA4N9WWr5B\ny5eRTY2fRg8Ht6GB/10JsUl2+xVuMh+4xT8toz6ybBSig3TLZYPwK6sxRB1D257T\nSRTYrIMNq/rqHg4RMExHXpcdQUSGyijocGKdsvjnK7WZAiWPWAzviiJ6e6sny+35\n2oHSYshZAgMBAAECggEADzmaMLxB/A71mLosrnU9ZIXmMMi6IUjUFghiRgNu9E14\n3hfcsnAr/lmz2BEye2NwtAKZImHgvSzlZylLmn1Fs98tbBnZ7jd7javKOfopLuge\n6pRhoLERFZT/EMzG/96nTLIEIKTR7KU5zwZK8Qa941i9M74P/bhVrWKFPUkEVQ6+\nS96S3Wh/1DdzByNzS29JiM/JHZv53LOHQsL38um2an/HqLB3cF/qAlo3e/ho6dLX\nIDkwXLMqI6jw+8vfDAjnGikhoQtfRmuxkmpy43p9bM6Ff9PbV4FzwFmKZNMA0H73\nYLwlNv9ppJFHRhJ9SdedZGsj/SQfFYo9fbbtJ0X3IQKBgQDSs8OrByHt47bdacej\nmmqhkpWbN0AiNFkfax1yJy9gTphidqZcI9K/l+Wagt8JwcS3gZQBXdKO09mjeTKV\nhYmvW8fXZUOQTZ5sBhPSGwZEU0nRVeCtuyxwomCbU2KZEexkIMXNvDgFvljFwqm2\nvUrUfGeM6dBkfA3mqtiOWMUx0QKBgQDPePWQuJ5DydVBpGsByg3MJq5xjqKA4naC\nsCj+nSlu28Jx0/6c2ttGClYiUn6apCs15UYBFVTckIedR6O/eyKn/OydfwD8Vs+0\nGwx7I9gsEskxarwi/s6Psgj6/rMgUrEyPpR4VNzOmZCPEJeG9PkzDzurlDDmwtEN\nXhURy22ICQKBgGSZ1hPDvQxzTC1dQye3I7BvZ6ULdUCfk+nvX8jQMsud2x4wHnAh\n3o8B/GuQjuN+s+kWIk+gt1bgiaqGxIMllj626KzMOb0dgkV7hV0s8AoRZk5f3X21\nv5srvEqNPqdtKlwIVclMU8dSQdpyfku1B5R6rYpXXNuNa6m16t3UPprxAoGBALw2\nUidYpBKA/dpPytdTslKaYLQZnifnyXTjVD0u29B6whm7JIatMDCI3fzC86Fb/usk\ns+31qQdygeRXgiAKF7VniEuUVJOWOVR9GUR4jvnkjOoslsH0f/TxoJ36Awv2mFMp\nXE0RR0KRIwf2GFBQ2eTNE+eiRv6Ai19iEyESd6npAn8x+2a7N3TRfCyuK+o4+ZTb\nP7q3XFi1xZRohsLwUi+08b7USkAqOW+BeQRIdaZYp+9fxT15uu30Z9cc2cgkFTsl\nCPqavUBUSt1iUNQ5qqzXXIk1U1cMqUu/v69BBgaKoIe+UxVrdYNVt+LLASJew1Bg\n+dQzK9bvv9+Ix6LS6R4K\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBQTCByKADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MHYwEAYHKoZI\nzj0CAQYFK4EEACIDYgAEQ8ySTA7MiR0XU7yo6AWzS/vB5sZfuV02rxlo0EjHsJKv\n6X22+R5GV8FpOg8KoPU3VsQDl4HRum3ZzpvHUC7nmGPOZceuu98XmBTgR4MD/JX8\nIi8YR/6S4RI4CC6YskjtMAoGCCqGSM49BAMCA2gAMGUCMQCLj5bSoeNldnyt8WGP\n0J6T1D/DMk0fE3lN+DQbpAURKlublFTYLKN69dB+/FAKb1ICMGsc80UdZae4Jg7n\nm7UGIY5AihPUn+CRKII01qEeiU4nIIPYulwGImTuLtiMQoog4w==\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "RS256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSA key, certificate whose first x byte is 0x3f: the length spans the point exactly, then the tag is no SEQUENCE",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCqwumYKkP8qvrq\nRUL11+Jfiw4l6j50E3fqjZbkcNs4SIPaT3x96GH8HAD/YKOHeM1zW3OKUtSYqonl\n/BzGSMHIjTdsJik1GzrEv9hL/FOusx1Ouxre1Rwk77g6b/NpJIj4HepSCMPmgilC\nXhVIyhj0UaT1ngxd/Ud6CK4Y6vyY0sKRLVJPnvOjxIn7ClkGQgkdkyBA4N9WWr5B\ny5eRTY2fRg8Ht6GB/10JsUl2+xVuMh+4xT8toz6ybBSig3TLZYPwK6sxRB1D257T\nSRTYrIMNq/rqHg4RMExHXpcdQUSGyijocGKdsvjnK7WZAiWPWAzviiJ6e6sny+35\n2oHSYshZAgMBAAECggEADzmaMLxB/A71mLosrnU9ZIXmMMi6IUjUFghiRgNu9E14\n3hfcsnAr/lmz2BEye2NwtAKZImHgvSzlZylLmn1Fs98tbBnZ7jd7javKOfopLuge\n6pRhoLERFZT/EMzG/96nTLIEIKTR7KU5zwZK8Qa941i9M74P/bhVrWKFPUkEVQ6+\nS96S3Wh/1DdzByNzS29JiM/JHZv53LOHQsL38um2an/HqLB3cF/qAlo3e/ho6dLX\nIDkwXLMqI6jw+8vfDAjnGikhoQtfRmuxkmpy43p9bM6Ff9PbV4FzwFmKZNMA0H73\nYLwlNv9ppJFHRhJ9SdedZGsj/SQfFYo9fbbtJ0X3IQKBgQDSs8OrByHt47bdacej\nmmqhkpWbN0AiNFkfax1yJy9gTphidqZcI9K/l+Wagt8JwcS3gZQBXdKO09mjeTKV\nhYmvW8fXZUOQTZ5sBhPSGwZEU0nRVeCtuyxwomCbU2KZEexkIMXNvDgFvljFwqm2\nvUrUfGeM6dBkfA3mqtiOWMUx0QKBgQDPePWQuJ5DydVBpGsByg3MJq5xjqKA4naC\nsCj+nSlu28Jx0/6c2ttGClYiUn6apCs15UYBFVTckIedR6O/eyKn/OydfwD8Vs+0\nGwx7I9gsEskxarwi/s6Psgj6/rMgUrEyPpR4VNzOmZCPEJeG9PkzDzurlDDmwtEN\nXhURy22ICQKBgGSZ1hPDvQxzTC1dQye3I7BvZ6ULdUCfk+nvX8jQMsud2x4wHnAh\n3o8B/GuQjuN+s+kWIk+gt1bgiaqGxIMllj626KzMOb0dgkV7hV0s8AoRZk5f3X21\nv5srvEqNPqdtKlwIVclMU8dSQdpyfku1B5R6rYpXXNuNa6m16t3UPprxAoGBALw2\nUidYpBKA/dpPytdTslKaYLQZnifnyXTjVD0u29B6whm7JIatMDCI3fzC86Fb/usk\ns+31qQdygeRXgiAKF7VniEuUVJOWOVR9GUR4jvnkjOoslsH0f/TxoJ36Awv2mFMp\nXE0RR0KRIwf2GFBQ2eTNE+eiRv6Ai19iEyESd6npAn8x+2a7N3TRfCyuK+o4+ZTb\nP7q3XFi1xZRohsLwUi+08b7USkAqOW+BeQRIdaZYp+9fxT15uu30Z9cc2cgkFTsl\nCPqavUBUSt1iUNQ5qqzXXIk1U1cMqUu/v69BBgaKoIe+UxVrdYNVt+LLASJew1Bg\n+dQzK9bvv9+Ix6LS6R4K\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBDCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAEP/5ikPU+HgpV/qWRTT7EOIYHwHncB+PSk1KNVOW/\ntIUknAfw/85BLMjawOIWFIo6UW9sVO0fEI6ZNeX72T5N9jAKBggqhkjOPQQDAgNI\nADBFAiANo0OuQXVaDgmZAq0mLSn8OrCou61z7gXvKIKRN5qDOAIhANKgQHPlo1kJ\n7u2qL5p94SRITJII5kNt0nzFs5uU0pYX\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "RS256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSA key, certificate whose first x byte is 0x80: indefinite length on a primitive tag",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCqwumYKkP8qvrq\nRUL11+Jfiw4l6j50E3fqjZbkcNs4SIPaT3x96GH8HAD/YKOHeM1zW3OKUtSYqonl\n/BzGSMHIjTdsJik1GzrEv9hL/FOusx1Ouxre1Rwk77g6b/NpJIj4HepSCMPmgilC\nXhVIyhj0UaT1ngxd/Ud6CK4Y6vyY0sKRLVJPnvOjxIn7ClkGQgkdkyBA4N9WWr5B\ny5eRTY2fRg8Ht6GB/10JsUl2+xVuMh+4xT8toz6ybBSig3TLZYPwK6sxRB1D257T\nSRTYrIMNq/rqHg4RMExHXpcdQUSGyijocGKdsvjnK7WZAiWPWAzviiJ6e6sny+35\n2oHSYshZAgMBAAECggEADzmaMLxB/A71mLosrnU9ZIXmMMi6IUjUFghiRgNu9E14\n3hfcsnAr/lmz2BEye2NwtAKZImHgvSzlZylLmn1Fs98tbBnZ7jd7javKOfopLuge\n6pRhoLERFZT/EMzG/96nTLIEIKTR7KU5zwZK8Qa941i9M74P/bhVrWKFPUkEVQ6+\nS96S3Wh/1DdzByNzS29JiM/JHZv53LOHQsL38um2an/HqLB3cF/qAlo3e/ho6dLX\nIDkwXLMqI6jw+8vfDAjnGikhoQtfRmuxkmpy43p9bM6Ff9PbV4FzwFmKZNMA0H73\nYLwlNv9ppJFHRhJ9SdedZGsj/SQfFYo9fbbtJ0X3IQKBgQDSs8OrByHt47bdacej\nmmqhkpWbN0AiNFkfax1yJy9gTphidqZcI9K/l+Wagt8JwcS3gZQBXdKO09mjeTKV\nhYmvW8fXZUOQTZ5sBhPSGwZEU0nRVeCtuyxwomCbU2KZEexkIMXNvDgFvljFwqm2\nvUrUfGeM6dBkfA3mqtiOWMUx0QKBgQDPePWQuJ5DydVBpGsByg3MJq5xjqKA4naC\nsCj+nSlu28Jx0/6c2ttGClYiUn6apCs15UYBFVTckIedR6O/eyKn/OydfwD8Vs+0\nGwx7I9gsEskxarwi/s6Psgj6/rMgUrEyPpR4VNzOmZCPEJeG9PkzDzurlDDmwtEN\nXhURy22ICQKBgGSZ1hPDvQxzTC1dQye3I7BvZ6ULdUCfk+nvX8jQMsud2x4wHnAh\n3o8B/GuQjuN+s+kWIk+gt1bgiaqGxIMllj626KzMOb0dgkV7hV0s8AoRZk5f3X21\nv5srvEqNPqdtKlwIVclMU8dSQdpyfku1B5R6rYpXXNuNa6m16t3UPprxAoGBALw2\nUidYpBKA/dpPytdTslKaYLQZnifnyXTjVD0u29B6whm7JIatMDCI3fzC86Fb/usk\ns+31qQdygeRXgiAKF7VniEuUVJOWOVR9GUR4jvnkjOoslsH0f/TxoJ36Awv2mFMp\nXE0RR0KRIwf2GFBQ2eTNE+eiRv6Ai19iEyESd6npAn8x+2a7N3TRfCyuK+o4+ZTb\nP7q3XFi1xZRohsLwUi+08b7USkAqOW+BeQRIdaZYp+9fxT15uu30Z9cc2cgkFTsl\nCPqavUBUSt1iUNQ5qqzXXIk1U1cMqUu/v69BBgaKoIe+UxVrdYNVt+LLASJew1Bg\n+dQzK9bvv9+Ix6LS6R4K\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBTCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAEgBWpboPPaIRBJOj//4QSkUm897646mT5TOsVgMGH\ntf7OiElIoxRVqGo8an3Dje1178tM0TExQ39YDZ+G20qhqzAKBggqhkjOPQQDAgNJ\nADBGAiEAsfleT+Cz7tpJ4dqFZbqn4ocfZhrLkuME9j5EJRrIkDwCIQC3YjJlc2h0\nlwMc927ZWuPhgDCHYFv3VnTBGv5y+JYATg==\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "RS256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSA key, certificate whose first x byte is 0x82: a long-form length past the end",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCqwumYKkP8qvrq\nRUL11+Jfiw4l6j50E3fqjZbkcNs4SIPaT3x96GH8HAD/YKOHeM1zW3OKUtSYqonl\n/BzGSMHIjTdsJik1GzrEv9hL/FOusx1Ouxre1Rwk77g6b/NpJIj4HepSCMPmgilC\nXhVIyhj0UaT1ngxd/Ud6CK4Y6vyY0sKRLVJPnvOjxIn7ClkGQgkdkyBA4N9WWr5B\ny5eRTY2fRg8Ht6GB/10JsUl2+xVuMh+4xT8toz6ybBSig3TLZYPwK6sxRB1D257T\nSRTYrIMNq/rqHg4RMExHXpcdQUSGyijocGKdsvjnK7WZAiWPWAzviiJ6e6sny+35\n2oHSYshZAgMBAAECggEADzmaMLxB/A71mLosrnU9ZIXmMMi6IUjUFghiRgNu9E14\n3hfcsnAr/lmz2BEye2NwtAKZImHgvSzlZylLmn1Fs98tbBnZ7jd7javKOfopLuge\n6pRhoLERFZT/EMzG/96nTLIEIKTR7KU5zwZK8Qa941i9M74P/bhVrWKFPUkEVQ6+\nS96S3Wh/1DdzByNzS29JiM/JHZv53LOHQsL38um2an/HqLB3cF/qAlo3e/ho6dLX\nIDkwXLMqI6jw+8vfDAjnGikhoQtfRmuxkmpy43p9bM6Ff9PbV4FzwFmKZNMA0H73\nYLwlNv9ppJFHRhJ9SdedZGsj/SQfFYo9fbbtJ0X3IQKBgQDSs8OrByHt47bdacej\nmmqhkpWbN0AiNFkfax1yJy9gTphidqZcI9K/l+Wagt8JwcS3gZQBXdKO09mjeTKV\nhYmvW8fXZUOQTZ5sBhPSGwZEU0nRVeCtuyxwomCbU2KZEexkIMXNvDgFvljFwqm2\nvUrUfGeM6dBkfA3mqtiOWMUx0QKBgQDPePWQuJ5DydVBpGsByg3MJq5xjqKA4naC\nsCj+nSlu28Jx0/6c2ttGClYiUn6apCs15UYBFVTckIedR6O/eyKn/OydfwD8Vs+0\nGwx7I9gsEskxarwi/s6Psgj6/rMgUrEyPpR4VNzOmZCPEJeG9PkzDzurlDDmwtEN\nXhURy22ICQKBgGSZ1hPDvQxzTC1dQye3I7BvZ6ULdUCfk+nvX8jQMsud2x4wHnAh\n3o8B/GuQjuN+s+kWIk+gt1bgiaqGxIMllj626KzMOb0dgkV7hV0s8AoRZk5f3X21\nv5srvEqNPqdtKlwIVclMU8dSQdpyfku1B5R6rYpXXNuNa6m16t3UPprxAoGBALw2\nUidYpBKA/dpPytdTslKaYLQZnifnyXTjVD0u29B6whm7JIatMDCI3fzC86Fb/usk\ns+31qQdygeRXgiAKF7VniEuUVJOWOVR9GUR4jvnkjOoslsH0f/TxoJ36Awv2mFMp\nXE0RR0KRIwf2GFBQ2eTNE+eiRv6Ai19iEyESd6npAn8x+2a7N3TRfCyuK+o4+ZTb\nP7q3XFi1xZRohsLwUi+08b7USkAqOW+BeQRIdaZYp+9fxT15uu30Z9cc2cgkFTsl\nCPqavUBUSt1iUNQ5qqzXXIk1U1cMqUu/v69BBgaKoIe+UxVrdYNVt+LLASJew1Bg\n+dQzK9bvv9+Ix6LS6R4K\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBTCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAEgvTJ1/I6p7DmgSILiWO9TXXgMqFP2QmbGw8hui/g\n1x/jTJNFuPbh05xYw4sR+zMBwab3d5t3CjDFCNrwUE5ATTAKBggqhkjOPQQDAgNJ\nADBGAiEAxkkOo71RF+GbBXJ9t3rwpt75C230dYQ6WpjdEKhpXbkCIQCQB5x8Ctk0\nAaSGEojC/MPGDI5MBf0w4R2FwV9YF8NQaQ==\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "RS512",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "RSA key, certificate whose first x bytes are 0x84 0x8.: a negative length",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCqwumYKkP8qvrq\nRUL11+Jfiw4l6j50E3fqjZbkcNs4SIPaT3x96GH8HAD/YKOHeM1zW3OKUtSYqonl\n/BzGSMHIjTdsJik1GzrEv9hL/FOusx1Ouxre1Rwk77g6b/NpJIj4HepSCMPmgilC\nXhVIyhj0UaT1ngxd/Ud6CK4Y6vyY0sKRLVJPnvOjxIn7ClkGQgkdkyBA4N9WWr5B\ny5eRTY2fRg8Ht6GB/10JsUl2+xVuMh+4xT8toz6ybBSig3TLZYPwK6sxRB1D257T\nSRTYrIMNq/rqHg4RMExHXpcdQUSGyijocGKdsvjnK7WZAiWPWAzviiJ6e6sny+35\n2oHSYshZAgMBAAECggEADzmaMLxB/A71mLosrnU9ZIXmMMi6IUjUFghiRgNu9E14\n3hfcsnAr/lmz2BEye2NwtAKZImHgvSzlZylLmn1Fs98tbBnZ7jd7javKOfopLuge\n6pRhoLERFZT/EMzG/96nTLIEIKTR7KU5zwZK8Qa941i9M74P/bhVrWKFPUkEVQ6+\nS96S3Wh/1DdzByNzS29JiM/JHZv53LOHQsL38um2an/HqLB3cF/qAlo3e/ho6dLX\nIDkwXLMqI6jw+8vfDAjnGikhoQtfRmuxkmpy43p9bM6Ff9PbV4FzwFmKZNMA0H73\nYLwlNv9ppJFHRhJ9SdedZGsj/SQfFYo9fbbtJ0X3IQKBgQDSs8OrByHt47bdacej\nmmqhkpWbN0AiNFkfax1yJy9gTphidqZcI9K/l+Wagt8JwcS3gZQBXdKO09mjeTKV\nhYmvW8fXZUOQTZ5sBhPSGwZEU0nRVeCtuyxwomCbU2KZEexkIMXNvDgFvljFwqm2\nvUrUfGeM6dBkfA3mqtiOWMUx0QKBgQDPePWQuJ5DydVBpGsByg3MJq5xjqKA4naC\nsCj+nSlu28Jx0/6c2ttGClYiUn6apCs15UYBFVTckIedR6O/eyKn/OydfwD8Vs+0\nGwx7I9gsEskxarwi/s6Psgj6/rMgUrEyPpR4VNzOmZCPEJeG9PkzDzurlDDmwtEN\nXhURy22ICQKBgGSZ1hPDvQxzTC1dQye3I7BvZ6ULdUCfk+nvX8jQMsud2x4wHnAh\n3o8B/GuQjuN+s+kWIk+gt1bgiaqGxIMllj626KzMOb0dgkV7hV0s8AoRZk5f3X21\nv5srvEqNPqdtKlwIVclMU8dSQdpyfku1B5R6rYpXXNuNa6m16t3UPprxAoGBALw2\nUidYpBKA/dpPytdTslKaYLQZnifnyXTjVD0u29B6whm7JIatMDCI3fzC86Fb/usk\ns+31qQdygeRXgiAKF7VniEuUVJOWOVR9GUR4jvnkjOoslsH0f/TxoJ36Awv2mFMp\nXE0RR0KRIwf2GFBQ2eTNE+eiRv6Ai19iEyESd6npAn8x+2a7N3TRfCyuK+o4+ZTb\nP7q3XFi1xZRohsLwUi+08b7USkAqOW+BeQRIdaZYp+9fxT15uu30Z9cc2cgkFTsl\nCPqavUBUSt1iUNQ5qqzXXIk1U1cMqUu/v69BBgaKoIe+UxVrdYNVt+LLASJew1Bg\n+dQzK9bvv9+Ix6LS6R4K\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBDCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAEhKW16+k9MGv8vq5R7WuLs1KYZhiIqbMf2dFdh6bM\nmcBEvtArvhznBj5FShjHFTHRDcp+qBS06ttkBQeuY1ZX7jAKBggqhkjOPQQDAgNI\nADBFAiEAq4e/gaUSCgAuEw0VlUJGIbWx0K1eBYbhd9m1t4c6h1cCIGbOZlB6UOAl\n8hFCpmtrs4S8Pikf/0UA7NjwltpIUJiO\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "RS384",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "P-384 key, P-256 certificate, ES384: the certificate's point is not on P-384",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDAJBS0KxZMDFEykdLI\nzZo/5HIh+QoBmPrL1zJqVa1L+ybGGOebbslNblLN3OHLDHahZANiAARDzJJMDsyJ\nHRdTvKjoBbNL+8Hmxl+5XTavGWjQSMewkq/pfbb5HkZXwWk6Dwqg9TdWxAOXgdG6\nbdnOm8dQLueYY85lx6673xeYFOBHgwP8lfwiLxhH/pLhEjgILpiySO0=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBDCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAE5oqNMniqzHYqE5B10crqi6eRriKeZyZ1q182eLYu\n27a5/XsoH0u88FYcNsBKv0okd28JAhrAiXXXv0/k+zZV2jAKBggqhkjOPQQDAgNI\nADBFAiEAvwF/leD/Wy5cxqkSxO/9FgECodzUAeVZM76LAXioWLcCIH4+3yYm8fJY\ngvlepxc3bJHlo592CeOpzXsq/jJ06H9P\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "ES384",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "P-256 key, P-384 certificate, ES256: the certificate's point is not on P-256",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg0OVa6n40RCidR9Nb\nTFC/Er4lOwRDbEoTGRZUUtOsKZihRANCAATmio0yeKrMdioTkHXRyuqLp5GuIp5n\nJnWrXzZ4ti7btrn9eygfS7zwVhw2wEq/SiR3bwkCGsCJdde/T+T7NlXa\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBQTCByKADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MHYwEAYHKoZI\nzj0CAQYFK4EEACIDYgAEQ8ySTA7MiR0XU7yo6AWzS/vB5sZfuV02rxlo0EjHsJKv\n6X22+R5GV8FpOg8KoPU3VsQDl4HRum3ZzpvHUC7nmGPOZceuu98XmBTgR4MD/JX8\nIi8YR/6S4RI4CC6YskjtMAoGCCqGSM49BAMCA2gAMGUCMQCLj5bSoeNldnyt8WGP\n0J6T1D/DMk0fE3lN+DQbpAURKlublFTYLKN69dB+/FAKb1ICMGsc80UdZae4Jg7n\nm7UGIY5AihPUn+CRKII01qEeiU4nIIPYulwGImTuLtiMQoog4w==\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "ES256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "the ERROR entries and their throwable chains",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+      "mask": [
+        {
+          "regex": "\"stackTrace\" : \\[[^\\]]*\\]",
+          "replace": "\"stackTrace\" : <frames>"
+        },
+        {
+          "regex": "(\"epochTime\" : )\\d+",
+          "replace": "${1}0"
+        },
+        "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+        "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "P-384 key, P-256 certificate, ES256: accepted, the certificate's key is published",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDAJBS0KxZMDFEykdLI\nzZo/5HIh+QoBmPrL1zJqVa1L+ybGGOebbslNblLN3OHLDHahZANiAARDzJJMDsyJ\nHRdTvKjoBbNL+8Hmxl+5XTavGWjQSMewkq/pfbb5HkZXwWk6Dwqg9TdWxAOXgdG6\nbdnOm8dQLueYY85lx6673xeYFOBHgwP8lfwiLxhH/pLhEjgILpiySO0=\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBDCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAE5oqNMniqzHYqE5B10crqi6eRriKeZyZ1q182eLYu\n27a5/XsoH0u88FYcNsBKv0okd28JAhrAiXXXv0/k+zZV2jAKBggqhkjOPQQDAgNI\nADBFAiEAvwF/leD/Wy5cxqkSxO/9FgECodzUAeVZM76LAXioWLcCIH4+3yYm8fJY\ngvlepxc3bJHlo592CeOpzXsq/jJ06H9P\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "ES256",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "a token, signed with the private key",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "p384key"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "verified against the certificate's key, which did not sign it",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:p384key}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "P-256 key, P-384 certificate, ES384: accepted",
+      "method": "PUT",
+      "path": "/mockserver/oidc",
+      "body": {
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg0OVa6n40RCidR9Nb\nTFC/Er4lOwRDbEoTGRZUUtOsKZihRANCAATmio0yeKrMdioTkHXRyuqLp5GuIp5n\nJnWrXzZ4ti7btrn9eygfS7zwVhw2wEq/SiR3bwkCGsCJdde/T+T7NlXa\n-----END PRIVATE KEY-----\n",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIBQTCByKADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MHYwEAYHKoZI\nzj0CAQYFK4EEACIDYgAEQ8ySTA7MiR0XU7yo6AWzS/vB5sZfuV02rxlo0EjHsJKv\n6X22+R5GV8FpOg8KoPU3VsQDl4HRum3ZzpvHUC7nmGPOZceuu98XmBTgR4MD/JX8\nIi8YR/6S4RI4CC6YskjtMAoGCCqGSM49BAMCA2gAMGUCMQCLj5bSoeNldnyt8WGP\n0J6T1D/DMk0fE3lN+DQbpAURKlublFTYLKN69dB+/FAKb1ICMGsc80UdZae4Jg7n\nm7UGIY5AihPUn+CRKII01qEeiU4nIIPYulwGImTuLtiMQoog4w==\n-----END CERTIFICATE-----\n",
+        "signingAlgorithm": "ES384",
+        "keyId": "k267"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "its JWKS",
+      "method": "GET",
+      "path": "/.well-known/jwks.json",
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "a token, signed with the private key",
+      "method": "POST",
+      "path": "/token",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "grant_type=client_credentials&scope=openid",
+      "capture": {
+        "bodyRegex": "\"access_token\" : \"([^\"]+)\"",
+        "as": "p256key"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "note": "verified against the certificate's key, which did not sign it",
+      "method": "GET",
+      "path": "/userinfo",
+      "headers": {
+        "Authorization": "Bearer {{capture:p256key}}"
+      },
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]{128}\"",
+          "replace": "<jwt with a 96-byte signature>\""
+        },
+        {
+          "regex": "eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]*",
+          "replace": "<jwt>"
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        },
+        {
+          "regex": "\"(iat|nbf|exp)\" : \\d+",
+          "replace": "\"${1}\" : <time>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "SAML: EC key, RSA certificate, ES256",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ],
+      "body": {
+        "idpEntityId": "http://localhost:1080/saml/idp",
+        "spEntityId": "https://sp.example.com/metadata",
+        "assertionConsumerServiceUrl": "https://sp.example.com/acs",
+        "subjectNameId": "u@example.com",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICkTCCAXmgAwIBAgIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDDAF0MB4X\nDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowDDEKMAgGA1UEAwwBdDCCASIw\nDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKrC6ZgqQ/yq+upFQvXX4l+LDiXq\nPnQTd+qNluRw2zhIg9pPfH3oYfwcAP9go4d4zXNbc4pS1JiqieX8HMZIwciNN2wm\nKTUbOsS/2Ev8U66zHU67Gt7VHCTvuDpv82kkiPgd6lIIw+aCKUJeFUjKGPRRpPWe\nDF39R3oIrhjq/JjSwpEtUk+e86PEifsKWQZCCR2TIEDg31ZavkHLl5FNjZ9GDwe3\noYH/XQmxSXb7FW4yH7jFPy2jPrJsFKKDdMtlg/ArqzFEHUPbntNJFNisgw2r+uoe\nDhEwTEdelx1BRIbKKOhwYp2y+OcrtZkCJY9YDO+KInp7qyfL7fnagdJiyFkCAwEA\nATANBgkqhkiG9w0BAQsFAAOCAQEAaVneCfPBycuMFiiHCimtcHZloX+r21BbGykH\noVn6+sxfjPP0TA5QNkP2sr8/2RdEb6dllpQFzQUNYz/qRjJAl0aX9j+5Lpj4tSJl\nekoIz2HhpUTG+GCz0siZs1kZcQN39qlqIlTnmWNwV+D0DE/ln/7Hl9gWe+cYjF/u\nE7VwRk4Tfobf+PzA1v++32Xb4BcBvjTgF+LOo3WceklE9KsLsUJRlrJWnkGMjXR7\nAN9TOGMSC30qvvhDYdlClKJiMSCKRHfc4d22T0k/eYJ66hoNrUyM2iSXeY64hiTs\nAaaa3Tr09xQni1TOgyfONPiytFR+rVRwdDpH2pAba4q9Y3aU3w==\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg0OVa6n40RCidR9Nb\nTFC/Er4lOwRDbEoTGRZUUtOsKZihRANCAATmio0yeKrMdioTkHXRyuqLp5GuIp5n\nJnWrXzZ4ti7btrn9eygfS7zwVhw2wEq/SiR3bwkCGsCJdde/T+T7NlXa\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      }
+    },
+    {
+      "note": "SSO",
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "SAML: RSA key, P-256 certificate, RS256",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ],
+      "body": {
+        "idpEntityId": "http://localhost:1080/saml/idp",
+        "spEntityId": "https://sp.example.com/metadata",
+        "assertionConsumerServiceUrl": "https://sp.example.com/acs",
+        "subjectNameId": "u@example.com",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBDCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAE5oqNMniqzHYqE5B10crqi6eRriKeZyZ1q182eLYu\n27a5/XsoH0u88FYcNsBKv0okd28JAhrAiXXXv0/k+zZV2jAKBggqhkjOPQQDAgNI\nADBFAiEAvwF/leD/Wy5cxqkSxO/9FgECodzUAeVZM76LAXioWLcCIH4+3yYm8fJY\ngvlepxc3bJHlo592CeOpzXsq/jJ06H9P\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCqwumYKkP8qvrq\nRUL11+Jfiw4l6j50E3fqjZbkcNs4SIPaT3x96GH8HAD/YKOHeM1zW3OKUtSYqonl\n/BzGSMHIjTdsJik1GzrEv9hL/FOusx1Ouxre1Rwk77g6b/NpJIj4HepSCMPmgilC\nXhVIyhj0UaT1ngxd/Ud6CK4Y6vyY0sKRLVJPnvOjxIn7ClkGQgkdkyBA4N9WWr5B\ny5eRTY2fRg8Ht6GB/10JsUl2+xVuMh+4xT8toz6ybBSig3TLZYPwK6sxRB1D257T\nSRTYrIMNq/rqHg4RMExHXpcdQUSGyijocGKdsvjnK7WZAiWPWAzviiJ6e6sny+35\n2oHSYshZAgMBAAECggEADzmaMLxB/A71mLosrnU9ZIXmMMi6IUjUFghiRgNu9E14\n3hfcsnAr/lmz2BEye2NwtAKZImHgvSzlZylLmn1Fs98tbBnZ7jd7javKOfopLuge\n6pRhoLERFZT/EMzG/96nTLIEIKTR7KU5zwZK8Qa941i9M74P/bhVrWKFPUkEVQ6+\nS96S3Wh/1DdzByNzS29JiM/JHZv53LOHQsL38um2an/HqLB3cF/qAlo3e/ho6dLX\nIDkwXLMqI6jw+8vfDAjnGikhoQtfRmuxkmpy43p9bM6Ff9PbV4FzwFmKZNMA0H73\nYLwlNv9ppJFHRhJ9SdedZGsj/SQfFYo9fbbtJ0X3IQKBgQDSs8OrByHt47bdacej\nmmqhkpWbN0AiNFkfax1yJy9gTphidqZcI9K/l+Wagt8JwcS3gZQBXdKO09mjeTKV\nhYmvW8fXZUOQTZ5sBhPSGwZEU0nRVeCtuyxwomCbU2KZEexkIMXNvDgFvljFwqm2\nvUrUfGeM6dBkfA3mqtiOWMUx0QKBgQDPePWQuJ5DydVBpGsByg3MJq5xjqKA4naC\nsCj+nSlu28Jx0/6c2ttGClYiUn6apCs15UYBFVTckIedR6O/eyKn/OydfwD8Vs+0\nGwx7I9gsEskxarwi/s6Psgj6/rMgUrEyPpR4VNzOmZCPEJeG9PkzDzurlDDmwtEN\nXhURy22ICQKBgGSZ1hPDvQxzTC1dQye3I7BvZ6ULdUCfk+nvX8jQMsud2x4wHnAh\n3o8B/GuQjuN+s+kWIk+gt1bgiaqGxIMllj626KzMOb0dgkV7hV0s8AoRZk5f3X21\nv5srvEqNPqdtKlwIVclMU8dSQdpyfku1B5R6rYpXXNuNa6m16t3UPprxAoGBALw2\nUidYpBKA/dpPytdTslKaYLQZnifnyXTjVD0u29B6whm7JIatMDCI3fzC86Fb/usk\ns+31qQdygeRXgiAKF7VniEuUVJOWOVR9GUR4jvnkjOoslsH0f/TxoJ36Awv2mFMp\nXE0RR0KRIwf2GFBQ2eTNE+eiRv6Ai19iEyESd6npAn8x+2a7N3TRfCyuK+o4+ZTb\nP7q3XFi1xZRohsLwUi+08b7USkAqOW+BeQRIdaZYp+9fxT15uu30Z9cc2cgkFTsl\nCPqavUBUSt1iUNQ5qqzXXIk1U1cMqUu/v69BBgaKoIe+UxVrdYNVt+LLASJew1Bg\n+dQzK9bvv9+Ix6LS6R4K\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      }
+    },
+    {
+      "note": "SSO",
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "SAML: EC key, RSA certificate, RS256: the key cannot sign RS256",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ],
+      "body": {
+        "idpEntityId": "http://localhost:1080/saml/idp",
+        "spEntityId": "https://sp.example.com/metadata",
+        "assertionConsumerServiceUrl": "https://sp.example.com/acs",
+        "subjectNameId": "u@example.com",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIICkTCCAXmgAwIBAgIBATANBgkqhkiG9w0BAQsFADAMMQowCAYDVQQDDAF0MB4X\nDTI2MDEwMTAwMDAwMFoXDTM1MTIzMDAwMDAwMFowDDEKMAgGA1UEAwwBdDCCASIw\nDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKrC6ZgqQ/yq+upFQvXX4l+LDiXq\nPnQTd+qNluRw2zhIg9pPfH3oYfwcAP9go4d4zXNbc4pS1JiqieX8HMZIwciNN2wm\nKTUbOsS/2Ev8U66zHU67Gt7VHCTvuDpv82kkiPgd6lIIw+aCKUJeFUjKGPRRpPWe\nDF39R3oIrhjq/JjSwpEtUk+e86PEifsKWQZCCR2TIEDg31ZavkHLl5FNjZ9GDwe3\noYH/XQmxSXb7FW4yH7jFPy2jPrJsFKKDdMtlg/ArqzFEHUPbntNJFNisgw2r+uoe\nDhEwTEdelx1BRIbKKOhwYp2y+OcrtZkCJY9YDO+KInp7qyfL7fnagdJiyFkCAwEA\nATANBgkqhkiG9w0BAQsFAAOCAQEAaVneCfPBycuMFiiHCimtcHZloX+r21BbGykH\noVn6+sxfjPP0TA5QNkP2sr8/2RdEb6dllpQFzQUNYz/qRjJAl0aX9j+5Lpj4tSJl\nekoIz2HhpUTG+GCz0siZs1kZcQN39qlqIlTnmWNwV+D0DE/ln/7Hl9gWe+cYjF/u\nE7VwRk4Tfobf+PzA1v++32Xb4BcBvjTgF+LOo3WceklE9KsLsUJRlrJWnkGMjXR7\nAN9TOGMSC30qvvhDYdlClKJiMSCKRHfc4d22T0k/eYJ66hoNrUyM2iSXeY64hiTs\nAaaa3Tr09xQni1TOgyfONPiytFR+rVRwdDpH2pAba4q9Y3aU3w==\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg0OVa6n40RCidR9Nb\nTFC/Er4lOwRDbEoTGRZUUtOsKZihRANCAATmio0yeKrMdioTkHXRyuqLp5GuIp5n\nJnWrXzZ4ti7btrn9eygfS7zwVhw2wEq/SiR3bwkCGsCJdde/T+T7NlXa\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "RS256"
+      }
+    },
+    {
+      "note": "SSO",
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "SAML: P-384 key, P-256 certificate, ES256",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ],
+      "body": {
+        "idpEntityId": "http://localhost:1080/saml/idp",
+        "spEntityId": "https://sp.example.com/metadata",
+        "assertionConsumerServiceUrl": "https://sp.example.com/acs",
+        "subjectNameId": "u@example.com",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIBBDCBq6ADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MFkwEwYHKoZI\nzj0CAQYIKoZIzj0DAQcDQgAE5oqNMniqzHYqE5B10crqi6eRriKeZyZ1q182eLYu\n27a5/XsoH0u88FYcNsBKv0okd28JAhrAiXXXv0/k+zZV2jAKBggqhkjOPQQDAgNI\nADBFAiEAvwF/leD/Wy5cxqkSxO/9FgECodzUAeVZM76LAXioWLcCIH4+3yYm8fJY\ngvlepxc3bJHlo592CeOpzXsq/jJ06H9P\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDDAJBS0KxZMDFEykdLI\nzZo/5HIh+QoBmPrL1zJqVa1L+ybGGOebbslNblLN3OHLDHahZANiAARDzJJMDsyJ\nHRdTvKjoBbNL+8Hmxl+5XTavGWjQSMewkq/pfbb5HkZXwWk6Dwqg9TdWxAOXgdG6\nbdnOm8dQLueYY85lx6673xeYFOBHgwP8lfwiLxhH/pLhEjgILpiySO0=\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES256"
+      }
+    },
+    {
+      "note": "SSO",
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "note": "SAML: P-256 key, P-384 certificate, ES384",
+      "method": "PUT",
+      "path": "/mockserver/saml",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ],
+      "body": {
+        "idpEntityId": "http://localhost:1080/saml/idp",
+        "spEntityId": "https://sp.example.com/metadata",
+        "assertionConsumerServiceUrl": "https://sp.example.com/acs",
+        "subjectNameId": "u@example.com",
+        "signingCertificatePem": "-----BEGIN CERTIFICATE-----\nMIIBQTCByKADAgECAgEBMAoGCCqGSM49BAMCMAwxCjAIBgNVBAMMAXQwHhcNMjYw\nMTAxMDAwMDAwWhcNMzUxMjMwMDAwMDAwWjAMMQowCAYDVQQDDAF0MHYwEAYHKoZI\nzj0CAQYFK4EEACIDYgAEQ8ySTA7MiR0XU7yo6AWzS/vB5sZfuV02rxlo0EjHsJKv\n6X22+R5GV8FpOg8KoPU3VsQDl4HRum3ZzpvHUC7nmGPOZceuu98XmBTgR4MD/JX8\nIi8YR/6S4RI4CC6YskjtMAoGCCqGSM49BAMCA2gAMGUCMQCLj5bSoeNldnyt8WGP\n0J6T1D/DMk0fE3lN+DQbpAURKlublFTYLKN69dB+/FAKb1ICMGsc80UdZae4Jg7n\nm7UGIY5AihPUn+CRKII01qEeiU4nIIPYulwGImTuLtiMQoog4w==\n-----END CERTIFICATE-----\n",
+        "signingPrivateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg0OVa6n40RCidR9Nb\nTFC/Er4lOwRDbEoTGRZUUtOsKZihRANCAATmio0yeKrMdioTkHXRyuqLp5GuIp5n\nJnWrXzZ4ti7btrn9eygfS7zwVhw2wEq/SiR3bwkCGsCJdde/T+T7NlXa\n-----END PRIVATE KEY-----\n",
+        "signingAlgorithm": "ES384"
+      }
+    },
+    {
+      "note": "SSO",
+      "method": "POST",
+      "path": "/saml/sso",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "SAMLRequest=PHNhbWxwOkF1dGhuUmVxdWVzdCB4bWxuczpzYW1scD0idXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBJRD0iX2F1dGhuLXcxIiBWZXJzaW9uPSIyLjAiLz4%3D",
+      "mask": [
+        {
+          "regex": "localhost:(<port>|1080)",
+          "replace": "localhost:<p>"
+        },
+        {
+          "regex": "name=\"SAMLResponse\" value=\"[^\"]*\"",
+          "replace": "name=\"SAMLResponse\" value=\"<signed>\""
+        },
+        {
+          "regex": "content-length: \\d+",
+          "replace": "content-length: <varies>"
+        }
+      ]
+    }
+  ]
+}

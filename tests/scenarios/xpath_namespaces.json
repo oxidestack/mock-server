@@ -1,0 +1,1038 @@
+{
+ "source": "XPathEvaluator parses the body namespace-aware only when the matcher has namespacePrefixes (bound in its NamespaceContext; an unknown prefix resolves to no namespace); without them the DOM is namespace-unaware: namespace-uri() is empty, local-name() strips the prefix, a name test compares the qualified name, a prefixed name test is never true and an unbound prefix in the body is no error. A body that does not parse records the ErrorHandler's fatal error and then the thrown SAXParseException.",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//*[local-name()='content']",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: local-name()",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "unaware: local-name(): debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//*[name()='bar:content']",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: name()",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "unaware: name(): debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//*[local-name()='bar:content']",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: local-name() is not the qualified name",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "unaware: local-name() is not the qualified name: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//content",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: a name test is not the local name",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "unaware: a name test is not the local name: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//*[namespace-uri()='']",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: namespace-uri() is empty",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "unaware: namespace-uri() is empty: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//*[namespace-uri()='http://bar.example.com']",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: no namespace uri",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "unaware: no namespace uri: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "count(//@*)=1",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: namespace declarations are not attributes",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "unaware: namespace declarations are not attributes: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//bar:content",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: prefixed name test",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "unaware: prefixed name test: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//bar:content",
+      "namespacePrefixes": {
+       "bar": "http://bar.example.com"
+      },
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: prefixed name test",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "aware: prefixed name test: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//baz:content",
+      "namespacePrefixes": {
+       "bar": "http://bar.example.com"
+      },
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: unknown prefix",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "aware: unknown prefix: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//plain",
+      "namespacePrefixes": {
+       "bar": "http://bar.example.com"
+      },
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: unprefixed name test",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "aware: unprefixed name test: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//content",
+      "namespacePrefixes": {
+       "bar": "http://bar.example.com"
+      },
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: unprefixed name test of a namespaced element",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "aware: unprefixed name test of a namespaced element: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//*[local-name()='content' and namespace-uri()='http://bar.example.com']",
+      "namespacePrefixes": {},
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: empty prefixes",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "aware: empty prefixes: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "//*[name()='bar:content']",
+      "namespacePrefixes": {},
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: name()",
+   "method": "POST",
+   "path": "/x",
+   "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+  },
+  {
+   "note": "aware: name(): debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<foo:root xmlns:foo='http://foo.example.com' xmlns:bar='http://bar.example.com'>   <bar:content a='1'>some_key</bar:content><plain>x</plain></foo:root>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "not xml",
+   "method": "POST",
+   "path": "/x",
+   "body": "some text"
+  },
+  {
+   "note": "not xml: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "some text"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unclosed",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a><b></a>"
+  },
+  {
+   "note": "unclosed: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a><b></a>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "two roots",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a/><b/>"
+  },
+  {
+   "note": "two roots: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a/><b/>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "doctype",
+   "method": "POST",
+   "path": "/x",
+   "body": "<!DOCTYPE a><a/>"
+  },
+  {
+   "note": "doctype: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<!DOCTYPE a><a/>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a/b:c",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: an unbound prefix",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a><b:c x:y='1'/></a>"
+  },
+  {
+   "note": "unaware: an unbound prefix: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a><b:c x:y='1'/></a>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a/*[local-name()='c']",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: local-name() of an unbound prefix",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a><b:c/></a>"
+  },
+  {
+   "note": "unaware: local-name() of an unbound prefix: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a><b:c/></a>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "namespacePrefixes": {},
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: an unbound prefix",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a><b:c/></a>"
+  },
+  {
+   "note": "aware: an unbound prefix: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a><b:c/></a>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "unaware: a default namespace",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a xmlns='urn:x'/>"
+  },
+  {
+   "note": "unaware: a default namespace: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a xmlns='urn:x'/>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "namespacePrefixes": {},
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: a default namespace",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a xmlns='urn:x'/>"
+  },
+  {
+   "note": "aware: a default namespace: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a xmlns='urn:x'/>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/x:a",
+      "namespacePrefixes": {
+       "x": "urn:x"
+      },
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "aware: a default namespace bound",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a xmlns='urn:x'/>"
+  },
+  {
+   "note": "aware: a default namespace bound: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a xmlns='urn:x'/>"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "trailing content",
+   "method": "POST",
+   "path": "/x",
+   "body": "<a/>junk"
+  },
+  {
+   "note": "trailing content: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "<a/>junk"
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/x",
+     "body": {
+      "xpath": "/a",
+      "type": "XPATH"
+     }
+    },
+    "httpResponse": {
+     "body": "matched"
+    }
+   }
+  },
+  {
+   "note": "blank",
+   "method": "POST",
+   "path": "/x",
+   "body": "  "
+  },
+  {
+   "note": "blank: debugMismatch",
+   "method": "PUT",
+   "path": "/mockserver/debugMismatch",
+   "body": {
+    "path": "/x",
+    "body": "  "
+   },
+   "compare": "json",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2}T[0-9:.]+Z"
+   ]
+  }
+ ]
+}

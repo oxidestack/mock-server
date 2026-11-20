@@ -1,0 +1,54 @@
+{
+ "source": "ForwardRetryPolicy.isTransientFailure and ForwardCircuitBreaker.isNeutral (UpstreamProxyUnreachableException): a forward whose forwardSocksProxy refuses is neither retried nor counted against its target's breaker",
+ "properties": {
+  "forwardProxyRetryCount": "2",
+  "forwardProxyCircuitBreakerEnabled": "true",
+  "forwardProxyCircuitBreakerFailureThreshold": "2",
+  "forwardProxyCircuitBreakerWindowMillis": "60000",
+  "forwardSocksProxy": "{{deadhost}}",
+  "forwardProxyRetryBackoffMillis": "6000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/plain"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/target",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "forward through the unreachable proxy 1: one attempt (a retry would wait the 6 s back-off and more), a 502, never the breaker's 503",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "forward through the unreachable proxy 2: one attempt (a retry would wait the 6 s back-off and more), a 502, never the breaker's 503",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "forward through the unreachable proxy 3: one attempt (a retry would wait the 6 s back-off and more), a 502, never the breaker's 503",
+   "method": "GET",
+   "path": "/plain"
+  },
+  {
+   "note": "no 'forward circuit breaker opened' WARN",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

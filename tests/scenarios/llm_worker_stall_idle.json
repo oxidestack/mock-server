@@ -1,0 +1,134 @@
+{
+ "source": "hand-written: NettyHttpClientLlmTransport blocks the Netty worker thread (see llm_worker_stall), and InboundConnectionIdleHandler (an IdleStateHandler) is added as a connection registers: a connection accepted onto the blocked loop starts its idle period only once the stall ends, and is closed inboundConnectionIdleTimeoutMillis after it",
+ "peer": true,
+ "properties": {
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "1200",
+  "inboundConnectionIdleTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "any",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"{\\\"httpRequest\\\": {\\\"method\\\": \\\"GET\\\", \\\"path\\\": \\\"/orders/1\\\"}, \\\"httpResponse\\\": {\\\"statusCode\\\": 200, \\\"body\\\": \\\"order\\\"}}\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    }
+   ],
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p1"
+    }
+   },
+   "note": "the first call opens the LLM client's connection, the second registration"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p2"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p3"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p4"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p5"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/generateExpectation",
+   "body": {
+    "request": {
+     "path": "/p6"
+    }
+   },
+   "async": "stalled",
+   "note": "on the pooled channel's event loop: the call blocks the loop for llmRequestTimeoutMillis (1200 ms)"
+  },
+  {
+   "sleepMillis": 200,
+   "note": "the stalled request's connection is accepted before the next ones"
+  },
+  {
+   "method": "GET",
+   "path": "/other/1",
+   "note": "the next four connections are on the other event loops: answered at once"
+  },
+  {
+   "method": "GET",
+   "path": "/other/2"
+  },
+  {
+   "method": "GET",
+   "path": "/other/3"
+  },
+  {
+   "method": "GET",
+   "path": "/other/4"
+  },
+  {
+   "note": "five registrations after the stalled request's, sending nothing: on the loop it blocks, registered (and timed) only once the stall ends, about 1000 ms from now, then closed 300 ms later",
+   "tcp": [],
+   "minMillis": 1100
+  },
+  {
+   "method": "GET",
+   "path": "/other/5",
+   "note": "the next loop again: answered at once"
+  },
+  {
+   "await": "stalled"
+  }
+ ]
+}

@@ -1,0 +1,10 @@
+{"source": "a forward override's FILE template renders with the server's configuration (systemValue allow list)",
+ "properties": {"templateSystemValueAllowList": "MY_VAR"},
+ "env": {"MY_VAR": "one", "OTHER": "three"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/upstream"}, "httpResponse": {"body": "from upstream"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/override-m"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/upstream", "headers": {"Host": ["localhost:{{port}}"]}}, "httpResponse": {"statusCode": 200, "body": {"type": "FILE", "filePath": "{{files}}/override_system_value.mustache", "contentType": "text/plain", "templateType": "MUSTACHE"}}}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/override-v"}, "httpOverrideForwardedRequest": {"httpRequest": {"path": "/upstream", "headers": {"Host": ["localhost:{{port}}"]}}, "httpResponse": {"statusCode": 200, "body": {"type": "FILE", "filePath": "{{files}}/override_system_value.vm", "contentType": "text/plain", "templateType": "VELOCITY"}}}}},
+  {"note": "mustache: allow-listed var visible, other empty", "method": "GET", "path": "/override-m"},
+  {"note": "velocity", "method": "GET", "path": "/override-v"}
+]}

@@ -1,0 +1,60 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "[{\"httpRequest\": {\"path\": \"/after\"}, \"httpResponse\": {\"body\": \"a\"}, \"afterActions\": [{\"httpRequest\": {\"path\": \"/hook/after\", \"headers\": {\"Host\": [\"localhost:1\"]}}}]}, {\"httpRequest\": {\"path\": \"/before\"}, \"httpResponse\": {\"body\": \"b\"}, \"beforeActions\": [{\"httpRequest\": {\"path\": \"/hook/before\", \"headers\": {\"Host\": [\"localhost:1\"]}}}]}]",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/after",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 1000
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/before",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 1000
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutOccurrences": {
+      "webhook failed for request": 2,
+      "Caused by: java.net.ConnectException: finishConnect(..) failed with error(-111): Connection refused\n": 2
+    },
+    "stdoutInOrder": [
+      " after-action webhook failed for request\n",
+      "\"path\" : \"/hook/after\"",
+      "\n - finishConnect(..) failed with error(-111): Connection refused: localhost/127.0.0.1:1\nshaded_package.io.netty.channel.AbstractChannel$AnnotatedConnectException: finishConnect(..) failed with error(-111): Connection refused: localhost/127.0.0.1:1\nCaused by: java.net.ConnectException: finishConnect(..) failed with error(-111): Connection refused\n",
+      " blocking before-action webhook failed for request\n",
+      "\"path\" : \"/hook/before\"",
+      "\n - Unable to connect to socket localhost/127.0.0.1:1\norg.mockserver.httpclient.SocketConnectionException: Unable to connect to socket localhost/127.0.0.1:1",
+      "\nCaused by: shaded_package.io.netty.channel.AbstractChannel$AnnotatedConnectException: finishConnect(..) failed with error(-111): Connection refused: localhost/127.0.0.1:1\nCaused by: java.net.ConnectException: finishConnect(..) failed with error(-111): Connection refused\n"
+    ]
+  }
+}

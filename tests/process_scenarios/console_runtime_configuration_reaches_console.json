@@ -1,0 +1,51 @@
+{
+  "target": "binary",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/configuration",
+        "ownHost": true,
+        "body": "{\"logLevelOverrides\": {\"EXPECTATION_MANAGEMENT\": \"WARN\", \"RECEIVED_REQUEST\": \"WARN\"}, \"disableLogging\": true, \"compactLogFormat\": true, \"disableSystemOut\": true}",
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"id\": \"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa\", \"httpRequest\": {\"path\": \"/a\"}, \"httpResponse\": {\"body\": \"x\"}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/a",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutNotContains": [
+      "configuration updated via API",
+      "creating expectation:",
+      "received request:",
+      "returning response:"
+    ]
+  }
+}

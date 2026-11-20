@@ -1,0 +1,75 @@
+{
+ "properties": {
+  "controlPlaneJWTAuthenticationRequired": "true",
+  "controlPlaneJWTAuthenticationJWKSource": "{{files}}/jwt/jwk.json",
+  "controlPlaneJWTAuthenticationExpectedAudience": "https://mock-server.com",
+  "controlPlaneJWTAuthenticationMatchingClaims": "name=John Doe,admin=true",
+  "controlPlaneJWTAuthenticationRequiredClaims": "name,admin,scope",
+  "controlPlaneTLSMutualAuthenticationRequired": "true",
+  "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/tls/private-ca/ca-cert.pem",
+  "initializationJsonPath": "{{files}}/auth/mtls_forwards.json",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/tls/private-ca/forward-client-cert.pem;{{files}}/tls/private-ca/forward-client-key.pem,0.0.0.0={{files}}/tls/foreign-leaf-cert.pem;{{files}}/tls/foreign-leaf-key.pem"
+ },
+ "steps": [
+  {
+   "note": "mTLS passes, no JWT: the JWT handler's reason answers",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "mTLS passes, JWT expired",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2stc2VydmVyLXJzLXRlc3QifQ.eyJleHAiOjk0NjY4NDgwMCwiaWF0IjoxNjAwMDAwMDAwLCJpc3MiOiJpc3N1ZXIiLCJuYmYiOjE2MDAwMDAwMDAsInNjb3BlIjoiaW50ZXJuYWwgcHVibGljIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOiJ0cnVlIiwiYXVkIjoiaHR0cHM6Ly9tb2NrLXNlcnZlci5jb20ifQ.O2Gzrt3KmLSvAO4NyP3mySyh7gjDVviXA6rcZYNvp3eYMxPyQvLgqoKocKKiOGufxDLm0mIoGzBHnkHdDpJxf3-IwELIFgKQvbWpBxZZffrvAzvlLPG3UrZv44yRWDg3ydGCTrh3PBS_ljkXr0KKib9eb4C7__wyV1o6ddbTvh2sL8o4aFphMEd5IbTkcLWIIjnQap3yczGaMppuI-pKgeHHeBMhiYWZZVBhkRJu111iVvCfDz6lXVWrYZOjp9hCgXFPSo-zUg79BiZ8JRvINbefjtiKZGgux4lLevtc2OCxF8jZmt9X7EejfIhhvVruNZvjOD5FYMQfbEVyJa2ZHA"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "mTLS passes, JWT valid: both handlers authenticate",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2stc2VydmVyLXJzLXRlc3QifQ.eyJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTYwMDAwMDAwMCwiaXNzIjoiaXNzdWVyIiwibmJmIjoxNjAwMDAwMDAwLCJzY29wZSI6ImludGVybmFsIHB1YmxpYyIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjoidHJ1ZSIsImF1ZCI6Imh0dHBzOi8vbW9jay1zZXJ2ZXIuY29tIn0.KK1qoHtgQMVOvkmVrm8mebOJdtry58sQa_RCp8TIsjJd_zkO8pbr8E1S5OsqSqakrALPsVDq05M2eI_pwfpEEFfcSVlCWhgqaPaM5N4HnjhqybuQOHiT71Z7QFeNs4NljMWTPcrqx4dwWqGg1WGF4FU0Iw0Eyckbprl-8RboqVZT4iMuOLYgUOQDNnOQIQeRKn1rqaYDkcRNHQ8OjZ0dr850RaywVe0VDtn36pGx6dpBBGK_HlXnSe6O-kyRgaUE71gc-Tc23kbloAK7xrugoFE7rxprSTg6SlSnUwJYbO9SxO799zBFOZzh07hXt47Tt0hJGsa5pBiosmORylluZA"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "mTLS fails, JWT valid: the mTLS handler's reason answers",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2stc2VydmVyLXJzLXRlc3QifQ.eyJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTYwMDAwMDAwMCwiaXNzIjoiaXNzdWVyIiwibmJmIjoxNjAwMDAwMDAwLCJzY29wZSI6ImludGVybmFsIHB1YmxpYyIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjoidHJ1ZSIsImF1ZCI6Imh0dHBzOi8vbW9jay1zZXJ2ZXIuY29tIn0.KK1qoHtgQMVOvkmVrm8mebOJdtry58sQa_RCp8TIsjJd_zkO8pbr8E1S5OsqSqakrALPsVDq05M2eI_pwfpEEFfcSVlCWhgqaPaM5N4HnjhqybuQOHiT71Z7QFeNs4NljMWTPcrqx4dwWqGg1WGF4FU0Iw0Eyckbprl-8RboqVZT4iMuOLYgUOQDNnOQIQeRKn1rqaYDkcRNHQ8OjZ0dr850RaywVe0VDtn36pGx6dpBBGK_HlXnSe6O-kyRgaUE71gc-Tc23kbloAK7xrugoFE7rxprSTg6SlSnUwJYbO9SxO799zBFOZzh07hXt47Tt0hJGsa5pBiosmORylluZA"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "both fail: mTLS runs first, so its reason answers",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}",
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2stc2VydmVyLXJzLXRlc3QifQ.eyJleHAiOjk0NjY4NDgwMCwiaWF0IjoxNjAwMDAwMDAwLCJpc3MiOiJpc3N1ZXIiLCJuYmYiOjE2MDAwMDAwMDAsInNjb3BlIjoiaW50ZXJuYWwgcHVibGljIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOiJ0cnVlIiwiYXVkIjoiaHR0cHM6Ly9tb2NrLXNlcnZlci5jb20ifQ.O2Gzrt3KmLSvAO4NyP3mySyh7gjDVviXA6rcZYNvp3eYMxPyQvLgqoKocKKiOGufxDLm0mIoGzBHnkHdDpJxf3-IwELIFgKQvbWpBxZZffrvAzvlLPG3UrZv44yRWDg3ydGCTrh3PBS_ljkXr0KKib9eb4C7__wyV1o6ddbTvh2sL8o4aFphMEd5IbTkcLWIIjnQap3yczGaMppuI-pKgeHHeBMhiYWZZVBhkRJu111iVvCfDz6lXVWrYZOjp9hCgXFPSo-zUg79BiZ8JRvINbefjtiKZGgux4lLevtc2OCxF8jZmt9X7EejfIhhvVruNZvjOD5FYMQfbEVyJa2ZHA"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "JWT valid in the clear: no client certificate",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "headers": {
+    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im1vY2stc2VydmVyLXJzLXRlc3QifQ.eyJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTYwMDAwMDAwMCwiaXNzIjoiaXNzdWVyIiwibmJmIjoxNjAwMDAwMDAwLCJzY29wZSI6ImludGVybmFsIHB1YmxpYyIsIm5hbWUiOiJKb2huIERvZSIsImFkbWluIjoidHJ1ZSIsImF1ZCI6Imh0dHBzOi8vbW9jay1zZXJ2ZXIuY29tIn0.KK1qoHtgQMVOvkmVrm8mebOJdtry58sQa_RCp8TIsjJd_zkO8pbr8E1S5OsqSqakrALPsVDq05M2eI_pwfpEEFfcSVlCWhgqaPaM5N4HnjhqybuQOHiT71Z7QFeNs4NljMWTPcrqx4dwWqGg1WGF4FU0Iw0Eyckbprl-8RboqVZT4iMuOLYgUOQDNnOQIQeRKn1rqaYDkcRNHQ8OjZ0dr850RaywVe0VDtn36pGx6dpBBGK_HlXnSe6O-kyRgaUE71gc-Tc23kbloAK7xrugoFE7rxprSTg6SlSnUwJYbO9SxO799zBFOZzh07hXt47Tt0hJGsa5pBiosmORylluZA"
+   },
+   "body": {
+    "path": "/nothing"
+   }
+  }
+ ]
+}

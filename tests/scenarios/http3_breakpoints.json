@@ -1,0 +1,32 @@
+{
+ "source": "upstream #81 and #82, 67ebbd0cd and 18b3a36e7, Http3BreakpointIntegrationTest: a RESPONSE breakpoint pauses a mocked response over HTTP/3 and the client's response is sent; an SSE response over HTTP/3 goes through the SSE handler's own RESPONSE_STREAM hold, the same code as on every protocol",
+ "quic": true,
+ "properties": {
+  "http3Port": "19763"
+ },
+ "steps": [
+  {"wsOpen": "bp", "headers": {"X-CLIENT-REGISTRATION-ID": "bp-h3-client"}},
+  {"wsRead": "bp"},
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/bp-mock"}, "httpResponse": {"statusCode": 200, "body": "original"}},
+    {"httpRequest": {"path": "/bp-sse"}, "httpSseResponse": {"events": [{"data": "one"}, {"data": "two"}]}}
+   ]
+  },
+  {"method": "PUT", "path": "/mockserver/breakpoint/matcher", "body": {"httpRequest": {"path": "/bp-mock"}, "phases": ["RESPONSE"], "clientId": "bp-h3-client"}},
+  {"method": "PUT", "path": "/mockserver/breakpoint/matcher", "body": {"httpRequest": {"path": "/bp-sse"}, "phases": ["RESPONSE_STREAM"], "clientId": "bp-h3-client"}},
+  {"h3": true, "method": "GET", "path": "/bp-mock", "maxMillis": 8000, "async": "m", "note": "held at the RESPONSE breakpoint"},
+  {"wsRead": "bp", "capture": {"bodyRegex": "\"WebSocketCorrelationId\" : \\[ \"([^\"]+)\"", "as": "m"}, "mask": ["(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"], "note": "the response the client is sent"},
+  {"wsSend": "bp", "envelope": {"type": "org.mockserver.model.HttpResponse", "value": {"statusCode": 202, "headers": {"x-modified": ["yes"], "WebSocketCorrelationId": ["{{capture:m}}"]}, "body": "modified"}}, "note": "RESPONSE MODIFY"},
+  {"await": "m", "note": "the client's response over HTTP/3"},
+  {"h3": true, "method": "GET", "path": "/bp-sse", "maxMillis": 8000, "async": "s", "note": "an SSE response whose events are held"},
+  {"wsRead": "bp", "capture": {"bodyRegex": "\"correlationId\":\"([^\"]+)\"", "as": "f0"}, "mask": ["(?<=\"requestTimestamp\":)\\d+"], "note": "event 0"},
+  {"wsSend": "bp", "envelope": {"type": "org.mockserver.serialization.model.StreamFrameDecisionDTO", "value": {"correlationId": "{{capture:f0}}", "action": "MODIFY", "body": "ZGF0YTogT05FCgo="}}, "note": "event 0 replaced"},
+  {"wsRead": "bp", "capture": {"bodyRegex": "\"correlationId\":\"([^\"]+)\"", "as": "f1"}, "mask": ["(?<=\"requestTimestamp\":)\\d+"], "note": "event 1"},
+  {"wsSend": "bp", "envelope": {"type": "org.mockserver.serialization.model.StreamFrameDecisionDTO", "value": {"correlationId": "{{capture:f1}}", "action": "CONTINUE"}}, "note": "event 1 as it is"},
+  {"await": "s", "note": "the SSE stream over HTTP/3"},
+  {"wsRead": "bp", "waitMillis": 500, "note": "nothing more is held"}
+ ]
+}

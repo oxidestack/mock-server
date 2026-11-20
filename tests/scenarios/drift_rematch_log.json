@@ -1,0 +1,38 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"target\", \"httpRequest\": {\"path\": \"/fwd\"}, \"httpResponse\": {\"statusCode\": 200, \"body\": \"upstream\"}}, {\"id\": \"other\", \"httpRequest\": {\"path\": \"/other\"}, \"httpResponse\": {\"body\": \"other\"}}, {\"id\": \"fwd\", \"httpRequest\": {\"path\": \"/fwd\", \"headers\": {\"Host\": [\"front.example\"]}}, \"priority\": 10, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}]"
+  },
+  {
+   "method": "GET",
+   "path": "/fwd",
+   "headers": {
+    "Host": "front.example"
+   },
+   "note": "forwarded to the target expectation; driftDetectionEnabled is on by default, so after the forward the drift pass (`analyseDrift` -> `allMatchingExpectation`) matches the request against every expectation again and logs each evaluation"
+  },
+  {
+   "sleepMillis": 1000
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/fwd"
+   },
+   "note": "the lines about /fwd: after the forwarded response, the drift pass's evaluation of every expectation against the request as `HttpForwardActionHandler` rewrote it (its `Host` replaced in place), so the forwarding expectation no longer matches; header blocks are masked because the received request's `Host` is racy in the oracle (received, rewritten or none: docs/divergences.md, `Host` of the received request)",
+   "mask": [
+    {
+     "regex": "\"headers\" : \\{[^{}]*\\}",
+     "replace": "\"headers\" : <masked>"
+    },
+    {
+     "regex": "\"timing\" : \\{[^{}]*\\}",
+     "replace": "\"timing\" : <masked>"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,26 @@
+{
+ "source": "hand-written: the explain narration prompt scrubbed with LlmPromptRedactor's own sets (X-Auth-Token and the configured dataPlaneApiKeyAuthenticationHeader beside the default headers, the body-field names as query parameters, code beside an OAuth signal, code_verifier in key=value text)",
+ "peer": true,
+ "properties": {
+  "llmExplainNarrationEnabled": "true",
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "30000",
+  "dataPlaneApiKeyAuthenticationHeader": "X-Tenant-Key",
+  "dataPlaneApiKeyAuthenticationValue": "tenant-key-value-1"
+ },
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/reset", "node": "peer"},
+  {"note": "the LLM: any chat completion", "method": "PUT", "path": "/mockserver/expectation", "maxMillis": 60000, "node": "peer", "body": {"id": "llm", "httpRequest": {"method": "POST", "path": "/v1/chat/completions"}, "httpResponse": {"statusCode": 200, "headers": {"content-type": ["application/json"]}, "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-narrator\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"The request missed on X-Auth-Token.\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"}}, "mask": ["content-length: \\d+"]},
+  {"note": "one differing field per expectation: upstream keeps getAllDifferences in a HashMap keyed by an enum, so the order of several is arbitrary per JVM", "method": "PUT", "path": "/mockserver/expectation", "maxMillis": 60000, "body": {"id": "nr-h", "httpRequest": {"method": "POST", "path": "/nr2", "headers": {"X-Auth-Token": ["tok-expected-1234"], "X-Csrf-Token": ["csrf-expected-5678"]}}, "httpResponse": {"body": "nr-h"}}, "mask": ["content-length: \\d+"]},
+  {"method": "PUT", "path": "/mockserver/expectation", "maxMillis": 60000, "body": {"id": "nr-q", "httpRequest": {"method": "POST", "path": "/nr2", "queryStringParameters": {"code_verifier": ["verifier-qe-0000"], "password": ["pw-expected-1111"], "code": ["authcode-e-2222"], "state": ["state-e-3333"]}}, "httpResponse": {"body": "nr-q"}}, "mask": ["content-length: \\d+"]},
+  {"method": "PUT", "path": "/mockserver/expectation", "maxMillis": 60000, "body": {"id": "nr-b", "httpRequest": {"method": "POST", "path": "/nr2", "body": {"type": "STRING", "string": "grant=y&code_verifier=verifier-be-4321&code=authcode-be-1&state=s"}}, "httpResponse": {"body": "nr-b"}}, "mask": ["content-length: \\d+"]},
+  {"note": "a miss on each, quoting the recorded request's X-Auth-Token, data-plane key, OAuth code and code_verifier values", "method": "POST", "path": "/nr2?code=authcode-7777&state=state-8888&code_verifier=verifier-q-9999&password=pw-query-3333", "headers": {"X-Auth-Token": "tok-actual-4567", "X-Csrf-Token": "csrf-actual-8765", "X-Tenant-Key": "tenant-key-value-1", "Content-Type": "text/plain"}, "body": "grant=x&code_verifier=verifier-b-1234&code=authcode-b-5555&state=s"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "maxMillis": 60000, "body": {"path": "/nr2"}, "capture": {"bodyRegex": "\"RECEIVED_REQUEST\",\\s*\"correlationId\" : \"([^\"]+)\"", "as": "cn"}, "mask": [{"regex": "^[\\s\\S]*$", "replace": "<log entries>"}, "content-length: \\d+"]},
+  {"note": "narrated by the LLM, the facts unchanged", "method": "PUT", "path": "/mockserver/explain?narrate=true&correlationId={{capture:cn}}", "compare": "json", "maxMillis": 40000, "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "explainUnmatched narrated too", "method": "PUT", "path": "/mockserver/explainUnmatched?narrate=true", "compare": "json", "maxMillis": 40000, "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+"]},
+  {"note": "the prompts the LLM received: no credential value quoted", "method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "node": "peer", "body": {"path": "/v1/chat/completions"}, "mask": ["\\d{4}-\\d\\d-\\d\\dT[0-9:.]+Z", "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}", "content-length: \\d+", "\"(?:content-length|Content-Length)\" : \\[ \"\\d+\" \\]", "\"host\" : \\[ \"[0-9.]+:"]}
+ ]
+}

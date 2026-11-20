@@ -1,0 +1,83 @@
+{
+ "properties": {
+  "maxSocketTimeoutInMillis": "1000",
+  "socketConnectionTimeoutInMillis": "700",
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"id\": \"slow-upstream\", \"httpRequest\": {\"path\": \"/to/.*\"}, \"httpResponse\": {\"body\": \"late\", \"delay\": {\"timeUnit\": \"MILLISECONDS\", \"value\": 5000}}}, {\"id\": \"fwf-read\", \"priority\": 10, \"httpRequest\": {\"path\": \"/to/read\", \"headers\": {\"Host\": [\"front.example\"]}}, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"body\": \"read fallback\"}}}, {\"id\": \"fwf-read-strict\", \"priority\": 10, \"httpRequest\": {\"path\": \"/to/read-strict\", \"headers\": {\"Host\": [\"front.example\"]}}, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}, \"fallbackResponse\": {\"body\": \"unused\"}, \"fallbackOnTimeout\": false}}, {\"id\": \"forward-read\", \"priority\": 10, \"httpRequest\": {\"path\": \"/to/forward-read\", \"headers\": {\"Host\": [\"front.example\"]}}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}}}, {\"id\": \"fwf-connect\", \"priority\": 10, \"httpRequest\": {\"path\": \"/to/connect\"}, \"httpForwardWithFallback\": {\"httpForward\": {\"host\": \"10.255.255.1\", \"port\": 81}, \"fallbackResponse\": {\"body\": \"connect fallback\"}}}, {\"id\": \"forward-connect\", \"priority\": 10, \"httpRequest\": {\"path\": \"/to/forward-connect\"}, \"httpForward\": {\"host\": \"10.255.255.1\", \"port\": 81}}]"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "read timeout: fallback",
+   "method": "GET",
+   "path": "/to/read",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "sleepMillis": 4500,
+   "awaitIdle": true
+  },
+  {
+   "note": "read timeout, fallbackOnTimeout false: 502",
+   "method": "GET",
+   "path": "/to/read-strict",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "sleepMillis": 4500,
+   "awaitIdle": true
+  },
+  {
+   "note": "httpForward read timeout: 502",
+   "method": "GET",
+   "path": "/to/forward-read",
+   "headers": {
+    "Host": "front.example"
+   }
+  },
+  {
+   "sleepMillis": 4500,
+   "awaitIdle": true
+  },
+  {
+   "note": "connect timeout: fallback",
+   "method": "GET",
+   "path": "/to/connect"
+  },
+  {
+   "note": "httpForward connect timeout: 502",
+   "method": "GET",
+   "path": "/to/forward-connect"
+  },
+  {
+   "note": "log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\"timing\" : \\{[^{}]*\\}",
+     "replace": "\"timing\" : <masked>"
+    },
+    {
+     "regex": "(?:\"host\" : \\[ (?:\"(?:front\\.example|localhost:<port>)\" )?\\],\\s*\"content-length\" : \\[ \"0\" \\]|\"content-length\" : \\[ \"0\" \\],\\s*\"Host\" : \\[ \"(?:localhost:<port>|10\\.255\\.255\\.1:81)\" \\])\\s*\\}",
+     "replace": "<received request headers> }"
+    },
+    {
+     "regex": "<timestamp> - exception caught by HTTP client handler - null\\n-{36}\\n",
+     "replace": ""
+    }
+   ]
+  }
+ ]
+}

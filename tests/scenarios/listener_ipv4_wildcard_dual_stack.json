@@ -1,0 +1,31 @@
+{
+ "note": "an explicit localBoundIP of 0.0.0.0 is still dual-stack on the oracle: the JDK binds IPv4's any-local address as in6addr_any on its IPv6 socket (/proc/net/tcp6 lists 0438 on ::), so a self-dial to ::1 is answered like one to 127.0.0.1. Any other IPv4 address is bound IPv4-mapped and refuses ::1 (localBoundIP=127.0.0.1 lists ::ffff:127.0.0.1, probed by hand: the harness cannot reach a loopback-bound container). Recorded inside the oracle's container, as listener_dual_stack_ipv6_loopback",
+ "properties": {
+  "localBoundIP": "0.0.0.0"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/v4only/target\"}, \"httpResponse\": {\"body\": \"reached over ipv4\"}}, {\"httpRequest\": {\"path\": \"/v4only/v6\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/v4only/target\", \"socketAddress\": {\"host\": \"::1\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}}}, {\"httpRequest\": {\"path\": \"/v4only/v4\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/v4only/target\", \"socketAddress\": {\"host\": \"127.0.0.1\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}}}]"
+  },
+  {
+   "note": "::1 is listened on too",
+   "method": "GET",
+   "path": "/v4only/v6"
+  },
+  {
+   "note": "and 127.0.0.1",
+   "method": "GET",
+   "path": "/v4only/v4"
+  },
+  {
+   "note": "both dials arrived, each Host adjusted to its socket address",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {
+    "path": "/v4only/target"
+   }
+  }
+ ]
+}

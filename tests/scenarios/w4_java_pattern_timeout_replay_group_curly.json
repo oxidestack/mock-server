@@ -1,0 +1,109 @@
+{
+ "source": "Pattern.group0 makes a quantified group whose body study finds deterministic a GroupCurly, which has no Loop.posIndex, so several such groups in a row are polynomial over a long value; the regex-timeout replay walks them so, and RegexStringMatcher (DOTALL | CASE_INSENSITIVE | UNICODE_CASE, matches()) passes regexMatchingTimeoutMillis (here 300) on a 62-character value where the oracle's JVM does and logs its WARN, and stays within it where the JVM does",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "group-curly",
+     "httpRequest": {
+      "path": "/v(ab)*(ab)*(ab)*(ab)*(ab)*(ab)*(ab)*(ab)*(ab)*x"
+     },
+     "httpResponse": {
+      "body": "group-curly"
+     }
+    },
+    {
+     "id": "group-curly-non-capturing",
+     "httpRequest": {
+      "path": "/w(?:a\\d)*(?:a\\d)*(?:a\\d)*(?:a\\d)*(?:a\\d)*(?:a\\d)*(?:a\\d)*(?:a\\d)*(?:a\\d)*x"
+     },
+     "httpResponse": {
+      "body": "group-curly-non-capturing"
+     }
+    },
+    {
+     "id": "group-curly-plus",
+     "httpRequest": {
+      "path": "/u(ab)+(ab)+(ab)+(ab)+(ab)+(ab)+(ab)+(ab)+(ab)+x"
+     },
+     "httpResponse": {
+      "body": "group-curly-plus"
+     }
+    },
+    {
+     "id": "group-curly-lazy",
+     "httpRequest": {
+      "path": "/y(ab)*?(ab)*?(ab)*?(ab)*?(ab)*?(ab)*?(ab)*?(ab)*?(ab)*?x"
+     },
+     "httpResponse": {
+      "body": "group-curly-lazy"
+     }
+    },
+    {
+     "id": "loop-memo",
+     "httpRequest": {
+      "path": "/z(a|b)*(a|b)*(a|b)*(a|b)*(a|b)*(a|b)*(a|b)*(a|b)*(a|b)*x"
+     },
+     "httpResponse": {
+      "body": "loop-memo"
+     }
+    },
+    {
+     "id": "group-curly-match",
+     "httpRequest": {
+      "path": "/k(ab)*(ab)*(ab)*(ab)*(ab)*(ab)*(ab)*(ab)*(ab)*x"
+     },
+     "httpResponse": {
+      "body": "group-curly-match"
+     }
+    }
+   ]
+  },
+  {
+   "note": "nine greedy GroupCurly nodes without Loop.posIndex: polynomial past the budget",
+   "method": "GET",
+   "path": "/vabababababababababababababababababababababababababababababab"
+  },
+  {
+   "note": "the same over non-capturing groups",
+   "method": "GET",
+   "path": "/wa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1"
+  },
+  {
+   "note": "GroupCurly with a minimum of one",
+   "method": "GET",
+   "path": "/uabababababababababababababababababababababababababababababab"
+  },
+  {
+   "note": "lazy GroupCurly (match1)",
+   "method": "GET",
+   "path": "/yabababababababababababababababababababababababababababababab"
+  },
+  {
+   "note": "a non-deterministic body is a Loop, memoised at the top level: no timeout",
+   "method": "GET",
+   "path": "/zabababababababababababababababababababababababababababababab"
+  },
+  {
+   "note": "a finished replay that matches",
+   "method": "GET",
+   "path": "/kababababababababababababababababababababababababababababababx"
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

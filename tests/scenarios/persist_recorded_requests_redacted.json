@@ -1,0 +1,15 @@
+{
+ "properties": {
+  "persistRecordedRequestsToDisk": "true",
+  "persistedRecordedRequestsPath": "{{scratch}}/persist_recorded_requests_redacted.ndjson",
+  "redactSecretsInLog": "true"
+ },
+ "steps": [
+  {"writeFile": {"path": "{{scratch}}/persist_recorded_requests_redacted.ndjson", "content": ""}, "note": "truncate in place"},
+  {"method": "PUT", "path": "/mockserver/reset"},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/secured"}, "httpResponse": {"body": "ok", "headers": {"Set-Cookie": ["session=TOPSECRET"]}}}},
+  {"method": "GET", "path": "/secured?api_key=QUERYSECRET", "headers": {"Authorization": "Bearer SECRET123", "Accept": "application/json"}, "note": "masked on disk"},
+  {"sleepMillis": 1000},
+  {"readFile": "{{scratch}}/persist_recorded_requests_redacted.ndjson", "mask": [{"regex": "^\\x00+", "replace": ""}],"note": "the archive honours redactSecretsInLog"}
+ ]
+}

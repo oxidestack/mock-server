@@ -1,0 +1,42 @@
+{
+ "note": "CircularPriorityQueueTest, InMemoryExpectationKeyValueStoreTest byte budget: maxExpectationsSizeInBytes evicts the eldest expectations by insertion (not priority) until the store's estimated size fits, never the last one; a PUT /mockserver/configuration shrink evicts at once and 0 disables the bound while the total is still kept; the expectation-store byte metrics and the one-shot WARN.",
+ "properties": {
+  "maxExpectationsSizeInBytes": "6000",
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {"note": "the eldest, despite its priority", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "a", "priority": 10, "httpRequest": {"path": "/a"}, "httpResponse": {"body": "a"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "b", "httpRequest": {"path": "/b"}, "httpResponse": {"body": "b"}}},
+  {"note": "two fit the budget", "method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"note": "the third evicts a", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "c", "httpRequest": {"path": "/c"}, "httpResponse": {"body": "c"}}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"method": "GET", "path": "/a"},
+  {"method": "GET", "path": "/c"},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"note": "an update in place keeps its weight in step", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "c", "httpRequest": {"path": "/c"}, "httpResponse": {"body": "c-updated-with-a-longer-body"}}},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"note": "header entries are weighed", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "d", "httpRequest": {"path": "/d", "headers": {"x-one": ["v1", "v2"], "x-two": "w"}}, "httpResponse": {"headers": {"x-out": ["o"]}, "body": "dd"}}},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"note": "a JSON request body is weighed with its matcher tree", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "e", "httpRequest": {"path": "/e", "body": {"type": "JSON", "json": {"key": "value", "list": [1, 2]}}}, "httpResponse": {"body": "e"}}},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"note": "a string request body and several responses", "method": "PUT", "path": "/mockserver/expectation", "body": {"id": "f", "httpRequest": {"path": "/f", "body": "plain-text"}, "httpResponses": [{"body": "one"}, {"body": "three"}]}},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "g", "httpRequest": {"path": "/g"}, "httpResponseTemplate": {"templateType": "VELOCITY", "template": "{ 'statusCode': 200, 'body': 'g' }"}}},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "a shrink evicts at once, keeping the newest even over the budget", "method": "PUT", "path": "/mockserver/configuration", "body": {"maxExpectationsSizeInBytes": 1000}, "mask": [{"regex": "\"(actionHandlerThreadCount|maxEventLogSizeInBytes|maxOpenAiResponsesSizeInBytes)\" : \\d+", "replace": "\"${1}\" : <host-derived>", "reason": "derived from the recording VM's processors and heap"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"id": "h", "httpRequest": {"path": "/h"}, "httpResponse": {"body": "h"}}},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "0 disables the bound; the total is still kept", "method": "PUT", "path": "/mockserver/configuration", "body": {"maxExpectationsSizeInBytes": 0}, "mask": [{"regex": "\"(actionHandlerThreadCount|maxEventLogSizeInBytes|maxOpenAiResponsesSizeInBytes)\" : \\d+", "replace": "\"${1}\" : <host-derived>", "reason": "derived from the recording VM's processors and heap"}]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [{"id": "i", "httpRequest": {"path": "/i"}, "httpResponse": {"body": "i"}}, {"id": "j", "httpRequest": {"path": "/j"}, "httpResponse": {"body": "j"}}, {"id": "k", "httpRequest": {"path": "/k"}, "httpResponse": {"body": "k"}}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"note": "a clear takes its weight off the total", "method": "PUT", "path": "/mockserver/clear?type=EXPECTATIONS", "body": {"id": "j"}},
+  {"method": "GET", "path": "/mockserver/metrics", "mask": [{"regex": "(?m)^(?!mock_server_(max_)?expectations_byte)[^\\n]*\\n", "replace": "", "reason": "only the expectation-store byte metrics are under test"}]},
+  {"note": "a huge budget evicts nothing", "method": "PUT", "path": "/mockserver/configuration", "body": {"maxExpectationsSizeInBytes": 1000000000}, "mask": [{"regex": "\"(actionHandlerThreadCount|maxEventLogSizeInBytes|maxOpenAiResponsesSizeInBytes)\" : \\d+", "replace": "\"${1}\" : <host-derived>", "reason": "derived from the recording VM's processors and heap"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"},
+  {"note": "the byte-budget WARN, once", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS"}
+ ]
+}

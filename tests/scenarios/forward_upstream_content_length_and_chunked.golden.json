@@ -1,0 +1,63 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/clte/up/cl5\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"x-after\" : [ \"1\" ],\n      \"Transfer-Encoding\" : [ \"chunked\" ],\n      \"Content-Length\" : [ \"5\" ]\n    },\n    \"body\" : \"hello\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clte/up/cl3\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"x-before\" : [ \"1\" ],\n      \"Transfer-Encoding\" : [ \"Chunked\" ],\n      \"Content-Length\" : [ \"3\" ]\n    },\n    \"body\" : \"hello\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clte/up/plain\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"plain\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/clte/up/bare\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"Transfer-Encoding\" : [ \"chunked\" ],\n      \"Content-Length\" : [ \"5\" ]\n    },\n    \"body\" : \"hello\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/clte/up/cl5\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/clte/fwd/cl5\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/clte/up/cl3\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/clte/fwd/cl3\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/clte/up/plain\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/clte/fwd/plain\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpOverrideForwardedRequest\" : {\n    \"requestOverride\" : {\n      \"path\" : \"/clte/up/bare\",\n      \"headers\" : {\n        \"Host\" : [ \"localhost:<port>\" ]\n      }\n    }\n  },\n  \"httpRequest\" : {\n    \"path\" : \"/clte/fwd/bare\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "tcpText": "HTTP/1.1 502 Bad Gateway\r\nconnection: close\r\ncontent-length: 176\r\n\r\nresponse from the upstream could not be decoded: ContentLengthNotAllowedException: Content-Length are not allowed in HTTP/1.1 messages that contains a Transfer-Encoding header.",
+      "closed": true,
+      "note": "upstream answers Content-Length 5 and Transfer-Encoding chunked: Netty's decoder rejects the head (ContentLengthNotAllowedException); the aggregated invalid message keeps Content-Length, loses chunked, has no body"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 5\r\nconnection: close\r\n\r\nplain",
+      "closed": true,
+      "note": "the pooled connection now discards everything it reads (BAD_MESSAGE): the next forward to the same upstream reaches it but its answer is swallowed, so it times out (maxSocketTimeoutInMillis 2000): 502"
+    },
+    {
+      "tcpText": "HTTP/1.1 502 Bad Gateway\r\nconnection: close\r\ncontent-length: 176\r\n\r\nresponse from the upstream could not be decoded: ContentLengthNotAllowedException: Content-Length are not allowed in HTTP/1.1 messages that contains a Transfer-Encoding header.",
+      "closed": true,
+      "note": "a fresh connection after the timeout closed the poisoned one: Chunked (any case) is dropped too; Content-Length and connection then go in the hop-by-hop filter, as x-before is left"
+    },
+    {
+      "tcpText": "HTTP/1.1 200 OK\r\ncontent-length: 5\r\nconnection: close\r\n\r\nplain",
+      "closed": true,
+      "note": "so does cl3's connection: the next forward times out too"
+    },
+    {
+      "tcpText": "HTTP/1.1 502 Bad Gateway\r\nconnection: close\r\ncontent-length: 176\r\n\r\nresponse from the upstream could not be decoded: ContentLengthNotAllowedException: Content-Length are not allowed in HTTP/1.1 messages that contains a Transfer-Encoding header.",
+      "closed": true,
+      "note": "a fresh connection again: the bare pair, nothing left after the hop-by-hop filter, so the response keeps Content-Length 5 (and the upstream's connection header in the log)"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/clte/fwd/cl5\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"x\" ],\n      \"Connection\" : [ \"close\" ]\n    },\n    \"keepAlive\" : false,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    <masked>,\n    <masked>\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 502,\n    \"reasonPhrase\" : \"Bad Gateway\",\n    \"body\" : \"response from the upstream could not be decoded: ContentLengthNotAllowedException: Content-Length are not allowed in HTTP/1.1 messages that contains a Transfer-Encoding header.\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/clte/fwd/plain\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"x\" ],\n      \"Connection\" : [ \"close\" ]\n    },\n    \"keepAlive\" : false,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    <masked>,\n    <masked>\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"reasonPhrase\" : \"OK\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"content-length\" : [ \"5\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"body\" : \"plain\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/clte/fwd/cl3\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"x\" ],\n      \"Connection\" : [ \"close\" ]\n    },\n    \"keepAlive\" : false,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    <masked>,\n    <masked>\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 502,\n    \"reasonPhrase\" : \"Bad Gateway\",\n    \"body\" : \"response from the upstream could not be decoded: ContentLengthNotAllowedException: Content-Length are not allowed in HTTP/1.1 messages that contains a Transfer-Encoding header.\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/clte/fwd/plain\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"x\" ],\n      \"Connection\" : [ \"close\" ]\n    },\n    \"keepAlive\" : false,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    <masked>,\n    <masked>\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"reasonPhrase\" : \"OK\",\n    \"headers\" : {\n      \"x-mockserver-response-time-ms\" : [ \"<ms>\" ],\n      \"content-length\" : [ \"5\" ],\n      \"connection\" : [ \"keep-alive\" ]\n    },\n    \"body\" : \"plain\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n}, {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/clte/fwd/bare\",\n    \"headers\" : {\n      \"content-length\" : [ \"0\" ],\n      \"Host\" : [ \"x\" ],\n      \"Connection\" : [ \"close\" ]\n    },\n    \"keepAlive\" : false,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    <masked>,\n    <masked>\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 502,\n    \"reasonPhrase\" : \"Bad Gateway\",\n    \"body\" : \"response from the upstream could not be decoded: ContentLengthNotAllowedException: Content-Length are not allowed in HTTP/1.1 messages that contains a Transfer-Encoding header.\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n} ]",
+      "note": "the event log keeps the invalid responses as the client saw them"
+    }
+  ]
+}

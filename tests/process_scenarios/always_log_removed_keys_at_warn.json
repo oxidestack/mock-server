@@ -1,0 +1,24 @@
+{
+  "target": "both",
+  "args": ["-serverPort", "0", "-Dmockserver.forwardBinaryRequestsUseSingleConnection=false"],
+  "env": {
+    "MOCK_SERVER_NO_BROWSER": "1",
+    "MOCKSERVER_LOG_LEVEL": "WARN",
+    "MOCKSERVER_FORWARD_BINARY_REQUESTS_WITHOUT_WAITING_FOR_RESPONSE": "true"
+  },
+  "readiness": {
+    "logContains": "logger level is"
+  },
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "[WARN] MockServer configuration environment variable [MOCKSERVER_FORWARD_BINARY_REQUESTS_WITHOUT_WAITING_FOR_RESPONSE] was removed in 9.0.0 and is ignored: a proxied binary connection is always relayed on one upstream connection, which waits for no response",
+      "[WARN] MockServer configuration system property [mockserver.forwardBinaryRequestsUseSingleConnection] was removed in 9.0.0 and is ignored: a proxied binary connection is always relayed on one upstream connection"
+    ],
+    "stdoutNotContains": [
+      "unrecognised MockServer configuration",
+      "[INFO] "
+    ]
+  }
+}

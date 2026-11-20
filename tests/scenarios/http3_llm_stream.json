@@ -1,0 +1,103 @@
+{
+ "source": "upstream #82, 18b3a36e7: a streamed httpLlmResponse over HTTP/3 is sent as one HEADERS frame, the provider's events as DATA frames, then the end of the stream (Http3HttpObjectEncoder), as Http3StreamingActionsIntegrationTest's streamed OpenAI case; and an SSE response to HEAD keeps its events",
+ "quic": true,
+ "properties": {
+  "http3Port": "19760"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "llm-h3",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "one two three",
+       "streaming": true,
+       "streamingPhysics": {
+        "subwordStreaming": false
+       }
+      }
+     }
+    },
+    {
+     "id": "anthropic-h3",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/messages"
+     },
+     "httpLlmResponse": {
+      "provider": "ANTHROPIC",
+      "model": "claude",
+      "completion": {
+       "text": "hi there",
+       "streaming": true,
+       "streamingPhysics": {
+        "subwordStreaming": false
+       }
+      }
+     }
+    },
+    {
+     "id": "sse-h3",
+     "httpRequest": {
+      "path": "/sse-head"
+     },
+     "httpSseResponse": {
+      "events": [
+       {
+        "data": "one"
+       },
+       {
+        "data": "two"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"stream\":true}",
+   "maxMillis": 5000,
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\":\\d+"
+   ],
+   "note": "a streamed OpenAI completion over HTTP/3"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/v1/messages",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"stream\":true}",
+   "maxMillis": 5000,
+   "mask": [
+    "msg_[0-9A-Za-z]+"
+   ],
+   "note": "a streamed Anthropic message over HTTP/3"
+  },
+  {
+   "h3": true,
+   "method": "HEAD",
+   "path": "/sse-head",
+   "maxMillis": 5000,
+   "note": "an SSE response to HEAD is sent with its events over HTTP/3, as over HTTP/1.1 and HTTP/2"
+  }
+ ]
+}

@@ -1,0 +1,35 @@
+{"source": "Scheduler.getPendingDelayedTaskCount adds pendingUnboundedDelayedTasks (a delayed task without a rejectable wrapper, e.g. HttpSseResponseActionHandler's next event, one per stream, and each ScenarioManager.scheduleTransition until it fires or is cancelled), and getQueuedTaskCount is the scheduler pool's queue, which holds the same delayed tasks",
+ "properties": {"metricsEnabled": "true"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+   {"httpRequest": {"path": "/sse"}, "httpSseResponse": {"events": [
+    {"data": "one", "delay": {"timeUnit": "MILLISECONDS", "value": 2000}},
+    {"data": "two", "delay": {"timeUnit": "MILLISECONDS", "value": 2000}}
+   ], "closeConnection": true}}
+  ], "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]},
+  {"note": "the stream's first event waits for its delay", "async": "s", "maxMillis": 30000, "method": "GET", "path": "/sse"},
+  {"sleepMillis": 500, "awaitCounts": {"pendingDelayed": 1}},
+  {"note": "one unbounded delayed task: the stream's next event", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "a timed transition", "method": "PUT", "path": "/mockserver/scenario/timed", "body": {"state": "A", "nextState": "B", "transitionAfterMs": 30000}},
+  {"note": "replaces it, cancelling the first", "method": "PUT", "path": "/mockserver/scenario/timed", "body": {"state": "A", "nextState": "C", "transitionAfterMs": 30000}},
+  {"note": "the stream's next event and the one pending transition", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"await": "s"},
+  {"sleepMillis": 500, "awaitCounts": {"pendingDelayed": 1}},
+  {"note": "the stream ended; the transition still waits", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"note": "reset cancels every pending transition", "method": "PUT", "path": "/mockserver/reset"},
+  {"sleepMillis": 200, "awaitCounts": {"pendingDelayed": 0}},
+  {"note": "nothing waits", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:pending_delayed_tasks|scheduler_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]}
+ ]
+}

@@ -1,0 +1,796 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) fixture-SseBodyParserChunkTimingTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c948a4fd0207",
+   "note": "shouldHandlePerChunkDelaysLongerThanEvents (fixture): reset"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": [
+    {
+     "headerRegex": [
+      "Mcp-Session-Id",
+      "(.+)"
+     ],
+     "as": "s"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "shouldHandlePerChunkDelaysLongerThanEvents (fixture): MCP session",
+   "case": "c948a4fd0207"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "note": "shouldHandlePerChunkDelaysLongerThanEvents (fixture): MCP initialized",
+   "case": "c948a4fd0207"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/sse\"},\"httpResponse\":{\"statusCode\":200,\"headers\":{\"Content-Type\":[\"text/event-stream\"],\"x-mockserver-chunk-delays-ms\":[\"0,100,200\"]},\"body\":\"data: only\\n\\n\"}}\n",
+   "note": "shouldHandlePerChunkDelaysLongerThanEvents (fixture): the inputs as recorded traffic",
+   "case": "c948a4fd0207"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-acb8d242844d.json"
+     }
+    }
+   },
+   "note": "shouldHandlePerChunkDelaysLongerThanEvents (fixture): SseBodyParser.parse",
+   "compare": "json",
+   "case": "c948a4fd0207"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-acb8d242844d.json"
+     }
+    }
+   },
+   "note": "shouldHandlePerChunkDelaysLongerThanEvents (fixture): the fixture read back",
+   "compare": "json",
+   "case": "c948a4fd0207"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldHandlePerChunkDelaysLongerThanEvents (fixture): the fixture's expectations",
+   "case": "c948a4fd0207"
+  },
+  {
+   "deleteFile": "/tmp/msrs-fixture-acb8d242844d.json",
+   "note": "shouldHandlePerChunkDelaysLongerThanEvents (fixture): clean up",
+   "case": "c948a4fd0207"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "4a1f7c1ff49d",
+   "note": "shouldHandleRealisticCapturedTimingValues (fixture): reset"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": [
+    {
+     "headerRegex": [
+      "Mcp-Session-Id",
+      "(.+)"
+     ],
+     "as": "s"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "shouldHandleRealisticCapturedTimingValues (fixture): MCP session",
+   "case": "4a1f7c1ff49d"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "note": "shouldHandleRealisticCapturedTimingValues (fixture): MCP initialized",
+   "case": "4a1f7c1ff49d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/sse\"},\"httpResponse\":{\"statusCode\":200,\"headers\":{\"Content-Type\":[\"text/event-stream\"],\"x-mockserver-chunk-delays-ms\":[\"0,350,15,12\"]},\"body\":\"event: message_start\\ndata: {\\\"type\\\":\\\"message_start\\\"}\\n\\nevent: content_block_delta\\ndata: {\\\"type\\\":\\\"delta\\\",\\\"text\\\":\\\"Hello\\\"}\\n\\nevent: content_block_delta\\ndata: {\\\"type\\\":\\\"delta\\\",\\\"text\\\":\\\" world\\\"}\\n\\nevent: message_stop\\ndata: {\\\"type\\\":\\\"message_stop\\\"}\\n\\n\"}}\n",
+   "note": "shouldHandleRealisticCapturedTimingValues (fixture): the inputs as recorded traffic",
+   "case": "4a1f7c1ff49d"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-b4b2523aff14.json"
+     }
+    }
+   },
+   "note": "shouldHandleRealisticCapturedTimingValues (fixture): SseBodyParser.parse",
+   "compare": "json",
+   "case": "4a1f7c1ff49d"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-b4b2523aff14.json"
+     }
+    }
+   },
+   "note": "shouldHandleRealisticCapturedTimingValues (fixture): the fixture read back",
+   "compare": "json",
+   "case": "4a1f7c1ff49d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldHandleRealisticCapturedTimingValues (fixture): the fixture's expectations",
+   "case": "4a1f7c1ff49d"
+  },
+  {
+   "deleteFile": "/tmp/msrs-fixture-b4b2523aff14.json",
+   "note": "shouldHandleRealisticCapturedTimingValues (fixture): clean up",
+   "case": "4a1f7c1ff49d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "13aa07d2253e",
+   "note": "shouldApplyPerChunkDelaysWhenProvided (fixture): reset"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": [
+    {
+     "headerRegex": [
+      "Mcp-Session-Id",
+      "(.+)"
+     ],
+     "as": "s"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "shouldApplyPerChunkDelaysWhenProvided (fixture): MCP session",
+   "case": "13aa07d2253e"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "note": "shouldApplyPerChunkDelaysWhenProvided (fixture): MCP initialized",
+   "case": "13aa07d2253e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/sse\"},\"httpResponse\":{\"statusCode\":200,\"headers\":{\"Content-Type\":[\"text/event-stream\"],\"x-mockserver-chunk-delays-ms\":[\"0,120,45\"]},\"body\":\"data: first\\n\\ndata: second\\n\\ndata: third\\n\\n\"}}\n",
+   "note": "shouldApplyPerChunkDelaysWhenProvided (fixture): the inputs as recorded traffic",
+   "case": "13aa07d2253e"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-a3dac753ef39.json"
+     }
+    }
+   },
+   "note": "shouldApplyPerChunkDelaysWhenProvided (fixture): SseBodyParser.parse",
+   "compare": "json",
+   "case": "13aa07d2253e"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-a3dac753ef39.json"
+     }
+    }
+   },
+   "note": "shouldApplyPerChunkDelaysWhenProvided (fixture): the fixture read back",
+   "compare": "json",
+   "case": "13aa07d2253e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldApplyPerChunkDelaysWhenProvided (fixture): the fixture's expectations",
+   "case": "13aa07d2253e"
+  },
+  {
+   "deleteFile": "/tmp/msrs-fixture-a3dac753ef39.json",
+   "note": "shouldApplyPerChunkDelaysWhenProvided (fixture): clean up",
+   "case": "13aa07d2253e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "f79a898fe126",
+   "note": "shouldFallBackToFixedDelayWhenPerChunkDelaysTooShort (fixture): reset"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": [
+    {
+     "headerRegex": [
+      "Mcp-Session-Id",
+      "(.+)"
+     ],
+     "as": "s"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "shouldFallBackToFixedDelayWhenPerChunkDelaysTooShort (fixture): MCP session",
+   "case": "f79a898fe126"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "note": "shouldFallBackToFixedDelayWhenPerChunkDelaysTooShort (fixture): MCP initialized",
+   "case": "f79a898fe126"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/sse\"},\"httpResponse\":{\"statusCode\":200,\"headers\":{\"Content-Type\":[\"text/event-stream\"],\"x-mockserver-chunk-delays-ms\":[\"0,100\"]},\"body\":\"data: first\\n\\ndata: second\\n\\ndata: third\\n\\n\"}}\n",
+   "note": "shouldFallBackToFixedDelayWhenPerChunkDelaysTooShort (fixture): the inputs as recorded traffic",
+   "case": "f79a898fe126"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-ed27adb0812f.json"
+     }
+    }
+   },
+   "note": "shouldFallBackToFixedDelayWhenPerChunkDelaysTooShort (fixture): SseBodyParser.parse",
+   "compare": "json",
+   "case": "f79a898fe126"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-ed27adb0812f.json"
+     }
+    }
+   },
+   "note": "shouldFallBackToFixedDelayWhenPerChunkDelaysTooShort (fixture): the fixture read back",
+   "compare": "json",
+   "case": "f79a898fe126"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldFallBackToFixedDelayWhenPerChunkDelaysTooShort (fixture): the fixture's expectations",
+   "case": "f79a898fe126"
+  },
+  {
+   "deleteFile": "/tmp/msrs-fixture-ed27adb0812f.json",
+   "note": "shouldFallBackToFixedDelayWhenPerChunkDelaysTooShort (fixture): clean up",
+   "case": "f79a898fe126"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "18047fcfb18c",
+   "note": "shouldFallBackToFixedDelayWhenNoPerChunkDelays (fixture): reset"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": [
+    {
+     "headerRegex": [
+      "Mcp-Session-Id",
+      "(.+)"
+     ],
+     "as": "s"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "shouldFallBackToFixedDelayWhenNoPerChunkDelays (fixture): MCP session",
+   "case": "18047fcfb18c"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "note": "shouldFallBackToFixedDelayWhenNoPerChunkDelays (fixture): MCP initialized",
+   "case": "18047fcfb18c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/sse\"},\"httpResponse\":{\"statusCode\":200,\"headers\":{\"Content-Type\":[\"text/event-stream\"]},\"body\":\"data: first\\n\\ndata: second\\n\\ndata: third\\n\\n\"}}\n",
+   "note": "shouldFallBackToFixedDelayWhenNoPerChunkDelays (fixture): the inputs as recorded traffic",
+   "case": "18047fcfb18c"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-8c9565c6960f.json"
+     }
+    }
+   },
+   "note": "shouldFallBackToFixedDelayWhenNoPerChunkDelays (fixture): SseBodyParser.parse",
+   "compare": "json",
+   "case": "18047fcfb18c"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-8c9565c6960f.json"
+     }
+    }
+   },
+   "note": "shouldFallBackToFixedDelayWhenNoPerChunkDelays (fixture): the fixture read back",
+   "compare": "json",
+   "case": "18047fcfb18c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldFallBackToFixedDelayWhenNoPerChunkDelays (fixture): the fixture's expectations",
+   "case": "18047fcfb18c"
+  },
+  {
+   "deleteFile": "/tmp/msrs-fixture-8c9565c6960f.json",
+   "note": "shouldFallBackToFixedDelayWhenNoPerChunkDelays (fixture): clean up",
+   "case": "18047fcfb18c"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d22596baefd0",
+   "note": "shouldPreserveBackwardCompatibilityWithNoArgParse (fixture): reset"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": [
+    {
+     "headerRegex": [
+      "Mcp-Session-Id",
+      "(.+)"
+     ],
+     "as": "s"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "shouldPreserveBackwardCompatibilityWithNoArgParse (fixture): MCP session",
+   "case": "d22596baefd0"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "note": "shouldPreserveBackwardCompatibilityWithNoArgParse (fixture): MCP initialized",
+   "case": "d22596baefd0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/sse\"},\"httpResponse\":{\"statusCode\":200,\"headers\":{\"Content-Type\":[\"text/event-stream\"]},\"body\":\"data: first\\n\\ndata: second\\n\\n\"}}\n",
+   "note": "shouldPreserveBackwardCompatibilityWithNoArgParse (fixture): the inputs as recorded traffic",
+   "case": "d22596baefd0"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-cdf021ecdd17.json"
+     }
+    }
+   },
+   "note": "shouldPreserveBackwardCompatibilityWithNoArgParse (fixture): SseBodyParser.parse",
+   "compare": "json",
+   "case": "d22596baefd0"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-cdf021ecdd17.json"
+     }
+    }
+   },
+   "note": "shouldPreserveBackwardCompatibilityWithNoArgParse (fixture): the fixture read back",
+   "compare": "json",
+   "case": "d22596baefd0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldPreserveBackwardCompatibilityWithNoArgParse (fixture): the fixture's expectations",
+   "case": "d22596baefd0"
+  },
+  {
+   "deleteFile": "/tmp/msrs-fixture-cdf021ecdd17.json",
+   "note": "shouldPreserveBackwardCompatibilityWithNoArgParse (fixture): clean up",
+   "case": "d22596baefd0"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "3ed373d0c95f",
+   "note": "shouldHandleZeroCapturedDelay (fixture): reset"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": [
+    {
+     "headerRegex": [
+      "Mcp-Session-Id",
+      "(.+)"
+     ],
+     "as": "s"
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "shouldHandleZeroCapturedDelay (fixture): MCP session",
+   "case": "3ed373d0c95f"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   },
+   "note": "shouldHandleZeroCapturedDelay (fixture): MCP initialized",
+   "case": "3ed373d0c95f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=recording&redactSensitiveData=false",
+   "body": "{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/sse\"},\"httpResponse\":{\"statusCode\":200,\"headers\":{\"Content-Type\":[\"text/event-stream\"],\"x-mockserver-chunk-delays-ms\":[\"0,0\"]},\"body\":\"data: first\\n\\ndata: second\\n\\n\"}}\n",
+   "note": "shouldHandleZeroCapturedDelay (fixture): the inputs as recorded traffic",
+   "case": "3ed373d0c95f"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "record_llm_fixtures",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-12c4ed799a0d.json"
+     }
+    }
+   },
+   "note": "shouldHandleZeroCapturedDelay (fixture): SseBodyParser.parse",
+   "compare": "json",
+   "case": "3ed373d0c95f"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "load_expectations_from_file",
+     "arguments": {
+      "path": "/tmp/msrs-fixture-12c4ed799a0d.json"
+     }
+    }
+   },
+   "note": "shouldHandleZeroCapturedDelay (fixture): the fixture read back",
+   "compare": "json",
+   "case": "3ed373d0c95f"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=JSON",
+   "body": "",
+   "note": "shouldHandleZeroCapturedDelay (fixture): the fixture's expectations",
+   "case": "3ed373d0c95f"
+  },
+  {
+   "deleteFile": "/tmp/msrs-fixture-12c4ed799a0d.json",
+   "note": "shouldHandleZeroCapturedDelay (fixture): clean up",
+   "case": "3ed373d0c95f"
+  }
+ ]
+}

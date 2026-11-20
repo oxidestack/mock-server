@@ -1,0 +1,39 @@
+{
+ "properties": {
+  "validateProxyOpenAPISpec": "{{files}}/openapi/openapi_petstore_example.json",
+  "validateProxyEnforce": "true"
+ },
+ "steps": [
+  {
+   "note": "violating request rejected",
+   "method": "POST",
+   "path": "/pets",
+   "headers": {
+    "Host": "{{deadhost}}",
+    "Content-Type": "application/json"
+   },
+   "body": "{\"id\": \"not_a_number\", \"name\": \"Fido\"}"
+  },
+  {
+   "note": "unknown operation",
+   "method": "GET",
+   "path": "/unknown",
+   "headers": {
+    "Host": "{{deadhost}}"
+   }
+  },
+  {
+   "note": "logs",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/pets"
+   },
+   "mask": [
+    "\"host\" : \\[ \"[^\"]*\" \\]",
+    "content-length: \\d+"
+   ]
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, "localhost:(?:18999|1)\\b", {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}, "\"host\" : \\[ \"[^\"]*\" \\]", "content-length: \\d+"], "body": {"path": "/pets"}}
+]
+}

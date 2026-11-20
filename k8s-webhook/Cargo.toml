@@ -1,0 +1,42 @@
+# MockServer's Kubernetes admission webhook (upstream module mockserver-k8s-webhook, image mockserver/mockserver-webhook):
+# its own binary and image, as upstream ships it.
+[package]
+name = "mock-server-k8s-webhook"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+name = "k8s_webhook"
+path = "src/lib.rs"
+
+[[bin]]
+name = "mock-server-webhook"
+path = "src/main.rs"
+
+[dependencies]
+# Jackson's tree model, asText, compact writer and parse-error messages, as the webhook's ObjectMapper has them.
+jackson = { package = "jackson-rs", version = "0.1" }
+java-compat = { package = "java-compat-rs", version = "0.1" }
+base64 = "0.23.1"
+# DSA signatures and ffdhe2048 for the DHE-DSS TLS 1.2 path (src/dsa.rs); MIT/Apache-2.0.
+num-bigint = "0.4.8"
+sha2 = { version = "0.10.9", features = ["compress"] }
+# AES-CBC with HMAC for the DHE-DSS CBC suites (src/cbc.rs); MIT/Apache-2.0, all already in Cargo.lock.
+aes = "0.9.3"
+hmac = "0.12.1"
+sha1 = { version = "0.10.7", features = ["compress"] }
+subtle = "2.6.1"
+# The TLS 1.3 prefix a DSA key's server runs (src/tls13.rs): HKDF, digests, AEAD records and the x25519/P-256/P-384
+# agreements over ring (already the rustls provider), P-521 over RustCrypto's p521, X25519MLKEM768's ML-KEM half over ml-kem;
+# Apache-2.0/MIT (ring: ISC/OpenSSL/MIT, as under rustls).
+ring = "0.17"
+p521 = { version = "0.13", features = ["ecdh"] }
+ml-kem = { version = "0.3.4", features = ["getrandom"] }
+httparse = "1.10.1"
+percent-encoding = "2.3.2"
+rustls = { version = "0.23.45", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+rustls-pki-types = "1.15.1"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "net", "macros", "signal", "time", "sync", "io-util"] }
+tokio-rustls = { version = "0.26.5", default-features = false, features = ["ring", "tls12"] }

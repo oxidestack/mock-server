@@ -1,0 +1,17 @@
+# org.mockserver.persistence.ExpectationBlobStoreRestoreTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldRestorePersistedExpectationsFromACloudBlobStoreOnStartup  rust:tests/upstream/blob_s3.rs::should_restore_cloud_persisted_expectations_after_restart  # MinIO; persisted by one server, restored by the next
+shouldNotRestoreThroughTheFilesystemBlobStore  rust:tests/upstream/persistence_restore.rs::should_not_restore_through_the_filesystem_blob_store
+shouldStartCleanlyWhenThePersistedBlobIsBlank  rust:tests/upstream/persistence_restore.rs::should_start_cleanly_when_the_persisted_blob_is_blank  # an S3 store whose endpoint is a second in-process server playing the bucket
+shouldStartWhenThePersistedBlobIsMalformedRatherThanFailingStartup  rust:tests/upstream/persistence_restore.rs::should_start_when_the_persisted_blob_is_malformed_rather_than_failing_startup
+shouldNotFailStartupOnARestoreErrorWhenNoLoggerIsSupplied  n/a  # a Java constructor without a logger
+shouldStartCleanlyWhenNoPersistedBlobExistsForTheKey  http:persistence_blob_store_memory  # step "startup entries: the restore from the in-memory store found nothing"
+shouldRestoreTheValidExpectationsAndSkipAnInvalidOneWithAWarningNamingIt  rust:tests/upstream/persistence_restore.rs::should_restore_the_valid_expectations_and_skip_an_invalid_one_with_a_warning_naming_it  # and the first save backs the restored document up, once
+shouldNotSaveOverTheOriginalWhenItsBackupCannotBeWrittenAndRetryOnTheNextSave  rust:tests/upstream/persistence_restore.rs::should_not_save_over_the_original_when_its_backup_cannot_be_written_and_retry_on_the_next_save
+shouldKeepRestoredExpectationsWhenInitializationJsonPathMatchesPersistedExpectationsPath  rust:tests/upstream/blob_s3.rs::should_restore_cloud_persisted_expectations_when_initialization_json_path_matches_persisted_expectations_path
+shouldBoundStartupWhenTheBlobStoreNeverResponds  rust:tests/upstream/persistence_restore.rs::should_bound_startup_when_the_blob_store_never_responds
+shouldLogTheUnderlyingCauseWhenTheBlobStoreFailsAfterTheDeadlineHasExpired  rust:tests/upstream/persistence_restore.rs::should_log_the_underlying_cause_when_the_blob_store_fails_after_the_deadline_has_expired
+shouldSkipTheRestoreEntirelyWhenTheDeadlineIsZero  rust:tests/upstream/cluster_state_backend.rs::should_not_restore_cluster_persisted_expectations_when_the_blob_store_restore_is_disabled  # blobStoreRestoreTimeoutSeconds=0 on a clustered backend's blobs
+shouldUseAValidObjectStoreKeyRatherThanTheAbsoluteLocalPathForACloudStore  rust:tests/upstream/blob_s3.rs::should_restore_cloud_persisted_expectations_with_a_trailing_slash_key_prefix  # the one object key is the prefix plus the file name
+shouldKeepTheAbsolutePathAsTheKeyForTheFilesystemBlobStore  http:persistence_file_content  # the filesystem store writes the configured absolute path

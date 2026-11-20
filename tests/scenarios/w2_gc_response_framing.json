@@ -1,0 +1,440 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/304"
+    },
+    "httpResponse": {
+     "statusCode": 304,
+     "body": "abc",
+     "headers": {
+      "x-a": [
+       "1"
+      ]
+     }
+    }
+   },
+   "note": "304 with body",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/304",
+   "note": "304 with body call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/204"
+    },
+    "httpResponse": {
+     "statusCode": 204,
+     "body": "x",
+     "trailers": {
+      "x-t": [
+       "1"
+      ]
+     }
+    }
+   },
+   "note": "204 with body and trailers",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/204",
+   "note": "204 with body and trailers call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/override"
+    },
+    "httpResponse": {
+     "body": "hello",
+     "connectionOptions": {
+      "contentLengthHeaderOverride": 3
+     },
+     "trailers": {
+      "x-t": [
+       "1"
+      ]
+     }
+    }
+   },
+   "note": "length override with trailers",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/override",
+   "note": "length override with trailers call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/override-chunked"
+    },
+    "httpResponse": {
+     "body": "hello",
+     "connectionOptions": {
+      "contentLengthHeaderOverride": 3,
+      "chunkSize": 2
+     },
+     "trailers": {
+      "x-t": [
+       "1"
+      ]
+     }
+    }
+   },
+   "note": "length override chunked",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/override-chunked",
+   "note": "length override chunked call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/trailers"
+    },
+    "httpResponse": {
+     "body": "hello",
+     "trailers": {
+      "x-t": [
+       "1",
+       "2"
+      ],
+      "x-s": [
+       "v"
+      ]
+     }
+    }
+   },
+   "note": "multi-valued trailers",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/trailers",
+   "note": "multi-valued trailers call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/204-framing"
+    },
+    "httpResponse": {
+     "statusCode": 204,
+     "body": "abc",
+     "headers": {
+      "content-length": [
+       "3"
+      ],
+      "transfer-encoding": [
+       "chunked"
+      ],
+      "x-a": [
+       "1"
+      ]
+     }
+    }
+   },
+   "note": "204 drops user framing headers",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/204-framing",
+   "note": "204 drops user framing headers call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/204-override"
+    },
+    "httpResponse": {
+     "statusCode": 204,
+     "body": "abc",
+     "connectionOptions": {
+      "contentLengthHeaderOverride": 2
+     }
+    }
+   },
+   "note": "204 drops the length override",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/204-override",
+   "note": "204 drops the length override call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/204-chunked"
+    },
+    "httpResponse": {
+     "statusCode": 204,
+     "body": "abcdef",
+     "connectionOptions": {
+      "chunkSize": 2
+     }
+    }
+   },
+   "note": "204 drops chunking",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/204-chunked",
+   "note": "204 drops chunking call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/205"
+    },
+    "httpResponse": {
+     "statusCode": 205,
+     "body": "abc",
+     "headers": {
+      "x-a": [
+       "1"
+      ]
+     }
+    }
+   },
+   "note": "205 gets content-length 0",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/205",
+   "note": "205 gets content-length 0 call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/205-chunked"
+    },
+    "httpResponse": {
+     "statusCode": 205,
+     "body": "abc",
+     "connectionOptions": {
+      "chunkSize": 2
+     }
+    }
+   },
+   "note": "205 chunked",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/205-chunked",
+   "note": "205 chunked call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/205-trailers"
+    },
+    "httpResponse": {
+     "statusCode": 205,
+     "trailers": {
+      "x-t": [
+       "1"
+      ]
+     }
+    }
+   },
+   "note": "205 with trailers",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/205-trailers",
+   "note": "205 with trailers call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/205-suppressed"
+    },
+    "httpResponse": {
+     "statusCode": 205,
+     "body": "abc",
+     "connectionOptions": {
+      "suppressContentLengthHeader": true
+     }
+    }
+   },
+   "note": "205 with suppressed length",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/205-suppressed",
+   "note": "205 with suppressed length call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/304-chunked"
+    },
+    "httpResponse": {
+     "statusCode": 304,
+     "body": "abcdef",
+     "connectionOptions": {
+      "chunkSize": 2
+     }
+    }
+   },
+   "note": "304 keeps transfer-encoding without a body",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/304-chunked",
+   "note": "304 keeps transfer-encoding without a body call",
+   "trailers": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/dribble-trailers"
+    },
+    "httpResponse": {
+     "body": "abcdefgh",
+     "connectionOptions": {
+      "chunkSize": 3,
+      "chunkDelay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 100
+      }
+     },
+     "trailers": {
+      "x-t": [
+       "1"
+      ]
+     }
+    }
+   },
+   "note": "dribble with trailers",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/dribble-trailers",
+   "note": "dribble with trailers call",
+   "trailers": true,
+   "minMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/w2gc/dribble-empty"
+    },
+    "httpResponse": {
+     "connectionOptions": {
+      "chunkSize": 3,
+      "chunkDelay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 100
+      }
+     }
+    }
+   },
+   "note": "dribble of an empty body",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/w2gc/dribble-empty",
+   "note": "dribble of an empty body call",
+   "trailers": true,
+   "minMillis": 100
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset"
+  }
+ ]
+}

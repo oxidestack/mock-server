@@ -1,0 +1,109 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/mp",
+      "body": {
+       "type": "MULTIPART",
+       "fields": {
+        "title": [
+         "report"
+        ]
+       },
+       "filenames": {
+        "upload": [
+         "a.csv"
+        ]
+       },
+       "partContentTypes": {
+        "upload": [
+         "text/csv"
+        ],
+        "raw": [
+         "application/octet-stream"
+        ]
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "multipart"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/mp2",
+      "body": {
+       "fields": {
+        "title": [
+         "other"
+        ]
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "mp2"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/mp3",
+      "body": {
+       "type": "MULTIPART",
+       "fields": {
+        "upload": [
+         "x,y\n1,2"
+        ]
+       }
+      }
+     },
+     "httpResponse": {
+      "body": "file content"
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mp",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=XyZ"
+   },
+   "body": "--XyZ\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nreport\r\n--XyZ\r\nContent-Disposition: form-data; name=\"upload\"; filename=\"a.csv\"\r\nContent-Type: text/csv\r\n\r\nx,y\n1,2\r\n--XyZ\r\nContent-Disposition: form-data; name=\"raw\"; filename=\"b.bin\"\r\n\r\nabc\r\n--XyZ--\r\n",
+   "note": "all match"
+  },
+  {
+   "method": "POST",
+   "path": "/mp2",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=XyZ"
+   },
+   "body": "--XyZ\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nreport\r\n--XyZ\r\nContent-Disposition: form-data; name=\"upload\"; filename=\"a.csv\"\r\nContent-Type: text/csv\r\n\r\nx,y\n1,2\r\n--XyZ\r\nContent-Disposition: form-data; name=\"raw\"; filename=\"b.bin\"\r\n\r\nabc\r\n--XyZ--\r\n",
+   "note": "field differs"
+  },
+  {
+   "method": "POST",
+   "path": "/mp3",
+   "headers": {
+    "Content-Type": "multipart/form-data; boundary=XyZ"
+   },
+   "body": "--XyZ\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nreport\r\n--XyZ\r\nContent-Disposition: form-data; name=\"upload\"; filename=\"a.csv\"\r\nContent-Type: text/csv\r\n\r\nx,y\n1,2\r\n--XyZ\r\nContent-Disposition: form-data; name=\"raw\"; filename=\"b.bin\"\r\n\r\nabc\r\n--XyZ--\r\n",
+   "note": "file content as field"
+  },
+  {
+   "method": "POST",
+   "path": "/mp",
+   "headers": {
+    "Content-Type": "text/plain"
+   },
+   "body": "--XyZ\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\nreport\r\n--XyZ\r\nContent-Disposition: form-data; name=\"upload\"; filename=\"a.csv\"\r\nContent-Type: text/csv\r\n\r\nx,y\n1,2\r\n--XyZ\r\nContent-Disposition: form-data; name=\"raw\"; filename=\"b.bin\"\r\n\r\nabc\r\n--XyZ--\r\n",
+   "note": "not multipart"
+  }
+ ]
+}

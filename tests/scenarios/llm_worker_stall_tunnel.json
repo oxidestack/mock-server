@@ -1,0 +1,321 @@
+{
+ "source": "hand-written: a CONNECT tunnel's loopback leg is an accepted connection, which takes the worker group's next event loop and handles the tunnel's requests on it (see llm_worker_stall_semantic)",
+ "peer": true,
+ "properties": {
+  "llmProvider": "OPENAI",
+  "llmBaseUrl": "{{peerurl}}",
+  "llmApiKey": "test-key",
+  "llmModel": "gpt-test",
+  "llmRequestTimeoutMillis": "1000",
+  "llmSemanticMatchingEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "yes",
+     "priority": 0,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "body": {
+       "type": "STRING",
+       "string": "MESSAGE<<<I want my money back",
+       "subString": true
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"  Yes, it does.\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    },
+    {
+     "id": "no",
+     "priority": -1,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"id\": \"chatcmpl-1\", \"object\": \"chat.completion\", \"model\": \"gpt-4o-mini\", \"choices\": [{\"index\": 0, \"message\": {\"role\": \"assistant\", \"content\": \"no\"}, \"finish_reason\": \"stop\"}], \"usage\": {\"prompt_tokens\": 10, \"completion_tokens\": 5, \"total_tokens\": 15}}"
+     }
+    }
+   ],
+   "node": "peer"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "refund",
+     "priority": 5,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "conversationPredicates": {
+       "semanticMatchAgainst": "the user asks for a refund"
+      },
+      "completion": {
+       "text": "Refund issued."
+      }
+     }
+    },
+    {
+     "id": "fallback",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpResponse": {
+      "statusCode": 418,
+      "body": "no semantic match"
+     }
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 1"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ],
+   "note": "the first judge call opens the pooled connection, the third registration"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 2"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "no LLM call: one more connection in the worker group's turn"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 3"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "POST /v1/chat/completions HTTP/1.1\r\nHost: mocked.example.test:80\r\nContent-Type: application/json\r\nContent-Length: 95\r\nConnection: close\r\n\r\n{\"model\": \"gpt-4o\", \"messages\": [{\"role\": \"user\", \"content\": \"I want my money back, order 4\"}]}"
+    }
+   ],
+   "chunkMillis": 1000,
+   "awaitBytes": 129,
+   "minMillis": 2000,
+   "text": true,
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+",
+    "\"created_at\" ?: ?\\d+"
+   ],
+   "note": "a cleartext CONNECT tunnel, eighth registration: RelayConnectHandler's loopback client is on the proxy client's event loop (no turn taken), but the loopback connection it opens is accepted, the next registration on the worker group, on the pooled channel's loop: the tunnelled request is handled there and its verdict times out"
+  },
+  {
+   "sleepMillis": 1500,
+   "note": "the tunnelled verdict stalled: its request is written to the pooled connection only once the loop is free, and the next call reuses that connection only after the write and its answer are done, or opens another one: a registration the steps below count"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 5"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ],
+   "note": "the tunnel took two registrations: not on the pooled channel's loop"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 6"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 7"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 8"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 9"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ],
+   "note": "five registrations after the tunnel's loopback leg: on the pooled channel's loop again, the fallback answers"
+  },
+  {
+   "method": "POST",
+   "path": "/v1/chat/completions",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": {
+    "model": "gpt-4o",
+    "messages": [
+     {
+      "role": "user",
+      "content": "I want my money back, order 10"
+     }
+    ]
+   },
+   "mask": [
+    "\"id\" : \"[^\"]*\"",
+    "\"created\" ?: ?\\d+",
+    "chatcmpl-[A-Za-z0-9]+"
+   ]
+  }
+ ]
+}

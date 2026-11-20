@@ -1,0 +1,538 @@
+{
+  "source": "hand-written: date-time matchers (NottableDateTimeString, DateTimeComparisonMatcher) on header, query, path-parameter and cookie values; isolated: the clock is frozen.",
+  "isolated": true,
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clock",
+      "body": {
+        "action": "freeze",
+        "instant": "2026-06-15T12:30:45Z"
+      },
+      "note": "now is 2026-06-15T12:30:45Z"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "method": "GET",
+          "path": "/date-time",
+          "headers": {
+            "X-Issued-At": [
+              {
+                "after": "now -1 hours"
+              }
+            ],
+            "If-Modified-Since": [
+              {
+                "before": "2026-10-21T00:00:00Z",
+                "actualFormat": "rfc1123"
+              }
+            ],
+            "X-Plain": [
+              "before:2026-01-01"
+            ]
+          },
+          "queryStringParameters": {
+            "from": [
+              {
+                "after": "2026-01-01",
+                "actualFormat": "dd/MM/yyyy",
+                "zone": "Europe/London"
+              }
+            ]
+          },
+          "cookies": {
+            "seen": {
+              "not": true,
+              "equalToDateTime": "now +1 days",
+              "truncateExpected": "first day of month",
+              "truncateActual": "startOfDay",
+              "applyTruncationLast": true
+            }
+          }
+        },
+        "httpResponse": {
+          "statusCode": 200,
+          "body": "dated"
+        }
+      },
+      "note": "upstream's test fixture: headers, query and cookies"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "method": "GET",
+          "path": "/epoch",
+          "headers": {
+            "X-Epoch": [
+              {
+                "equalToDateTime": "2026-06-15T12:30:45Z",
+                "actualFormat": "epochMillis"
+              },
+              {
+                "not": true,
+                "before": "now PT1H",
+                "truncateActual": "startOfHour",
+                "zone": "+02:00"
+              }
+            ]
+          },
+          "queryStringParameters": {
+            "at": [
+              {
+                "after": "Mon, 15 Jun 2026 12:00:00 GMT",
+                "truncateExpected": "startOfDay"
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "epoch"
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+      "note": "the echo: not, the operator, then the options in a fixed order"
+    },
+    {
+      "method": "GET",
+      "path": "/date-time?from=02/01/2026",
+      "headers": {
+        "X-Issued-At": "2026-06-15T12:00:00Z",
+        "If-Modified-Since": "Tue, 20 Oct 2026 10:00:00 GMT",
+        "X-Plain": "before:2026-01-01",
+        "Cookie": "seen=2026-06-15T00:00:00Z"
+      },
+      "note": "every value matches"
+    },
+    {
+      "method": "GET",
+      "path": "/date-time?from=02/01/2026",
+      "headers": {
+        "X-Issued-At": "2026-06-15T11:00:00Z",
+        "If-Modified-Since": "Tue, 20 Oct 2026 10:00:00 GMT",
+        "X-Plain": "before:2026-01-01",
+        "Cookie": "seen=2026-06-15T00:00:00Z"
+      },
+      "note": "issued too early"
+    },
+    {
+      "method": "GET",
+      "path": "/date-time?from=01/01/2026",
+      "headers": {
+        "X-Issued-At": "2026-06-15T12:00:00Z",
+        "If-Modified-Since": "Tue, 20 Oct 2026 10:00:00 GMT",
+        "X-Plain": "before:2026-01-01",
+        "Cookie": "seen=2026-06-15T00:00:00Z"
+      },
+      "note": "from not after 2026-01-01 in London"
+    },
+    {
+      "method": "GET",
+      "path": "/date-time?from=02/01/2026",
+      "headers": {
+        "X-Issued-At": "2026-06-15T12:00:00Z",
+        "If-Modified-Since": "Tue, 20 Oct 2026 10:00:00 GMT",
+        "X-Plain": "before:2026-01-01",
+        "Cookie": "seen=soon"
+      },
+      "note": "a negated comparison does not match a value that is not a date-time"
+    },
+    {
+      "method": "GET",
+      "path": "/date-time?from=02/01/2026",
+      "headers": {
+        "X-Issued-At": "2026-06-15T12:00:00Z",
+        "If-Modified-Since": "2026-10-20T10:00:00Z",
+        "X-Plain": "before:2026-01-01",
+        "Cookie": "seen=2026-06-15T00:00:00Z"
+      },
+      "note": "rfc1123 is the only form read"
+    },
+    {
+      "method": "GET",
+      "path": "/epoch?at=2026-06-15T00:00:01Z",
+      "headers": {
+        "X-Epoch": [
+          "1781526645000",
+          "2026-06-15T16:31:00+02:00"
+        ]
+      },
+      "note": "epoch millis, and not before now plus an hour once truncated to the hour"
+    },
+    {
+      "method": "GET",
+      "path": "/epoch?at=2026-06-15T00:00:01Z",
+      "headers": {
+        "X-Epoch": [
+          "1781526645000",
+          "2026-06-15T15:59:00+02:00"
+        ]
+      },
+      "note": "before now plus an hour once truncated: the negated value fails"
+    },
+    {
+      "method": "GET",
+      "path": "/epoch?at=2026-06-15T00:00:00Z",
+      "headers": {
+        "X-Epoch": [
+          "1781526645000",
+          "2026-06-15T16:31:00+02:00"
+        ]
+      },
+      "note": "at equals the truncated expected"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/pact?consumer=web&provider=api",
+      "note": "Pact export: a date-time value is its description with a type rule"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/epoch",
+          "headers": {
+            "X-Epoch": [
+              {
+                "after": "2026-06-15T00:00:00Z"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "a verification with a date-time value"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "path": "/epoch",
+          "headers": {
+            "X-Epoch": [
+              {
+                "after": "2027-06-15T00:00:00Z"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      }
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/verify",
+      "body": {
+        "httpRequest": {
+          "headers": {
+            "X-Epoch": [
+              "a",
+              {
+                "after": "tomorrow"
+              }
+            ]
+          }
+        },
+        "times": {
+          "atLeast": 1
+        }
+      },
+      "note": "a verification with an unreadable date-time value"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "headers": {
+            "X": [
+              {
+                "before": "now",
+                "after": "now"
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: two operators"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "queryStringParameters": {
+            "X": [
+              {
+                "value": "a",
+                "after": "now"
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: value and an operator"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "cookies": {
+            "X": {
+              "zone": "UTC"
+            }
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: options without an operator"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "pathParameters": {
+            "X": [
+              "a",
+              {
+                "after": "now",
+                "zone": "Mars"
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: unknown zone, second value"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "method": {
+            "after": "yesterday"
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: unreadable literal on the method"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "headers": [
+            {
+              "name": "X",
+              "values": [
+                "a",
+                {
+                  "after": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: list-form header"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "cookies": [
+            {
+              "name": "X",
+              "value": {
+                "after": "x"
+              }
+            }
+          ]
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: list-form cookie"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "headers": {
+            "X": [
+              {
+                "after": "now",
+                "actualFormat": "bbb"
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: invalid pattern"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "headers": {
+            "X": [
+              {
+                "after": "now",
+                "truncateActual": "week"
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: unknown truncation"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "headers": {
+            "X": [
+              {
+                "after": "now -1 fortnight"
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: unknown offset unit"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "headers": {
+            "X": [
+              {
+                "equalToDateTime": "  "
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: blank expected"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": {
+        "httpRequest": {
+          "headers": {
+            "X": [
+              {
+                "optional": true,
+                "before": "now"
+              }
+            ]
+          }
+        },
+        "httpResponse": {
+          "body": "ok"
+        }
+      },
+      "note": "refused: optional and an operator"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/fine"
+          },
+          "httpResponse": {}
+        },
+        {
+          "httpRequest": {
+            "headers": {
+              "X": [
+                {
+                  "after": "x"
+                }
+              ]
+            }
+          },
+          "httpResponse": {}
+        }
+      ],
+      "note": "an array: the bad entry is reported"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        "[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:.]{12}"
+      ],
+      "note": "what was logged, the match failures included"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/clock",
+      "body": {
+        "action": "reset"
+      },
+      "mask": [
+        "\"currentInstant\" : \"[^\"]+\"",
+        "\"currentEpochMillis\" : -?[0-9]+"
+      ]
+    }
+  ]
+}

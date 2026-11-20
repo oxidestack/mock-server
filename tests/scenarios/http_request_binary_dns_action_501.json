@@ -1,0 +1,20 @@
+{
+  "source": "9.2.0 (#84): an HTTP request that matches a binaryResponse or dnsResponse expectation is answered 501 Not Implemented and logs a WARN; it used to get no answer.",
+  "steps": [
+    {"method": "PUT", "path": "/mockserver/reset"},
+    {
+      "note": "an HTTP request matched by a binary and by a DNS expectation, and an ordinary one",
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {"id": "bin-http", "httpRequest": {"path": "/binary"}, "binaryResponse": {"binaryData": "AQIDBA=="}},
+        {"id": "dns-http", "httpRequest": {"path": "/dns"}, "dnsResponse": {"answerRecords": [{"name": "api.example.com", "type": "A", "value": "10.0.0.1", "ttl": 60}]}},
+        {"id": "plain", "httpRequest": {"path": "/probe"}, "httpResponse": {"body": "probe"}}
+      ]
+    },
+    {"note": "BINARY_RESPONSE: 501", "method": "GET", "path": "/binary"},
+    {"note": "DNS_RESPONSE: 501", "method": "GET", "path": "/dns"},
+    {"note": "the connection still serves the next request", "method": "GET", "path": "/probe"},
+    {"note": "the WARN entries", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS"}
+  ]
+}

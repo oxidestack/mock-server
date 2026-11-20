@@ -1,0 +1,35 @@
+{
+ "properties": {
+  "loadGenerationMaxStages": "50000"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "note": "STAIRS 10001 steps over the 10,000 ceiling",
+   "body": "{\"name\":\"n\",\"steps\":[{\"request\":{\"path\":\"/x\"}}],\"profile\":{\"shape\":{\"type\":\"STAIRS\",\"start\":1,\"step\":1,\"steps\":10001,\"stepDurationMillis\":1000}}}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "note": "STAIRS steps 2^31-1 over the ceiling",
+   "body": "{\"name\":\"n\",\"steps\":[{\"request\":{\"path\":\"/x\"}}],\"profile\":{\"shape\":{\"type\":\"STAIRS\",\"start\":1,\"step\":1,\"steps\":2147483647,\"stepDurationMillis\":1000}}}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "note": "STAIRS 10000 steps at the ceiling: past the stage check",
+   "body": "{\"name\":\"n\",\"steps\":[{\"request\":{\"path\":\"/x\"}}],\"profile\":{\"shape\":{\"type\":\"STAIRS\",\"start\":1,\"step\":1,\"steps\":10000,\"stepDurationMillis\":1000000}}}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/loadScenario",
+   "note": "explicit stages are held to the property, not the ceiling",
+   "body": "{\"name\":\"n\",\"steps\":[{\"request\":{\"path\":\"/x\"}}],\"profile\":{\"stages\":[{\"type\":\"VU\",\"vus\":1,\"durationMillis\":1},{\"type\":\"VU\",\"vus\":1,\"durationMillis\":1},{\"type\":\"VU\",\"vus\":1,\"durationMillis\":1}]}}"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  }
+ ]
+}

@@ -1,0 +1,172 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/proto\",\n    \"protocol\" : \"HTTP_2\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"seen as h2\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/bad-name\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"bad@name\" : [ \"v\" ]\n    },\n    \"body\" : \"x\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/chunked\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"abcdefghij\",\n    \"connectionOptions\" : {\n      \"chunkSize\" : 3\n    }\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/sse\"\n  },\n  \"httpSseResponse\" : {\n    \"events\" : [ {\n      \"data\" : \"one\",\n      \"event\" : \"e\"\n    }, {\n      \"data\" : \"two\"\n    } ]\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/upper-name\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"X-Upper\" : [ \"v\" ]\n    },\n    \"body\" : \"x\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"path\" : \"/trailers\"\n  },\n  \"httpResponse\" : {\n    \"headers\" : {\n      \"Transfer-Encoding\" : [ \"chunked\" ],\n      \"Connection\" : [ \"keep-alive\" ]\n    },\n    \"body\" : \"x\"\n  },\n  \"id\" : \"<uuid>\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-length: 10"
+      ],
+      "body": "seen as h2",
+      "note": "an HTTP/2 stream is seen as protocol HTTP_2 (ConnectionScopeHandler)"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: protocol did not match (  exact string match failed expected:     HTTP_2    found:     HTTP_1_1 )"
+      ],
+      "body": "",
+      "note": "the same path over HTTP/1.1 does not match"
+    },
+    {
+      "status": 501,
+      "headers": [],
+      "body": "",
+      "note": "callback websocket path over h2 without upgrade headers"
+    },
+    {
+      "status": 501,
+      "headers": [],
+      "body": "",
+      "note": "dashboard websocket over an HTTP/2 stream"
+    },
+    {
+      "status": 200,
+      "headers": [],
+      "body": "",
+      "note": "response with an illegal header name over h2"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "content-length: 1",
+        "x-upper: v"
+      ],
+      "body": "x",
+      "note": "response with an upper-case header name over h2"
+    },
+    {
+      "status": 200,
+      "headers": [],
+      "body": "x",
+      "note": "connection-specific response headers over h2"
+    },
+    {
+      "status": 200,
+      "headers": [],
+      "body": "abcdefghij",
+      "note": "a chunked streamed response ends its HTTP/2 stream (StreamAddressedContentHandler)"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "cache-control: no-cache",
+        "content-type: text/event-stream"
+      ],
+      "body": "event: e\ndata: one\n\ndata: two\n\n",
+      "note": "an SSE response ends its HTTP/2 stream"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=262144",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4",
+        "DATA stream=1 flags=0x1 \"abcdefghij\""
+      ],
+      "closed": false,
+      "note": "frames: chunked response"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=262144",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4",
+        "DATA stream=1 flags=0x0 \"event: e\\ndata: one\\n\\n\"",
+        "DATA stream=1 flags=0x0 \"data: two\\n\\n\"",
+        "DATA stream=1 flags=0x1 \"\""
+      ],
+      "closed": false,
+      "note": "frames: SSE response"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=262144",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x5"
+      ],
+      "closed": false,
+      "note": "frames: response with an illegal header name"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=262144",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4",
+        "DATA stream=1 flags=0x1 \"x\""
+      ],
+      "closed": false,
+      "note": "frames: connection-specific response headers"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=262144",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4",
+        "DATA stream=1 flags=0x1 \"x\""
+      ],
+      "closed": false,
+      "note": "frames: upper-case response header name"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=262144",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x5"
+      ],
+      "closed": false,
+      "note": "frames: websocket path"
+    },
+    {
+      "status": 404,
+      "headers": [
+        "content-length: 0",
+        "x-mockserver-closest-match-hint: expectation <uuid>: path did not match (  string or regex match failed expected:     /proto    found:     /mockserver/status )"
+      ],
+      "body": "",
+      "note": "control plane over h2"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "{\n  \"artifactId\" : \"mockserver-core\",\n  \"gitHash\" : \"789142c1\",\n  \"groupId\" : \"org.mock-server\",\n  \"ports\" : [ <port> ],\n  \"version\" : \"9.2.0\"\n}",
+      "note": "status over h2 PUT"
+    }
+  ]
+}

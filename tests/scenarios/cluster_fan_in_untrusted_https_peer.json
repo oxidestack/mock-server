@@ -1,0 +1,46 @@
+{
+ "note": "the fan-in client is a plain java.net.HttpURLConnection, so it trusts the JDK's cacerts and not the forwarding client's trust manager (ANY by default): a peer over https whose certificate is MockServer's own (the second node's leaf) is unreachable, with the JSSE message in the WARN entry.",
+ "peer": true,
+ "properties": {
+  "clusterVerifyFanIn": "true",
+  "clusterVerifyFanInPeers": "{{peerhttpsurl}}"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "api",
+    "httpRequest": {
+     "path": "/api"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api"
+  },
+  {
+   "note": "502 naming the peer",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/api"
+   },
+   "mask": [
+    "https://\\d+\\.\\d+\\.\\d+\\.\\d+:<port>"
+   ]
+  },
+  {
+   "note": "the WARN entry carries the handshake failure",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "https://\\d+\\.\\d+\\.\\d+\\.\\d+:<port>"
+   ]
+  }
+ ]
+}

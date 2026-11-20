@@ -1,0 +1,213 @@
+{
+ "quic": true,
+ "properties": {
+  "http3Port": "19484"
+ },
+ "steps": [
+  {
+   "method": "GET",
+   "path": "/mockserver/http3status",
+   "pollUntil": "\"enabled\" ?: ?true",
+   "note": "wait for the HTTP/3 server"
+  },
+  {
+   "h3": true,
+   "method": "GET",
+   "path": "/warm-up",
+   "note": "lets the oracle's startup logging finish"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "the oracle may log its startup entries after the opening reset: reset again"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear",
+   "note": "no descriptors"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "health check without descriptors",
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "reflection without descriptors",
+   "bodyBase64": "AAAAAAI6AA==",
+   "binaryBody": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc",
+   "note": "descriptors"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "overall health",
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "an unregistered service",
+   "bodyBase64": "AAAAABIKEG5ldmVyLlJlZ2lzdGVyZWQ="
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "my.Service",
+    "status": "NOT_SERVING"
+   },
+   "note": "my.Service NOT_SERVING"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "a registered service",
+   "bodyBase64": "AAAAAAwKCm15LlNlcnZpY2U="
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc-web"
+   },
+   "note": "a health check over grpc-web",
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "reflection v1 list_services",
+   "bodyBase64": "AAAAAAI6AA==",
+   "binaryBody": true
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "reflection v1alpha list_services",
+   "bodyBase64": "AAAAAAI6AA==",
+   "binaryBody": true
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "reflection file_by_filename",
+   "bodyBase64": "AAAAABAaDmdyZWV0aW5nLnByb3Rv",
+   "binaryBody": true
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "reflection: two requests in one body",
+   "bodyBase64": "AAAAAAI6AAAAAAAiIiBjb20uZXhhbXBsZS5ncnBjLkdyZWV0aW5nU2VydmljZQ==",
+   "binaryBody": true
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.reflection.v1.ServerReflection/ServerReflectionInfo",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "reflection without a body",
+   "binaryBody": true
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/grpc.health.v1.Health/Check"
+    },
+    "httpResponse": {
+     "body": {
+      "status": "SERVING"
+     }
+    }
+   },
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ],
+   "note": "an expectation on the health method"
+  },
+  {
+   "h3": true,
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "headers": {
+    "content-type": "application/grpc"
+   },
+   "note": "health check with an expectation on it",
+   "bodyBase64": "AAAAAAA="
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(\"totalTimeInMillis\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ],
+   "note": "what the oracle logged"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "my.Service",
+    "remove": true
+   },
+   "note": "remove my.Service"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear",
+   "note": "clear descriptors"
+  }
+ ]
+}

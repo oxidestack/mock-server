@@ -1,0 +1,312 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "get user 1",
+      "request": {
+       "method": "GET",
+       "path": "/users/1"
+      },
+      "response": {
+       "status": 200,
+       "body": {
+        "id": 1
+       }
+      }
+     }
+    ]
+   },
+   "note": "importedExpectationMatchesDocumentedRequest"
+  },
+  {
+   "method": "GET",
+   "path": "/users/1"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "get any user",
+      "request": {
+       "method": "GET",
+       "path": "/users/123"
+      },
+      "response": {
+       "status": 200
+      },
+      "matchingRules": {
+       "request": {
+        "path": {
+         "matchers": [
+          {
+           "match": "regex",
+           "regex": "/users/\\d+"
+          }
+         ]
+        }
+       }
+      }
+     }
+    ]
+   },
+   "note": "regexMatchingRuleOnPathMapsToRegexMatcherValue"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "auth header any value",
+      "request": {
+       "method": "GET",
+       "path": "/secure",
+       "headers": {
+        "X-Trace": [
+         "abc123"
+        ]
+       }
+      },
+      "response": {
+       "status": 200
+      },
+      "matchingRules": {
+       "request": {
+        "header": {
+         "$['X-Trace'][0]": {
+          "matchers": [
+           {
+            "match": "type"
+           }
+          ]
+         }
+        }
+       }
+      }
+     }
+    ]
+   },
+   "note": "typeMatchingRuleOnHeaderRelaxesToPresenceRegex"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "query contains",
+      "request": {
+       "method": "GET",
+       "path": "/search",
+       "query": {
+        "q": [
+         "hello world"
+        ]
+       }
+      },
+      "response": {
+       "status": 200
+      },
+      "matchingRules": {
+       "request": {
+        "query": {
+         "$.q[0]": {
+          "matchers": [
+           {
+            "match": "include",
+            "value": "world"
+           }
+          ]
+         }
+        }
+       }
+      }
+     }
+    ]
+   },
+   "note": "includeMatchingRuleOnQueryMapsToSubstringRegex"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact",
+   "body": {
+    "interactions": [
+     {
+      "description": "with auth",
+      "request": {
+       "method": "GET",
+       "path": "/x",
+       "headers": {
+        "Authorization": [
+         "Bearer secret-token"
+        ]
+       }
+      },
+      "response": {
+       "status": 200
+      }
+     }
+    ]
+   },
+   "note": "redactionMasksSensitiveHeadersByDefault"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "create user",
+      "request": {
+       "method": "POST",
+       "path": "/users",
+       "body": {
+        "name": "alice",
+        "age": 30
+       }
+      },
+      "response": {
+       "status": 201
+      }
+     }
+    ]
+   },
+   "note": "jsonRequestBodyMatchesRegardlessOfKeyOrder"
+  },
+  {
+   "method": "POST",
+   "path": "/users",
+   "body": "{ \"age\": 30, \"name\": \"alice\" }",
+   "note": "reordered JSON body matches"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "plain text body",
+      "request": {
+       "method": "POST",
+       "path": "/echo",
+       "body": "hello world"
+      },
+      "response": {
+       "status": 200
+      }
+     }
+    ]
+   },
+   "note": "stringRequestBodyKeptAsExactStringMatch"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "short query field",
+      "request": {
+       "method": "GET",
+       "path": "/search",
+       "query": {
+        "q": [
+         "abc"
+        ]
+       }
+      },
+      "response": {
+       "status": 200
+      },
+      "matchingRules": {
+       "request": {
+        "query": {
+         "$.query[0]": {
+          "matchers": [
+           {
+            "match": "type"
+           }
+          ]
+         }
+        }
+       }
+      }
+     }
+    ]
+   },
+   "note": "shortFieldNameDoesNotFalseMatchLongerRuleKey"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "v2",
+      "providerState": "v2 state",
+      "request": {
+       "method": "GET",
+       "path": "/v2"
+      },
+      "response": {
+       "status": 200
+      }
+     }
+    ]
+   },
+   "note": "importsV2ProviderStateAsScenarioGate"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact&redactSensitiveData=false",
+   "body": {
+    "interactions": [
+     {
+      "description": "stateless",
+      "request": {
+       "method": "GET",
+       "path": "/stateless"
+      },
+      "response": {
+       "status": 200
+      }
+     }
+    ]
+   },
+   "note": "statelessInteractionHasNoScenarioGate"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=pact",
+   "body": {
+    "interactions": [
+     {
+      "description": "stateful",
+      "providerStates": [
+       {
+        "name": "a user exists"
+       }
+      ],
+      "request": {
+       "method": "GET",
+       "path": "/stateful",
+       "headers": {
+        "Authorization": "Bearer x"
+       }
+      },
+      "response": {
+       "status": 200
+      }
+     }
+    ]
+   },
+   "note": "providerStatePreservedThroughRedaction"
+  }
+ ]
+}

@@ -1,0 +1,92 @@
+{
+ "source": "upstream 456a9dee3 and 6dcc66b58 (GrpcReflectionDataPlaneAuthenticationIntegrationTest, GrpcBidiDataPlaneAuthenticationIntegrationTest). With dataPlaneAuthenticationRequired, GrpcToHttpRequestHandler refuses a gRPC request without credentials with UNAUTHENTICATED before reflection, chaos and the unknown-method and decode-error answers; health stays open. With grpcBidiStreamingEnabled, GrpcBidiRouterHandler routes reflection to the streaming handler only with credentials, and checks them before the bidi match.",
+ "properties": {
+  "dataPlaneAuthenticationRequired": "true",
+  "dataPlaneBearerAuthenticationToken": "reflection-token",
+  "grpcBidiStreamingEnabled": "true"
+ },
+ "steps": [
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "a Times.once bidi expectation",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/com.example.grpc.GreetingService/Chat"
+    },
+    "times": {
+     "remainingTimes": 1,
+     "unlimited": false
+    },
+    "grpcBidiResponse": {
+     "statusName": "OK",
+     "rules": [
+      {
+       "matchJson": ".*Alice.*",
+       "responses": [
+        {
+         "json": "{\"greeting\": \"Hello Alice\"}"
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "note": "a bidi stream without credentials is refused",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "the expectation is unused",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "mask": [
+    "\"id\" : \"[^\"]+\""
+   ]
+  },
+  {
+   "note": "a bidi stream with credentials uses it",
+   "method": "POST",
+   "path": "/com.example.grpc.GreetingService/Chat",
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers",
+    "authorization": "Bearer reflection-token"
+   },
+   "trailers": true,
+   "h2": true,
+   "bodyBase64": "AAAAAAcKBUFsaWNl"
+  },
+  {
+   "note": "now used up",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS"
+  },
+  {
+   "note": "refusals are logged",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+   ]
+  }
+ ]
+}

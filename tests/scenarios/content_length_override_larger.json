@@ -1,0 +1,82 @@
+{
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {"path": "/clol/200"},
+          "httpResponse": {"statusCode": 200, "body": "abc", "connectionOptions": {"contentLengthHeaderOverride": 10}}
+        },
+        {
+          "httpRequest": {"path": "/clol/500"},
+          "httpResponse": {"statusCode": 500, "body": "abc", "connectionOptions": {"contentLengthHeaderOverride": 7}}
+        },
+        {
+          "httpRequest": {"path": "/clol/empty"},
+          "httpResponse": {"statusCode": 200, "connectionOptions": {"contentLengthHeaderOverride": 5}}
+        },
+        {
+          "httpRequest": {"path": "/clol/close"},
+          "httpResponse": {"statusCode": 200, "body": "abc", "connectionOptions": {"contentLengthHeaderOverride": 10, "closeSocket": true}}
+        },
+        {
+          "httpRequest": {"path": "/clol/chunked"},
+          "httpResponse": {"statusCode": 200, "body": "abcdef", "connectionOptions": {"contentLengthHeaderOverride": 10, "chunkSize": 2}}
+        },
+        {
+          "httpRequest": {"path": "/clol/json"},
+          "httpResponse": {"statusCode": 201, "body": {"json": {"a": 1}}, "connectionOptions": {"contentLengthHeaderOverride": 40}}
+        },
+        {
+          "httpRequest": {"path": "/clol/next"},
+          "httpResponse": {"statusCode": 200, "body": "next"}
+        }
+      ]
+    },
+    {
+      "note": "an override larger than the body is written; the body is short and the connection stays open (the client waits)",
+      "tcp": [{"text": "GET /clol/200 HTTP/1.1\r\nHost: x\r\n\r\n"}],
+      "text": true
+    },
+    {
+      "note": "the same on a 500",
+      "tcp": [{"text": "GET /clol/500 HTTP/1.1\r\nHost: x\r\n\r\n"}],
+      "text": true
+    },
+    {
+      "note": "an override on an empty body",
+      "tcp": [{"text": "GET /clol/empty HTTP/1.1\r\nHost: x\r\n\r\n"}],
+      "text": true
+    },
+    {
+      "note": "an override with closeSocket",
+      "tcp": [{"text": "GET /clol/close HTTP/1.1\r\nHost: x\r\n\r\n"}],
+      "text": true
+    },
+    {
+      "note": "an override with chunkSize",
+      "tcp": [{"text": "GET /clol/chunked HTTP/1.1\r\nHost: x\r\n\r\n"}],
+      "text": true
+    },
+    {
+      "note": "an override on a JSON body",
+      "tcp": [{"text": "GET /clol/json HTTP/1.1\r\nHost: x\r\n\r\n"}],
+      "text": true
+    },
+    {
+      "note": "a second request on the connection: its answer follows the short body, so a length-reading client takes it as the rest",
+      "tcp": [{"text": "GET /clol/200 HTTP/1.1\r\nHost: x\r\n\r\n"}, {"text": "GET /clol/next HTTP/1.1\r\nHost: x\r\n\r\n"}],
+      "text": true
+    },
+    {
+      "note": "over HTTP/2 the override is a content-length field beside a shorter DATA frame",
+      "h2raw": {"method": "GET", "path": "/clol/200", "decode": true}
+    },
+    {
+      "note": "the same request with Connection: close",
+      "tcp": [{"text": "GET /clol/200 HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"}],
+      "text": true
+    }
+  ]
+}

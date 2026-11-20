@@ -1,0 +1,27 @@
+{
+ "quic": true,
+ "properties": {
+  "http3Port": "19678"
+ },
+ "steps": [
+  {"method": "GET", "path": "/mockserver/http3status", "pollUntil": "\"enabled\" ?: ?true", "note": "wait for the HTTP/3 server"},
+  {"h3": true, "method": "GET", "path": "/warm-up", "note": "lets the oracle's startup logging finish"},
+  {"method": "PUT", "path": "/mockserver/reset", "note": "the oracle may log its startup entries after the opening reset: reset again"},
+  {"method": "PUT", "path": "/mockserver/grpc/descriptors", "bodyFile": "grpc/greeting.dsc", "note": "descriptors"},
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {"path": "/com.example.grpc.GreetingService/ListGreetings"},
+     "grpcStreamResponse": {"statusName": "OK", "messages": [{"json": "{\"greeting\": \"one\"}"}, {"json": "{\"greeting\": \"two\"}"}]}
+    }
+   ],
+   "mask": ["\"id\" : \"[0-9a-f-]+\""]
+  },
+  {"h3": true, "method": "GET", "path": "/com.example.grpc.GreetingService/ListGreetings", "maxMillis": 5000, "binaryBody": true, "note": "a grpcStreamResponse hit by a plain GET over HTTP/3"},
+  {"h3": true, "method": "HEAD", "path": "/com.example.grpc.GreetingService/ListGreetings", "maxMillis": 5000, "binaryBody": true, "note": "and by a HEAD"},
+  {"h3": true, "method": "POST", "path": "/com.example.grpc.GreetingService/ListGreetings", "headers": {"content-type": "application/json"}, "body": "{}", "maxMillis": 5000, "binaryBody": true, "note": "and by a JSON POST"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "note": "the stream entries"}
+ ]
+}

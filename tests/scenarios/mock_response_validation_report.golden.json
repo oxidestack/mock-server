@@ -1,0 +1,83 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"operationId\" : \"somePath\",\n    \"specUrlOrPayload\" : \"{{root}}/tests/files/openapi/openapi_petstore_example.json\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"body\" : \"{\\\"id\\\": \\\"not-a-number\\\"}\"\n  },\n  \"id\" : \"mrv-invalid\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"operationId\" : \"listPets\",\n    \"specUrlOrPayload\" : \"{{root}}/tests/files/openapi/openapi_petstore_example.json\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"body\" : \"[{\\\"id\\\": 1, \\\"name\\\": \\\"rex\\\"}]\"\n  },\n  \"id\" : \"mrv-valid\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n}, {\n  \"httpRequest\" : {\n    \"specUrlOrPayload\" : \"{{root}}/tests/files/openapi/openapi_petstore_example.json\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 418,\n    \"body\" : \"not validated without an operationId\"\n  },\n  \"id\" : \"mrv-no-operation\",\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 22",
+        "content-type: application/json"
+      ],
+      "body": "{\"id\": \"not-a-number\"}",
+      "note": "report-only: the invalid response goes out, a WARN is logged"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 26",
+        "content-type: application/json"
+      ],
+      "body": "[{\"id\": 1, \"name\": \"rex\"}]",
+      "note": "a valid response is untouched"
+    },
+    {
+      "status": 418,
+      "headers": [
+        "connection: keep-alive",
+        "content-length: 36"
+      ],
+      "body": "not validated without an operationId",
+      "reason": "Client Error (418)",
+      "note": "no operationId: no validation"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: text/plain; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "<timestamp> - resetting all expectations and request logs\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"operationId\" : \"somePath\",\n      \"specUrlOrPayload\" : \"{{root}}/tests/files/openapi/openapi_petstore_example.json\"\n    },\n    \"httpResponse\" : {\n      \"statusCode\" : 200,\n      \"headers\" : {\n        \"content-type\" : [ \"application/json\" ]\n      },\n      \"body\" : \"{\\\"id\\\": \\\"not-a-number\\\"}\"\n    },\n    \"id\" : \"mrv-invalid\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  mrv-invalid\n\n------------------------------------\n<timestamp> - creating expectation:\n\n  {\n    \"httpRequest\" : {\n      \"specUrlOrPayload\" : \"{{root}}/tests/files/openapi/openapi_petstore_example.json\"\n    },\n    \"httpResponse\" : {\n      \"statusCode\" : 418,\n      \"body\" : \"not validated without an operationId\"\n    },\n    \"id\" : \"mrv-no-operation\",\n    \"priority\" : 0,\n    \"timeToLive\" : {\n      \"unlimited\" : true\n    },\n    \"times\" : {\n      \"unlimited\" : true\n    }\n  }\n\n with id:\n\n  mrv-no-operation\n\n------------------------------------\n<timestamp> - received request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/v1/some/path\",\n    \"headers\" : {\n      \"x-request-id\" : [ \"<uuid>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n------------------------------------\n<timestamp> - request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/v1/some/path\",\n    \"headers\" : {\n      \"x-request-id\" : [ \"<uuid>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n matched request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/v1/some/path\",\n    \"queryStringParameters\" : {\n      \"keyMatchStyle\" : \"MATCHING_KEY\",\n      \"?limit\" : {\n        \"parameterStyle\" : \"FORM_EXPLODED\",\n        \"values\" : [ {\n          \"schema\" : {\n            \"format\" : \"int32\",\n            \"type\" : \"integer\"\n          }\n        } ]\n      }\n    },\n    \"headers\" : {\n      \"keyMatchStyle\" : \"MATCHING_KEY\",\n      \"X-Request-ID\" : {\n        \"parameterStyle\" : \"SIMPLE\",\n        \"values\" : [ {\n          \"schema\" : {\n            \"format\" : \"uuid\",\n            \"type\" : \"string\"\n          }\n        } ]\n      }\n    }\n  }\n\n------------------------------------\n<timestamp> - returning response:\n\n  {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"body\" : \"{\\\"id\\\": \\\"not-a-number\\\"}\"\n  }\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/v1/some/path\",\n    \"headers\" : {\n      \"x-request-id\" : [ \"<uuid>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n for action:\n\n  {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"body\" : \"{\\\"id\\\": \\\"not-a-number\\\"}\"\n  }\n\n from expectation:\n\n  mrv-invalid\n\n------------------------------------\n<timestamp> - OpenAPI response validation failed for operation somePath:\n\n  response body validation error: 2 errors:\n   - $.id: string found, integer expected\n   - $.name: is missing but it is required\n\n for request:\n\n  {\n    \"method\" : \"GET\",\n    \"path\" : \"/v1/some/path\",\n    \"headers\" : {\n      \"x-request-id\" : [ \"<uuid>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  }\n\n for response:\n\n  {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"body\" : \"{\\\"id\\\": \\\"not-a-number\\\"}\"\n  }\n\n"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"method\" : \"GET\",\n    \"path\" : \"/v1/some/path\",\n    \"headers\" : {\n      \"x-request-id\" : [ \"<uuid>\" ],\n      \"host\" : [ \"localhost:<port>\" ],\n      \"content-length\" : [ \"0\" ]\n    },\n    \"keepAlive\" : true,\n    \"secure\" : false,\n    \"protocol\" : \"HTTP_1_1\",\n    \"localAddress\" : \"<address>\",\n    \"remoteAddress\" : \"<address>\"\n  },\n  \"httpResponse\" : {\n    \"statusCode\" : 200,\n    \"headers\" : {\n      \"content-type\" : [ \"application/json\" ]\n    },\n    \"body\" : \"{\\\"id\\\": \\\"not-a-number\\\"}\"\n  },\n  \"timestamp\" : \"<timestamp>\"\n} ]"
+    }
+  ]
+}

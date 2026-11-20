@@ -1,0 +1,57 @@
+{
+  "note": "as a process, 8.0.0 exits once PUT /mockserver/stop closes the listeners; the JVM's only non-daemon thread waits on the server channel, so the drain (stopDrainMillis) never holds the exit and an in-flight delayed response is cut",
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_STOP_DRAIN_MILLIS": "10000"
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "timeoutSecs": 30,
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "{\"httpRequest\": {\"path\": \"/slow\"}, \"httpResponse\": {\"body\": \"late\", \"delay\": {\"timeUnit\": \"MILLISECONDS\", \"value\": 6000}}}",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/slow",
+        "ownHost": true,
+        "background": "slow"
+      }
+    },
+    {
+      "sleepMillis": 500
+    },
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/stop",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "exitWithinMillis": 3000
+    }
+  ],
+  "expect": {
+    "running": false,
+    "exitCode": 0,
+    "background": {
+      "slow": {
+        "answered": false
+      }
+    }
+  }
+}

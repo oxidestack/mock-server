@@ -1,0 +1,67 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) confput-ConfigurationTest-fc62adf5 (conformance/harvest)",
+ "properties": {
+  "logLevel": "INFO",
+  "defaultResponseHeaders": ""
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8d41f30f2e56",
+   "note": "shouldKeepMemoisedPerRequestPropertiesCorrectAcrossUnrelatedChangesAndInstanceOverrides (confput): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "defaultResponseHeaders": "X-Instance=1"
+   },
+   "note": "shouldKeepMemoisedPerRequestPropertiesCorrectAcrossUnrelatedChangesAndInstanceOverrides (confput): configuration.defaultResponseHeaders(\"X-Instance=1\")",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n(?:.*?\\n)?  \"defaultResponseHeaders\" : (\\{\\n.*?\\n  \\}|[^\\n]*?),?\\n.*\\z",
+     "replace": "\"defaultResponseHeaders\" : ${1}"
+    },
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration, which has no defaultResponseHeaders member>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ],
+   "case": "8d41f30f2e56"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "e71c7a7d0f7c",
+   "note": "shouldKeepMemoisedPerRequestPropertiesCorrectAcrossUnrelatedChangesAndInstanceOverrides (confput): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "defaultResponseHeaders": null
+   },
+   "note": "shouldKeepMemoisedPerRequestPropertiesCorrectAcrossUnrelatedChangesAndInstanceOverrides (confput): configuration.defaultResponseHeaders(null): read back as \"X-Global=2\" in Java",
+   "mask": [
+    {
+     "regex": "(?s)\\A\\{\\n(?:.*?\\n)?  \"defaultResponseHeaders\" : (\\{\\n.*?\\n  \\}|[^\\n]*?),?\\n.*\\z",
+     "replace": "\"defaultResponseHeaders\" : ${1}"
+    },
+    {
+     "regex": "(?s)\\A\\{\\n.*\\z",
+     "replace": "<the configuration, which has no defaultResponseHeaders member>"
+    },
+    {
+     "regex": "^content-length: \\d+$",
+     "replace": "content-length: <the whole configuration>"
+    }
+   ],
+   "case": "e71c7a7d0f7c"
+  }
+ ]
+}

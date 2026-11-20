@@ -1,0 +1,298 @@
+{
+ "source": "hand-written: an LLM cost budget together with a forward's rate limit",
+ "properties": {
+  "llmCostBudgetUsd": "0.03",
+  "llmProvider": "OPENAI"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "llm",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/v1/chat/completions"
+     },
+     "httpLlmResponse": {
+      "provider": "OPENAI",
+      "model": "gpt-4o",
+      "completion": {
+       "text": "hi",
+       "usage": {
+        "inputTokens": 1000,
+        "outputTokens": 1000
+       }
+      }
+     }
+    },
+    {
+     "id": "rl-fwd",
+     "httpRequest": {
+      "path": "/v1/rl-fwd"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "id": "rl-fwd2",
+     "httpRequest": {
+      "path": "/v1/rl-fwd2"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/v1/chat/completions",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "id": "rl-plain",
+     "httpRequest": {
+      "path": "/plain"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/respond",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     "rateLimit": {
+      "limit": 1,
+      "windowMillis": 600000
+     }
+    },
+    {
+     "id": "respond",
+     "httpRequest": {
+      "path": "/respond"
+     },
+     "httpResponse": {
+      "body": "ok"
+     }
+    }
+   ],
+   "maxMillis": 60000
+  },
+  {
+   "method": "POST",
+   "path": "/v1/rl-fwd",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "note": "under budget and the limit: forwarded (cost 0.025 of 0.03)",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\" ?: ?\\d+",
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/rl-fwd",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "note": "under budget, over the limit: forwarded, then the 429 replaces the answer (cost 0.05)",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\" ?: ?\\d+",
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/rl-fwd",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "note": "over budget and over the limit: which 429 first?",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\" ?: ?\\d+",
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/rl-fwd2",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "note": "over budget, within the limit: the budget refusal",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\" ?: ?\\d+",
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/v1/rl-fwd2",
+   "body": "{\"model\":\"gpt-4o\",\"messages\":[]}",
+   "headers": {
+    "Content-Type": "application/json"
+   },
+   "note": "again: the budget refusal took no rate-limit slot",
+   "mask": [
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\" ?: ?\\d+",
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/plain",
+   "note": "a non-LLM forward is not blocked over budget"
+  },
+  {
+   "method": "GET",
+   "path": "/plain",
+   "mask": [
+    {
+     "regex": "x-ratelimit-reset: \\d+",
+     "replace": "x-ratelimit-reset: <epoch>"
+    },
+    {
+     "regex": "retry-after: \\d+$",
+     "replace": "retry-after: <secs>"
+    }
+   ],
+   "note": "and is rate limited"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "body": {
+    "path": "/v1/chat/completions"
+   },
+   "note": "the upstream saw the two forwards only",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/v1/rl-fwd"
+   },
+   "compare": "unordered",
+   "note": "drift analysis races the FORWARDED_REQUEST entry (scheduler.submit)",
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\"\\d+",
+    "(connectionEstablished|connectionTime|requestStarted|responseReceived|timeToFirstByte|totalTime)(InMillis|Millis)\\\\?\" : \\d+",
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\" ?: ?\\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/v1/rl-fwd2"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\"\\d+",
+    "(connectionEstablished|connectionTime|requestStarted|responseReceived|timeToFirstByte|totalTime)(InMillis|Millis)\\\\?\" : \\d+",
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\" ?: ?\\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/v1/rl-fwd"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    "X-RateLimit-Reset[^0-9]{0,40}\\d{10}",
+    "Retry-After[^0-9]{0,40}\\d+",
+    "x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\"\\d+",
+    "(connectionEstablished|connectionTime|requestStarted|responseReceived|timeToFirstByte|totalTime)(InMillis|Millis)\\\\?\" : \\d+",
+    "chatcmpl-[0-9a-f]{29}",
+    "created\\\\?\" ?: ?\\d+"
+   ]
+  }
+ ]
+}

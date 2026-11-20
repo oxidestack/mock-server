@@ -1,0 +1,523 @@
+{
+ "image": "clustered",
+ "properties": {
+  "stateBackend": "infinispan",
+  "clusterEnabled": "true",
+  "clusterName": "cluster-max-expectations-survivors",
+  "maxExpectations": "4"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "a",
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "body": "a"
+    }
+   },
+   "note": "maxExpectations=4 on a clustered node; the Infinispan expectations cache (Caffeine W-TinyLFU) is the eviction authority, so which expectation survives is Caffeine's admission, not insertion order"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "b",
+    "httpRequest": {
+     "path": "/b"
+    },
+    "httpResponse": {
+     "body": "b"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "c",
+    "httpRequest": {
+     "path": "/c"
+    },
+    "httpResponse": {
+     "body": "c"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "d",
+    "httpRequest": {
+     "path": "/d"
+    },
+    "httpResponse": {
+     "body": "d"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "full: a b c d"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "e",
+    "httpRequest": {
+     "path": "/e"
+    },
+    "httpResponse": {
+     "body": "e"
+    }
+   },
+   "note": "a fifth add: one of the five leaves"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "survivors after e"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "f",
+    "httpRequest": {
+     "path": "/f"
+    },
+    "httpResponse": {
+     "body": "f"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "g",
+    "httpRequest": {
+     "path": "/g"
+    },
+    "httpResponse": {
+     "body": "g"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "survivors after f and g"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "b",
+    "httpRequest": {
+     "path": "/b"
+    },
+    "httpResponse": {
+     "body": "b"
+    }
+   },
+   "note": "re-writes of one id (an update, a compute on an existing entry) raise its frequency"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "b",
+    "httpRequest": {
+     "path": "/b"
+    },
+    "httpResponse": {
+     "body": "b"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "b",
+    "httpRequest": {
+     "path": "/b"
+    },
+    "httpResponse": {
+     "body": "b"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "h",
+    "httpRequest": {
+     "path": "/h"
+    },
+    "httpResponse": {
+     "body": "h"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "i",
+    "httpRequest": {
+     "path": "/i"
+    },
+    "httpResponse": {
+     "body": "i"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "survivors after b re-written and h, i added"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "x",
+    "httpRequest": {
+     "path": "/x"
+    },
+    "httpResponse": {
+     "body": "x"
+    },
+    "times": {
+     "remainingTimes": 10,
+     "unlimited": false
+    }
+   },
+   "note": "a limited Times: each match is a backend get and replace"
+  },
+  {
+   "method": "GET",
+   "path": "/x"
+  },
+  {
+   "method": "GET",
+   "path": "/x"
+  },
+  {
+   "method": "GET",
+   "path": "/x"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "x after three matches: the shared counter moved, the node-local Times did not (consumeMatchLocally)"
+  },
+  {
+   "method": "GET",
+   "path": "/b",
+   "note": "an unlimited match"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "j",
+    "httpRequest": {
+     "path": "/j"
+    },
+    "httpResponse": {
+     "body": "j"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "k",
+    "httpRequest": {
+     "path": "/k"
+    },
+    "httpResponse": {
+     "body": "k"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "survivors after x matched three times and j, k added"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=EXPECTATIONS",
+   "body": {
+    "id": "k"
+   },
+   "note": "a clear by id"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "l",
+    "httpRequest": {
+     "path": "/l"
+    },
+    "httpResponse": {
+     "body": "l"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "m",
+    "httpRequest": {
+     "path": "/m"
+    },
+    "httpResponse": {
+     "body": "m"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "survivors after k cleared and l, m added"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "reset clears the expectations and the shared-Times counters"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "a",
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "body": "a"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "b",
+    "httpRequest": {
+     "path": "/b"
+    },
+    "httpResponse": {
+     "body": "b"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "n",
+    "httpRequest": {
+     "path": "/n"
+    },
+    "httpResponse": {
+     "body": "n"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "o",
+    "httpRequest": {
+     "path": "/o"
+    },
+    "httpResponse": {
+     "body": "o"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "p",
+    "httpRequest": {
+     "path": "/p"
+    },
+    "httpResponse": {
+     "body": "p"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "q",
+    "httpRequest": {
+     "path": "/q"
+    },
+    "httpResponse": {
+     "body": "q"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "survivors after reset and a b n o p q added"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "note": "limited Times only: the expectations cache and the sharedTimesCounters cache (also maxCount=maxExpectations) each pick their own victim"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "t1",
+    "httpRequest": {
+     "path": "/t1"
+    },
+    "httpResponse": {
+     "body": "t1"
+    },
+    "times": {
+     "remainingTimes": 1,
+     "unlimited": false
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "t2",
+    "httpRequest": {
+     "path": "/t2"
+    },
+    "httpResponse": {
+     "body": "t2"
+    },
+    "times": {
+     "remainingTimes": 2,
+     "unlimited": false
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "t3",
+    "httpRequest": {
+     "path": "/t3"
+    },
+    "httpResponse": {
+     "body": "t3"
+    },
+    "times": {
+     "remainingTimes": 2,
+     "unlimited": false
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "t4",
+    "httpRequest": {
+     "path": "/t4"
+    },
+    "httpResponse": {
+     "body": "t4"
+    },
+    "times": {
+     "remainingTimes": 2,
+     "unlimited": false
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "t5",
+    "httpRequest": {
+     "path": "/t5"
+    },
+    "httpResponse": {
+     "body": "t5"
+    },
+    "times": {
+     "remainingTimes": 2,
+     "unlimited": false
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "survivors of five limited adds"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "method": "GET",
+   "path": "/t1"
+  },
+  {
+   "method": "GET",
+   "path": "/t2"
+  },
+  {
+   "method": "GET",
+   "path": "/t3"
+  },
+  {
+   "method": "GET",
+   "path": "/t4"
+  },
+  {
+   "method": "GET",
+   "path": "/t5"
+  },
+  {
+   "method": "GET",
+   "path": "/t1",
+   "note": "t1 had one use: the counter is at zero, not served"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "after one match of each and t1's second"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "a live expectation whose counter was evicted fails closed with a WARN after its matched entry; unordered: the exhausted expectation's removal runs on the scheduler (scheduler.submit), and its entry lands before or after the 404's (three recordings, three positions)",
+   "compare": "unordered"
+  }
+ ]
+}

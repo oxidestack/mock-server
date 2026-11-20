@@ -1,0 +1,30 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/relay\"}, \"priority\": 10, \"times\": {\"remainingTimes\": 1}, \"httpForward\": {\"host\": \"localhost\", \"port\": {{port}}, \"scheme\": \"HTTP\"}}, {\"httpRequest\": {\"path\": \"/relay\"}, \"httpWebSocketResponse\": {\"messages\": [{\"text\": \"hello\"}]}}]",
+   "note": "a counted plain forward to the server itself, then a WebSocket response for the relayed upgrade",
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "tcp": [
+    "R0VUIC9yZWxheSBIVFRQLzEuMQ0KSG9zdDogbG9jYWxob3N0DQpVcGdyYWRlOiB3ZWJzb2NrZXQNCkNvbm5lY3Rpb246IFVwZ3JhZGUNClNlYy1XZWJTb2NrZXQtS2V5OiBkR2hsSUhOaGJYQnNaU0J1YjI1alpRPT0NClNlYy1XZWJTb2NrZXQtVmVyc2lvbjogMTMNCg0K"
+   ],
+   "note": "a matched plain httpForward relays the upgrade to its host and port (WebSocket passthrough): 101, the upstream frames"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "the relay entry names the upstream as InetSocketAddress.toString (host/address:port)",
+   "mask": [
+    "\"sec-websocket-key\" : \\[ \"[^\"]+\" \\]"
+   ]
+  }
+ ]
+}

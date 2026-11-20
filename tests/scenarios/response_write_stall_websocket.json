@@ -1,0 +1,166 @@
+{
+ "source": "WriteStallTimeoutHandler closes a WebSocket connection (httpWebSocketResponse) whose client took none of the frames waiting for it for responseWriteStallTimeoutMillis, and counts it in mock_server_response_write_stalls_total{protocol=websocket,scope=connection} (MetricsTest#countsResponseWriteStallsUnderTheirProtocolAndScope). maxRequestBodySize is raised for the 30 MB expectation. logLevel WARN keeps the tens of MB out of the event log, whose rendering starved the timed scenarios replayed in the same process",
+ "properties": {
+  "metricsEnabled": "true",
+  "responseWriteStallTimeoutMillis": "1000",
+  "maxRequestBodySize": "104857600",
+  "logLevel": "WARN"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/ws"
+     },
+     "httpWebSocketResponse": {
+      "messages": [
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       },
+       {
+        "text": "{{repeat:1000000:a}}"
+       }
+      ],
+      "closeConnection": false
+     }
+    }
+   ],
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    {
+     "regex": "a{1000,}|(?:AAAA){1000,}",
+     "replace": "<1 MB>",
+     "reason": "the large payload echoed back"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "thirty 1 MB text messages to a WebSocket client that stops reading: cut after a second, before they are all sent (the socket stays open otherwise: closeConnection false)",
+   "tcp": [
+    {
+     "text": "GET /ws HTTP/1.1\r\nHost: {{host}}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"
+    }
+   ],
+   "stallMillis": 5000
+  },
+  {
+   "note": "one WebSocket connection cut",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_response_write_stalls)[^\\n]*\\n",
+     "replace": "",
+     "reason": "only the series this scenario drives; the rest are pinned by metrics.json"
+    },
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "note": "the WARN, with the bytes waiting for the client when it was cut",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    {
+     "regex": "a{1000,}",
+     "replace": "<large body>",
+     "reason": "the 30 MB response, logged when it was returned"
+    },
+    {
+     "regex": "(took none of the\\n\\n  )\\d+",
+     "replace": "${1}<bytes>",
+     "reason": "Netty's ChannelOutboundBuffer.totalPendingWriteBytes (the unwritten messages plus 96 bytes of entry overhead each: 32864 for one 32 KiB slice of PacedLargeWriteHandler, 30000096 for a 30 MB binary answer written whole) against the rest of the write our socket has not taken, which depends on socket buffers"
+    }
+   ]
+  }
+ ]
+}

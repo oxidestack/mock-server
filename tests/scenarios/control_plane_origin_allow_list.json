@@ -1,0 +1,11 @@
+{"properties": {"controlPlaneCorsAllowOrigin": "https://app.example, http://dash.example:8080", "controlPlaneTrustedHostSuffixes": "corp.example, *.dev.example, com, co.uk, github.io, lan, not a suffix!"},
+ "steps": [
+  {"note": "a listed origin is reflected", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "headers": {"Origin": "https://app.example"}},
+  {"note": "listed with its port", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "headers": {"Origin": "http://dash.example:8080"}},
+  {"note": "a loopback origin is no longer allowed once the list is set", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "headers": {"Origin": "http://localhost:3000"}},
+  {"note": "a same-host origin under a trusted suffix", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "headers": {"Origin": "http://mock.corp.example:8443", "Host": "mock.corp.example:8443"}},
+  {"note": "a same-host origin under a wildcard-written trusted suffix", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "headers": {"Origin": "http://a.dev.example:8443", "Host": "a.dev.example:8443"}},
+  {"note": "a rejected public suffix trusts nothing", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "headers": {"Origin": "http://rebind.github.io:8443", "Host": "rebind.github.io:8443"}},
+  {"note": "a single-label suffix that is no public suffix is trusted, with a warning", "method": "PUT", "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS", "headers": {"Origin": "http://box.lan:8443", "Host": "box.lan:8443"}},
+  {"note": "the trusted-suffix ERROR and WARN entries of startup", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS"}
+]}

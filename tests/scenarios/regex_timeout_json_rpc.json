@@ -1,0 +1,81 @@
+{
+ "source": "JsonRpcMatcher.methodMatches runs a regex method through MatchingTimeoutExecutor.matchesWithRegexTimeout; a catastrophic `(.*a){25}` against a 40-character method passes regexMatchingTimeoutMillis (here 300), logs the WARN `json-rpc method regex evaluation timed out after {}ms for pattern:{}— treating as non-match`, and the request does not match. A short method fails within the budget; a normal regex still matches.",
+ "properties": {
+  "regexMatchingTimeoutMillis": "300"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "catastrophic",
+     "httpRequest": {
+      "path": "/rpc",
+      "body": {
+       "type": "JSON_RPC",
+       "method": "(.*a){25}"
+      }
+     },
+     "httpResponse": {
+      "body": "catastrophic"
+     }
+    },
+    {
+     "id": "normal",
+     "httpRequest": {
+      "path": "/rpc",
+      "body": {
+       "type": "JSON_RPC",
+       "method": "Ok[0-9]+"
+      }
+     },
+     "httpResponse": {
+      "body": "normal"
+     }
+    }
+   ]
+  },
+  {
+   "note": "Java backtracking passes the 300 ms budget: no match",
+   "method": "POST",
+   "path": "/rpc",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab"
+   }
+  },
+  {
+   "note": "a short method fails within the budget: no timeout entry",
+   "method": "POST",
+   "path": "/rpc",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "ab"
+   }
+  },
+  {
+   "note": "a normal regex is unaffected",
+   "method": "POST",
+   "path": "/rpc",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "Ok12"
+   }
+  },
+  {
+   "sleepMillis": 300
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

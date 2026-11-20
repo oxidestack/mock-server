@@ -1,0 +1,100 @@
+{
+  "properties": {
+    "streamIdleTimeoutSeconds": "2",
+    "maxSocketTimeoutInMillis": "1000",
+    "forwardProxyHttp2Upgrade": "true"
+  },
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/h2idle/up"
+          },
+          "httpSseResponse": {
+            "events": [
+              {
+                "data": "one"
+              },
+              {
+                "data": "two",
+                "delay": {
+                  "timeUnit": "SECONDS",
+                  "value": 4
+                }
+              }
+            ]
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/h2idle/fwd"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/h2idle/up",
+              "secure": true,
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "mask": [
+        "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+      ]
+    },
+    {
+      "note": "an HTTP/2 upstream (forwardProxyHttp2Upgrade) idles after one event: the stream channel is closed by the idle timeout",
+      "method": "GET",
+      "path": "/h2idle/fwd",
+      "minMillis": 1900
+    },
+    {
+      "note": "the upstream saw the forward on stream 3, as Netty's client opens its first stream",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS",
+      "body": {
+        "path": "/h2idle/up"
+      }
+    },
+    {
+      "note": "the logged streamed response keeps the head's x-http2-stream-id, which the client's head did not get",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "body": {
+        "path": "/h2idle/fwd"
+      },
+      "mask": [
+        {
+          "regex": "(\"(?:connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis)\" : )\\d+",
+          "replace": "${1}<ms>"
+        }
+      ]
+    },
+    {
+      "note": "log: the idle WARN names the HTTP/2 stream channel, `<parent>/1 (H2 - 3)` (only that entry is compared: the entries of the first TLS use differ for reasons of their own, the CA load lines in docs/divergences.md and the forwarding client's certificate)",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "mask": [
+        {
+          "regex": "(?s)^.*?(streaming response idle timeout - closing channel [^\\n]*).*$",
+          "replace": "${1}"
+        },
+        {
+          "regex": "id: 0x[0-9a-f]{8}",
+          "replace": "id: 0x<id>"
+        },
+        {
+          "regex": "L:/[^ \\]\"]+",
+          "replace": "L:/<local>"
+        }
+      ]
+    }
+  ]
+}

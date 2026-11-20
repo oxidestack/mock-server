@@ -1,0 +1,102 @@
+{
+  "recordedFrom": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+  "results": [
+    {
+      "status": 201,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <masked>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"httpRequest\" : {\n    \"path\" : \"/upload\"\n  },\n  \"httpResponse\" : {\n    \"body\" : \"served\"\n  },\n  <masked>,\n  \"priority\" : 0,\n  \"timeToLive\" : {\n    \"unlimited\" : true\n  },\n  \"times\" : {\n    \"unlimited\" : true\n  }\n} ]"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=32768",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4 :status: 100"
+      ],
+      "closed": false,
+      "note": "an HTTP/2 request expecting 100-continue whose HEADERS frame leaves the stream open is sent an interim 100 (HttpObjectAggregator.newContinueResponse on the stream's pipeline)"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=32768",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4 :status: 100",
+        "HEADERS stream=1 flags=0x4 :status: 200, content-length: 6",
+        "DATA stream=1 flags=0x1 \"served\""
+      ],
+      "closed": false,
+      "note": "then its body is read and the request answered; the Expect header is gone from what is recorded"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=32768",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4 :status: 200, content-length: 6",
+        "DATA stream=1 flags=0x1 \"served\""
+      ],
+      "closed": false,
+      "note": "a request expecting 100-continue that ends with its HEADERS frame"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=32768",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x5 :status: 417, content-length: 0"
+      ],
+      "closed": false,
+      "note": "an expectation other than 100-continue"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 5=10485760 6=32768",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4 :status: 100",
+        "RST_STREAM stream=1 code=1",
+        "HEADERS stream=3 flags=0x4 :status: 200, content-length: 6",
+        "DATA stream=3 flags=0x1 \"served\""
+      ],
+      "closed": false,
+      "note": "trailers over maxHeaderSize after the interim 100 reset the stream on a direct connection"
+    },
+    {
+      "frames": [
+        "SETTINGS 3=100 6=32768",
+        "SETTINGS ack",
+        "HEADERS stream=1 flags=0x4 :status: 100",
+        "HEADERS stream=1 flags=0x5 :status: 431",
+        "RST_STREAM stream=1 code=1",
+        "HEADERS stream=3 flags=0x24 :status: 200, content-length: 6",
+        "DATA stream=3 flags=0x1 \"served\""
+      ],
+      "closed": false,
+      "note": "in a SOCKS5 tunnel, trailers over maxHeaderSize after the interim 100 are answered 431 (a 1xx is no response head), then reset"
+    },
+    {
+      "status": 200,
+      "headers": [
+        "access-control-allow-credentials: false",
+        "access-control-allow-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-allow-methods: CONNECT, DELETE, GET, HEAD, OPTIONS, POST, PUT, PATCH, TRACE",
+        "access-control-allow-origin: *",
+        "access-control-expose-headers: Allow, Content-Encoding, Content-Length, Content-Type, ETag, Expires, Last-Modified, Location, Server, Vary, Authorization",
+        "access-control-max-age: 0",
+        "connection: keep-alive",
+        "content-length: <varies>",
+        "content-type: application/json; charset=utf-8",
+        "version: 9.2.0"
+      ],
+      "body": "[ {\n  \"body\" : \"request body\",\n  \"headers\" : {\n    \"transfer-encoding\" : [ \"chunked\" ],\n    \"host\" : [ \"localhost\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"POST\",\n  \"path\" : \"/upload\",\n  \"protocol\" : \"HTTP_2\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"expect\" : [ \"100-continue\" ],\n    \"host\" : [ \"localhost\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/upload\",\n  \"protocol\" : \"HTTP_2\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"host\" : [ \"localhost:<port>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/upload\",\n  \"protocol\" : \"HTTP_2\",\n  \"secure\" : false\n}, {\n  \"headers\" : {\n    \"content-length\" : [ \"0\" ],\n    \"host\" : [ \"localhost:<port>\" ]\n  },\n  \"keepAlive\" : true,\n  \"method\" : \"GET\",\n  \"path\" : \"/upload\",\n  \"protocol\" : \"HTTP_2\",\n  \"secure\" : false\n} ]",
+      "note": "what was recorded"
+    }
+  ]
+}

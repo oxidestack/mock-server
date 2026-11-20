@@ -1,0 +1,34 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "[{\"httpRequest\": {\"path\": \"/target\"}, \"httpResponse\": {\"headers\": {\"content-type\": [\"application/json; charset=utf-8\"]}, \"body\": {\"type\": \"JSON\", \"json\": \"{\\\"name\\\": \\\"old\\\", \\\"a\\\": 1, \\\"secret\\\": \\\"shh\\\", \\\"from\\\": \\\"v\\\", \\\"keep\\\": true}\"}}}, {\"httpRequest\": {\"path\": \"/target-combined\"}, \"httpResponse\": {\"headers\": {\"content-type\": [\"application/json; charset=utf-8\"]}, \"body\": {\"type\": \"JSON\", \"json\": \"{\\\"a\\\": 1}\"}}}, {\"httpRequest\": {\"path\": \"/target-plain\"}, \"httpResponse\": {\"headers\": {\"content-type\": [\"text/plain; charset=utf-8\"]}, \"body\": \"plain text, not json\"}}, {\"httpRequest\": {\"path\": \"/patch\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target\", \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}, \"responseModifier\": {\"jsonPatch\": [{\"op\": \"replace\", \"path\": \"/name\", \"value\": \"new\"}, {\"op\": \"add\", \"path\": \"/b\", \"value\": 2}, {\"op\": \"remove\", \"path\": \"/secret\"}, {\"op\": \"move\", \"from\": \"/from\", \"path\": \"/to\"}]}}}, {\"httpRequest\": {\"path\": \"/mergepatch\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target\", \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}, \"responseModifier\": {\"jsonMergePatch\": {\"name\": \"new\", \"keep\": null, \"extra\": true}}}}, {\"httpRequest\": {\"path\": \"/both\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target-combined\", \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}, \"responseModifier\": {\"jsonPatch\": [{\"op\": \"add\", \"path\": \"/b\", \"value\": 2}], \"jsonMergePatch\": {\"a\": 10, \"b\": null, \"c\": 3}}}}, {\"httpRequest\": {\"path\": \"/testfail\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target-combined\", \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}, \"responseModifier\": {\"jsonPatch\": [{\"op\": \"test\", \"path\": \"/a\", \"value\": 999}, {\"op\": \"add\", \"path\": \"/b\", \"value\": 2}]}}}, {\"httpRequest\": {\"path\": \"/nonjson\"}, \"httpOverrideForwardedRequest\": {\"requestOverride\": {\"path\": \"/target-plain\", \"headers\": {\"Host\": [\"localhost:{{port}}\"]}}, \"responseModifier\": {\"jsonPatch\": [{\"op\": \"add\", \"path\": \"/b\", \"value\": 2}]}}}]"
+  },
+  {
+   "method": "GET",
+   "path": "/patch",
+   "note": "jsonPatch: replace/add/remove/move applied to a forwarded JSON response body"
+  },
+  {
+   "method": "GET",
+   "path": "/mergepatch",
+   "note": "jsonMergePatch: set/add fields, null deletes a field, recurses into nested objects"
+  },
+  {
+   "method": "GET",
+   "path": "/both",
+   "note": "jsonPatch applied before jsonMergePatch when both are present"
+  },
+  {
+   "method": "GET",
+   "path": "/testfail",
+   "note": "a failing RFC 6902 test op rejects the whole patch; body left unchanged"
+  },
+  {
+   "method": "GET",
+   "path": "/nonjson",
+   "note": "a non-JSON forwarded body is left byte-for-byte unchanged by jsonPatch"
+  }
+ ]
+}

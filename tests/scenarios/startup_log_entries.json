@@ -1,0 +1,31 @@
+{
+ "properties": {
+  "proxySetupLogging": "true",
+  "directoryToSaveDynamicSSLCertificate": "/tmp",
+  "initializationJsonPath": "{{files}}/init/expectations.json",
+  "initializationOpenAPIPath": "{{files}}/init/openapi.yaml"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "note": "what starting logs: init files, SSL context warnings, started on port, the CA, the proxy setup block, as entries (a Java throwable is left out: docs/divergences.md)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "mask": [
+    {
+     "regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}",
+     "replace": ""
+    },
+    {
+     "regex": "(\"epochTime\" : )\\d+",
+     "replace": "${1}0"
+    }
+   ]
+  },
+  {
+   "note": "what starting logs: init files, SSL context warnings, started on port, the CA, the proxy setup block, as text",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  }
+ ]
+}

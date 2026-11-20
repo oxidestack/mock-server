@@ -1,0 +1,77 @@
+{
+ "properties": {
+  "controlPlaneTLSMutualAuthenticationRequired": "true",
+  "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/tls/private-ca/ca-cert.pem",
+  "initializationJsonPath": "{{files}}/auth/mtls_forwards.json",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/tls/private-ca/no-eku-cert.pem;{{files}}/tls/private-ca/no-eku-key.pem,0.0.0.0={{files}}/tls/private-ca/any-eku-cert.pem;{{files}}/tls/private-ca/any-eku-key.pem,localhost.={{files}}/tls/private-ca/expired-cert.pem;{{files}}/tls/private-ca/expired-key.pem"
+ },
+ "steps": [
+  {
+   "note": "a control-plane request in the clear has no client certificate",
+   "method": "PUT",
+   "path": "/mockserver/clear",
+   "body": {
+    "path": "/nothing"
+   }
+  },
+  {
+   "note": "status is not gated",
+   "method": "PUT",
+   "path": "/mockserver/status"
+  },
+  {
+   "note": "the data plane is not gated: a secure expectation echoes the presented chain",
+   "method": "GET",
+   "path": "/via-tls/whoami",
+   "headers": {
+    "Host": "localhost:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a leaf signed by the configured CA chain (a private CA), without an extended key usage extension, authenticates",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "anyExtendedKeyUsage authenticates",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the presented chain, anyExtendedKeyUsage",
+   "method": "GET",
+   "path": "/via-tls/whoami",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an expired clientAuth leaf signed by the configured CA chain does not",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost.:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the presented chain, expired",
+   "method": "GET",
+   "path": "/via-tls/whoami",
+   "headers": {
+    "Host": "localhost.:{{port}}"
+   },
+   "maxMillis": 60000
+  }
+ ]
+}

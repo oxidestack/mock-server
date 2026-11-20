@@ -1,0 +1,119 @@
+{
+ "source": "wasmExecutionTimeoutMillis spans a module's instantiation, its start function included, and the call (WasmRuntime.callWithinBudget); a start function that never returns fails closed once the wall-clock budget is spent",
+ "properties": {
+  "wasmEnabled": "true",
+  "wasmExecutionTimeoutMillis": "2000"
+ },
+ "steps": [
+  {
+   "note": "dry run: a start function that finishes inside the budget runs before match",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/start-bounded.wasm}}",
+    "request": {
+     "body": "x"
+    },
+    "response": {
+     "statusCode": 200,
+     "body": "unshaped"
+    }
+   }
+  },
+  {
+   "note": "dry run: a start function that traps fails the instantiation, match is never called",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/start-trap.wasm}}",
+    "request": {
+     "body": "x"
+    }
+   }
+  },
+  {
+   "note": "upload both modules",
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=start-bounded-398",
+   "bodyFile": "wasm/units/start-bounded.wasm"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/wasm/modules?name=start-loop-398",
+   "bodyFile": "wasm/units/start-loop.wasm"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/bounded",
+     "body": {
+      "type": "WASM",
+      "moduleName": "start-bounded-398"
+     }
+    },
+    "httpResponse": {
+     "body": "bounded start function"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/loop",
+     "body": {
+      "type": "WASM",
+      "moduleName": "start-loop-398"
+     }
+    },
+    "httpResponse": {
+     "body": "never"
+    }
+   }
+  },
+  {
+   "note": "a bounded start function: the expectation matches",
+   "method": "POST",
+   "path": "/bounded",
+   "body": "x"
+  },
+  {
+   "note": "a start function that never returns: no match, after the whole budget",
+   "method": "POST",
+   "path": "/loop",
+   "body": "x",
+   "minMillis": 2000
+  },
+  {
+   "note": "dry run: the looping start function fails match closed after the budget",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/start-loop.wasm}}",
+    "request": {
+     "body": "x"
+    }
+   },
+   "minMillis": 2000
+  },
+  {
+   "note": "dry run with a response: match and shape each spend their own budget, shaped is null",
+   "method": "POST",
+   "path": "/mockserver/wasm/test",
+   "body": {
+    "module": "{{base64:wasm/units/start-loop.wasm}}",
+    "request": {
+     "body": "x"
+    },
+    "response": {
+     "statusCode": 200,
+     "body": "unshaped"
+    }
+   },
+   "minMillis": 4000
+  }
+ ]
+}

@@ -1,0 +1,23 @@
+{"steps": [
+  {"method": "PUT", "path": "/mockserver/reset", "note": "HttpRequestHandlerExceptionTest, PortUnificationHandlerExceptionTest: what the server does when decoding the bytes fails"},
+  {"tcp": ["R0FSQkFHRQ0KDQo="], "note": "not HTTP at all"},
+  {"tcp": ["R0VUIC8gSFRUUC8xLjENCkNvbnRlbnQtTGVuZ3RoOiBhYmMNCg0K"], "note": "Content-Length is not a number"},
+  {"tcp": ["R0VUIC8NCg0K"], "note": "request line without a version"},
+  {"tcp": ["R0VUIC8gSFRUUC8xLjENCkJhZCBIZWFkZXINClgtQTogYg0KDQo="], "note": "a header line without a colon"},
+  {"tcp": ["R0VUIC8gSFRUUC8xLjENClRyYW5zZmVyLUVuY29kaW5nOiBjaHVua2VkDQoNCnp6DQo="], "note": "a chunk size that is not hexadecimal"},
+  {"tcp": ["R0VUIC8gSFRUUC85LjkNCg0K"], "note": "an unusual version number is accepted"},
+  {"tcp": ["R0VUICAvIEhUVFAvMS4xDQoNCg=="], "note": "several spaces in the request line are accepted"},
+  {"tcp": ["R0VUIC8gRk9PDQoNCg=="], "note": "a version without a slash: the invalid message"},
+  {"tcp": ["R0VUIC8gSFRUUC8xLjENCkE6IDENClgtQSA6IGINCkI6IDINCg0K"], "note": "a space inside a header name"},
+  {"tcp": ["R0VUIC8gSFRUUC8xLjENClgtQTogAWINCg0K"], "note": "a control character in a header value"},
+  {"tcp": ["R0VUIC8gSFRUUC8xLjENCkE6IDENCkNvbnRlbnQtTGVuZ3RoOiA1DQpDb250ZW50LUxlbmd0aDogNg0KDQo="], "note": "two different Content-Length values"},
+  {"tcp": ["R0VUIC8gSFRUUC8xLjENCkNvbnRlbnQtTGVuZ3RoOiAtMQ0KDQo="], "note": "a negative Content-Length"},
+  {"tcp": ["R0VUIC8gSFRUUC8xLjENCkE6IDENCkNvbnRlbnQtTGVuZ3RoOiAzDQpUcmFuc2Zlci1FbmNvZGluZzogY2h1bmtlZA0KQjogMg0KDQphYmM="], "note": "Content-Length together with Transfer-Encoding"},
+  {"tcp": ["UE9TVCAvIEhUVFAvMS4xDQpBOiAxDQpUcmFuc2Zlci1FbmNvZGluZzogQ2h1bmtlZA0KDQp6eg0KYWJjDQo="], "note": "a bad chunk size after other headers"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS", "body": {"path": "/.*"}, "note": "what the log says about the faults", "mask": ["\"(local|remote)Address\" : \"[^\"]*\"", {"regex": "(closing connection from:\\n\\n  )/\\S+", "replace": "${1}<client address>", "reason": "the client's socket address: the oracle sees the Docker bridge's"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "note": "the decoded fragments that did get through are recorded"},
+  {"method": "GET", "path": "/mockserver/openapi.yaml", "note": "OpenAPISpecHandlerTest: the embedded spec", "mask": ["(?s)\\n.*"]},
+  {"method": "HEAD", "path": "/mockserver/openapi.yaml", "note": "a non-GET on the spec path"},
+  {"method": "PUT", "path": "/mockserver/openapi.yaml", "note": "a PUT on the spec path"},
+  {"method": "GET", "path": "/mockserver/openapi.yaml", "headers": {"Connection": ["close"]}, "note": "spec with Connection: close", "mask": ["(?s)\\n.*"]}
+]}

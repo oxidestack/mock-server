@@ -1,0 +1,418 @@
+{
+ "source": "hand-written: recorded Bedrock exchanges counted from their X-Amzn-Bedrock-*-Token-Count headers (BedrockLlmClient.parseCompletionResponse over the recorded HttpResponse) in LlmOptimisationReportBuilder and McpToolRegistry verify_cost_budget, 9.1.0",
+ "properties": {
+  "llmProvider": "BEDROCK"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "upstream-llama",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/meta.llama3-1-70b-instruct-v1:0/invoke",
+      "headers": {
+       "x-case": [
+        "llama"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "120"
+       ],
+       "X-Amzn-Bedrock-Output-Token-Count": [
+        "45"
+       ]
+      },
+      "body": "{\"generation\":\"Hello there, how can I help?\",\"stop_reason\":\"stop\"}"
+     }
+    },
+    {
+     "id": "forward-llama",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/llama"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/meta.llama3-1-70b-instruct-v1:0/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "llama"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-llama-cached",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/meta.llama3-1-8b-instruct-v1:0/invoke",
+      "headers": {
+       "x-case": [
+        "llama-cached"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "300"
+       ],
+       "X-Amzn-Bedrock-Output-Token-Count": [
+        "7"
+       ],
+       "X-Amzn-Bedrock-Cache-Read-Input-Token-Count": [
+        "200"
+       ],
+       "X-Amzn-Bedrock-Cache-Write-Input-Token-Count": [
+        "50"
+       ]
+      },
+      "body": "{\"generation\":\"Hi\",\"stop_reason\":\"length\"}"
+     }
+    },
+    {
+     "id": "forward-llama-cached",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/llama-cached"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/meta.llama3-1-8b-instruct-v1:0/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "llama-cached"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-cohere-embed",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/cohere.embed-english-v3/invoke",
+      "headers": {
+       "x-case": [
+        "cohere-embed"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "9"
+       ]
+      },
+      "body": "{\"id\":\"e1\",\"embeddings\":[[0.1,0.2]],\"texts\":[\"hello\"],\"response_type\":\"embeddings_floats\"}"
+     }
+    },
+    {
+     "id": "forward-cohere-embed",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/cohere-embed"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/cohere.embed-english-v3/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "cohere-embed"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-titan-embed",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/amazon.titan-embed-text-v2:0/invoke",
+      "headers": {
+       "x-case": [
+        "titan-embed"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ]
+      },
+      "body": "{\"embedding\":[0.1,0.2],\"inputTextTokenCount\":2}"
+     }
+    },
+    {
+     "id": "forward-titan-embed",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/titan-embed"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/amazon.titan-embed-text-v2:0/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "titan-embed"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "upstream-bad-header",
+     "priority": 10,
+     "httpRequest": {
+      "method": "POST",
+      "path": "/model/meta.llama3-1-70b-instruct-v1:0/invoke",
+      "headers": {
+       "x-case": [
+        "bad-header"
+       ]
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "content-type": [
+        "application/json"
+       ],
+       "X-Amzn-Bedrock-Input-Token-Count": [
+        "-1"
+       ],
+       "X-Amzn-Bedrock-Output-Token-Count": [
+        "lots"
+       ]
+      },
+      "body": "{\"generation\":\"Ok\",\"stop_reason\":\"stop\"}"
+     }
+    },
+    {
+     "id": "forward-bad-header",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/client/bad-header"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/model/meta.llama3-1-70b-instruct-v1:0/invoke",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ],
+        "x-case": [
+         "bad-header"
+        ]
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "note": "Llama InvokeModel: the body has no counts, the headers 120 in / 45 out",
+   "method": "POST",
+   "path": "/client/llama",
+   "body": "{\"prompt\":\"Say hello\",\"max_gen_len\":64}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "cache-read and cache-write header counts",
+   "method": "POST",
+   "path": "/client/llama-cached",
+   "body": "{\"prompt\":\"Again\",\"max_gen_len\":8}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "an embedding counted from its input header only",
+   "method": "POST",
+   "path": "/client/cohere-embed",
+   "body": "{\"texts\":[\"hello\"],\"input_type\":\"search_document\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "no headers: Titan's body count",
+   "method": "POST",
+   "path": "/client/titan-embed",
+   "body": "{\"inputText\":\"Hello\"}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "note": "unusable header values: estimated",
+   "method": "POST",
+   "path": "/client/bad-header",
+   "body": "{\"prompt\":\"Bad\",\"max_gen_len\":4}",
+   "headers": {
+    "Content-Type": "application/json"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=json",
+   "note": "calls counted from the recorded token-count headers"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/llm/optimisationReport?format=csv"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+     "protocolVersion": "2025-06-18"
+    }
+   },
+   "capture": {
+    "header": "Mcp-Session-Id",
+    "as": "s"
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "method": "notifications/initialized"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "BEDROCK",
+      "maxCostUsd": 1
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "usage from the recorded headers"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "BEDROCK",
+      "maxCostUsd": 1,
+      "path": "/model/meta.llama3-1-70b-instruct-v1:0/invoke"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "the Llama calls only"
+  },
+  {
+   "method": "POST",
+   "path": "/mockserver/mcp",
+   "headers": {
+    "Mcp-Session-Id": [
+     "{{capture:s}}"
+    ]
+   },
+   "body": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "method": "tools/call",
+    "params": {
+     "name": "verify_cost_budget",
+     "arguments": {
+      "provider": "BEDROCK",
+      "maxCostUsd": 1,
+      "path": "/client/llama-cached"
+     }
+    }
+   },
+   "mask": [
+    "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+    "content-length: \\d+"
+   ],
+   "note": "the forwarded exchange as the client saw it"
+  }
+ ]
+}

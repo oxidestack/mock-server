@@ -1,0 +1,39 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.privateKeyPath={{scratch}}/gen-key.pem",
+    "-Dmockserver.x509CertificatePath={{scratch}}/gen-cert.pem",
+    "-Dmockserver.certificateAuthorityCertificate={{scratch}}/gen-cert.pem"
+  ],
+  "certificates": [
+    {
+      "name": "gen"
+    }
+  ],
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 3,
+      "label": "t"
+    }
+  ],
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "tls": {
+      "t": "served"
+    },
+    "stdoutNotContains": [
+      "SSL or decoder fault caught by port unification handler"
+    ]
+  }
+}

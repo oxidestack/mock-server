@@ -1,0 +1,183 @@
+{
+ "source": "a forward's responseTemplate and a forward template that fail or render invalid output answer 500 by default (upstream #86, #104, TemplateFailureIntegrationTest), and as before with templateFailureAsServerError false",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/upstream"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "body": "from upstream"
+    }
+   },
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/fr-throw"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "path": "/upstream",
+      "headers": {
+       "Host": [
+        "{{host}}"
+       ]
+      }
+     },
+     "responseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "#foreach("
+     }
+    }
+   },
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/fr-invalid"
+    },
+    "httpOverrideForwardedRequest": {
+     "requestOverride": {
+      "path": "/upstream",
+      "headers": {
+       "Host": [
+        "{{host}}"
+       ]
+      }
+     },
+     "responseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{ 'statusCode': 'two hundred' }"
+     }
+    }
+   },
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/f-invalid"
+    },
+    "httpForwardTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{ 'statusCode': 200 }"
+    }
+   },
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/r-invalid"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "{ 'statusCode': 'two hundred' }"
+    }
+   },
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/r-throw"
+    },
+    "httpResponseTemplate": {
+     "templateType": "VELOCITY",
+     "template": "#foreach("
+    }
+   },
+   "mask": [
+    "content-length: \\d+"
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/fr-throw",
+   "note": "a forward response template that does not parse: 500"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/fr-throw"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {"regex": "(\"type\" : \"WARN\",\\n)    \"port\" : <port>,\\n(    \"messageFormat\" : \"org\\.mockserver\\.)", "replace": "$1$2", "reason": "the scheduler logs a failed forward future on whichever thread completes it, which carries a port only when it served a request before"}
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/fr-invalid",
+   "note": "a forward response template that renders no response: 500"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/fr-invalid"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {"regex": "(\"type\" : \"WARN\",\\n)    \"port\" : <port>,\\n(    \"messageFormat\" : \"org\\.mockserver\\.)", "replace": "$1$2", "reason": "the scheduler logs a failed forward future on whichever thread completes it, which carries a port only when it served a request before"}
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/f-invalid",
+   "note": "a forward template that renders no request: 500"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES",
+   "body": {
+    "path": "/f-invalid"
+   },
+   "mask": [
+    "(?s)\"stackTrace\" : \\[.*?\\]",
+    "\"epochTime\" : \\d+",
+    "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)",
+    "content-length: \\d+",
+    {"regex": "(\"type\" : \"WARN\",\\n)    \"port\" : <port>,\\n(    \"messageFormat\" : \"org\\.mockserver\\.)", "replace": "$1$2", "reason": "the scheduler logs a failed forward future on whichever thread completes it, which carries a port only when it served a request before"}
+   ]
+  },
+  {
+   "method": "GET",
+   "path": "/r-invalid",
+   "note": "a response template that renders no response: 500"
+  }
+ ]
+}

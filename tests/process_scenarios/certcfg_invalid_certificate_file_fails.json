@@ -1,0 +1,34 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}",
+    "-Dmockserver.privateKeyPath={{files}}/tls/foreign-leaf-key.pem",
+    "-Dmockserver.x509CertificatePath={{files}}/tls/invalid.pem"
+  ],
+  "readiness": {
+    "logContains": "started on port",
+    "settleMillis": 1000
+  },
+  "afterReady": [
+    {
+      "tls": 1,
+      "warmup": true
+    },
+    {
+      "tls": 3,
+      "label": "t"
+    }
+  ],
+  "timeoutSecs": 150,
+  "expect": {
+    "running": true,
+    "tls": {
+      "t": "refused"
+    },
+    "stdoutContains": [
+      "SSL or decoder fault caught by port unification handler",
+      "is not a valid PEM-encoded certificate"
+    ]
+  }
+}

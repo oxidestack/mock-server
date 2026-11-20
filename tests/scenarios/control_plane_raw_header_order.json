@@ -1,0 +1,126 @@
+{
+ "source": "raw header order of control-plane replies (content-type from the body's media type comes after connection; ResponseWriter's own replaceHeader puts it first)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "0868-a",
+    "httpRequest": {
+     "path": "/a"
+    },
+    "httpResponse": {
+     "body": "x"
+    }
+   },
+   "note": "one expectation to retrieve, a fixed id so the raw bodies compare"
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /a HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "one request to retrieve, a fixed Host so the raw bodies compare",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/retrieve?type=ACTIVE_EXPECTATIONS HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "retrieve expectations as JSON: withBody(..., MediaType), content-type after connection",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=java HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "retrieve expectations as Java",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/retrieve?type=REQUESTS HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "retrieve requests as JSON",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/retrieve?type=LOGS HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 24\r\nConnection: close\r\n\r\n{\"path\":\"/no-such-path\"}"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "retrieve logs (text) of a filter nothing matches",
+   "text": true,
+   "mask": [
+    {
+     "regex": "\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\\.\\d{3}",
+     "replace": "<timestamp>",
+     "reason": "log entry times"
+    }
+   ]
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/expectation HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 71\r\nConnection: close\r\n\r\n{\"id\":\"0868-b\",\"httpRequest\":{\"path\":\"/b\"},\"httpResponse\":{\"body\":\"y\"}}"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "create expectation: 201 echoing JSON, content-type after connection",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "GET /mockserver/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "ready: ResponseWriter.writeResponse(request, OK, body, contentType), content-type first",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/expectation HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 26\r\nConnection: close\r\n\r\n{\"httpRequest\":{\"path\":1}}"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "invalid expectation: 400 text, content-type first",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/verify HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 54\r\nConnection: close\r\n\r\n{\"httpRequest\":{\"path\":\"/nope\"},\"times\":{\"atLeast\":1}}"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "failed verification: 406 text, content-type first",
+   "text": true
+  },
+  {
+   "tcp": [
+    {
+     "text": "PUT /mockserver/clear HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "awaitBytes": 12,
+   "note": "clear: 200 without a body or content-type",
+   "text": true
+  }
+ ]
+}

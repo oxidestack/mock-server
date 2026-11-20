@@ -1,0 +1,75 @@
+{
+  "target": "both",
+  "args": [
+    "-serverPort",
+    "{{serverPort}}"
+  ],
+  "env": {
+    "MOCKSERVER_COMPACT_LOG_FORMAT": "true",
+    "MOCKSERVER_INITIALIZATION_JSON_PATH": "{{scratch}}/init.json",
+    "MOCKSERVER_INITIALIZATION_CLASS": "org.example.NoSuchInitializer"
+  },
+  "files": {
+    "init.json": "[{\"httpRequest\": \n  {\"path\": "
+  },
+  "readiness": {
+    "logContains": "started on port"
+  },
+  "afterReady": [
+    {
+      "http": {
+        "method": "PUT",
+        "path": "/mockserver/expectation",
+        "ownHost": true,
+        "body": "[{\"httpRequest\": {\"path\": \"/delay\"}, \"httpResponse\": {\"body\": \"d\", \"delay\": {\"timeUnit\": \"MILLISECONDS\", \"value\": 0, \"template\": \"not a\\n   number\", \"templateType\": \"MUSTACHE\"}}}, {\"httpRequest\": {\"path\": \"/file\"}, \"httpResponse\": {\"body\": {\"type\": \"FILE\", \"filePath\": \"/no/such/dir/missing.txt\"}}}, {\"httpRequest\": {\"path\": \"/hooked\"}, \"httpResponse\": {\"body\": \"h\"}, \"afterActions\": [{\"httpRequest\": {\"method\": \"POST\", \"path\": \"/hook\", \"headers\": {\"Host\": [\"localhost:1\"]}, \"body\": \"x\"}}]}]",
+        "expectStatus": 201
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/delay",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/file",
+        "ownHost": true,
+        "expectStatus": 500
+      }
+    },
+    {
+      "http": {
+        "method": "GET",
+        "path": "/hooked",
+        "ownHost": true,
+        "expectStatus": 200
+      }
+    },
+    {
+      "sleepMillis": 1500
+    }
+  ],
+  "timeoutSecs": 90,
+  "expect": {
+    "running": true,
+    "stdoutInOrder": [
+      "[WARN] exception while loading JSON initialization file, ignoring file: /",
+      "[WARN] exception while loading JSON initialization class, ignoring class: org.example.NoSuchInitializer\njava.lang.ClassNotFoundException: org.example.NoSuchInitializer\n",
+      "falling back to static delay because: delay template rendered non-numeric value \"not a number\"\n",
+      "unable to read file \" /no/such/dir/missing.txt \" for response body, returning 500 because: Exception while loading \"/no/such/dir/missing.txt\"\n",
+      "after-action webhook failed for request POST /hook - "
+    ],
+    "stdoutNotContains": [
+      "ignoring file:\n",
+      "ignoring class:\n",
+      "static delay because:\n",
+      "returning 500 because:\n",
+      "webhook failed for request\n",
+      "webhook failed for request{"
+    ]
+  }
+}

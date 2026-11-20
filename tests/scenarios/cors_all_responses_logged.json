@@ -1,0 +1,14 @@
+{"properties": {"enableCORSForAllResponses": "true"},
+ "steps": [
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/plain"}, "httpResponse": {"statusCode": 200, "body": "plain"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"path": "/own"}, "httpResponse": {"statusCode": 201, "headers": {"X-Own": ["one"], "Access-Control-Allow-Origin": ["http://own.example"], "Access-Control-Max-Age": ["60"]}, "body": "own"}}},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"method": "OPTIONS", "path": "/matched"}, "httpResponse": {"statusCode": 204}}},
+  {"method": "PUT", "path": "/mockserver/clear?type=log"},
+  {"note": "matched, no origin", "method": "GET", "path": "/plain"},
+  {"note": "matched, origin", "method": "GET", "path": "/plain", "headers": {"Origin": "http://example.com"}},
+  {"note": "matched, own headers, origin", "method": "GET", "path": "/own", "headers": {"Origin": "http://example.com", "Access-Control-Request-Headers": "x-a"}},
+  {"note": "matched preflight", "method": "OPTIONS", "path": "/matched", "headers": {"Origin": "http://example.com", "Access-Control-Request-Method": "PUT"}},
+  {"note": "the response entries", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUEST_RESPONSES"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS"}
+]}

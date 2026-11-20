@@ -1,0 +1,108 @@
+{
+ "properties": {
+  "forwardProxyBlockPrivateNetworks": "true",
+  "socketConnectionTimeoutInMillis": "500"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "note": "httpForwardTemplate targets chosen by socketAddress or by an explicit Host header",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/t/sa"
+     },
+     "httpForwardTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"path\": \"/t/upstream\", \"socketAddress\": {\"host\": \"169.254.169.254\", \"port\": 80, \"scheme\": \"HTTP\"}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/t/host"
+     },
+     "httpForwardTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"path\": \"/t/upstream\", \"headers\": {\"Host\": [\"127.0.0.1:8080\"]}}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/t/override"
+     },
+     "httpForwardTemplate": {
+      "templateType": "VELOCITY",
+      "template": "{\"path\": \"/t/upstream\", \"socketAddress\": {\"host\": \"169.254.169.254\", \"port\": 80, \"scheme\": \"HTTP\"}}",
+      "responseOverride": {
+       "statusCode": 299,
+       "body": "override"
+      }
+     }
+    }
+   ],
+   "mask": [
+    "\"id\" : \"[0-9a-f-]+\""
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "socketAddress host 169.254.169.254: blocked, 502",
+   "method": "GET",
+   "path": "/t/sa"
+  },
+  {
+   "note": "Host header 127.0.0.1:8080 (no socketAddress): blocked, 502",
+   "method": "GET",
+   "path": "/t/host"
+  },
+  {
+   "note": "blocked before any responseOverride applies",
+   "method": "GET",
+   "path": "/t/override"
+  },
+  {
+   "note": "the WARN entries; the oracle writes the post-match re-scan entries and the 502's 'returning response' in either order",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/t/.*"
+   },
+   "mask": [
+    "^content-length: \\d+$"
+   ],
+   "compare": "unordered"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "trafficValidate fetching its spec from a blocked host: 403",
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "spec": "http://127.0.0.1:{{deadport}}/openapi.json"
+   }
+  },
+  {
+   "note": "an https spec URL on a private address",
+   "method": "PUT",
+   "path": "/mockserver/trafficValidate",
+   "body": {
+    "specUrlOrPayload": "https://10.1.2.3/spec.yaml"
+   }
+  },
+  {
+   "note": "the trafficValidate WARN entries",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS&format=JSON",
+   "mask": [
+    "^content-length: \\d+$"
+   ]
+  }
+ ]
+}

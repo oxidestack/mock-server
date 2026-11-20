@@ -1,0 +1,261 @@
+{
+ "properties": {
+  "logLevel": "INFO"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "GET",
+   "path": "/p1",
+   "note": "five requests in the event log"
+  },
+  {
+   "method": "GET",
+   "path": "/p2"
+  },
+  {
+   "method": "GET",
+   "path": "/p3"
+  },
+  {
+   "method": "GET",
+   "path": "/p4"
+  },
+  {
+   "method": "GET",
+   "path": "/p5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "all five recorded"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxLogEntries": 2
+   },
+   "note": "maxLogEntries reduced while the server runs"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "after the reduction"
+  },
+  {
+   "method": "GET",
+   "path": "/p6",
+   "note": "more requests than the new bound"
+  },
+  {
+   "method": "GET",
+   "path": "/p7"
+  },
+  {
+   "method": "GET",
+   "path": "/p8"
+  },
+  {
+   "method": "GET",
+   "path": "/p9"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS",
+   "note": "after more requests"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxLogEntries": 50
+   },
+   "note": "only maxLogEntries supplied: ringBufferSize derives, no warning"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxLogEntries": 100000
+   },
+   "note": "back to the default"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/one"
+    },
+    "httpResponse": {
+     "body": "/one"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/two"
+    },
+    "httpResponse": {
+     "body": "/two"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/three"
+    },
+    "httpResponse": {
+     "body": "/three"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/four"
+    },
+    "httpResponse": {
+     "body": "/four"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "four expectations"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 2
+   },
+   "note": "maxExpectations reduced while the server runs"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "after the reduction"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/five"
+    },
+    "httpResponse": {
+     "body": "/five"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/six"
+    },
+    "httpResponse": {
+     "body": "/six"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/seven"
+    },
+    "httpResponse": {
+     "body": "/seven"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS",
+   "note": "after more expectations than the new bound"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxExpectations": 15000
+   },
+   "note": "back to the default"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneAuditMaxEntries": 5
+   },
+   "note": "audit capacity changed"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "controlPlaneAuditMaxEntries": 1000
+   },
+   "note": "back to the default"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "ringBufferSize": 4096
+   },
+   "note": "ringBufferSize differs from the value in force"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxWebSocketExpectations": 2000
+   },
+   "note": "maxWebSocketExpectations differs from the value in force"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/configuration"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/configuration",
+   "body": {
+    "maxWebSocketExpectations": 1500,
+    "ringBufferSize": 16384
+   },
+   "note": "equal to the value in force: nothing to warn about"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "note": "no init-only warning, no resize: the event log keeps its entries"
+  }
+ ]
+}

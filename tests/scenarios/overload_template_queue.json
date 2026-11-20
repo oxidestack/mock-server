@@ -1,0 +1,107 @@
+{
+ "source": "Scheduler.scheduleTemplateAction / executeTemplateAction: response template renders run on actionHandlerThreadCount template threads; one waiting for a thread is admitted while fewer than maxQueuedTemplateActions wait, else answered at once with 503, Retry-After: 1; a delayed template action is admitted to the queue, or refused, once its delay elapses (SchedulerOverloadTest shouldRejectTemplateActionWhenTemplateQueueIsFull, shouldRejectDelayedTemplateActionWhenTemplateQueueIsFullOnceTheDelayElapses); velocityTemplateExecutionTimeout 0: the slow template only has to hold the thread, so its render time must not meet the 5 s default",
+ "properties": {
+  "actionHandlerThreadCount": "1",
+  "maxQueuedTemplateActions": "1",
+  "velocityTemplateExecutionTimeout": "0"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 30000,
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/slow-template"
+     },
+     "httpResponseTemplate": {
+      "templateType": "VELOCITY",
+      "template": "#set($n = 0)#foreach($i in [1..10000000])#set($n = $n + 1)#end{\"statusCode\": 200, \"body\": \"$n\"}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/delayed-template"
+     },
+     "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"body\": \"quick\"}",
+      "delay": {
+       "timeUnit": "MILLISECONDS",
+       "value": 300
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/plain"
+     },
+     "httpResponse": {
+      "body": "plain"
+     }
+    }
+   ]
+  },
+  {
+   "note": "renders on the only template thread",
+   "async": "a",
+   "maxMillis": 120000,
+   "method": "GET",
+   "path": "/slow-template"
+  },
+  {
+   "sleepMillis": 200,
+   "awaitCounts": {"templateRunning": 1}
+  },
+  {
+   "note": "waits for the thread: the queue of 1 is full",
+   "async": "b",
+   "maxMillis": 120000,
+   "method": "GET",
+   "path": "/slow-template"
+  },
+  {
+   "sleepMillis": 200,
+   "awaitCounts": {"templateRunning": 1, "templateQueued": 1}
+  },
+  {
+   "note": "refused at once",
+   "method": "GET",
+   "path": "/slow-template",
+   "maxMillis": 2000
+  },
+  {
+   "note": "a delayed template action is refused once its delay elapses",
+   "method": "GET",
+   "path": "/delayed-template",
+   "maxMillis": 2000
+  },
+  {
+   "note": "a plain response renders no template and is never refused",
+   "method": "GET",
+   "path": "/plain",
+   "maxMillis": 2000
+  },
+  {
+   "await": "a"
+  },
+  {
+   "await": "b"
+  },
+  {
+   "note": "with the queue drained the delayed template is admitted",
+   "method": "GET",
+   "path": "/delayed-template"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "compare": "unordered",
+   "mask": [
+    "(?<=\"totalTimeInMillis\" : )\\d+",
+    "(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"
+   ]
+  }
+ ]
+}

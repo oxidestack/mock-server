@@ -1,0 +1,414 @@
+{
+ "properties": {
+  "driftDetectionEnabled": "false"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "nothing registered",
+   "method": "GET",
+   "path": "/mockserver/serviceChaos"
+  },
+  {
+   "note": "blank",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos"
+  },
+  {
+   "note": "clear and host",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "clear": true,
+    "host": "a"
+   }
+  },
+  {
+   "note": "no host",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "chaos": {
+     "errorStatus": 500
+    }
+   }
+  },
+  {
+   "note": "invalid",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "a",
+    "chaos": {
+     "errorStatus": 1000
+    }
+   }
+  },
+  {
+   "note": "invalid probability",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "a",
+    "chaos": {
+     "dropConnectionProbability": -0.5
+    }
+   }
+  },
+  {
+   "note": "invalid truncate",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "a",
+    "chaos": {
+     "truncateBodyAtFraction": 1.5
+    }
+   }
+  },
+  {
+   "note": "bad type",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "a",
+    "chaos": {
+     "latency": 5
+    }
+   }
+  },
+  {
+   "note": "register",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "Svc.Test:9000",
+    "chaos": {
+     "errorStatus": 503,
+     "errorProbability": 1,
+     "retryAfter": "2",
+     "latency": {
+      "timeUnit": "MILLISECONDS",
+      "value": 1
+     },
+     "graphqlErrors": false,
+     "seed": 7,
+     "quotaName": "z",
+     "quotaLimit": 5,
+     "quotaWindowMillis": 1000,
+     "quotaErrorStatus": 503,
+     "degradationRampMillis": 5,
+     "outageAfterMillis": 0,
+     "outageDurationMillis": 9,
+     "succeedFirst": 0,
+     "failRequestCount": 3,
+     "truncateBodyAtFraction": 1,
+     "malformedBody": false,
+     "slowResponseChunkSize": 2,
+     "slowResponseChunkDelay": {
+      "timeUnit": "SECONDS",
+      "value": 0
+     },
+     "dropConnectionProbability": 0,
+     "graphqlErrorMessage": "m",
+     "graphqlErrorCode": "c",
+     "graphqlNullifyData": true
+    }
+   }
+  },
+  {
+   "note": "register ttl",
+   "method": "PUT",
+   "path": "/serviceChaos",
+   "body": {
+    "host": "other",
+    "chaos": {
+     "errorStatus": 500
+    },
+    "ttlMillis": 600000
+   }
+  },
+  {
+   "note": "list",
+   "method": "GET",
+   "path": "/mockserver/serviceChaos",
+   "mask": [
+    "\"other\" : \\d+"
+   ]
+  },
+  {
+   "note": "patch",
+   "method": "PATCH",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "svc.test",
+    "chaos": {
+     "errorStatus": 504,
+     "errorProbability": 0.25
+    }
+   }
+  },
+  {
+   "note": "patch new",
+   "method": "PATCH",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "new",
+    "chaos": {
+     "latency": {
+      "timeUnit": "SECONDS",
+      "value": 1
+     }
+    }
+   }
+  },
+  {
+   "note": "patch no chaos",
+   "method": "PATCH",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "new"
+   }
+  },
+  {
+   "note": "remove",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "new"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "other",
+    "remove": true
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "svc.test",
+    "chaos": {
+     "errorStatus": 503,
+     "retryAfter": "2"
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/target"
+     },
+     "httpResponse": {
+      "body": "target"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fwd"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/target",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fwdown"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/target",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     },
+     "chaos": {
+      "truncateBodyAtFraction": 0.5
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/mock"
+     },
+     "httpResponse": {
+      "body": "mocked"
+     }
+    }
+   ]
+  },
+  {
+   "note": "service chaos on forward",
+   "method": "GET",
+   "path": "/fwd",
+   "headers": {
+    "Host": [
+     "svc.test"
+    ]
+   }
+  },
+  {
+   "note": "expectation chaos wins",
+   "method": "GET",
+   "path": "/fwdown",
+   "headers": {
+    "Host": [
+     "svc.test"
+    ]
+   }
+  },
+  {
+   "note": "not applied to responses",
+   "method": "GET",
+   "path": "/mock",
+   "headers": {
+    "Host": [
+     "svc.test"
+    ]
+   }
+  },
+  {
+   "note": "other host untouched",
+   "method": "GET",
+   "path": "/fwd"
+  },
+  {
+   "note": "forward chaos log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/fwd",
+    "headers": {
+     "Host": [
+      "svc.test"
+     ]
+    }
+   },
+   "mask": [
+    "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+    {
+     "regex": "(\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis|injectedChaosLatencyMillis)\" : )\\d+",
+     "replace": "${1}<n>"
+    }
+   ]
+  },
+  {
+   "note": "forward reshape log",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/fwdown"
+   },
+   "mask": [
+    "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+    {
+     "regex": "(\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis|injectedChaosLatencyMillis)\" : )\\d+",
+     "replace": "${1}<n>"
+    }
+   ]
+  },
+  {
+   "note": "recorded",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/fwd"
+   },
+   "mask": [
+    "\"x-mockserver-response-time-ms\" : \\[ \"\\d+\" \\]",
+    {
+     "regex": "(\"(connectionEstablishedMillis|connectionTimeInMillis|requestStartedMillis|responseReceivedMillis|timeToFirstByteInMillis|totalTimeInMillis|injectedChaosLatencyMillis)\" : )\\d+",
+     "replace": "${1}<n>"
+    }
+   ]
+  },
+  {
+   "note": "clear",
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "clear": true
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "survivor",
+    "chaos": {
+     "errorStatus": 500
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "reset clears",
+   "method": "GET",
+   "path": "/mockserver/serviceChaos"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "a.svc",
+    "chaos": {
+     "errorStatus": 500
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "a.svc",
+    "chaos": {
+     "errorStatus": 500
+    },
+    "ttlMillis": 5000
+   }
+  },
+  {
+   "method": "PATCH",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "host": "a.svc",
+    "chaos": {
+     "errorStatus": 501
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/serviceChaos",
+   "body": {
+    "clear": true
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS"
+  },
+  {"note": "the same entries as LOG_ENTRIES (a Java throwable, stack frames and all, is left out: docs/divergences.md)", "method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "mask": [{"regex": ",\\s*\"throwable\" : \\{[\\s\\S]*?\\n    \\}", "replace": ""}, {"regex": "(\"epochTime\" : )\\d+", "replace": "${1}0"}, "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", {"regex": "(Millis\\\\?\" : )\\d+", "replace": "${1}0"}, {"regex": "(x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\")\\d+", "replace": "${1}0"}]}
+]
+}

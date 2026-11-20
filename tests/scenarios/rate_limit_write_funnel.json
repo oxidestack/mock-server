@@ -1,0 +1,64 @@
+{
+ "source": "hand-written: the rate limit is taken in the write funnel, after a template, class callback, response list, request breakpoint or forward has run",
+ "isolated": true,
+ "properties": {},
+ "steps": [
+  {"wsOpen": "bp", "headers": {"X-CLIENT-REGISTRATION-ID": "rl-funnel-client"}, "note": "callback WebSocket under a fixed client id"},
+  {"wsRead": "bp", "note": "the client id message"},
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {"httpRequest": {"path": "/tpl"}, "httpResponseTemplate": {"template": "{\"statusCode\": 200, \"body\": \"templated\"}", "templateType": "VELOCITY", "delay": {"timeUnit": "MILLISECONDS", "value": 400}}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/tplx"}, "httpResponseTemplate": {"template": "{\"statusCode\": 200, \"body\": \"templated\"}", "templateType": "VELOCITY", "delay": {"templateType": "MUSTACHE", "template": "not a number"}}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/badtpl"}, "httpResponseTemplate": {"template": "#if(", "templateType": "VELOCITY"}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/cb"}, "httpResponseClassCallback": {"callbackClass": "com.example.NoSuchCallback", "delay": {"timeUnit": "MILLISECONDS", "value": 400}}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/list"}, "httpResponses": [{"body": "one"}, {"body": "two", "delay": {"templateType": "MUSTACHE", "template": "not a number"}}, {"body": {"type": "FILE", "filePath": "/no/such/rate_limit_write_funnel.txt"}}], "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/bp"}, "httpResponse": {"body": "held"}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/target"}, "httpResponse": {"body": "upstream"}},
+    {"httpRequest": {"path": "/fwd"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/target", "headers": {"Host": ["localhost:{{port}}"]}}}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/dead"}, "httpOverrideForwardedRequest": {"requestOverride": {"headers": {"Host": ["{{deadhost}}"]}}}, "rateLimit": {"limit": 1, "windowMillis": 600000}},
+    {"httpRequest": {"path": "/drop"}, "httpResponse": {"body": "dropped"}, "chaos": {"dropConnectionProbability": 1.0}, "rateLimit": {"limit": 1, "windowMillis": 600000}}
+   ],
+   "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]
+  },
+  {"method": "PUT", "path": "/mockserver/breakpoint/matcher", "body": {"httpRequest": {"path": "/bp"}, "phases": ["REQUEST"], "clientId": "rl-funnel-client"}},
+  {"method": "PUT", "path": "/mockserver/clear?type=LOG"},
+
+  {"method": "GET", "path": "/tpl", "note": "template 1: delayed"},
+  {"method": "GET", "path": "/tpl", "minMillis": 400, "note": "template over the limit: the action delay still applies, then the 429", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <epoch>"}, {"regex": "retry-after: \\d+$", "replace": "retry-after: <secs>"}]},
+  {"method": "GET", "path": "/tplx", "note": "template with a failing delay template 1"},
+  {"method": "GET", "path": "/tplx", "note": "over the limit: the delay template is still resolved", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <epoch>"}, {"regex": "retry-after: \\d+$", "replace": "retry-after: <secs>"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/tplx"}, "note": "the delay fallback WARN on both, and the 429 logged for the template action", "mask": ["(?s)\"stackTrace\" : \\[.*?\\]", "\"epochTime\" : \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "content-length: \\d+", "X-RateLimit-Reset[^0-9]{0,40}\\d{10}", "Retry-After[^0-9]{0,40}\\d+"]},
+  {"method": "GET", "path": "/badtpl", "note": "a failing template answers 404"},
+  {"method": "GET", "path": "/badtpl", "note": "and again 404: the limit is never taken"},
+  {"method": "GET", "path": "/badtpl", "note": "still 404"},
+  {"method": "GET", "path": "/cb", "minMillis": 400, "note": "unknown callback class: 404, which takes the limit"},
+  {"method": "GET", "path": "/cb", "minMillis": 400, "note": "over the limit after the delay", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <epoch>"}, {"regex": "retry-after: \\d+$", "replace": "retry-after: <secs>"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/badtpl"}, "mask": ["(?s)\"stackTrace\" : \\[.*?\\]", "\"epochTime\" : \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "content-length: \\d+"]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/cb"}, "mask": ["(?s)\"stackTrace\" : \\[.*?\\]", "\"epochTime\" : \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "content-length: \\d+", "X-RateLimit-Reset[^0-9]{0,40}\\d{10}", "Retry-After[^0-9]{0,40}\\d+"]},
+  {"method": "GET", "path": "/list", "note": "list 1"},
+  {"method": "GET", "path": "/list", "note": "list 2 over the limit: its delay template is resolved", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <epoch>"}, {"regex": "retry-after: \\d+$", "replace": "retry-after: <secs>"}]},
+  {"method": "GET", "path": "/list", "note": "list 3 over the limit: its unreadable file answers 500"},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/list"}, "mask": ["(?s)\"stackTrace\" : \\[.*?\\]", "\"epochTime\" : \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "content-length: \\d+", "X-RateLimit-Reset[^0-9]{0,40}\\d{10}", "Retry-After[^0-9]{0,40}\\d+"]},
+
+  {"method": "GET", "path": "/bp", "async": "bp1", "note": "breakpoint 1: held"},
+  {"wsRead": "bp", "capture": {"body": true, "as": "bp1"}, "mask": ["(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"], "note": "the first held request"},
+  {"wsSend": "bp", "envelope": {"type": "org.mockserver.model.HttpRequest", "value": "{{capture:bp1}}"}, "note": "CONTINUE"},
+  {"await": "bp1", "note": "answered by the expectation"},
+  {"method": "GET", "path": "/bp", "async": "bp2", "note": "breakpoint 2, over the limit: still held", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <epoch>"}, {"regex": "retry-after: \\d+$", "replace": "retry-after: <secs>"}]},
+  {"wsRead": "bp", "capture": {"body": true, "as": "bp2"}, "mask": ["(?<=\"X-MockServer-RequestTimestamp\" : \\[ \")\\d+"], "note": "the second held request"},
+  {"wsSend": "bp", "envelope": {"type": "org.mockserver.model.HttpRequest", "value": "{{capture:bp2}}"}, "note": "CONTINUE"},
+  {"await": "bp2", "note": "then rate limited"},
+  {"wsRead": "bp", "waitMillis": 500, "note": "nothing more is held"},
+
+  {"method": "GET", "path": "/fwd", "note": "forward 1"},
+  {"method": "GET", "path": "/fwd", "note": "forward 2 over the limit: forwarded, then the 429 replaces the answer", "mask": [{"regex": "x-ratelimit-reset: \\d+", "replace": "x-ratelimit-reset: <epoch>"}, {"regex": "retry-after: \\d+$", "replace": "retry-after: <secs>"}]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=REQUESTS", "body": {"path": "/target"}, "note": "the upstream saw both", "mask": ["\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)"]},
+  {"method": "PUT", "path": "/mockserver/retrieve?type=LOGS&format=LOG_ENTRIES", "body": {"path": "/fwd"}, "compare": "unordered", "note": "drift analysis of the first forward races its FORWARDED_REQUEST entry (scheduler.submit)", "mask": ["(?s)\"stackTrace\" : \\[.*?\\]", "\"epochTime\" : \\d+", "\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "content-length: \\d+", "X-RateLimit-Reset[^0-9]{0,40}\\d{10}", "Retry-After[^0-9]{0,40}\\d+", "x-mockserver-response-time-ms\\\\?\" : \\[\\s*\\\\?\"\\d+", "(connectionEstablished|connectionTime|requestStarted|responseReceived|timeToFirstByte|totalTime)(InMillis|Millis)\\\\?\" : \\d+"]},
+  {"method": "GET", "path": "/dead", "note": "a forward that fails answers its failure"},
+  {"method": "GET", "path": "/dead", "note": "and again: the limit is never taken"},
+  {"method": "GET", "path": "/drop", "note": "chaos drop comes before the rate limit"},
+  {"method": "GET", "path": "/drop", "note": "dropped again, never rate limited"}
+ ]
+}

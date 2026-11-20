@@ -1,0 +1,139 @@
+{
+  "quic": true,
+  "properties": {
+    "http3Port": "19641",
+    "maxHeaderSize": "32768",
+    "logLevel": "WARN",
+    "http3ConnectUdpEnabled": "true"
+  },
+  "steps": [
+    {
+      "method": "GET",
+      "path": "/mockserver/http3status",
+      "pollUntil": "\"enabled\" ?: ?true",
+      "note": "wait for the HTTP/3 server"
+    },
+    {
+      "h3": true,
+      "method": "GET",
+      "path": "/warm-up",
+      "note": "lets the oracle's startup logging finish"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset",
+      "note": "the oracle may log its startup entries after the opening reset: reset again"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/limit"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/over"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/upload"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/upload_over"
+          },
+          "httpResponse": {
+            "body": "served"
+          }
+        }
+      ],
+      "mask": [
+        "\"id\" : \"[0-9a-f-]+\""
+      ],
+      "note": "served paths"
+    },
+    {
+      "h3": true,
+      "method": "GET",
+      "path": "/limit",
+      "authority": "localhost",
+      "settings": [
+        6
+      ],
+      "note": "with CONNECT-UDP enabled: SETTINGS_MAX_FIELD_SECTION_SIZE is maxHeaderSize"
+    },
+    {
+      "h3": true,
+      "method": "GET",
+      "path": "/limit",
+      "authority": "localhost",
+      "headers": {
+        "x-filler": "{{repeat:32548:a}}"
+      },
+      "note": "a header section of exactly maxHeaderSize is served"
+    },
+    {
+      "h3": true,
+      "method": "GET",
+      "path": "/over",
+      "authority": "localhost",
+      "headers": {
+        "x-filler": "{{repeat:32550:a}}"
+      },
+      "closeError": true,
+      "note": "one byte over closes the connection with H3_EXCESSIVE_LOAD"
+    },
+    {
+      "h3": true,
+      "method": "GET",
+      "path": "/limit",
+      "authority": "localhost",
+      "headers": {
+        "x-filler": "{{repeat:32548:a}}"
+      },
+      "note": "the server carries on"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS",
+      "body": {
+        "path": "/over"
+      },
+      "note": "a request over the limit is never dispatched"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUESTS",
+      "body": {
+        "path": "/upload_over"
+      },
+      "note": "nor one whose trailers are over it"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=LOGS",
+      "note": "one WARN per refused section, naming the client's address",
+      "mask": [
+        "\"totalTimeInMillis\" : \\d+",
+        {
+          "regex": "/127\\.0\\.0\\.1:\\d+",
+          "replace": "/127.0.0.1:<client port>"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# org.mockserver.cli.MainTest (mockserver-netty): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldStartMockServer  process:log_level_debug_prints_fine
+shouldStartMockServerWithRemotePortAndHost  process:cli_legacy_proxy_remote_port_and_host_forwards
+shouldStartMockServerWithRemotePort  process:cli_legacy_proxy_remote_port_forwards
+shouldStartMockServerFromSystemProperty  process:cli_system_property_server_port_starts  # the -D option is the process's system property
+shouldPreferCliArgOverSystemProperty  process:cli_command_line_port_beats_system_property
+shouldStartMockServerFromPropertiesFile  process:cli_property_file_server_port_starts
+shouldPrintOutUsageForInvalidServerPort  process:cli_validate_legacy_server_port, process:main_invalid_server_port_exits_zero
+shouldPrintOutUsageForInvalidRemotePort  process:cli_legacy_flags_validate_remote_port, process:main_invalid_remote_port_exits_zero
+shouldPrintOutUsageForInvalidRemoteHost  process:cli_legacy_invalid_remote_host, process:main_invalid_remote_host_exits_zero
+shouldPrintOutUsageForInvalidLogLevel  process:cli_legacy_invalid_log_level, process:main_invalid_log_level_exits_zero
+shouldExitNonZeroWhenServerFailsToStart  process:main_exit_one_on_failed_bind
+shouldExitZeroForInvalidServerPortUsageError  process:cli_validate_legacy_server_port, process:main_invalid_server_port_exits_zero
+shouldExitNonZeroWhenTheHttp3PortCannotBeBound  process:cli_http3_port_held_exits_one  # the oracle is its HTTP/3 image; the DNS listener, which starts first, holds the port
+shouldExitNonZeroWhenTheHttp3PortIsNotAPort  process:cli_http3_port_not_a_port_exits_one
+shouldPrintTheMessageAloneWhenTheHttp3PortCannotBeBound  process:cli_http3_port_held_exits_one
+shouldPrintTheMessageAloneWhenControlPlaneMutualTlsIsRefused  process:auth_mtls_bundled_ca_without_chain_refused  # a unit test of Main.logStartupFailure; through the process the refusal is an IllegalArgumentException, so the oracle shows the usage and never prints this message
+shouldPrintTheStackTraceOfAnyOtherHttp3StartFailure  process:cli_http3_port_not_a_port_exits_one  # its synthetic cause cannot be produced; an out-of-range http3Port is the reachable "other" failure, logged as `exception while starting:{}` with the exception (mock-server prints no stack frames, as for any start failure)
+shouldExitNonZeroWhenTheDnsPortCannotBeBound  process:cli_http3_port_held_exits_one, rust:tests/upstream/udp_start_failure.rs::should_refuse_a_second_mock_server_given_the_dns_port_of_the_first  # the oracle's DNS listener binds before anything in its container could hold the port: the process scenario checks the exit of a refused UDP listener, the Rust port the DNS refusal itself
+shouldExitNonZeroWhenTheDnsPortIsNotAPort  process:cli_dns_port_not_a_port_exits_one
+shouldPrintTheMessageAloneWhenTheDnsPortCannotBeBound  rust:tests/upstream/udp_start_failure.rs::should_print_the_message_alone_when_the_dns_port_cannot_be_bound  # a unit test of Main.logStartupFailure; the held DNS port cannot be reached in the oracle's container (see shouldExitNonZeroWhenTheDnsPortCannotBeBound)
+shouldPrintTheStackTraceOfAnyOtherDnsStartFailure  process:cli_dns_port_not_a_port_exits_one  # its synthetic cause cannot be produced; an out-of-range dnsPort is the reachable "other" failure
+shouldPrintTheMessageAloneWhenDataPlaneMutualTlsIsRefused  gap  # 9.1.0 bundled-CA data-plane mTLS refusal is not matched yet

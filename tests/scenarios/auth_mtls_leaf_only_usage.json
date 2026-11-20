@@ -1,0 +1,60 @@
+{
+ "properties": {
+  "controlPlaneTLSMutualAuthenticationRequired": "true",
+  "controlPlaneTLSMutualAuthenticationCAChain": "{{files}}/tls/private-ca/ca-cert.pem",
+  "initializationJsonPath": "{{files}}/auth/mtls_leaf_only_forwards.json",
+  "controlPlaneAuditEnabled": "true",
+  "forwardProxyClientCertificatesByHost": "localhost={{files}}/tls/private-ca/attack/no-digital-signature-cert.pem;{{files}}/tls/private-ca/attack/no-digital-signature-key.pem,localhost.={{files}}/tls/private-ca/attack/server-auth-cert.pem;{{files}}/tls/private-ca/attack/server-auth-key.pem,127.0.0.1={{files}}/tls/private-ca/ca-cert.pem;{{files}}/tls/private-ca/ca-key.pem,0.0.0.0={{files}}/tls/private-ca/attack/no-eku-with-ca-chain.pem;{{files}}/tls/private-ca/no-eku-key.pem"
+ },
+ "steps": [
+  {
+   "note": "upstream #227: a key usage without digitalSignature does not authenticate",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "an extended key usage without clientAuth does not",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "localhost.:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the trust anchor itself does not",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "127.0.0.1:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "a trusted leaf with its CA appended authenticates",
+   "method": "GET",
+   "path": "/via-tls/clear",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000
+  },
+  {
+   "note": "the audit log: the verified leaf's subject, verified-mtls",
+   "method": "GET",
+   "path": "/via-tls/audit",
+   "headers": {
+    "Host": "0.0.0.0:{{port}}"
+   },
+   "maxMillis": 60000,
+   "mask": [
+    "\"epochTimeMs\" ?: ?\\d+",
+    "\"sourceAddress\" ?: ?\"[^\"]*\""
+   ]
+  }
+ ]
+}

@@ -1,0 +1,33 @@
+{
+ "source": "NettyHttpClient.connectBinaryRelay through connectThroughTunnel (binaryRelayTunnel): the binary relay's upstream connection is a SOCKS5 CONNECT through forwardSocksProxy, here the peer node, to the binary target (the peer itself), whose binary expectation answers",
+ "peer": true,
+ "properties": {
+  "proxyRemoteHost": "{{peerhost}}",
+  "proxyRemotePort": "{{peerport}}",
+  "forwardSocksProxy": "{{peerhost}}:{{peerport}}"
+ },
+ "steps": [
+  {"node": "peer", "method": "PUT", "path": "/mockserver/reset", "note": "the proxy's startup entries are not the point"},
+  {"node": "peer", "method": "PUT", "path": "/mockserver/expectation", "body": {"httpRequest": {"binaryData": "CQgHBgUEAwIBAA=="}, "binaryResponse": {"binaryData": "AQIDBA=="}}, "mask": ["\"id\" : \"[0-9a-f-]+\""]},
+  {"tcp": ["CQgHBgUEAwIBAA=="], "note": "relayed through the tunnel to the peer, which answers with its binary response"},
+  {"sleepMillis": 500},
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+", "replace": "/<client>", "reason": "the binary client's address: the Docker gateway's when recorded, loopback on replay"},
+    {"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:(<port>|\\d+)", "replace": "/<peer>", "reason": "the peer's address: its container's when recorded, loopback on replay"}
+   ],
+   "compare": "unordered",
+   "note": "what the relay logged"
+  },
+  {
+   "node": "peer",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [{"regex": "/\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+", "replace": "/<client>", "reason": "the relay's address as the peer sees it"}],
+   "compare": "unordered",
+   "note": "what the proxy (and target) logged"
+  }
+ ]
+}

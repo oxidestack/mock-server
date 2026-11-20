@@ -1,0 +1,349 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/up"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "Content-Type": [
+        "application/json"
+       ],
+       "X-Up": [
+        "1"
+       ]
+      },
+      "body": "{\"upstream\":true}"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/sse-up"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+       "Content-Type": [
+        "text/plain"
+       ]
+      },
+      "body": "data: one\n\ndata: two\n\n",
+      "connectionOptions": {
+       "chunkSize": 6
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/fwd/.*"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/sfwd/.*"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/sse-up",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dead/.*"
+     },
+     "httpForward": {
+      "host": "{{deadhost}}",
+      "port": "{{deadport}}"
+     }
+    }
+   ]
+  },
+  {
+   "note": "json upstream: json stream true",
+   "method": "POST",
+   "path": "/fwd/0",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"model\":\"x\",\"stream\":true}"
+  },
+  {
+   "note": "json upstream: json stream true whitespace",
+   "method": "POST",
+   "path": "/fwd/1",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"stream\" : true}"
+  },
+  {
+   "note": "json upstream: json stream true across newlines",
+   "method": "POST",
+   "path": "/fwd/2",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\n  \"stream\":\n  true\n}"
+  },
+  {
+   "note": "json upstream: json stream false",
+   "method": "POST",
+   "path": "/fwd/3",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"stream\":false}"
+  },
+  {
+   "note": "json upstream: json no stream field",
+   "method": "POST",
+   "path": "/fwd/4",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"model\":\"x\"}"
+  },
+  {
+   "note": "json upstream: accept event-stream no body",
+   "method": "GET",
+   "path": "/fwd/5",
+   "headers": {
+    "accept": "text/event-stream"
+   }
+  },
+  {
+   "note": "json upstream: accept event-stream among values",
+   "method": "GET",
+   "path": "/fwd/6",
+   "headers": {
+    "accept": "application/json, text/event-stream;q=0.9"
+   }
+  },
+  {
+   "note": "json upstream: non-json content type with stream true",
+   "method": "POST",
+   "path": "/fwd/7",
+   "headers": {
+    "content-type": "text/plain"
+   },
+   "body": "\"stream\":true"
+  },
+  {
+   "note": "json upstream: plain request",
+   "method": "POST",
+   "path": "/fwd/8",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"q\":\"hi\"}"
+  },
+  {
+   "note": "json upstream: no body no headers",
+   "method": "GET",
+   "path": "/fwd/9"
+  },
+  {
+   "note": "chunked text upstream: json stream true",
+   "method": "POST",
+   "path": "/sfwd/0",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"model\":\"x\",\"stream\":true}"
+  },
+  {
+   "note": "chunked text upstream: json stream true whitespace",
+   "method": "POST",
+   "path": "/sfwd/1",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"stream\" : true}"
+  },
+  {
+   "note": "chunked text upstream: json stream true across newlines",
+   "method": "POST",
+   "path": "/sfwd/2",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\n  \"stream\":\n  true\n}"
+  },
+  {
+   "note": "chunked text upstream: json stream false",
+   "method": "POST",
+   "path": "/sfwd/3",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"stream\":false}"
+  },
+  {
+   "note": "chunked text upstream: json no stream field",
+   "method": "POST",
+   "path": "/sfwd/4",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"model\":\"x\"}"
+  },
+  {
+   "note": "chunked text upstream: accept event-stream no body",
+   "method": "GET",
+   "path": "/sfwd/5",
+   "headers": {
+    "accept": "text/event-stream"
+   }
+  },
+  {
+   "note": "chunked text upstream: accept event-stream among values",
+   "method": "GET",
+   "path": "/sfwd/6",
+   "headers": {
+    "accept": "application/json, text/event-stream;q=0.9"
+   }
+  },
+  {
+   "note": "chunked text upstream: non-json content type with stream true",
+   "method": "POST",
+   "path": "/sfwd/7",
+   "headers": {
+    "content-type": "text/plain"
+   },
+   "body": "\"stream\":true"
+  },
+  {
+   "note": "chunked text upstream: plain request",
+   "method": "POST",
+   "path": "/sfwd/8",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"q\":\"hi\"}"
+  },
+  {
+   "note": "chunked text upstream: no body no headers",
+   "method": "GET",
+   "path": "/sfwd/9"
+  },
+  {
+   "note": "dead host: json stream true",
+   "method": "POST",
+   "path": "/dead/0",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"model\":\"x\",\"stream\":true}"
+  },
+  {
+   "note": "dead host: json stream true whitespace",
+   "method": "POST",
+   "path": "/dead/1",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"stream\" : true}"
+  },
+  {
+   "note": "dead host: json stream true across newlines",
+   "method": "POST",
+   "path": "/dead/2",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\n  \"stream\":\n  true\n}"
+  },
+  {
+   "note": "dead host: json stream false",
+   "method": "POST",
+   "path": "/dead/3",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"stream\":false}"
+  },
+  {
+   "note": "dead host: json no stream field",
+   "method": "POST",
+   "path": "/dead/4",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"model\":\"x\"}"
+  },
+  {
+   "note": "dead host: accept event-stream no body",
+   "method": "GET",
+   "path": "/dead/5",
+   "headers": {
+    "accept": "text/event-stream"
+   }
+  },
+  {
+   "note": "dead host: accept event-stream among values",
+   "method": "GET",
+   "path": "/dead/6",
+   "headers": {
+    "accept": "application/json, text/event-stream;q=0.9"
+   }
+  },
+  {
+   "note": "dead host: non-json content type with stream true",
+   "method": "POST",
+   "path": "/dead/7",
+   "headers": {
+    "content-type": "text/plain"
+   },
+   "body": "\"stream\":true"
+  },
+  {
+   "note": "dead host: plain request",
+   "method": "POST",
+   "path": "/dead/8",
+   "headers": {
+    "content-type": "application/json"
+   },
+   "body": "{\"q\":\"hi\"}"
+  },
+  {
+   "note": "dead host: no body no headers",
+   "method": "GET",
+   "path": "/dead/9"
+  },
+  {
+   "note": "exchanges",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/(fwd|sfwd)/.*"
+   },
+   "mask": [
+    {
+     "regex": "(\"x-mockserver-chunk-delays-ms\" : \\[ \"0)(?:,\\d+){3}\"",
+     "replace": "${1},<ms>,<ms>,<ms>\""
+    }
+   ]
+  }
+ ]
+}

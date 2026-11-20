@@ -1,0 +1,183 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) drift-DriftEndToEndAssemblyTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "9b1abcbb5427",
+   "note": "noForwardDriftYieldsEmptyGetDriftResult (drift): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "stub body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "noForwardDriftYieldsEmptyGetDriftResult (drift): upstream (the real response the analyser is given)",
+   "case": "9b1abcbb5427"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"id\": \"harvested-forward\",\n \"priority\": 999,\n \"httpRequest\": {\n  \"path\": \"/matching_path\"\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n }\n}",
+   "note": "noForwardDriftYieldsEmptyGetDriftResult (drift): a forward of the expectation's request",
+   "case": "9b1abcbb5427"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/matching_path"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "stub body"
+    },
+    "id": "0e3d2242-d2c4-441e-bd22-42d2c4941e32",
+    "priority": 0,
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "noForwardDriftYieldsEmptyGetDriftResult (drift): the analysed expectation",
+   "case": "9b1abcbb5427"
+  },
+  {
+   "method": "GET",
+   "path": "/matching_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "noForwardDriftYieldsEmptyGetDriftResult (drift): DriftAnalyzer.analyse (the request, forwarded)",
+   "case": "9b1abcbb5427"
+  },
+  {
+   "sleepMillis": 300,
+   "case": "9b1abcbb5427",
+   "note": "noForwardDriftYieldsEmptyGetDriftResult (drift): reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/drift?expectationId=0e3d2242-d2c4-441e-bd22-42d2c4941e32",
+   "note": "noForwardDriftYieldsEmptyGetDriftResult (drift): DriftStore records of the expectation",
+   "mask": [
+    {
+     "regex": "\"epochTimeMs\" : \\d+",
+     "replace": "\"epochTimeMs\" : <millis>"
+    }
+   ],
+   "case": "9b1abcbb5427"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "5ccecc1dae74",
+   "note": "driftDetectedOnForwardIsRetrievableThroughGetDriftEndpoint (drift): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "harvested-upstream",
+    "priority": 1000,
+    "httpRequest": {
+     "headers": {
+      "Host": [
+       "localhost:[0-9]+"
+      ]
+     }
+    },
+    "httpResponse": {
+     "statusCode": 500,
+     "reasonPhrase": "OK",
+     "body": "upstream body",
+     "delay": {
+      "timeUnit": "MILLISECONDS",
+      "value": 0
+     }
+    }
+   },
+   "note": "driftDetectedOnForwardIsRetrievableThroughGetDriftEndpoint (drift): upstream (the real response the analyser is given)",
+   "case": "5ccecc1dae74"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": "{\n \"id\": \"harvested-forward\",\n \"priority\": 999,\n \"httpRequest\": {\n  \"path\": \"/some_path\"\n },\n \"httpForward\": {\n  \"host\": \"localhost\",\n  \"port\": {{port}}\n }\n}",
+   "note": "driftDetectedOnForwardIsRetrievableThroughGetDriftEndpoint (drift): a forward of the expectation's request",
+   "case": "5ccecc1dae74"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/some_path"
+    },
+    "httpResponse": {
+     "statusCode": 200,
+     "reasonPhrase": "OK",
+     "body": "stub body"
+    },
+    "id": "e00c9664-2b3a-430a-8c96-642b3a230ae7",
+    "priority": 0,
+    "timeToLive": {
+     "unlimited": true
+    },
+    "times": {
+     "unlimited": true
+    }
+   },
+   "note": "driftDetectedOnForwardIsRetrievableThroughGetDriftEndpoint (drift): the analysed expectation",
+   "case": "5ccecc1dae74"
+  },
+  {
+   "method": "GET",
+   "path": "/some_path",
+   "headers": {
+    "Host": "harvest.client"
+   },
+   "note": "driftDetectedOnForwardIsRetrievableThroughGetDriftEndpoint (drift): DriftAnalyzer.analyse (the request, forwarded)",
+   "case": "5ccecc1dae74"
+  },
+  {
+   "sleepMillis": 300,
+   "case": "5ccecc1dae74",
+   "note": "driftDetectedOnForwardIsRetrievableThroughGetDriftEndpoint (drift): reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/drift?expectationId=e00c9664-2b3a-430a-8c96-642b3a230ae7",
+   "note": "driftDetectedOnForwardIsRetrievableThroughGetDriftEndpoint (drift): DriftStore records of the expectation",
+   "mask": [
+    {
+     "regex": "\"epochTimeMs\" : \\d+",
+     "replace": "\"epochTimeMs\" : <millis>"
+    }
+   ],
+   "case": "5ccecc1dae74"
+  }
+ ]
+}

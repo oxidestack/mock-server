@@ -1,0 +1,373 @@
+{
+  "steps": [
+    {
+      "method": "PUT",
+      "path": "/mockserver/reset"
+    },
+    {
+      "method": "PUT",
+      "path": "/mockserver/expectation",
+      "body": [
+        {
+          "httpRequest": {
+            "path": "/up/bare"
+          },
+          "httpResponse": {
+            "body": "{\"name\": \"old\", \"a\": 1}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/up/chunked"
+          },
+          "httpResponse": {
+            "body": "{\"name\": \"old\", \"a\": 1}",
+            "connectionOptions": {
+              "chunkSize": 8
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/up/ct"
+          },
+          "httpResponse": {
+            "headers": {
+              "Content-Type": [
+                "application/json"
+              ]
+            },
+            "body": "{\"name\": \"old\", \"a\": 1}"
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/plain"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/bare",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/merge-long"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/bare",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            },
+            "responseModifier": {
+              "jsonMergePatch": {
+                "extra": "a much longer value here"
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/merge-short"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/bare",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            },
+            "responseModifier": {
+              "jsonMergePatch": {
+                "name": null
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/patch-long"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/bare",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            },
+            "responseModifier": {
+              "jsonPatch": [
+                {
+                  "op": "add",
+                  "path": "/extra",
+                  "value": "a much longer value here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/patch-short"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/bare",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            },
+            "responseModifier": {
+              "jsonPatch": [
+                {
+                  "op": "remove",
+                  "path": "/name"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/chunked-plain"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/chunked",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/chunked-long"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/chunked",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            },
+            "responseModifier": {
+              "jsonMergePatch": {
+                "extra": "a much longer value here"
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/chunked-short"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/chunked",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            },
+            "responseModifier": {
+              "jsonMergePatch": {
+                "name": null
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/ct-long"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/ct",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            },
+            "responseModifier": {
+              "jsonMergePatch": {
+                "extra": "a much longer value here"
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "path": "/hbh/ct-short"
+          },
+          "httpOverrideForwardedRequest": {
+            "requestOverride": {
+              "path": "/up/ct",
+              "headers": {
+                "Host": [
+                  "localhost:{{port}}"
+                ]
+              }
+            },
+            "responseModifier": {
+              "jsonMergePatch": {
+                "name": null
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "note": "control: no patch, the upstream's content-length matches its body",
+      "tcp": [
+        {
+          "text": "GET /hbh/plain HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "jsonMergePatch lengthens the body: the stale content-length is kept, the whole patched body follows",
+      "tcp": [
+        {
+          "text": "GET /hbh/merge-long HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "jsonMergePatch shortens the body: the stale content-length is kept, fewer bytes follow",
+      "tcp": [
+        {
+          "text": "GET /hbh/merge-short HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "jsonPatch lengthens the body",
+      "tcp": [
+        {
+          "text": "GET /hbh/patch-long HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "jsonPatch shortens the body",
+      "tcp": [
+        {
+          "text": "GET /hbh/patch-short HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "chunked upstream (connection and transfer-encoding only): the forwarding client aggregates it into a content-length",
+      "tcp": [
+        {
+          "text": "GET /hbh/chunked-plain HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "chunked upstream, lengthening patch",
+      "tcp": [
+        {
+          "text": "GET /hbh/chunked-long HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "chunked upstream, shortening patch",
+      "tcp": [
+        {
+          "text": "GET /hbh/chunked-short HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "control: an end-to-end header filters the hop-by-hop ones, the length is recomputed",
+      "tcp": [
+        {
+          "text": "GET /hbh/ct-long HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "control: an end-to-end header, shortening patch",
+      "tcp": [
+        {
+          "text": "GET /hbh/ct-short HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "merge-long on a kept-alive connection: what the client reads within two seconds",
+      "tcp": [
+        {
+          "text": "GET /hbh/merge-long HTTP/1.1\r\nHost: x\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "merge-short on a kept-alive connection: what the client reads within two seconds",
+      "tcp": [
+        {
+          "text": "GET /hbh/merge-short HTTP/1.1\r\nHost: x\r\n\r\n"
+        }
+      ],
+      "text": true
+    },
+    {
+      "note": "the logged exchanges keep the stale content-length next to the patched body",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+      "body": {
+        "path": "/hbh/.*"
+      },
+      "mask": [
+        "\"(local|remote)Address\" : \"[^\"]*\""
+      ]
+    },
+    {
+      "note": "recorded expectation of a patched hop-by-hop-only forward",
+      "method": "PUT",
+      "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+      "body": {
+        "path": "/hbh/merge-long"
+      },
+      "mask": [
+        "\"(local|remote)Address\" : \"[^\"]*\""
+      ]
+    }
+  ]
+}

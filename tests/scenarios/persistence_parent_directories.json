@@ -1,0 +1,45 @@
+{
+ "properties": {
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/persistence_parent_directories/nested/expectations.json"
+ },
+ "startupLog": true,
+ "steps": [
+  {
+   "listFiles": "{{scratch}}/persistence_parent_directories",
+   "note": "no reset, so no save yet: the persisted file's directories do not exist, so the file could not be created at start"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "parent-directories",
+    "httpRequest": {
+     "path": "/parent"
+    },
+    "httpResponse": {
+     "body": "directories created"
+    }
+   }
+  },
+  {
+   "readFile": "{{scratch}}/persistence_parent_directories/nested/expectations.json",
+   "pollUntil": "parent-directories",
+   "note": "FilesystemBlobStore.put: the first save creates the missing directories"
+  },
+  {
+   "listFiles": "{{scratch}}/persistence_parent_directories/nested/*",
+   "note": "the save is written through a temporary file moved into place, which leaves nothing behind"
+  },
+  {
+   "deleteFile": "{{scratch}}/persistence_parent_directories/nested/expectations.json",
+   "note": "clean up, so the next run starts without the directories"
+  },
+  {
+   "deleteFile": "{{scratch}}/persistence_parent_directories/nested"
+  },
+  {
+   "deleteFile": "{{scratch}}/persistence_parent_directories"
+  }
+ ]
+}

@@ -1,0 +1,294 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/s/gzip"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ],
+       "content-encoding": [
+        "gzip"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "H4sIAAAAAAACE0tJLEm0UshIzcnJ5+JKAXPK84tyUri4AJ58k9MaAAAA"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/s/corrupt"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ],
+       "content-encoding": [
+        "gzip"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "H4sIAAAAAAAA//////8="
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/s/plain"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "ZGF0YTogaGVsbG8KCg=="
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/s/list"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/event-stream"
+       ],
+       "content-encoding": [
+        "gzip, br"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "H4sIAAAAAAACE0tJLEm0UshIzcnJ5+ICAB1zndQNAAAA"
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/a/corrupt"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/plain"
+       ],
+       "content-encoding": [
+        "gzip"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "H4sIAAAAAAAA//////8="
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m/plain"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/plain"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "aGVsbG8="
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/m/gzip"
+     },
+     "httpResponse": {
+      "headers": {
+       "content-type": [
+        "text/plain"
+       ],
+       "content-encoding": [
+        "gzip"
+       ]
+      },
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "H4sIAAAAAAACE8tIzcnJVyjPL8pJAQCFEUoNCwAAAA=="
+      }
+     }
+    }
+   ],
+   "note": "RelayConnectHandler's loopback leg on streamed responses: StreamingAwareHttpObjectAggregator relays a text/event-stream response (or one to a request asking for a stream) as it arrives, after BoundedZstdHttpContentDecompressor decoded it; a decode failure once the head went closes without the terminating chunk; an aggregated one answers 502."
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /s/gzip HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "streamed gzip through a cleartext CONNECT: decoded as it is relayed"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /s/plain HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "streamed, no coding, through a cleartext CONNECT"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /s/list HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "streamed, a coding list: relayed as written"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /s/corrupt HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "streamed corrupt gzip through a cleartext CONNECT: the head went, the stream closes without its terminating chunk"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "text": "GET /a/corrupt HTTP/1.1\r\nHost: mocked.example.test:80\r\nConnection: close\r\n\r\n"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "aggregated corrupt gzip through a cleartext CONNECT: 502"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "504f5354202f6d2f706c61696e20485454502f312e310d0a486f73743a206d6f636b65642e6578616d706c652e746573743a38300d0a436f6e74656e742d547970653a206170706c69636174696f6e2f6a736f6e0d0a436f6e74656e742d4c656e6774683a2032380d0a436f6e6e656374696f6e3a20636c6f73650d0a0d0a7b226d6f64656c223a2278222c2273747265616d223a20747275657d"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "a JSON request asking for a stream: the loopback relays the mocked response as a stream"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "504f5354202f6d2f706c61696e20485454502f312e310d0a486f73743a206d6f636b65642e6578616d706c652e746573743a38300d0a436f6e74656e742d547970653a206170706c69636174696f6e2f6a736f6e0d0a436f6e74656e742d456e636f64696e673a20677a69700d0a436f6e74656e742d4c656e6774683a2034380d0a436f6e6e656374696f6e3a20636c6f73650d0a0d0a1f8b0800000000000213ab56cacd4f49cd51b252aa50d2512a2e294a4dcc55b25228292a4dad05006aed78a91c000000"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "a gzip JSON request asking for a stream: the loopback decodes it to find the intent"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "504f5354202f6d2f677a697020485454502f312e310d0a486f73743a206d6f636b65642e6578616d706c652e746573743a38300d0a436f6e74656e742d547970653a206170706c69636174696f6e2f6a736f6e0d0a436f6e74656e742d456e636f64696e673a20677a69700d0a436f6e74656e742d4c656e6774683a2034380d0a436f6e6e656374696f6e3a20636c6f73650d0a0d0a1f8b0800000000000213ab56cacd4f49cd51b252aa50d2512a2e294a4dcc55b25228292a4dad05006aed78a91c000000"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "a gzip JSON request asking for a stream, a gzip response: decoded and streamed"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "504f5354202f6d2f706c61696e20485454502f312e310d0a486f73743a206d6f636b65642e6578616d706c652e746573743a38300d0a436f6e74656e742d547970653a206170706c69636174696f6e2f6a736f6e0d0a436f6e74656e742d456e636f64696e673a20677a69700d0a436f6e74656e742d4c656e6774683a2033360d0a436f6e6e656374696f6e3a20636c6f73650d0a0d0a1f8b0800000000000213ab562a2e294a4dcc55b24a4bcc294ead050082d13b0310000000"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "a JSON request not asking for a stream: aggregated"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a000000040000000000000034010500000001828600053a70617468072f732f677a6970000a3a617574686f72697479166d6f636b65642e6578616d706c652e746573743a3830"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "h2c streamed gzip through a cleartext CONNECT"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a000000040000000000000037010500000001828600053a706174680a2f732f636f7272757074000a3a617574686f72697479166d6f636b65642e6578616d706c652e746573743a3830"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "h2c streamed corrupt gzip: the stream is reset"
+  },
+  {
+   "tcp": [
+    {
+     "text": "CONNECT mocked.example.test:80 HTTP/1.1\r\nHost: mocked.example.test:80\r\n\r\n"
+    },
+    {
+     "hex": "505249202a20485454502f322e300d0a0d0a534d0d0a0d0a000000040000000000000035010500000001828600053a70617468082f732f706c61696e000a3a617574686f72697479166d6f636b65642e6578616d706c652e746573743a3830"
+    }
+   ],
+   "chunkMillis": 1000,
+   "text": true,
+   "note": "h2c streamed, no coding"
+  }
+ ]
+}

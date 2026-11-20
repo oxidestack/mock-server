@@ -1,0 +1,76 @@
+{
+ "source": "the out-of-range startup values mockserver-core's configuration tests set through the static store (BodySizeLimitConfigurationTest, BinaryMessageFramingConfigurationTest, SslCertificateLeafValidityInDaysTest, WatchInitializationJsonPollPeriodMillisTest, MaxLlmConversationBodySizeTest, InboundConnectionConfigurationTest, ResponseWriteStallTimeoutConfigurationTest, DriftDetectionConfigTest) and every other property ConfigurationProperties reads with a floor, each below its range: GET /mockserver/config reports the raw values and GET /mockserver/configuration what each was read as.",
+ "target": "both",
+ "args": [
+  "-serverPort",
+  "{{serverPort}}",
+  "-Dmockserver.maxRequestBodySize=0",
+  "-Dmockserver.maxResponseBodySize=-1",
+  "-Dmockserver.binaryMessageLengthPrefixBytes=16",
+  "-Dmockserver.binaryMessageLengthPrefixByteOrder=MIDDLE_ENDIAN",
+  "-Dmockserver.binaryMessageLengthPrefixOffset=-3",
+  "-Dmockserver.sslCertificateLeafValidityInDays=0",
+  "-Dmockserver.watchInitializationJsonPollPeriodMillis=-500",
+  "-Dmockserver.maxLlmConversationBodySize=1000",
+  "-Dmockserver.inboundConnectionIdleTimeoutMillis=-1",
+  "-Dmockserver.maxInboundConnections=-1",
+  "-Dmockserver.responseWriteStallTimeoutMillis=-1",
+  "-Dmockserver.driftSampleRate=-0.5",
+  "-Dmockserver.preemptionSimulationMaxDrainMillis=-1",
+  "-Dmockserver.stopDrainMillis=-1",
+  "-Dmockserver.http3MaxIdleTimeout=-1",
+  "-Dmockserver.http3InitialMaxData=-1",
+  "-Dmockserver.http3InitialMaxStreamDataBidirectional=-1",
+  "-Dmockserver.http3InitialMaxStreamsBidirectional=-1",
+  "-Dmockserver.http3QpackMaxTableCapacity=-1",
+  "-Dmockserver.http3AltSvcMaxAge=-1",
+  "-Dmockserver.maxLoggedBodyBytes=-1",
+  "-Dmockserver.forwardConnectionPoolMaxIdlePerKey=0",
+  "-Dmockserver.forwardConnectionPoolIdleTimeoutMillis=-1",
+  "-Dmockserver.forwardConnectionPoolMaxTotalPerKey=0",
+  "-Dmockserver.forwardSocketKeepAliveIdleSeconds=0",
+  "-Dmockserver.forwardSocketKeepAliveIntervalSeconds=0",
+  "-Dmockserver.forwardSocketKeepAliveCount=0",
+  "-Dmockserver.forwardProxyRetryCount=-1",
+  "-Dmockserver.forwardProxyRetryBackoffMillis=-1",
+  "-Dmockserver.forwardProxyCircuitBreakerFailureThreshold=0",
+  "-Dmockserver.forwardProxyCircuitBreakerWindowMillis=0",
+  "-Dmockserver.maxStreamingCaptureBytes=-1",
+  "-Dmockserver.streamIdleTimeoutSeconds=-1",
+  "-Dmockserver.llmEmbeddingMaxResponseValues=0",
+  "-Dmockserver.llmEmbeddingMaxInputCharacters=0",
+  "-Dmockserver.otelMetricsExportIntervalSeconds=0",
+  "-Dmockserver.prometheusRemoteWriteIntervalSeconds=0",
+  "-Dmockserver.forwardBinaryServerFirstWaitMillis=-1"
+ ],
+ "readiness": {
+  "logContains": "started on port",
+  "settleMillis": 1000
+ },
+ "timeoutSecs": 150,
+ "afterReady": [
+  {
+   "http": {
+    "method": "GET",
+    "path": "/mockserver/config",
+    "compareBody": "config"
+   }
+  },
+  {
+   "http": {
+    "method": "GET",
+    "path": "/mockserver/configuration",
+    "compareBody": "configuration"
+   }
+  }
+ ],
+ "bodyMask": [
+  {
+   "regex": "^(actionHandlerThreadCount|maxEventLogSizeInBytes|maxOpenAiResponsesSizeInBytes): \\d+$",
+   "replace": "${1}: <sized by the host's processors and memory>"
+  }
+ ],
+ "expect": {
+  "running": true
+ }
+}

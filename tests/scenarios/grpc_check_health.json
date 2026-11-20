@@ -1,0 +1,378 @@
+{
+ "steps": [
+  {
+   "note": "no descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  },
+  {
+   "note": "without descriptors: not answered",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAA=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "without descriptors: not answered over grpc-web",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAA=",
+   "trailers": true,
+   "headers": {
+    "content-type": "application/grpc-web"
+   }
+  },
+  {
+   "note": "upload greeting descriptor",
+   "method": "PUT",
+   "path": "/mockserver/grpc/descriptors",
+   "bodyFile": "grpc/greeting.dsc"
+  },
+  {
+   "note": "unregistered service: NOT_FOUND, no body, named in grpc-message",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAABIKEG5ldmVyLlJlZ2lzdGVyZWQ=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "unregistered service over grpc-web",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAABIKEG5ldmVyLlJlZ2lzdGVyZWQ=",
+   "trailers": true,
+   "headers": {
+    "content-type": "application/grpc-web"
+   }
+  },
+  {
+   "note": "overall health without registration: SERVING",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAA=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "overall NOT_SERVING",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "",
+    "status": "NOT_SERVING"
+   }
+  },
+  {
+   "note": "overall NOT_SERVING",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAA=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "an unregistered name does not inherit the overall status",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAA4KDHR5cG8uU2VydmNpZQ==",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "my.Service SERVING",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "my.Service",
+    "status": "SERVING"
+   }
+  },
+  {
+   "note": "registered SERVING",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAwKCm15LlNlcnZpY2U=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "my.Service NOT_SERVING",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "my.Service",
+    "status": "NOT_SERVING"
+   }
+  },
+  {
+   "note": "registered NOT_SERVING",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAwKCm15LlNlcnZpY2U=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "my.Service SERVICE_UNKNOWN",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "my.Service",
+    "status": "SERVICE_UNKNOWN"
+   }
+  },
+  {
+   "note": "registered SERVICE_UNKNOWN",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAwKCm15LlNlcnZpY2U=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "my.Service UNKNOWN",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "my.Service",
+    "status": "UNKNOWN"
+   }
+  },
+  {
+   "note": "registered UNKNOWN: the field is omitted",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAwKCm15LlNlcnZpY2U=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "my.Service override SERVING",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "my.Service",
+    "status": "SERVING"
+   }
+  },
+  {
+   "note": "override replaces the status",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAwKCm15LlNlcnZpY2U=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "remove my.Service",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "my.Service",
+    "remove": true
+   }
+  },
+  {
+   "note": "removed: unregistered again",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAwKCm15LlNlcnZpY2U=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "remove the overall status",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "",
+    "remove": true
+   }
+  },
+  {
+   "note": "overall back to SERVING",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAA=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "remove a never registered service",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "never.registered",
+    "remove": true
+   }
+  },
+  {
+   "note": "still unregistered",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAABIKEG5ldmVyLnJlZ2lzdGVyZWQ=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "long name SERVING",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "com.example.averylongpackagename.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.segment.HealthService",
+    "status": "NOT_SERVING"
+   }
+  },
+  {
+   "note": "a name with a multi-byte varint length",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAUEKvgJjb20uZXhhbXBsZS5hdmVyeWxvbmdwYWNrYWdlbmFtZS5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LnNlZ21lbnQuc2VnbWVudC5zZWdtZW50LkhlYWx0aFNlcnZpY2U=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "an empty body (no frame)",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "a short body",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAA",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "an unknown field tag",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAIQAQ==",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "svc2 SERVING",
+   "method": "PUT",
+   "path": "/mockserver/grpc/health",
+   "body": {
+    "service": "svc2",
+    "status": "SERVING"
+   }
+  },
+  {
+   "note": "entries",
+   "method": "GET",
+   "path": "/mockserver/grpc/health"
+  },
+  {
+   "note": "reset",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "after reset: unregistered",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAYKBHN2YzI=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "after reset: overall SERVING",
+   "method": "POST",
+   "path": "/grpc.health.v1.Health/Check",
+   "bodyBase64": "AAAAAAA=",
+   "trailers": true,
+   "h2": true,
+   "headers": {
+    "content-type": "application/grpc",
+    "te": "trailers"
+   }
+  },
+  {
+   "note": "clear descriptors",
+   "method": "PUT",
+   "path": "/mockserver/grpc/clear"
+  }
+ ],
+ "isolated": true
+}

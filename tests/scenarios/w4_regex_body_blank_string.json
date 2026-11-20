@@ -1,0 +1,176 @@
+{
+ "source": "BodyDecoderEncoder builds a StringBody for a string-typed request body, and StringBody keeps a blank value as \"\" (isNotBlank(value) ? value : \"\"), so a whitespace-only body reads as \"\" in every body matcher; JSON and XML bodies keep their whitespace",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "note": "REGEX body \\s+ (needs at least one whitespace character)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/plus",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\s+"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "plus"
+    }
+   }
+  },
+  {
+   "note": "REGEX body \\s* (also matches the empty string)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/star",
+     "body": {
+      "type": "REGEX",
+      "regex": "\\s*"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "star"
+    }
+   }
+  },
+  {
+   "note": "REGEX body x\\h+ (a reworded probe)",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/xh",
+     "body": {
+      "type": "REGEX",
+      "regex": "x\\h+"
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "xh"
+    }
+   }
+  },
+  {
+   "note": "STRING body with subString, a single space",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "path": "/sub",
+     "body": {
+      "type": "STRING",
+      "string": " ",
+      "subString": true
+     }
+    },
+    "httpResponse": {
+     "statusCode": 201,
+     "body": "sub"
+    }
+   }
+  },
+  {
+   "note": "\\s+ against a space and a tab, text/plain",
+   "method": "POST",
+   "path": "/plus",
+   "headers": {"content-type": "text/plain"},
+   "body": " \t"
+  },
+  {
+   "note": "\\s+ against a newline, no content type",
+   "method": "POST",
+   "path": "/plus",
+   "body": "\n"
+  },
+  {
+   "note": "\\s+ against an ideographic space (Character.isWhitespace), text/plain; charset=utf-8",
+   "method": "POST",
+   "path": "/plus",
+   "headers": {"content-type": "text/plain; charset=utf-8"},
+   "body": "　"
+  },
+  {
+   "note": "\\s+ against a no-break space (not Character.isWhitespace), text/plain; charset=utf-8",
+   "method": "POST",
+   "path": "/plus",
+   "headers": {"content-type": "text/plain; charset=utf-8"},
+   "body": " "
+  },
+  {
+   "note": "\\s+ against whitespace sent as application/json (JsonBody keeps it)",
+   "method": "POST",
+   "path": "/plus",
+   "headers": {"content-type": "application/json"},
+   "body": " \t"
+  },
+  {
+   "note": "\\s+ against whitespace sent as application/xml (XmlBody keeps it)",
+   "method": "POST",
+   "path": "/plus",
+   "headers": {"content-type": "application/xml"},
+   "body": "  "
+  },
+  {
+   "note": "\\s+ against whitespace sent as application/octet-stream (a BinaryBody, read as base64)",
+   "method": "POST",
+   "path": "/plus",
+   "headers": {"content-type": "application/octet-stream"},
+   "body": "  "
+  },
+  {
+   "note": "\\s+ against whitespace sent as application/json; charset=utf-8 (the default JSON content type)",
+   "method": "POST",
+   "path": "/plus",
+   "headers": {"content-type": "application/json; charset=utf-8"},
+   "body": "\n"
+  },
+  {
+   "note": "\\s* against a space and a tab, text/plain",
+   "method": "POST",
+   "path": "/star",
+   "headers": {"content-type": "text/plain"},
+   "body": " \t"
+  },
+  {
+   "note": "x\\h+ against x, a space and a tab: not blank, kept",
+   "method": "POST",
+   "path": "/xh",
+   "headers": {"content-type": "text/plain"},
+   "body": "x \t"
+  },
+  {
+   "note": "subString ' ' against two spaces (a blank expected string matches any body)",
+   "method": "POST",
+   "path": "/sub",
+   "headers": {"content-type": "text/plain"},
+   "body": "  "
+  },
+  {
+   "note": "the closest-match hint and log for the blank bodies",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=JSON",
+   "body": {"path": "/plus"}
+  },
+  {
+   "note": "the same requests as request-response pairs",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON",
+   "body": {"path": "/plus"}
+  },
+  {
+   "note": "the matched blank requests as request-response pairs",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=JSON",
+   "body": {"path": "/star"}
+  }
+ ]
+}

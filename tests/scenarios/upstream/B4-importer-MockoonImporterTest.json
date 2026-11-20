@@ -1,0 +1,96 @@
+{
+ "source": "harvested from mockserver-core 8.0.1-SNAPSHOT (b765b8271) importer-MockoonImporterTest (conformance/harvest)",
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "426899116eb5",
+   "note": "crudRouteProducesNoExpectation (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mockoon",
+   "body": "{\n  \"uuid\": \"env-1\",\n  \"lastMigration\": 33,\n  \"name\": \"Demo API\",\n  \"port\": 3000,\n  \"routes\": [\n    {\n      \"uuid\": \"route-user\",\n      \"type\": \"http\",\n      \"method\": \"get\",\n      \"endpoint\": \"users/:id\",\n      \"responses\": [\n        {\n          \"uuid\": \"r1\",\n          \"statusCode\": 200,\n          \"label\": \"ok\",\n          \"headers\": [ { \"key\": \"Content-Type\", \"value\": \"application/json\" } ],\n          \"body\": \"{\\\"id\\\":1}\",\n          \"latency\": 150,\n          \"default\": true,\n          \"rules\": [],\n          \"rulesOperator\": \"OR\"\n        }\n      ]\n    },\n    {\n      \"uuid\": \"route-search\",\n      \"type\": \"http\",\n      \"method\": \"get\",\n      \"endpoint\": \"search\",\n      \"responseMode\": null,\n      \"responses\": [\n        {\n          \"uuid\": \"s1\",\n          \"statusCode\": 200,\n          \"body\": \"filtered\",\n          \"rules\": [ { \"target\": \"query\", \"modifier\": \"q\", \"value\": \"book\", \"operator\": \"equals\", \"invert\": false } ],\n          \"rulesOperator\": \"AND\",\n          \"default\": false\n        },\n        {\n          \"uuid\": \"s2\",\n          \"statusCode\": 404,\n          \"body\": \"not found\",\n          \"rules\": [],\n          \"default\": true\n        }\n      ]\n    },\n    {\n      \"uuid\": \"route-seq\",\n      \"type\": \"http\",\n      \"method\": \"post\",\n      \"endpoint\": \"events\",\n      \"responseMode\": \"SEQUENTIAL\",\n      \"responses\": [\n        { \"uuid\": \"q1\", \"statusCode\": 201, \"body\": \"one\" },\n        { \"uuid\": \"q2\", \"statusCode\": 202, \"body\": \"two\" }\n      ]\n    },\n    {\n      \"uuid\": \"route-rand\",\n      \"type\": \"http\",\n      \"method\": \"get\",\n      \"endpoint\": \"dice\",\n      \"responseMode\": \"RANDOM\",\n      \"responses\": [\n        { \"uuid\": \"d1\", \"statusCode\": 200, \"body\": \"1\" },\n        { \"uuid\": \"d2\", \"statusCode\": 200, \"body\": \"6\" }\n      ]\n    },\n    {\n      \"uuid\": \"route-warn\",\n      \"type\": \"http\",\n      \"method\": \"get\",\n      \"endpoint\": \"warn\",\n      \"responses\": [\n        {\n          \"uuid\": \"w1\",\n          \"statusCode\": 200,\n          \"body\": \"x\",\n          \"rules\": [\n            { \"target\": \"cookie\", \"modifier\": \"sid\", \"value\": \"1\", \"operator\": \"equals\" },\n            { \"target\": \"body\", \"modifier\": \"\", \"value\": \"y\", \"operator\": \"null\" }\n          ],\n          \"default\": true\n        }\n      ]\n    },\n    {\n      \"uuid\": \"route-crud\",\n      \"type\": \"crud\",\n      \"method\": \"get\",\n      \"endpoint\": \"items\",\n      \"responses\": [ { \"uuid\": \"c1\", \"statusCode\": 200 } ]\n    }\n  ]\n}\n",
+   "note": "crudRouteProducesNoExpectation (importer): MockoonImporter mockoon",
+   "case": "426899116eb5"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "8e1ea666e0c4",
+   "note": "rejectsBlankAndInvalidInput (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mockoon",
+   "body": "",
+   "note": "rejectsBlankAndInvalidInput (importer): MockoonImporter mockoon",
+   "case": "8e1ea666e0c4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "091d4e80a3f7",
+   "note": "rejectsBlankAndInvalidInput (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mockoon",
+   "body": "{ \"name\": \"no routes\" }",
+   "note": "rejectsBlankAndInvalidInput (importer): MockoonImporter mockoon",
+   "case": "091d4e80a3f7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "d1b674ca2b5b",
+   "note": "warnsWhenQueryRuleHasNoModifier (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mockoon",
+   "body": "{ \"routes\": [ { \"type\": \"http\", \"method\": \"get\", \"endpoint\": \"q\", \"uuid\": \"rq\",\n  \"responses\": [\n    { \"uuid\": \"a\", \"statusCode\": 200, \"body\": \"hit\",\n      \"rules\": [ { \"target\": \"query\", \"value\": \"x\", \"operator\": \"equals\" } ], \"default\": false },\n    { \"uuid\": \"b\", \"statusCode\": 404, \"body\": \"miss\", \"rules\": [], \"default\": true } ] } ] }\n",
+   "note": "warnsWhenQueryRuleHasNoModifier (importer): MockoonImporter mockoon",
+   "case": "d1b674ca2b5b"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "c639734a07d7",
+   "note": "warnsOnHandlebarsTemplateBody (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mockoon",
+   "body": "{ \"routes\": [ { \"type\": \"http\", \"method\": \"get\", \"endpoint\": \"t\", \"uuid\": \"rt\",\n  \"responses\": [ { \"statusCode\": 200, \"body\": \"Hello {{urlParam 'id'}}\" } ] } ] }\n",
+   "note": "warnsOnHandlebarsTemplateBody (importer): MockoonImporter mockoon",
+   "case": "c639734a07d7"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "dd6a0bbe8eb4",
+   "note": "cleanSingleRouteHasNoWarnings (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mockoon",
+   "body": "{ \"routes\": [ { \"type\": \"http\", \"method\": \"get\", \"endpoint\": \"ping\", \"uuid\": \"rp\",\n  \"responses\": [ { \"statusCode\": 200, \"body\": \"pong\" } ] } ] }\n",
+   "note": "cleanSingleRouteHasNoWarnings (importer): MockoonImporter mockoon",
+   "case": "dd6a0bbe8eb4"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset",
+   "case": "01625d31d039",
+   "note": "escapesLiteralPathSegmentsSoDotDoesNotMatchAnyCharacter (importer): reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/import?format=mockoon",
+   "body": "{ \"routes\": [ { \"type\": \"http\", \"method\": \"get\", \"endpoint\": \"users/:id/file.txt\", \"uuid\": \"rf\",\n  \"responses\": [ { \"statusCode\": 200, \"body\": \"ok\" } ] } ] }\n",
+   "note": "escapesLiteralPathSegmentsSoDotDoesNotMatchAnyCharacter (importer): MockoonImporter mockoon",
+   "case": "01625d31d039"
+  }
+ ]
+}

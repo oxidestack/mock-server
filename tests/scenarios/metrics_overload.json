@@ -1,0 +1,32 @@
+{"source": "MetricsTest countsOverloadRejectionsByReasonAndExposesPendingDelayedTasks over the wire: Scheduler.rejectForOverload counts mock_server_overload_rejections_total by reason (delayed_responses answered 503, delay_skipped for a forward's chaos latency, side_actions for a dropped after-action), and the scheduler gauges read the live queue while a delayed response and an after-action wait",
+ "properties": {"metricsEnabled": "true", "maxPendingDelayedResponses": "1"},
+ "settleMillis": 4000,
+ "steps": [
+  {"note": "no rejection series before any refusal", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:overload_rejections|pending_delayed_tasks|scheduler_queued_tasks|template_action_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"method": "PUT", "path": "/mockserver/expectation", "body": [
+   {"httpRequest": {"path": "/delayed"}, "httpResponse": {"body": "delayed", "delay": {"timeUnit": "MILLISECONDS", "value": 2500}}},
+   {"httpRequest": {"path": "/now"}, "httpResponse": {"body": "now"}},
+   {"httpRequest": {"path": "/fwd-chaos"}, "httpOverrideForwardedRequest": {"requestOverride": {"path": "/now", "headers": {"Host": ["localhost:{{port}}"]}}}, "chaos": {"latency": {"timeUnit": "MILLISECONDS", "value": 5000}}},
+   {"httpRequest": {"path": "/side"}, "httpResponse": {"body": "side"}, "afterActions": [{"httpRequest": {"path": "/now", "headers": {"Host": ["localhost:{{port}}"]}}, "delay": {"timeUnit": "MILLISECONDS", "value": 2000}}]}
+  ], "mask": ["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]},
+  {"note": "takes the only delayed slot", "async": "a", "maxMillis": 30000, "method": "GET", "path": "/delayed"},
+  {"sleepMillis": 500, "awaitCounts": {"delayedResponses": 1}},
+  {"note": "refused: delayed_responses", "method": "GET", "path": "/delayed", "maxMillis": 2000, "mask": [{"regex": "retry-after: \\d+", "replace": "retry-after: <masked>"}]},
+  {"note": "chaos latency skipped: delay_skipped", "method": "GET", "path": "/fwd-chaos", "maxMillis": 4000},
+  {"note": "its after-action takes the only side-action slot", "method": "GET", "path": "/side", "maxMillis": 2000},
+  {"note": "this after-action is dropped: side_actions", "method": "GET", "path": "/side", "maxMillis": 2000},
+  {"note": "while the delayed response waits", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:overload_rejections|pending_delayed_tasks|scheduler_queued_tasks|template_action_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]},
+  {"await": "a"},
+  {"sleepMillis": 1500, "awaitCounts": {"pendingDelayed": 0}},
+  {"note": "drained", "method": "GET", "path": "/mockserver/metrics", "mask": [
+   {"regex": "(?m)^(?!(?:# (?:HELP|TYPE) )?mock_server_(?:overload_rejections|pending_delayed_tasks|scheduler_queued_tasks|template_action_queued_tasks))[^\\n]*\\n", "replace": "", "reason": "only the series this scenario drives; the rest are pinned by metrics.json"},
+   "content-length: \\d+"
+  ]}
+ ]
+}

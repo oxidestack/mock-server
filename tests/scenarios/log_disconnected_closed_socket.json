@@ -1,0 +1,216 @@
+{
+ "source": "at TRACE, 8.0.0's NettyResponseWriter.disconnectAndCloseChannel logs `disconnected and closed socket <local address>` once the socket a response closes is closed (closeSocket, a request without keep-alive, after closeSocketDelay, a chunkDelay response), and EarlyNettyResponseWriter the same with ` after early response`.",
+ "properties": {
+  "logLevel": "TRACE"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "maxMillis": 60000,
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/dc/close"
+     },
+     "httpResponse": {
+      "body": "c",
+      "connectionOptions": {
+       "closeSocket": true
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dc/open"
+     },
+     "httpResponse": {
+      "body": "o"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dc/nokeepalive"
+     },
+     "httpResponse": {
+      "body": "k",
+      "connectionOptions": {
+       "keepAliveOverride": false
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dc/delay"
+     },
+     "httpResponse": {
+      "body": "d",
+      "connectionOptions": {
+       "closeSocket": true,
+       "closeSocketDelay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 200
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dc/chunks"
+     },
+     "httpResponse": {
+      "body": "abcdef",
+      "connectionOptions": {
+       "closeSocket": true,
+       "chunkSize": 2,
+       "chunkDelay": {
+        "timeUnit": "MILLISECONDS",
+        "value": 10
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "closeSocket",
+   "awaitClose": true,
+   "method": "GET",
+   "path": "/dc/close"
+  },
+  {
+   "note": "the request asks to close",
+   "awaitClose": true,
+   "method": "GET",
+   "path": "/dc/open",
+   "headers": {
+    "Connection": "close"
+   }
+  },
+  {
+   "note": "keepAliveOverride false",
+   "awaitClose": true,
+   "method": "GET",
+   "path": "/dc/nokeepalive"
+  },
+  {
+   "note": "a chunkDelay response that closes",
+   "awaitClose": true,
+   "method": "GET",
+   "path": "/dc/chunks"
+  },
+  {
+   "note": "a keep-alive request: not closed, nothing logged",
+   "method": "GET",
+   "path": "/dc/open"
+  },
+  {
+   "note": "closeSocket after closeSocketDelay (sent last: the client waits for the delayed close, so its entry comes after the keep-alive request's)",
+   "awaitClose": true,
+   "method": "GET",
+   "path": "/dc/delay"
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "TRACE LOGS: one disconnect entry per socket a response closed; closeSocketDelay and keepAliveOverride false log none (the local address is the container's); the matcher's own TRACE mismatch entries (`string or regex match failed expected:{}found:{}`) are not written here yet and are cut out",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "(disconnected and closed socket )\\S+",
+     "replace": "${1}<local address>"
+    },
+    {
+     "regex": "(closing socket \\n\\n  )/\\S+",
+     "replace": "${1}<local address>",
+     "reason": "the server's local address: the oracle's is its container's"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - string or regex match failed expected:\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "httpRequest": {
+     "method": "POST",
+     "path": "/dc/early",
+     "respondBeforeBody": true
+    },
+    "httpResponse": {
+     "statusCode": 403,
+     "body": "e",
+     "connectionOptions": {
+      "closeSocket": true
+     }
+    }
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "an early response (the body is still arriving); its connection header is the adopted fix's (docs/divergences.md, upstream fix 88e72ebc7): the status line alone",
+   "text": true,
+   "tcp": [
+    {
+     "text": "POST /dc/early HTTP/1.1\r\nHost: localhost\r\nContent-Length: 20\r\n\r\n"
+    },
+    {
+     "text": "0123456789"
+    }
+   ],
+   "mask": [
+    {
+     "regex": "(?s)^(HTTP/1.1 \\d+)[ \\r].*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "TRACE LOGS: an early response's close, ` after early response`, logged at once (before the adopted fix's linger); the matcher's own TRACE mismatch entries (`string or regex match failed expected:{}found:{}`) are not written here yet and are cut out",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "\\[id: 0x[0-9a-f]{8}, L:/[^\\]]*\\]",
+     "replace": "[id: <channel>]"
+    },
+    {
+     "regex": "(disconnected and closed socket )\\S+",
+     "replace": "${1}<local address>"
+    },
+    {
+     "regex": "(closing socket \\n\\n  )/\\S+",
+     "replace": "${1}<local address>",
+     "reason": "the server's local address: the oracle's is its container's"
+    },
+    {
+     "regex": "(?s)\\n[^\\n]* - string or regex match failed expected:\\n.*?\\n-{36}\\n",
+     "replace": "\n"
+    }
+   ]
+  }
+ ]
+}

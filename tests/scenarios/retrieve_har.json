@@ -1,0 +1,212 @@
+{
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "id": "e1",
+     "httpRequest": {
+      "method": "POST",
+      "path": "/a",
+      "queryStringParameters": {
+       "z": [
+        "1"
+       ],
+       "a": [
+        "2 3"
+       ]
+      },
+      "headers": {
+       "zz": [
+        "1"
+       ],
+       "Aa": [
+        "2"
+       ]
+      },
+      "cookies": {
+       "c": "1"
+      },
+      "body": {
+       "type": "JSON",
+       "json": {
+        "q": 1
+       }
+      }
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "reasonPhrase": "Fine",
+      "headers": {
+       "Zed": [
+        "1"
+       ],
+       "alpha": [
+        "2"
+       ],
+       "Location": [
+        "/next"
+       ]
+      },
+      "cookies": {
+       "rc": "v"
+      },
+      "body": "plain"
+     }
+    },
+    {
+     "id": "e2",
+     "httpRequest": {
+      "path": "/bin"
+     },
+     "httpResponse": {
+      "body": {
+       "type": "BINARY",
+       "base64Bytes": "AAEC"
+      }
+     }
+    },
+    {
+     "id": "e3",
+     "httpRequest": {
+      "path": "/xml",
+      "secure": true,
+      "headers": {
+       "Host": [
+        "example.com:8443"
+       ]
+      }
+     },
+     "httpResponse": {
+      "body": {
+       "type": "XML",
+       "xml": "<a/>"
+      }
+     }
+    },
+    {
+     "id": "e4",
+     "httpRequest": {
+      "path": "/str"
+     },
+     "httpResponse": {
+      "statusCode": 202,
+      "body": {
+       "type": "STRING",
+       "string": "s",
+       "contentType": "text/csv"
+      }
+     }
+    },
+    {
+     "id": "e5",
+     "httpRequest": {
+      "path": "/json"
+     },
+     "httpResponse": {
+      "body": {
+       "json": {
+        "k": [
+         1,
+         2
+        ]
+       }
+      }
+     }
+    },
+    {
+     "id": "e6",
+     "httpRequest": {
+      "path": "/none"
+     },
+     "httpResponse": {
+      "statusCode": 204
+     }
+    },
+    {
+     "id": "e7",
+     "httpRequest": {
+      "path": "/fwd"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    }
+   ]
+  },
+  {
+   "note": "active expectations as HAR",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=ACTIVE_EXPECTATIONS&format=HAR"
+  },
+  {
+   "method": "POST",
+   "path": "/a?z=1&a=2%203",
+   "headers": {
+    "zz": "1",
+    "Aa": "2",
+    "Cookie": "c=1",
+    "content-type": "application/json"
+   },
+   "body": "{\"q\": 1}"
+  },
+  {
+   "method": "GET",
+   "path": "/bin"
+  },
+  {
+   "method": "GET",
+   "path": "/str?x=%C3%A9"
+  },
+  {
+   "method": "POST",
+   "path": "/nothing",
+   "headers": {
+    "content-type": "application/x-www-form-urlencoded"
+   },
+   "body": "a=1&b=2"
+  },
+  {
+   "method": "PUT",
+   "path": "/json",
+   "headers": {
+    "content-type": "application/octet-stream"
+   },
+   "bodyBase64": "AAECAw=="
+  },
+  {
+   "note": "requests as HAR",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=HAR",
+   "mask": [
+    "\"serverIPAddress\" : \"[^\"]*\""
+   ]
+  },
+  {
+   "note": "filtered requests as HAR",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUESTS&format=har",
+   "body": {
+    "path": "/bin"
+   },
+   "mask": [
+    "\"serverIPAddress\" : \"[^\"]*\""
+   ]
+  },
+  {
+   "note": "request-responses as HAR",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES&format=HAR",
+   "mask": [
+    "\"serverIPAddress\" : \"[^\"]*\""
+   ]
+  },
+  {
+   "note": "recorded expectations as HAR (none)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS&format=HAR"
+  }
+ ]
+}

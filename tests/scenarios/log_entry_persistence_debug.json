@@ -1,0 +1,54 @@
+{
+ "properties": {
+  "logLevel": "DEBUG",
+  "persistExpectations": "true",
+  "persistedExpectationsPath": "{{scratch}}/log_entry_persistence_debug.json"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "one",
+    "httpRequest": {
+     "path": "/one"
+    },
+    "httpResponse": {
+     "body": "1"
+    }
+   }
+  },
+  {
+   "note": "an update",
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": {
+    "id": "one",
+    "httpRequest": {
+     "path": "/one"
+    },
+    "httpResponse": {
+     "body": "2"
+    }
+   }
+  },
+  {
+   "sleepMillis": 500
+  },
+  {
+   "note": "DEBUG: each change persisted, without the expectations (the reset's own entry, written from another thread before or after the log is cleared, is masked)",
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "mask": [
+    {
+     "regex": "(resetting all expectations and request logs\\n-+\\n)[^\\n]* - persisting expectations to\\n\\n  [^\\n]*\\n\\n-+\\n",
+     "replace": "${1}"
+    }
+   ]
+  }
+ ]
+}

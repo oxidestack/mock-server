@@ -1,0 +1,276 @@
+{
+ "properties": {
+  "forwardProxyCircuitBreakerEnabled": "true",
+  "forwardProxyCircuitBreakerFailureThreshold": "2",
+  "forwardProxyCircuitBreakerWindowMillis": "10000",
+  "metricsEnabled": "true"
+ },
+ "steps": [
+  {
+   "method": "PUT",
+   "path": "/mockserver/expectation",
+   "body": [
+    {
+     "httpRequest": {
+      "path": "/up503"
+     },
+     "httpResponse": {
+      "statusCode": 503,
+      "body": "down"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ok"
+     },
+     "httpResponse": {
+      "statusCode": 200,
+      "body": "fine"
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovr"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/up503",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovrok"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/ok",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/ovrpatched"
+     },
+     "httpOverrideForwardedRequest": {
+      "requestOverride": {
+       "path": "/ok",
+       "headers": {
+        "Host": [
+         "localhost:{{port}}"
+        ]
+       }
+      },
+      "responseOverride": {
+       "headers": {
+        "x-patched": [
+         "yes"
+        ]
+       }
+      }
+     }
+    },
+    {
+     "httpRequest": {
+      "path": "/dead"
+     },
+     "httpForward": {
+      "host": "localhost",
+      "port": "{{deadport}}"
+     }
+    }
+   ]
+  },
+  {
+   "note": "no upstream open yet",
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?s)^.*\\n(mock_server_upstream_circuit_open [^\\n]*)\\n.*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "a success to another upstream path does not count",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "note": "two consecutive 503s from localhost:<port> open its breaker",
+   "method": "GET",
+   "path": "/ovr"
+  },
+  {
+   "method": "POST",
+   "path": "/ovr"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?s)^.*\\n(mock_server_upstream_circuit_open [^\\n]*)\\n.*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/clear?type=LOG"
+  },
+  {
+   "note": "open: every forward to that upstream fails fast",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "POST",
+   "path": "/ovr",
+   "body": "payload"
+  },
+  {
+   "note": "the response override still applies to the breaker's answer",
+   "method": "GET",
+   "path": "/ovrpatched"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/verify",
+   "body": {
+    "httpRequest": {
+     "path": "/ok"
+    },
+    "times": {
+     "atLeast": 0,
+     "atMost": 0
+    }
+   },
+   "note": "the open breaker sent nothing to /ok since the log was cleared"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=LOGS",
+   "body": {
+    "path": "/ovrok"
+   },
+   "compare": "unordered",
+   "note": "drift analysis (scheduled) and the forward's own log line race in the oracle when the forward's result is already complete; polled until every scheduled drift evaluation is logged",
+   "pollUntil": "(?s)^(?=(?:.*?didn't match expectation){8})(?=(?:.*? matched expectation:){2})"
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=REQUEST_RESPONSES",
+   "body": {
+    "path": "/ovrok"
+   }
+  },
+  {
+   "method": "PUT",
+   "path": "/mockserver/retrieve?type=RECORDED_EXPECTATIONS",
+   "mask": [
+    {
+     "regex": "\"rawBytes\" : \"[^\"]*\"",
+     "replace": "\"rawBytes\" : \"<base64 of a text naming the port>\""
+    }
+   ]
+  },
+  {
+   "note": "a refused connection is a failure too: a second upstream opens",
+   "method": "GET",
+   "path": "/dead"
+  },
+  {
+   "method": "GET",
+   "path": "/dead"
+  },
+  {
+   "method": "GET",
+   "path": "/dead"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?s)^.*\\n(mock_server_upstream_circuit_open [^\\n]*)\\n.*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 10200
+  },
+  {
+   "note": "after the window, one half-open trial goes through; it fails and re-opens",
+   "method": "GET",
+   "path": "/ovr"
+  },
+  {
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?s)^.*\\n(mock_server_upstream_circuit_open [^\\n]*)\\n.*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "sleepMillis": 10200
+  },
+  {
+   "note": "after another window, a successful trial closes it",
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "GET",
+   "path": "/ovrok"
+  },
+  {
+   "method": "GET",
+   "path": "/ovr"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?s)^.*\\n(mock_server_upstream_circuit_open [^\\n]*)\\n.*$",
+     "replace": "${1}"
+    }
+   ]
+  },
+  {
+   "note": "reset clears every breaker",
+   "method": "PUT",
+   "path": "/mockserver/reset"
+  },
+  {
+   "method": "GET",
+   "path": "/mockserver/metrics",
+   "mask": [
+    {
+     "regex": "(?s)^.*\\n(mock_server_upstream_circuit_open [^\\n]*)\\n.*$",
+     "replace": "${1}"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+# org.mockserver.persistence.FileWatcherTest (mockserver-core): what covers each test against mock-server.
+# <test>  <ref>[, <ref>...]  # note     ref: process:<tests/process_scenarios name>, rust:<file>::<fn>, http:<tests/scenarios name>
+# <test>  n/a  # why no process, HTTP or Rust test can check it      <test>  gap  # what is missing (a to-do)
+shouldInvokeUpdatedHandlerWhenFileContentChanges  http:file_watcher_reload  # a content change reloads the watched initialisation file
+shouldDetectAChangeToTheFinalByteOfAMultiBufferFile  http:file_watcher_byte_changes  # a watched file over 192 KiB changed a dozen bytes from its end
+shouldDetectAChangeConfinedToBytesAboveSevenBits  http:file_watcher_byte_changes  # only the second byte of one UTF-8 character changes, same length
+shouldStaySilentWhileAMultiBufferFileIsUnchanged  http:log_entry_watcher_trace  # at TRACE the log shows one reload per edit and none for the polls between; the watched file is small, not multi-buffer
+shouldNotInvokeUpdatedHandlerWhenFileBecomesUnreadable  http:file_watcher_absent_start  # step "what a deletion leaves behind": the deleted file is not a change, the loaded expectations stay
+shouldReloadWhenFileReappearsAfterBeingUnreadable  http:file_watcher_absent_start  # step "the file appears": absent (no fingerprint) to readable is a change
+shouldStopInvokingHandlerAfterSetRunningFalse  n/a  # `FileWatcher.setRunning(false)` is a Java API; the server stops its watchers only when it stops
+runningFlagDefaultsToTrueAndReflectsSetRunning  n/a  # `FileWatcher.isRunning()` getter, a Java API

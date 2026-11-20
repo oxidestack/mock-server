@@ -1,0 +1,65 @@
+[
+  { "request": { "urlPath": "/fault/random" }, "response": { "fault": "RANDOM_DATA_THEN_CLOSE" } },
+  { "request": { "urlPath": "/fault/reset" }, "response": { "fault": "connection_reset_by_peer" } },
+  { "request": { "urlPath": "/delay/uniform" }, "response": { "body": "u", "fixedDelayMilliseconds": 5, "delayDistribution": { "type": "uniform", "lower": 10, "upper": 20 } } },
+  { "request": { "urlPath": "/delay/lognormal" }, "response": { "body": "l", "fixedDelayMilliseconds": 3, "delayDistribution": { "type": "lognormal", "median": 80, "sigma": 0.4, "maxValue": 500 } } },
+  { "request": { "urlPath": "/delay/fixed" }, "response": { "body": "f", "delayDistribution": { "type": "fixed", "milliseconds": 40 } } },
+  { "request": { "urlPath": "/delay/unknown" }, "response": { "body": "x", "fixedDelayMilliseconds": 7, "delayDistribution": { "type": "gaussian" } } },
+  { "request": { "urlPath": "/delay/invalid" }, "response": { "body": "x", "delayDistribution": { "type": "uniform", "lower": 30, "upper": 10 } } },
+  { "request": { "urlPath": "/delay/proxy" }, "response": { "proxyBaseUrl": "http://origin.example.com", "fixedDelayMilliseconds": 9 } },
+  { "request": { "urlPath": "/dribble" }, "response": { "body": "0123456789", "chunkedDribbleDelay": { "numberOfChunks": 3, "totalDuration": 90 } } },
+  { "request": { "urlPath": "/dribble/empty" }, "response": { "status": 204, "chunkedDribbleDelay": { "numberOfChunks": 2, "totalDuration": 10 } } },
+  { "request": { "urlPath": "/dribble/bad" }, "response": { "body": "abc", "chunkedDribbleDelay": { "numberOfChunks": 0, "totalDuration": 10 } } },
+  { "request": { "urlPath": "/file" }, "response": { "headers": { "Content-Type": "application/json" }, "bodyFileName": "books.json", "chunkedDribbleDelay": { "numberOfChunks": 2, "totalDuration": 10 } } },
+  { "request": { "urlPath": "/file/missing" }, "response": { "bodyFileName": "nope.json" } },
+  { "request": { "urlPath": "/file/traversal" }, "response": { "bodyFileName": "../wiremock_mappings.json" } },
+  { "request": { "urlPath": "/file/symlink" }, "response": { "bodyFileName": "escape.json" } },
+  { "request": { "url": "/greet/hi?x=1" }, "response": { "bodyFileName": "sub/greeting.txt", "transformers": [ "response-template" ] } },
+  {
+    "request": { "method": "GET", "urlPath": "/template/a/b" },
+    "response": {
+      "status": 200,
+      "headers": { "X-Echo": "{{request.headers.X-In}}", "X-Plain": "fixed" },
+      "body": "{{request.method}} {{request.path}} {{request.pathSegments.[1]}} {{request.query.q}} {{request.query.q.1}} {{request.cookies.c}} {{{request.body}}}x",
+      "transformers": [ "response-template", "my-transformer" ],
+      "transformerParameters": { "p": 1 }
+    }
+  },
+  {
+    "request": { "method": "GET", "urlPath": "/template/ok" },
+    "response": { "jsonBody": { "method": "{{request.method}}", "token": "abc" }, "transformers": [ "response-template" ] }
+  },
+  {
+    "request": { "method": "GET", "urlPathTemplate": "/template/{id}" },
+    "response": { "body": "id={{request.path.id}} q={{request.query.q}}", "transformers": [ "response-template" ], "fixedDelayMilliseconds": 1 }
+  },
+  {
+    "request": { "urlPath": "/template/helper" },
+    "response": { "body": "{{now}} {{randomValue length=3}}", "transformers": [ "response-template" ] }
+  },
+  {
+    "request": { "urlPath": "/template/none" },
+    "response": { "body": "no tags", "transformers": [ "response-template" ] }
+  },
+  {
+    "request": { "urlPath": "/webhook" },
+    "response": { "status": 202 },
+    "postServeActions": [
+      {
+        "name": "webhook",
+        "parameters": {
+          "method": "post",
+          "url": "https://hooks.example.com:8443/notify?src=wm&x=a%20b",
+          "headers": { "Authorization": "Bearer real", "X-Method": "{{originalRequest.method}}", "X-Multi": [ "{{originalRequest.headers.X-Id}}", "{{originalRequest.query.q}}" ] },
+          "body": "{\"id\":\"{{jsonPath originalRequest.body '$.items[0].id'}}\",\"password\":\"p\",\"t\":\"{{now}}\"}",
+          "delay": { "type": "uniform", "lower": 1, "upper": 5 }
+        }
+      },
+      { "name": "webhook", "parameters": { "url": "/relative" } },
+      { "name": "webhook", "parameters": { "url": "http://hooks.example.com", "base64Body": "AAE=" } },
+      { "name": "webhook", "parameters": { "url": "http://hooks.example.com/bad", "base64Body": "@@" } },
+      { "name": "slack" }
+    ],
+    "serveEventListeners": { "webhook": { "url": "http://hooks.example.com/v3", "delay": { "type": "fixed", "milliseconds": 2 } } }
+  }
+]
