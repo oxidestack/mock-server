@@ -221,6 +221,10 @@ released too: a bind that fails (`Exception while binding MockServer to port N`)
 replays the scenario again with fresh ports (`lost_bind_ports`; `tests/support/tcp_port.rs`), so a scenario that
 expects that answer binds `N` successfully first.
 
+A replay that stops making progress fails rather than waiting for ever: once a file (top-level or harvested) has
+been in flight for `MOCK_SERVER_REPLAY_STALL_SECS` seconds (default 600; `0` turns it off), the test process
+exits with every file still in flight and how long each has been, the longest first (`tests/support/stall_watch.rs`).
+
 ### What the harness normalises
 
 UUIDs, timestamps, ports, socket addresses and `x-mockserver-response-time-ms` are normalised, and `date` is ignored.

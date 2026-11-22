@@ -170,6 +170,8 @@ mod h3_step;
 mod docker_bind;
 #[path = "support/image_analytics.rs"]
 mod image_analytics;
+#[path = "support/stall_watch.rs"]
+mod stall_watch;
 
 use tcp_port::{dead_port, pick_refusing_port, port_refuses};
 
@@ -4246,6 +4248,7 @@ async fn scenarios_match_the_oracle() {
             loop {
                 let Some((index, file)) = queue.lock().unwrap().pop_front() else { break };
                 let scenario = load(&file);
+                let _watched = stall_watch::watch(&stem(&file));
                 let alone = workers > 1 && process_wide(&scenario).is_some();
                 let replayed = async {
                     let _exclusive = if alone { Some(PROCESS_WIDE.write().await) } else { None };
@@ -4590,6 +4593,7 @@ async fn upstream_scenarios_match_the_oracle() {
             loop {
                 let Some((index, file)) = queue.lock().unwrap().pop() else { break };
                 let scenario = load(&file);
+                let _watched = stall_watch::watch(&stem(&file));
                 let golden = load(&golden_path(&file));
                 // Next to the top-level scenarios replaying at the same time: see [`process_wide`].
                 let alone = process_wide(&scenario).is_some();
