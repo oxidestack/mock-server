@@ -206,6 +206,8 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     // The closest-match scan the unmatched request's log entries made, which `returnNotFound`'s hint reuses when
     // nothing it read has changed.
     let mut closest_scan = None;
+    // whether the request the log holds is the request as it is now (`httpForward` rewrites `Host` on the logged one)
+    let logged_is_request = !matches!(matched.as_ref().map(|e| &e.action), Some(Action::Forward(_)));
     {
         // Logged on arrival, before any delay (upstream's RECEIVED_REQUEST, which the server's own looped request
         // skips and nothing else: `processActionAfterFilter`); `httpForward` rewrites `Host`
@@ -220,9 +222,9 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         // The entries render the request they hold when the log is read (upstream's event log ring after 8.0.0), so
         // they show the path parameters the match set (oracle, scenario `path_parameters_log_entries`) and the `Host`
         // and scheme `httpForward` set (`log_ca_load_client_refused_forward`).
-        let shown = logged_request.insert(crate::recorded::LoggedRequest::of(&logged));
+        let shown = logged_request.insert(crate::recorded::LoggedRequest::shared(Arc::new(logged)));
         if !looped {
-            state.log.received_as_logged(logged, &request, shown);
+            state.log.received_logged(shown, &request);
         }
         if state.info_enabled() {
             closest_scan = crate::blocking::off_worker_when_large(request.body.len(), || {
@@ -623,17 +625,26 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     let validated = mock_validation.map(|operation| (operation, logged_response.clone(), request.clone()));
     use crate::recorded::{Arg, Kind, LogEntry};
     let logged_request = logged_request.unwrap_or_else(|| crate::recorded::LoggedRequest::of(&request));
+    // A mock response's `returning response` entry, built when the log is read: from the request the received entry
+    // holds and the response the exchange holds (without a breakpoint's `timing`, which the entry shows and the exchange
+    // does not).
+    let served = match (&served_by, log.served_action.take()) {
+        (Some(_), Some(action)) if logged_is_request && logged_response.get("timing").is_none() => {
+            let (empty_body, action) = (log.empty_body.clone(), crate::recorded::interned(action));
+            Some(move |x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest| served_entry(x, logged, &action, empty_body.as_ref()))
+        }
+        (_, action) => {
+            log.served_action = action;
+            None
+        }
+    };
     let ordered = || logged_request.arg();
     // `LogEntry.setArguments`: an `HttpResponse` argument (the response, a response action) prints its body bare.
-    let with_empty = |v: &serde_json::Value, is_action: bool| match &log.empty_body {
-        Some((body, in_action)) if !is_action || *in_action => crate::canonical::with_response_body(v, body),
-        _ => v.clone(),
-    };
+    let with_empty = |v: &serde_json::Value, is_action: bool| with_empty_body(v, log.empty_body.as_ref(), is_action);
     let response = || Arg::from(crate::recorded::logged_response(&with_empty(&logged_response, false)));
     let message = match (&served_by, &log.served_action) {
         (Some(id), Some(action)) => Some(
-            LogEntry::new(Kind::ExpectationResponse, "returning response:{}for request:{}for action:{}from expectation:{}")
-                .args([response(), ordered(), crate::recorded::logged_response(&with_empty(action, true)).into(), id.into()]),
+            LogEntry::new(Kind::ExpectationResponse, SERVED_FORMAT).args([response(), ordered(), crate::recorded::logged_response(&with_empty(action, true)).into(), id.into()]),
         ),
         (None, _) if stored_entry.is_some() => stored_entry.take(),
         (None, _) if reply.status == 404 => Some(LogEntry::new(Kind::NoMatchResponse, "no expectation for:{}returning response:{}").args([ordered(), response()]).other_argument(1)),
@@ -672,9 +683,10 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         let preflight = (served_by.is_none() && is_preflight(&request) && state.info_enabled())
             .then(|| LogEntry::new(Kind::Info, "returning CORS response for OPTIONS request").correlation(request.log_correlation_id.clone()));
         let warned_request = informational_warning.as_ref().map(|_| request.clone());
-        match message {
-            Some(message) => state.log.record_with_message(request, logged_response, served_by, message),
-            None => state.log.record(request, logged_response, served_by),
+        match (served, message) {
+            (Some(make), _) => state.log.record_served(&logged_request, logged_response, served_by, Kind::ExpectationResponse, make),
+            (None, Some(message)) => state.log.record_with_message(request, logged_response, served_by, message),
+            (None, None) => state.log.record(request, logged_response, served_by),
         }
         if let (Some(entry), Some(request)) = (informational_warning, warned_request) {
             crate::log::warn_event_about(state, entry, &request);
@@ -694,6 +706,28 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         None => reply,
     };
     dribbled(reply)
+}
+
+/// A mock response's `returning response` entry.
+const SERVED_FORMAT: &str = "returning response:{}for request:{}for action:{}from expectation:{}";
+
+/// `LogEntry.setArguments`: an `HttpResponse` argument (the response, a response action) prints its body bare, and an
+/// empty one as the arm logged it (for the action only when it shows it too).
+fn with_empty_body(v: &serde_json::Value, empty_body: Option<&(serde_json::Value, bool)>, is_action: bool) -> serde_json::Value {
+    match empty_body {
+        Some((body, in_action)) if !is_action || *in_action => crate::canonical::with_response_body(v, body),
+        _ => v.clone(),
+    }
+}
+
+/// The `returning response` entry of an exchange a mock response `action` of its expectation served, its request in
+/// the logged form `logged`.
+fn served_entry(x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest, action: &serde_json::Value, empty_body: Option<&(serde_json::Value, bool)>) -> crate::recorded::LogEntry {
+    use crate::recorded::{Arg, Kind, LogEntry, logged_response};
+    let id = x.expectation_id.as_deref().unwrap_or_default();
+    LogEntry::new(Kind::ExpectationResponse, SERVED_FORMAT)
+        .args([Arg::from(logged_response(&with_empty_body(&x.response, empty_body, false))), logged.arg(), logged_response(&with_empty_body(action, empty_body, true)).into(), id.into()])
+        .request_logged(&x.request, logged)
 }
 
 /// `Action::Respond`: a mock response, maybe a `recoverAfter` failure or a synthesized GraphQL body.

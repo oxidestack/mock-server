@@ -858,7 +858,7 @@ fn recorded_pairs(state: &State, filter: Option<&RequestMatcher>) -> Vec<std::sy
         .matching(filter)
         .into_iter()
         // an `EXPECTATION_RESPONSE` or `FORWARDED_REQUEST` entry: a mock's, a forward's, or a static file's (no expectation)
-        .filter(|x| x.expectation_id.is_some() || x.recorded.is_some() || x.entry.as_ref().is_some_and(|e| e.kind == Kind::ExpectationResponse))
+        .filter(|x| x.expectation_id.is_some() || x.recorded.is_some() || x.entry_kind() == Some(Kind::ExpectationResponse))
         .collect()
 }
 
@@ -1087,7 +1087,7 @@ fn verify_response(state: &State, v: &Value, filter_json: Option<&Value>, respon
     let shown = recorded::Arg::with_text(Value::Array(exchanges.clone()), java_list(exchanges.iter().map(json::pretty)));
     log(state, entry(Kind::VerificationFailed, format, correlation, filter_json, true).args([recorded::Arg::from(&expected_json), shown]), filter_json);
     let max = max_in_failure(v);
-    let responses: Vec<&Value> = pairs.iter().map(|x| &x.response).collect();
+    let responses: Vec<&Value> = pairs.iter().map(|x| &*x.response).collect();
     let mut message = if pairs.len() < max {
         format!("{}, expected:<{expected}> but was:<{}>", times.count_mismatch("Response", matched), responses_text(&responses))
     } else {
@@ -1142,7 +1142,7 @@ fn verify_response_sequence(state: &State, v: &Value, responses: &[Value], corre
                     String::new()
                 };
                 let expected: Vec<Value> = responses.iter().map(verification_response).collect();
-                let recorded_responses: Vec<Value> = pairs.iter().map(|x| x.response.clone()).collect();
+                let recorded_responses: Vec<Value> = pairs.iter().map(|x| Value::clone(&x.response)).collect();
                 let entry = recorded::LogEntry::new(Kind::VerificationFailed, "response sequence not found, expected:{}but was:{}").correlation(correlation).without_port().args([
                     recorded::Arg::with_text(Value::Array(expected.clone()), java_list(expected.iter().map(json::pretty))),
                     recorded::Arg::with_text(Value::Array(recorded_responses.clone()), java_list(recorded_responses.iter().map(json::pretty))),
@@ -1151,7 +1151,7 @@ fn verify_response_sequence(state: &State, v: &Value, responses: &[Value], corre
                 let max = max_in_failure(v);
                 let expected: Vec<Value> = responses.iter().map(verification_response).collect();
                 let expected: Vec<&Value> = expected.iter().collect();
-                let recorded: Vec<&Value> = pairs.iter().map(|x| &x.response).collect();
+                let recorded: Vec<&Value> = pairs.iter().map(|x| &*x.response).collect();
                 let mut message = if recorded.len() < max {
                     format!("Response sequence not found, expected:<{}> but was:<{}>", responses_text(&expected), responses_text(&recorded))
                 } else {

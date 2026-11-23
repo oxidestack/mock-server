@@ -566,7 +566,7 @@ pub fn build(state: &State, filter: &Filter) -> Built {
         grouping_key.get_or_insert(key);
         let latency_ms = logged_header(&x.response, RESPONSE_TIME_HEADER).and_then(|h| h.trim().parse::<i64>().ok());
         let response_headers = x.response.get("headers").cloned().unwrap_or(Value::Null);
-        exchanges.push(Captured { request: x.request.clone(), response_body, response_headers, latency_ms, provider });
+        exchanges.push(Captured { request: crate::request::HttpRequest::clone(&x.request), response_body, response_headers, latency_ms, provider });
     }
     let max_calls = state.config.property("llmOptimisationMaxCalls").and_then(|v| v.trim().parse::<i64>().ok()).unwrap_or(200);
     if max_calls > 0 && exchanges.len() as i64 > max_calls {

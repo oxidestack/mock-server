@@ -49,11 +49,12 @@ pub struct RecordedRequest {
     pub millis: i64,
 }
 
-#[derive(Clone)]
 pub struct Exchange {
-    pub request: HttpRequest,
-    /// Canonical `httpResponse` as MockServer logs it (the action's response, or the 404).
-    pub response: Value,
+    /// Shared with the request's arrival entry when the log holds the same request for both.
+    pub request: Arc<HttpRequest>,
+    /// Canonical `httpResponse` as MockServer logs it (the action's response, or the 404); a served request's is shared
+    /// with the earlier exchanges that logged an equal one ([`interned`]).
+    pub response: Arc<Value>,
     pub timestamp: DateTime<Local>,
     /// For forwarded exchanges: the expectation `retrieve?type=RECORDED_EXPECTATIONS` reports.
     pub recorded: Option<Value>,
@@ -61,13 +62,157 @@ pub struct Exchange {
     pub recorded_input: Option<Value>,
     /// The expectation that produced the response, if any (verification by expectation id).
     pub expectation_id: Option<String>,
-    /// Its entry (and line in `retrieve?type=LOGS`), when upstream writes one for this kind of completion.
-    pub entry: Option<LogEntry>,
+    /// Its entry (and line in `retrieve?type=LOGS`), when upstream writes one for this kind of completion: see
+    /// [`Exchange::entry`].
+    entry: ExchangeEntry,
     /// A `NO_MATCH_RESPONSE`: no expectation matched (what `explainUnmatched` explains).
     pub no_match: bool,
     /// The request as `REQUEST_RESPONSES` shows it, for an exchange re-imported from an archive (the model object
     /// it was read into, not a received request).
     pub shown_request: Option<Value>,
+}
+
+/// An exchange's entry: none, built when the exchange was logged, or built the first time the log is read. Most
+/// served requests' entries are never read (below INFO nothing prints them), and building one was most of the cost of
+/// logging a request.
+enum ExchangeEntry {
+    None,
+    /// Boxed: a `LogEntry` is ~600 bytes, and most exchanges hold a deferred one.
+    Built(Box<LogEntry>),
+    Deferred(Box<Deferred>),
+}
+
+/// What a deferred entry is built from: its call site's builder, then what logging it adds ([`completed_entry`]) in
+/// the port scope it was logged in. The type is known without building it.
+struct Deferred {
+    kind: Kind,
+    portless: bool,
+    make: Box<dyn Fn(&Exchange) -> LogEntry + Send + Sync>,
+    built: std::sync::OnceLock<Box<LogEntry>>,
+}
+
+impl Exchange {
+    /// A completion logged now, with no entry yet.
+    pub fn new(request: Arc<HttpRequest>, response: impl Into<Arc<Value>>, expectation_id: Option<String>) -> Exchange {
+        Exchange {
+            request,
+            response: response.into(),
+            timestamp: Local::now(),
+            recorded: None,
+            recorded_input: None,
+            expectation_id,
+            entry: ExchangeEntry::None,
+            no_match: false,
+            shown_request: None,
+        }
+    }
+
+    /// The exchange with `entry` as its entry, as logged.
+    pub fn with_entry(mut self, entry: Option<LogEntry>) -> Exchange {
+        self.entry = entry.map_or(ExchangeEntry::None, |e| ExchangeEntry::Built(Box::new(e)));
+        self
+    }
+
+    /// The exchange's entry, built now if it was deferred.
+    pub fn entry(&self) -> Option<&LogEntry> {
+        match &self.entry {
+            ExchangeEntry::None => None,
+            ExchangeEntry::Built(entry) => Some(entry),
+            ExchangeEntry::Deferred(d) => Some(d.built.get_or_init(|| Box::new(completed_entry((d.make)(self), self, d.portless)))),
+        }
+    }
+
+    /// The type of the exchange's entry, without building it.
+    pub fn entry_kind(&self) -> Option<Kind> {
+        match &self.entry {
+            ExchangeEntry::None => None,
+            ExchangeEntry::Built(entry) => Some(entry.kind),
+            ExchangeEntry::Deferred(d) => Some(d.kind),
+        }
+    }
+
+    /// The entry as its call site made it, before logging completes it.
+    fn take_entry(&mut self) -> Option<LogEntry> {
+        match std::mem::replace(&mut self.entry, ExchangeEntry::None) {
+            ExchangeEntry::None => None,
+            ExchangeEntry::Built(entry) => Some(*entry),
+            ExchangeEntry::Deferred(d) => Some((d.make)(self)),
+        }
+    }
+
+    /// The type a completion's entry takes when its call site set none.
+    fn completion_kind(&self) -> Kind {
+        match (self.no_match, self.recorded.is_some()) {
+            (true, _) => Kind::NoMatchResponse,
+            (_, true) => Kind::ForwardedRequest,
+            _ => Kind::ExpectationResponse,
+        }
+    }
+}
+
+impl Clone for Exchange {
+    /// A copy holds its entry built.
+    fn clone(&self) -> Exchange {
+        Exchange {
+            request: self.request.clone(),
+            response: self.response.clone(),
+            timestamp: self.timestamp,
+            recorded: self.recorded.clone(),
+            recorded_input: self.recorded_input.clone(),
+            expectation_id: self.expectation_id.clone(),
+            entry: self.entry().map_or(ExchangeEntry::None, |e| ExchangeEntry::Built(Box::new(e.clone()))),
+            no_match: self.no_match,
+            shown_request: self.shown_request.clone(),
+        }
+    }
+}
+
+/// A completion's entry as the log keeps it: the exchange's type and attachments unless its call site set them, and
+/// no port when logged in a portless scope.
+fn completed_entry(mut entry: LogEntry, x: &Exchange, portless: bool) -> LogEntry {
+    entry.portless |= portless;
+    if entry.kind == Kind::Info {
+        entry.kind = x.completion_kind();
+    }
+    if entry.requests.is_none() {
+        entry = entry.request(&x.request);
+    }
+    if entry.correlation_id.is_none() && !x.request.log_correlation_id.is_empty() {
+        entry.correlation_id = Some(x.request.log_correlation_id.clone());
+    }
+    if entry.response.is_none() && !x.response.is_null() {
+        entry.response = Some(crate::log_entry::Json::new(logged_response(&x.response)));
+    }
+    // the arguments equal to the entry's response (the response, a static response action) are that value
+    if let Some(response) = entry.response.clone() {
+        for argument in entry.arguments.iter_mut().flatten() {
+            // an argument still unrendered is not compared: that would render it on every request, and the
+            // response is never a request's JSON
+            if argument.is_rendered() && !crate::log_entry::Json::ptr_eq(argument, &response) && **argument == *response {
+                *argument = response.clone();
+            }
+        }
+    }
+    if entry.expectation_id.is_none() && entry.kind == Kind::ExpectationResponse {
+        entry.expectation_id = x.expectation_id.clone();
+    }
+    // `setExpectation(request, response)`: the recorded expectation, its response as the entry's.
+    if entry.expectation.is_none() && entry.kind == Kind::ForwardedRequest {
+        entry.expectation = x.recorded.as_ref().map(|recorded| {
+            let mut recorded = recorded.clone();
+            if let Some(o) = recorded.as_object_mut() {
+                if let Some(r) = o.get("httpRequest").cloned().map(model_json) {
+                    o.insert("httpRequest".into(), r);
+                }
+                if let (true, Some(response)) = (o.contains_key("httpResponse"), entry.response.as_ref()) {
+                    o.insert("httpResponse".into(), Value::clone(response));
+                }
+            }
+            crate::log_entry::Json::new(recorded)
+        });
+        entry.synthetic_expectation = entry.expectation.is_some();
+    }
+    entry
 }
 
 tokio::task_local! {
@@ -244,11 +389,11 @@ pub enum Subject {
 /// `REQUESTS` and verification) and its completion (`EXPECTATION_RESPONSE` / `FORWARDED_REQUEST`, read by
 /// `REQUEST_RESPONSES` and recorded expectations).
 enum Entry {
-    /// With the log correlation id upstream gives the request, and the request as the log line shows it (the line's text
-    /// is made from it when read). The fifth is the request
+    /// With the log correlation id upstream gives the request (`None`: the request's own, not copied), and the request as
+    /// the log line shows it (`None`: the entry's own; the line's text is made from it when read). The fifth is the request
     /// as logged before `maxLoggedBodyBytes` cut it, which the entry's `arguments` keep; the last the request the
     /// line's text shows, when that is neither (`httpForward` rewrote `Host` on the retained one).
-    Received(Arc<HttpRequest>, DateTime<Local>, String, crate::log_entry::Json, Option<crate::log_entry::Json>, Option<crate::log_entry::Json>),
+    Received(Arc<HttpRequest>, DateTime<Local>, Option<String>, Option<crate::log_entry::Json>, Option<crate::log_entry::Json>, Option<crate::log_entry::Json>),
     Exchange(Arc<Exchange>),
     /// Boxed: a `LogEntry` is ~500 bytes, and every slot of the log is as large as its largest variant.
     Message(Box<Message>),
@@ -267,14 +412,14 @@ impl Entry {
     fn text(&self, fields: Option<&[String]>) -> (DateTime<Local>, String) {
         match self {
             Entry::Received(r, ts, _, text, whole, shown) => match fields {
-                None => (*ts, received_text_of(text)),
+                None => (*ts, text.as_deref().map_or_else(|| received_text_of(&logged(r)), received_text_of)),
                 Some(fields) => {
                     let source = shown.as_deref().or(whole.as_deref()).cloned().unwrap_or_else(|| logged(r));
                     (*ts, received_text_of(&redact_value(&source, fields, true)))
                 }
             },
             Entry::Exchange(x) => {
-                let entry = x.entry.as_ref().expect("an exchange with a log line");
+                let entry = x.entry().expect("an exchange with a log line");
                 (x.timestamp, fields.map_or_else(|| entry.message_text().to_string(), |f| entry.redacted(f).message_text().to_string()))
             }
             Entry::Message(m) => {
@@ -287,10 +432,9 @@ impl Entry {
     /// The entry's log correlation id, as `LogEntry.getCorrelationId`.
     fn correlation_id(&self) -> Option<&str> {
         match self {
-            Entry::Received(_, _, id, ..) => Some(id.as_str()),
+            Entry::Received(r, _, id, ..) => Some(received_id(r, id)),
             Entry::Exchange(x) => x
-                .entry
-                .as_ref()
+                .entry()
                 .and_then(|e| e.correlation_id.as_deref())
                 .or_else(|| (!x.request.log_correlation_id.is_empty()).then_some(x.request.log_correlation_id.as_str())),
             Entry::Message(m) => m.entry.correlation_id.as_deref(),
@@ -337,7 +481,8 @@ mod weight {
 
     /// `String.length()`: UTF-16 code units.
     pub fn java_length(text: &str) -> u64 {
-        text.encode_utf16().count() as u64
+        // an ASCII text has one unit per byte, and most header names and values are ASCII
+        if text.is_ascii() { text.len() as u64 } else { text.encode_utf16().count() as u64 }
     }
 
     /// `headerBytes`: per header value, `overhead` plus its name's and value's characters.
@@ -423,6 +568,13 @@ mod weight {
     }
 }
 
+/// An entry in the ring with its weight (0 while no byte budget is in force), so evicting it does not weigh it again
+/// under the lock.
+struct Slot {
+    entry: Entry,
+    weight: u64,
+}
+
 /// An entry on its way into the ring, with the weight taken before the lock (see [`RequestLog::push`]).
 struct Staged {
     entry: Entry,
@@ -436,6 +588,7 @@ struct Staged {
 struct Drained {
     any: bool,
     recorded: bool,
+    /// What the drain evicted: the one entry a full log drops for each push is kept without allocating under the lock.
     dropped_entry: Option<Entry>,
     dropped_entries: Vec<Entry>,
 }
@@ -444,20 +597,27 @@ struct Drained {
 /// what was staged meanwhile, since the pushers that found it held went away without waiting.
 struct Ring<'a> {
     log: &'a RequestLog,
-    guard: Option<parking_lot::MutexGuard<'a, VecDeque<Entry>>>,
+    guard: Option<parking_lot::MutexGuard<'a, VecDeque<Slot>>>,
     work: Option<Drained>,
 }
 
 impl std::ops::Deref for Ring<'_> {
-    type Target = VecDeque<Entry>;
-    fn deref(&self) -> &VecDeque<Entry> {
+    type Target = VecDeque<Slot>;
+    fn deref(&self) -> &VecDeque<Slot> {
         self.guard.as_ref().expect("held")
     }
 }
 
 impl std::ops::DerefMut for Ring<'_> {
-    fn deref_mut(&mut self) -> &mut VecDeque<Entry> {
+    fn deref_mut(&mut self) -> &mut VecDeque<Slot> {
         self.guard.as_mut().expect("held")
+    }
+}
+
+impl Ring<'_> {
+    /// The entries, oldest first.
+    fn entries(&self) -> impl Iterator<Item = &Entry> {
+        self.iter().map(|slot| &slot.entry)
     }
 }
 
@@ -474,7 +634,7 @@ impl Drop for Ring<'_> {
 }
 
 pub struct RequestLog {
-    entries: Mutex<VecDeque<Entry>>,
+    entries: Mutex<VecDeque<Slot>>,
     /// Entries pushed and not yet in `entries`: see [`RequestLog::push`].
     inbox: concurrent_queue::ConcurrentQueue<Staged>,
     /// `maxLogEntries`; changed under the `entries` lock (see [`RequestLog::resize`]).
@@ -664,7 +824,7 @@ impl RequestLog {
         use std::sync::atomic::Ordering::Relaxed;
         let entries = self.locked();
         let max_bytes = self.max_bytes.load(Relaxed);
-        let bytes = if max_bytes > 0 { self.bytes.load(Relaxed) } else { entries.iter().map(Entry::weight).sum() };
+        let bytes = if max_bytes > 0 { self.bytes.load(Relaxed) } else { entries.entries().map(Entry::weight).sum() };
         (entries.len(), bytes, max_bytes, self.capacity.load(Relaxed))
     }
 
@@ -686,20 +846,23 @@ impl RequestLog {
             let mut entries = self.locked();
             // a budget newly in force starts from what the log holds
             if max_bytes > 0 && self.max_bytes.load(Relaxed) == 0 {
-                self.bytes.store(entries.iter().map(Entry::weight).sum(), Relaxed);
+                for slot in entries.iter_mut() {
+                    slot.weight = slot.entry.weight();
+                }
+                self.bytes.store(entries.iter().map(|slot| slot.weight).sum(), Relaxed);
             }
             self.capacity.store(max_entries, Relaxed);
             self.max_bytes.store(max_bytes, Relaxed);
             let mut evicted_recorded = false;
-            let mut evict = |entries: &mut VecDeque<Entry>, by_bytes: bool| {
+            let mut evict = |entries: &mut VecDeque<Slot>, by_bytes: bool| {
                 let Some(dropped) = entries.pop_front() else { return };
                 if by_bytes {
                     self.byte_evicted.fetch_add(1, Relaxed);
                 }
                 if max_bytes > 0 {
-                    self.bytes.fetch_sub(dropped.weight(), Relaxed);
+                    self.bytes.fetch_sub(dropped.weight, Relaxed);
                 }
-                evicted_recorded |= matches!(dropped, Entry::Exchange(ref x) if x.recorded.is_some());
+                evicted_recorded |= matches!(dropped.entry, Entry::Exchange(ref x) if x.recorded.is_some());
                 self.evicted.fetch_add(1, Relaxed);
                 self.evicted_since_start.fetch_add(1, Relaxed);
             };
@@ -796,7 +959,7 @@ impl RequestLog {
     /// The recorded expectations (canonical form), oldest first: what `retrieveRecordedExpectations(null)` returns.
     pub fn recorded_expectations(&self) -> Vec<Value> {
         self.locked()
-            .iter()
+            .entries()
             .filter_map(|e| match e {
                 Entry::Exchange(x) => x.recorded.as_ref().map(|r| {
                     let mut r = r.clone();
@@ -856,7 +1019,7 @@ impl RequestLog {
         }
         let request = self.truncated_request(&x.request);
         let response = self.truncated_response(&x.response);
-        if let Some(entry) = x.entry.as_mut() {
+        if let ExchangeEntry::Built(entry) = &mut x.entry {
             let mut swaps = Vec::new();
             if let Some(cut) = &request && let Some(own) = entry.requests.as_mut().filter(|own| own.len() == 1 && *own[0] == logged(&x.request)) {
                 let retained = logged(cut);
@@ -914,10 +1077,10 @@ impl RequestLog {
             }
         }
         if let Some(cut) = request {
-            x.request = cut;
+            x.request = Arc::new(cut);
         }
         if let Some(cut) = response {
-            x.response = cut;
+            x.response = Arc::new(cut);
         }
     }
 
@@ -963,7 +1126,7 @@ impl RequestLog {
 
     /// Moves the staged entries into the ring, evicting as each one is admitted. What the caller does after releasing
     /// the lock (the destructors, the change signal, the recorded hook) comes back as [`Drained`].
-    fn drain(&self, entries: &mut std::collections::VecDeque<Entry>) -> Drained {
+    fn drain(&self, entries: &mut std::collections::VecDeque<Slot>) -> Drained {
         use std::sync::atomic::Ordering::Relaxed;
         let mut work = Drained::default();
         while let Ok(Staged { entry, weighed_for, weight: early_weight }) = self.inbox.pop() {
@@ -981,24 +1144,23 @@ impl RequestLog {
             };
             // `CircularConcurrentLinkedDeque.evictExcessElements`: first the count, then (with a budget) the bytes, until
             // the incoming entry fits or nothing is left to drop; an entry over the whole budget is kept alone.
-            let mut evict = |entries: &mut std::collections::VecDeque<Entry>, by_bytes: bool| {
+            let mut evict = |entries: &mut std::collections::VecDeque<Slot>, by_bytes: bool| {
                 if let Some(dropped) = entries.pop_front() {
                     if by_bytes {
                         self.byte_evicted.fetch_add(1, Relaxed);
                     }
                     if max_bytes > 0 {
-                        self.bytes.fetch_sub(dropped.weight(), Relaxed);
+                        self.bytes.fetch_sub(dropped.weight, Relaxed);
                     }
-                    work.recorded |= matches!(dropped, Entry::Exchange(ref x) if x.recorded.is_some());
+                    work.recorded |= matches!(dropped.entry, Entry::Exchange(ref x) if x.recorded.is_some());
                     self.evicted.fetch_add(1, Relaxed);
                     self.evicted_since_start.fetch_add(1, Relaxed);
-                    // what the push evicts is dropped after the lock is released: freeing an entry (a request, its JSON
-                    // views) under it serialised every request worker behind one destructor once the log was full
-                    //. The one entry a full log drops for each push is kept without allocating under the
-                    // lock.
+                    // what the push evicts is freed after the lock is released, and off the request path
+                    // ([`evicted::discard`]): freeing an entry under the lock serialised every request worker behind
+                    // one destructor once the log was full
                     match work.dropped_entry {
-                        None => work.dropped_entry = Some(dropped),
-                        Some(_) => work.dropped_entries.push(dropped),
+                        None => work.dropped_entry = Some(dropped.entry),
+                        Some(_) => work.dropped_entries.push(dropped.entry),
                     }
                 }
             };
@@ -1011,7 +1173,7 @@ impl RequestLog {
                 }
                 self.bytes.fetch_add(weight, Relaxed);
             }
-            entries.push_back(entry);
+            entries.push_back(Slot { entry, weight });
         }
         work
     }
@@ -1019,7 +1181,7 @@ impl RequestLog {
     /// What a drain leaves for after the lock is released.
     fn finish(&self, work: Drained) {
         let Drained { any, recorded, dropped_entry, dropped_entries } = work;
-        drop((dropped_entry, dropped_entries));
+        evicted::discard(dropped_entry.into_iter().chain(dropped_entries));
         if any {
             self.changes.touch();
         }
@@ -1037,24 +1199,37 @@ impl RequestLog {
     /// A request's arrival whose log line shows `shown`: `httpForward` rewrites `Host` on the recorded request
     /// before `REQUESTS` serialises it, after the line was formatted.
     pub fn received_as(&self, request: HttpRequest, shown: &HttpRequest) {
-        self.received_as_logged(request, shown, &LoggedRequest::of(shown));
+        self.received_shared(Arc::new(request), shown, &LoggedRequest::of(shown).json, true);
     }
 
-    /// [`RequestLog::received_as`] with `shown` already in its logged form, which the request's other entries share.
-    pub fn received_as_logged(&self, request: HttpRequest, shown: &HttpRequest, shown_logged: &LoggedRequest) {
+    /// A request's arrival as the data plane logs it: the entry holds `logged`'s request, not a copy, and its line
+    /// shows `logged`'s JSON, which the request's other entries share; `shown` is the request as it arrived, before
+    /// `httpForward` rewrote `Host` on the retained one.
+    pub fn received_logged(&self, logged: &LoggedRequest, shown: &HttpRequest) {
+        self.received_shared(logged.request.clone(), shown, &logged.json, false);
+    }
+
+    /// `line` is the request the line shows; the entry keeps it when `keep_line`, else (the line is `request`'s own
+    /// logged form) renders the line from `request` when read.
+    fn received_shared(&self, request: Arc<HttpRequest>, shown: &HttpRequest, line: &crate::log_entry::Json, keep_line: bool) {
         // `CredentialRedaction.forLog`: a control-plane request's entry holds it without its credentials
         if let Some(masked) = crate::credential_redaction::for_log(&request) {
             let shown = crate::credential_redaction::for_log(shown).unwrap_or_else(|| shown.clone());
-            return self.received_as_logged(masked, &shown, &LoggedRequest::of(&shown));
+            let shown_json = LoggedRequest::of(&shown).json;
+            return self.received_shared(Arc::new(masked), &shown, &shown_json, true);
         }
-        let id = crate::breakpoint::correlation(&request);
+        // nothing is built for a log that keeps nothing and a console that prints nothing
+        if self.capacity.load(std::sync::atomic::Ordering::Relaxed) == 0 && !self.console_wanted(Level::Info, Kind::ReceivedRequest) {
+            return;
+        }
+        let id = request.log_correlation_id.is_empty().then(|| crate::breakpoint::correlation(&request));
         let shown_request = shown;
-        let text = shown_logged.json.clone();
-        let shown = (shown.headers != request.headers).then(|| shown_logged.json.clone());
+        let text = keep_line.then(|| line.clone());
+        let shown = (shown.headers != request.headers).then(|| line.clone());
         if self.console_wanted(Level::Info, Kind::ReceivedRequest) {
             let console_text = match self.redaction_fields() {
                 Some(fields) => received_text_of(&redact_value(shown.as_deref().unwrap_or(&logged(&request)), &fields, true)),
-                None => received_text_of(&text),
+                None => received_text_of(line),
             };
             self.console(Level::Info, Kind::ReceivedRequest, &console_text, &|| format!("received request: {}", crate::log_entry::compact_argument("received request:", &logged(&request), "")), in_portless_scope());
         }
@@ -1063,11 +1238,11 @@ impl RequestLog {
             Some(cut) => {
                 let shown_cut = self.truncated_request(shown_request).unwrap_or_else(|| shown_request.clone());
                 let shown_logged = LoggedRequest::of(&shown_cut);
-                let text = shown_logged.json.clone();
+                let text = Some(shown_logged.json.clone());
                 let shown = (shown_cut.headers != cut.headers).then(|| shown_logged.json.clone());
                 self.push(Entry::Received(Arc::new(cut), Local::now(), id, text, None, shown));
             }
-            None => self.push(Entry::Received(Arc::new(request), Local::now(), id, text, None, shown)),
+            None => self.push(Entry::Received(request, Local::now(), id, text, None, shown)),
         }
     }
 
@@ -1078,17 +1253,42 @@ impl RequestLog {
 
     /// [`RequestLog::record`] with the completion's log line.
     pub fn record_with_message(&self, request: HttpRequest, response: Value, expectation_id: Option<String>, message: impl Into<LogEntry>) {
-        self.push_exchange(Exchange {
-            request,
-            response,
-            timestamp: Local::now(),
-            recorded: None,
-            recorded_input: None,
-            expectation_id,
-            entry: Some(message.into()),
-            no_match: false,
-            shown_request: None,
-        });
+        self.push_exchange(Exchange::new(Arc::new(request), response, expectation_id).with_entry(Some(message.into())));
+    }
+
+    /// A served request's completion whose entry `make` builds from the exchange (its request, its response). The
+    /// entry is built when the log is first read unless something needs it kept as built (a disk-capture hook sees it,
+    /// `maxLoggedBodyBytes` cuts what it quotes, a control-plane request is masked); one the console prints is built
+    /// for it and let go. `kind` is its type. Nothing is built for a log that keeps nothing.
+    pub fn record_served(
+        &self,
+        logged: &LoggedRequest,
+        response: Value,
+        expectation_id: Option<String>,
+        kind: Kind,
+        make: impl Fn(&Exchange, &LoggedRequest) -> LogEntry + Send + Sync + 'static,
+    ) {
+        use std::sync::atomic::Ordering::{Acquire, Relaxed};
+        let hooked = self.exchange_hook_set.load(Acquire);
+        let printed = self.console_wanted(Level::Info, kind);
+        if self.capacity.load(Relaxed) == 0 && !hooked && !printed {
+            return;
+        }
+        let mut x = Exchange::new(logged.request.clone(), interned(response), expectation_id);
+        if hooked || self.max_logged_body_bytes.load(Relaxed) > 0 || crate::credential_redaction::for_log(&x.request).is_some() {
+            x.entry = ExchangeEntry::Built(Box::new(make(&x, logged)));
+            return self.push_exchange(x);
+        }
+        let portless = in_portless_scope();
+        if printed {
+            // the console's copy is built now, from the logged form the request's other lines rendered, and let go:
+            // the log keeps what builds it again
+            self.console_entry(&completed_entry(make(&x, logged), &x, portless));
+        }
+        let kind = if kind == Kind::Info { x.completion_kind() } else { kind };
+        let make = move |x: &Exchange| make(x, &LoggedRequest::shared(x.request.clone()));
+        x.entry = ExchangeEntry::Deferred(Box::new(Deferred { kind, portless, make: Box::new(make), built: Default::default() }));
+        self.push(Entry::Exchange(Arc::new(x)));
     }
 
     /// A completion's entry takes the exchange's type (`EXPECTATION_RESPONSE`, `NO_MATCH_RESPONSE`,
@@ -1096,61 +1296,15 @@ impl RequestLog {
     fn push_exchange(&self, mut x: Exchange) {
         // `CredentialRedaction.forLog`: a control-plane request's entry holds it without its credentials
         if let Some(masked) = crate::credential_redaction::for_log(&x.request) {
-            x.request = masked;
+            x.request = Arc::new(masked);
             if let Some((shown, _)) = x.shown_request.as_ref().and_then(crate::credential_redaction::json_for_log) {
                 x.shown_request = Some(shown);
             }
         }
-        if let Some(mut entry) = x.entry.take() {
-            entry.portless |= in_portless_scope();
-            if entry.kind == Kind::Info {
-                entry.kind = match (x.no_match, x.recorded.is_some()) {
-                    (true, _) => Kind::NoMatchResponse,
-                    (_, true) => Kind::ForwardedRequest,
-                    _ => Kind::ExpectationResponse,
-                };
-            }
-            if entry.requests.is_none() {
-                entry = entry.request(&x.request);
-            }
-            if entry.correlation_id.is_none() && !x.request.log_correlation_id.is_empty() {
-                entry.correlation_id = Some(x.request.log_correlation_id.clone());
-            }
-            if entry.response.is_none() && !x.response.is_null() {
-                entry.response = Some(crate::log_entry::Json::new(logged_response(&x.response)));
-            }
-            // the arguments equal to the entry's response (the response, a static response action) are that value
-            //
-            if let Some(response) = entry.response.clone() {
-                for argument in entry.arguments.iter_mut().flatten() {
-                    // an argument still unrendered is not compared: that would render it on every request, and the
-                    // response is never a request's JSON
-                    if argument.is_rendered() && !crate::log_entry::Json::ptr_eq(argument, &response) && **argument == *response {
-                        *argument = response.clone();
-                    }
-                }
-            }
-            if entry.expectation_id.is_none() && entry.kind == Kind::ExpectationResponse {
-                entry.expectation_id = x.expectation_id.clone();
-            }
-            // `setExpectation(request, response)`: the recorded expectation, its response as the entry's.
-            if entry.expectation.is_none() && entry.kind == Kind::ForwardedRequest {
-                entry.expectation = x.recorded.as_ref().map(|recorded| {
-                    let mut recorded = recorded.clone();
-                    if let Some(o) = recorded.as_object_mut() {
-                        if let Some(r) = o.get("httpRequest").cloned().map(model_json) {
-                            o.insert("httpRequest".into(), r);
-                        }
-                        if let (true, Some(response)) = (o.contains_key("httpResponse"), entry.response.as_ref()) {
-                            o.insert("httpResponse".into(), Value::clone(response));
-                        }
-                    }
-                    crate::log_entry::Json::new(recorded)
-                });
-                entry.synthetic_expectation = entry.expectation.is_some();
-            }
+        if let Some(entry) = x.take_entry() {
+            let entry = completed_entry(entry, &x, in_portless_scope());
             self.console_entry(&entry);
-            x.entry = Some(entry);
+            x.entry = ExchangeEntry::Built(Box::new(entry));
         }
         // Disk capture runs first, with the exchange as served; an archive's own re-import is never appended back.
         if !x.no_match && x.shown_request.is_none() && self.exchange_hook_set.load(std::sync::atomic::Ordering::Acquire) {
@@ -1170,7 +1324,9 @@ impl RequestLog {
         if message.is_none() {
             return;
         }
-        self.push_exchange(Exchange { request, response, timestamp: Local::now(), recorded: None, recorded_input: None, expectation_id: None, entry: message, no_match: true, shown_request: None });
+        let mut x = Exchange::new(Arc::new(request), response, None).with_entry(message);
+        x.no_match = true;
+        self.push_exchange(x);
     }
 
     /// `retrieveUnmatchedRequests`: the most recent no-match exchanges, newest first, at most `limit` (1 to 100).
@@ -1189,24 +1345,18 @@ impl RequestLog {
         message: Option<LogEntry>,
     ) {
         let (recorded, recorded_input) = recorded.map(|(c, i)| (Some(c), Some(i))).unwrap_or_default();
-        self.push_exchange(Exchange { request, response, timestamp: Local::now(), recorded, recorded_input, expectation_id, entry: message, no_match: false, shown_request: None });
+        let mut x = Exchange::new(Arc::new(request), response, expectation_id).with_entry(message);
+        (x.recorded, x.recorded_input) = (recorded, recorded_input);
+        self.push_exchange(x);
     }
 
     /// `importRecordedRequestResponse`: a forwarded exchange read back from an archive; `shown` is the request as
     /// `REQUEST_RESPONSES` writes it.
     pub fn record_reimported(&self, request: HttpRequest, shown: Value, response: Value, recorded: (Value, Value), message: impl Into<LogEntry>) {
         let (recorded, recorded_input) = (Some(recorded.0), Some(recorded.1));
-        self.push_exchange(Exchange {
-            request,
-            response,
-            timestamp: Local::now(),
-            recorded,
-            recorded_input,
-            expectation_id: None,
-            entry: Some(message.into()),
-            no_match: false,
-            shown_request: Some(shown),
-        });
+        let mut x = Exchange::new(Arc::new(request), response, None).with_entry(Some(message.into()));
+        (x.recorded, x.recorded_input, x.shown_request) = (recorded, recorded_input, Some(shown));
+        self.push_exchange(x);
     }
 
     /// Requests served by an expectation (optionally only by `id`), oldest first.
@@ -1267,7 +1417,7 @@ impl RequestLog {
     /// Completed exchanges, oldest first.
     pub fn exchanges(&self) -> Vec<Arc<Exchange>> {
         self.locked()
-            .iter()
+            .entries()
             .filter_map(|e| match e {
                 Entry::Exchange(x) => Some(x.clone()),
                 _ => None,
@@ -1278,7 +1428,7 @@ impl RequestLog {
     /// Received requests, oldest first.
     pub fn requests(&self) -> Vec<Arc<HttpRequest>> {
         self.locked()
-            .iter()
+            .entries()
             .filter_map(|e| match e {
                 Entry::Received(r, ..) => Some(r.clone()),
                 _ => None,
@@ -1291,11 +1441,11 @@ impl RequestLog {
     /// expectation served, and the DNS and binary received entries naming the expectation that answered them).
     pub fn recorded_requests(&self, answered: bool) -> Vec<RecordedRequest> {
         self.locked()
-            .iter()
+            .entries()
             .filter_map(|e| match e {
                 Entry::Received(r, ts, ..) if !answered => Some(RecordedRequest { request: Received::Http(r.clone()), expectation_id: None, millis: ts.timestamp_millis() }),
                 Entry::Exchange(x) if answered && x.expectation_id.is_some() => Some(RecordedRequest {
-                    request: Received::Http(Arc::new(x.request.clone())),
+                    request: Received::Http(x.request.clone()),
                     expectation_id: x.expectation_id.clone(),
                     millis: x.timestamp.timestamp_millis(),
                 }),
@@ -1325,7 +1475,7 @@ impl RequestLog {
     /// Received requests logged after `epoch_millis` (`RecordedRequest.arrivedAtMillis > verificationStartedAtMillis`),
     /// the arrivals a failed verification's summary counts.
     pub fn received_after(&self, epoch_millis: i64) -> usize {
-        self.locked().iter().filter(|e| matches!(e, Entry::Received(_, ts, ..) if ts.timestamp_millis() > epoch_millis)).count()
+        self.locked().entries().filter(|e| matches!(e, Entry::Received(_, ts, ..) if ts.timestamp_millis() > epoch_millis)).count()
     }
 
     /// `RECEIVED_REQUEST` entries whose request matches `filter`, as `retrieve?format=LOG_ENTRIES` serialises them
@@ -1334,10 +1484,10 @@ impl RequestLog {
     pub fn received_log_entries(&self, filter: Option<&RequestMatcher>, config: &Config) -> Vec<Value> {
         let fields = redact_fields(config);
         self.locked()
-            .iter()
+            .entries()
             .filter_map(|e| match e {
                 Entry::Received(r, ts, id, _, whole, _) if filter.is_none_or(|f| crate::matcher::as_received(|| f.matches(r, Mode::ControlPlane))) => {
-                    Some(redact_entry_json(received_log_entry(r, ts, id, whole.as_deref(), fields.as_deref(), false), fields.as_deref()))
+                    Some(redact_entry_json(received_log_entry(r, ts, received_id(r, id), whole.as_deref(), fields.as_deref(), false), fields.as_deref()))
                 }
                 _ => None,
             })
@@ -1355,9 +1505,9 @@ impl RequestLog {
     pub fn handled(&self, kind: Kind, filter: &RequestMatcher) -> usize {
         // Collected first: the matcher may log (a regex timeout), which takes the log's lock.
         let (mut exchanges, mut messages) = (Vec::new(), Vec::new());
-        for e in self.locked().iter() {
+        for e in self.locked().entries() {
             match e {
-                Entry::Exchange(x) if x.entry.as_ref().is_some_and(|m| m.kind == kind) => exchanges.push(x.clone()),
+                Entry::Exchange(x) if x.entry_kind() == Some(kind) => exchanges.push(x.clone()),
                 Entry::Message(m) if m.entry.kind == kind => {
                     if let Subject::Request(r) = &m.subject {
                         messages.push(r.clone());
@@ -1381,10 +1531,10 @@ impl RequestLog {
         let fields = self.redaction_fields();
         let fields = fields.as_deref();
         self.locked()
-            .iter()
+            .entries()
             .filter_map(|e| match e {
                 Entry::Received(..) => e.received_request().filter(|r| crate::matcher::as_received(|| request(r))).map(|_| e.text(fields)),
-                Entry::Exchange(x) => x.entry.as_ref().filter(|_| request(&x.request)).map(|_| e.text(fields)),
+                Entry::Exchange(x) => x.entry_kind().filter(|_| request(&x.request)).map(|_| e.text(fields)),
                 Entry::Message(m) => {
                     let keep = match &m.subject {
                         Subject::None => true,
@@ -1438,9 +1588,9 @@ impl RequestLog {
     pub fn messages_correlated(&self, correlation_id: &str) -> Vec<(DateTime<Local>, String)> {
         let fields = self.redaction_fields();
         self.locked()
-            .iter()
+            .entries()
             .filter(|e| e.correlation_id() == Some(correlation_id))
-            .filter(|e| !matches!(e, Entry::Exchange(x) if x.entry.is_none()))
+            .filter(|e| !matches!(e, Entry::Exchange(x) if x.entry_kind().is_none()))
             .map(|e| e.text(fields.as_deref()))
             .collect()
     }
@@ -1450,15 +1600,15 @@ impl RequestLog {
     /// logged without an entry (below INFO) is no entry upstream either.
     pub fn explainable(&self, correlation_id: &str) -> Vec<Explainable> {
         self.locked()
-            .iter()
+            .entries()
             .filter(|e| e.correlation_id() == Some(correlation_id))
             .filter_map(|e| match e {
                 Entry::Received(r, ts, ..) => {
                     Some(Explainable { kind: Kind::ReceivedRequest, request: Some(HttpRequest::clone(r)), timestamp: *ts, entry: None })
                 }
                 Entry::Exchange(x) => {
-                    let entry = x.entry.as_ref()?;
-                    Some(Explainable { kind: entry.kind, request: Some(x.request.clone()), timestamp: x.timestamp, entry: Some(entry.clone()) })
+                    let entry = x.entry()?;
+                    Some(Explainable { kind: entry.kind, request: Some(HttpRequest::clone(&x.request)), timestamp: x.timestamp, entry: Some(entry.clone()) })
                 }
                 Entry::Message(m) => {
                     let request = match &m.subject {
@@ -1494,29 +1644,24 @@ impl RequestLog {
         };
         let exchange = |x: &Exchange| -> Value {
             let fallback;
-            let entry = match &x.entry {
+            let entry = match x.entry() {
                 Some(e) => e,
                 None => {
-                    let kind = match (x.no_match, x.recorded.is_some()) {
-                        (true, _) => Kind::NoMatchResponse,
-                        (_, true) => Kind::ForwardedRequest,
-                        _ => Kind::ExpectationResponse,
-                    };
-                    fallback = LogEntry::new(kind, "").request(&x.request);
+                    fallback = LogEntry::new(x.completion_kind(), "").request(&x.request);
                     &fallback
                 }
             };
             redact_entry_json(render(entry, &x.timestamp), fields.as_deref())
         };
         self.locked()
-            .iter()
+            .entries()
             .filter(|e| correlation.is_none_or(|c| e.correlation_id() == Some(c)))
             .filter_map(|e| match (scope, e) {
                 (EntryScope::Messages, Entry::Received(r, ts, id, _, whole, _)) => {
-                    crate::matcher::as_received(|| request(r)).then(|| redact_entry_json(received_log_entry(r, ts, id, whole.as_deref(), fields.as_deref(), dashboard), fields.as_deref()))
+                    crate::matcher::as_received(|| request(r)).then(|| redact_entry_json(received_log_entry(r, ts, received_id(r, id), whole.as_deref(), fields.as_deref(), dashboard), fields.as_deref()))
                 }
                 (EntryScope::Messages, Entry::Exchange(x)) => {
-                    x.entry.as_ref().filter(|_| request(&x.request)).map(|m| redact_entry_json(render(m, &x.timestamp), fields.as_deref()))
+                    x.entry_kind().filter(|_| request(&x.request)).and_then(|_| x.entry()).map(|m| redact_entry_json(render(m, &x.timestamp), fields.as_deref()))
                 }
                 (EntryScope::Messages, Entry::Message(m)) => {
                     let keep = match &m.subject {
@@ -1578,7 +1723,7 @@ impl RequestLog {
             }
         };
         let mut entries = self.locked();
-        entries.retain(|e| match e {
+        entries.retain(|slot| match &slot.entry {
             Entry::Received(r, ..) => !request(r),
             Entry::Exchange(x) => !request(&x.request),
             Entry::Message(m) => match &m.subject {
@@ -1589,7 +1734,7 @@ impl RequestLog {
             },
         });
         if self.max_bytes.load(std::sync::atomic::Ordering::Relaxed) > 0 {
-            self.bytes.store(entries.iter().map(Entry::weight).sum(), std::sync::atomic::Ordering::Relaxed);
+            self.bytes.store(entries.iter().map(|slot| slot.weight).sum(), std::sync::atomic::Ordering::Relaxed);
         }
         drop(entries);
         self.changes.touch();
@@ -1841,8 +1986,8 @@ pub fn redact_exchanges(exchanges: Vec<Arc<Exchange>>, config: &Config) -> Vec<A
         .iter()
         .map(|x| {
             let mut e = (**x).clone();
-            e.request = redact_request(&x.request, &fields);
-            e.response = redact_value(&e.response, &fields, false);
+            e.request = Arc::new(redact_request(&x.request, &fields));
+            e.response = Arc::new(redact_value(&e.response, &fields, false));
             // The recorded expectation's original JSON text, which the HAR export prefers to the model's, still quotes
             // the redacted fields: the export renders the redacted model instead.
             let body_redacted = e.response.get("body") != x.response.get("body");
@@ -2071,22 +2216,41 @@ const SHARED_EXPECTATIONS: usize = 256;
 
 /// A request as log lines show it, built once for all of its entries: [`logged`] and its text in a
 /// message ([`log_value`]).
+#[derive(Clone)]
 pub struct LoggedRequest {
     /// Shared by every entry that attaches the request or takes it as an argument.
     pub json: crate::log_entry::Json,
+    /// The request the JSON is rendered from, which an entry may hold instead of a copy.
+    pub request: Arc<HttpRequest>,
 }
 
 impl LoggedRequest {
     /// Rendered when an entry first needs it: the request is kept, not its JSON.
     pub fn of(request: &HttpRequest) -> LoggedRequest {
-        let request = request.clone();
-        LoggedRequest { json: crate::log_entry::Json::lazy(move || logged(&request)) }
+        LoggedRequest::shared(Arc::new(request.clone()))
+    }
+
+    /// [`LoggedRequest::of`] a request held already.
+    pub fn shared(request: Arc<HttpRequest>) -> LoggedRequest {
+        let source = request.clone();
+        let make = move || logged(&source);
+        // `CredentialRedaction.forLog` reads only a control-plane request (its JSON `path`, or a preflight's): any
+        // other is attached to an entry without rendering it to look
+        let path = request.path.as_str();
+        let credential_free = !crate::cors_origin::is_control_plane_route(Some(&request.method), path) && !crate::cors_origin::is_control_plane_path_candidate(path);
+        let json = if credential_free { crate::log_entry::Json::lazy_credential_free(make) } else { crate::log_entry::Json::lazy(make) };
+        LoggedRequest { json, request }
     }
 
     /// The request as a message argument: what `Arg::from(logged(request))` gives, without rendering it again.
     pub fn arg(&self) -> Arg {
         Arg { json: self.json.clone(), object: None, shape: crate::log_entry::ArgText::Json }
     }
+}
+
+/// A received entry's correlation id: its own, or its request's.
+fn received_id<'a>(request: &'a HttpRequest, id: &'a Option<String>) -> &'a str {
+    id.as_deref().unwrap_or(&request.log_correlation_id)
 }
 
 /// The `received request` log line of a request already in its logged JSON form.
@@ -2756,7 +2920,7 @@ pub fn exchange_json(x: &Exchange) -> Value {
     let mut o = Map::new();
     o.insert("httpRequest".into(), x.shown_request.clone().unwrap_or_else(|| ordered(&x.request)));
     if !x.response.is_null() {
-        o.insert("httpResponse".into(), x.response.clone());
+        o.insert("httpResponse".into(), Value::clone(&x.response));
     }
     o.insert("timestamp".into(), x.timestamp.format("%Y-%m-%d %H:%M:%S%.3f").to_string().into());
     Value::Object(o)
@@ -2801,6 +2965,79 @@ pub fn input_request(request: &HttpRequest) -> Value {
         o.insert("body".into(), body);
     }
     Value::Object(o)
+}
+
+/// `value`, or an equal one logged lately on this thread: a static response's logged form and its action are the same
+/// from request to request, and each copy was ~1 KB of the event log per request.
+pub fn interned(value: Value) -> Arc<Value> {
+    use std::cell::RefCell;
+    thread_local! {
+        static RECENT: RefCell<VecDeque<Arc<Value>>> = const { RefCell::new(VecDeque::new()) };
+    }
+    const RECENT_VALUES: usize = 8;
+    let mut value = Some(value);
+    let shared = RECENT.try_with(|recent| {
+        let mut recent = recent.borrow_mut();
+        let given = value.as_ref().expect("not yet taken");
+        if let Some(found) = recent.iter().find(|v| ***v == *given) {
+            return found.clone();
+        }
+        if recent.len() == RECENT_VALUES {
+            recent.pop_front();
+        }
+        let shared = Arc::new(value.take().expect("not yet taken"));
+        recent.push_back(shared.clone());
+        shared
+    });
+    // a thread on its way out shares nothing
+    shared.unwrap_or_else(|_| Arc::new(value.take().unwrap_or_default()))
+}
+
+/// Freeing what the log evicts off the request path: each thread gathers what its pushes evicted and hands every
+/// [`evicted::BATCH`] of them to one thread that frees them, so a full log costs a request one move, not the
+/// destructors of a request, a response and their entries.
+mod evicted {
+    use super::Entry;
+    use std::cell::RefCell;
+    use std::sync::OnceLock;
+    use std::sync::mpsc::Sender;
+
+    pub const BATCH: usize = 256;
+
+    thread_local! {
+        static GATHERED: RefCell<Vec<Entry>> = const { RefCell::new(Vec::new()) };
+    }
+
+    /// The freeing thread's inbox; `None` when it could not be started (then each batch is freed where it filled).
+    fn freer() -> Option<&'static Sender<Vec<Entry>>> {
+        static FREER: OnceLock<Option<Sender<Vec<Entry>>>> = OnceLock::new();
+        FREER
+            .get_or_init(|| {
+                let (tx, rx) = std::sync::mpsc::channel::<Vec<Entry>>();
+                std::thread::Builder::new().name("event-log-free".into()).spawn(move || rx.into_iter().for_each(drop)).ok().map(|_| tx)
+            })
+            .as_ref()
+    }
+
+    pub fn discard(entries: impl Iterator<Item = Entry>) {
+        let mut entries = entries.peekable();
+        if entries.peek().is_none() {
+            return;
+        }
+        let full = GATHERED.try_with(|gathered| {
+            let mut gathered = gathered.borrow_mut();
+            if gathered.capacity() == 0 {
+                gathered.reserve_exact(BATCH);
+            }
+            gathered.extend(entries);
+            (gathered.len() >= BATCH).then(|| std::mem::replace(&mut *gathered, Vec::with_capacity(BATCH)))
+        });
+        // a thread on its way out frees what it evicts itself
+        let Ok(Some(full)) = full else { return };
+        if let Some(freer) = freer() {
+            let _ = freer.send(full);
+        }
+    }
 }
 
 #[cfg(test)]

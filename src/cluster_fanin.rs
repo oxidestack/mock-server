@@ -300,15 +300,8 @@ pub(crate) fn exchange_from_json(v: &Value) -> Exchange {
         .and_then(|t| chrono::NaiveDateTime::parse_from_str(t, "%Y-%m-%d %H:%M:%S%.3f").ok())
         .and_then(|t| t.and_local_timezone(chrono::Local).single())
         .unwrap_or_else(chrono::Local::now);
-    Exchange {
-        request: request_from_json(&request),
-        response: v.get("httpResponse").cloned().unwrap_or(Value::Null),
-        timestamp,
-        recorded: None,
-        recorded_input: None,
-        expectation_id: None,
-        entry: None,
-        no_match: false,
-        shown_request: Some(request),
-    }
+    let mut x = Exchange::new(std::sync::Arc::new(request_from_json(&request)), v.get("httpResponse").cloned().unwrap_or(Value::Null), None);
+    x.timestamp = timestamp;
+    x.shown_request = Some(request);
+    x
 }

@@ -19,18 +19,31 @@ pub struct Json(std::sync::Arc<JsonCell>);
 struct JsonCell {
     value: std::sync::OnceLock<Value>,
     make: std::sync::Mutex<Option<Box<dyn FnOnce() -> Value + Send>>>,
+    /// Known, without rendering it, to be a request `CredentialRedaction.forLog` leaves as it is (not a control-plane
+    /// request), so attaching it to an entry need not read it.
+    credential_free: bool,
 }
 
 impl Json {
     pub fn new(value: Value) -> Json {
         let cell = std::sync::OnceLock::new();
         let _ = cell.set(value);
-        Json(std::sync::Arc::new(JsonCell { value: cell, make: std::sync::Mutex::new(None) }))
+        Json(std::sync::Arc::new(JsonCell { value: cell, make: std::sync::Mutex::new(None), credential_free: false }))
     }
 
     /// A value rendered by `make` the first time it is read.
     pub fn lazy(make: impl FnOnce() -> Value + Send + 'static) -> Json {
-        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), make: std::sync::Mutex::new(Some(Box::new(make))) }))
+        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), make: std::sync::Mutex::new(Some(Box::new(make))), credential_free: false }))
+    }
+
+    /// [`Json::lazy`] for a request already known to carry nothing `CredentialRedaction.forLog` masks.
+    pub fn lazy_credential_free(make: impl FnOnce() -> Value + Send + 'static) -> Json {
+        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), make: std::sync::Mutex::new(Some(Box::new(make))), credential_free: true }))
+    }
+
+    /// See [`Json::lazy_credential_free`].
+    pub fn is_credential_free(&self) -> bool {
+        self.0.credential_free
     }
 
     /// The value, copied only while another entry still shares it.
@@ -565,6 +578,9 @@ impl LogEntry {
     /// `CredentialRedaction.forLog`: a control-plane request the entry holds without its credentials, the values it
     /// masked remembered for `redactSecretsInLog`.
     fn for_log(&mut self, request: Json) -> Json {
+        if request.is_credential_free() {
+            return request;
+        }
         match crate::credential_redaction::json_for_log(&request) {
             Some((masked, values)) => {
                 self.masked_values.extend(values);
@@ -658,7 +674,7 @@ impl LogEntry {
 
     /// `CredentialRedaction.argumentForLog`: a control-plane request argument without its credentials.
     fn argument_for_log(&mut self, argument: Arg) -> Arg {
-        if !matches!(argument.shape, ArgText::Json) {
+        if !matches!(argument.shape, ArgText::Json) || argument.json.is_credential_free() {
             return argument;
         }
         match crate::credential_redaction::json_for_log(&argument.json) {

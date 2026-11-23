@@ -259,7 +259,7 @@ pub fn forward_failures(state: &State, correlation_id: Option<&str>, limit: i64)
         .exchanges()
         .into_iter()
         .rev()
-        .filter(|x| x.entry.as_ref().is_some_and(|e| e.kind == Kind::NoMatchResponse && e.format == FORWARD_FAILURE_FORMAT))
+        .filter(|x| x.entry().is_some_and(|e| e.kind == Kind::NoMatchResponse && e.format == FORWARD_FAILURE_FORMAT))
         .filter(|x| correlation_id.is_none_or(|id| failure_correlation_id(x) == id))
         .take(limit)
         .collect();
@@ -278,7 +278,7 @@ pub fn forward_failures(state: &State, correlation_id: Option<&str>, limit: i64)
             node.insert("timestamp".into(), x.timestamp.format("%Y-%m-%d %H:%M:%S%.3f").to_string().into());
             node.insert("method".into(), x.request.method.clone().into());
             node.insert("path".into(), x.request.path.clone().into());
-            describe_failure_into(state, node, x.entry.as_ref().expect("filtered on its entry"))
+            describe_failure_into(state, node, x.entry().expect("filtered on its entry"))
         })
         .collect();
     let mut body = Map::new();
@@ -294,7 +294,7 @@ pub fn forward_failures(state: &State, correlation_id: Option<&str>, limit: i64)
 
 /// A failed forward's log correlation id: its entry's, else its request's.
 fn failure_correlation_id(x: &crate::recorded::Exchange) -> String {
-    x.entry.as_ref().and_then(|e| e.correlation_id.clone()).unwrap_or_else(|| x.request.log_correlation_id.clone())
+    x.entry().and_then(|e| e.correlation_id.clone()).unwrap_or_else(|| x.request.log_correlation_id.clone())
 }
 
 /// `PUT /mockserver/explain` (`HttpState.explainWithOptionalNarration`).

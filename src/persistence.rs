@@ -282,7 +282,7 @@ fn start_recorded_requests(state: &Arc<State>) {
         let mut line = serde_json::Map::new();
         line.insert("httpRequest".into(), x.shown_request.clone().unwrap_or_else(|| crate::recorded::ordered(&x.request)));
         if !x.response.is_null() {
-            line.insert("httpResponse".into(), x.response.clone());
+            line.insert("httpResponse".into(), serde_json::Value::clone(&x.response));
         }
         let compact = collapse_whitespace_runs_containing_line_break(&crate::json::compact(&Value::Object(line)));
         let mut file = file.lock();

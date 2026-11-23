@@ -654,7 +654,7 @@ pub fn validation_pairs(exchanges: &[Arc<crate::recorded::Exchange>]) -> Vec<(Ht
             if let Some(ct) = default_type.filter(|_| crate::request::first(&headers, "content-type").is_none()) {
                 headers.push(("content-type".into(), vec![ct]));
             }
-            (x.request.clone(), headers, status, String::from_utf8_lossy(&bytes).into_owned())
+            (HttpRequest::clone(&x.request), headers, status, String::from_utf8_lossy(&bytes).into_owned())
         })
         .collect()
 }
@@ -3253,7 +3253,7 @@ fn retrieve(state: &State, request: &HttpRequest) -> Reply {
             let reply = match (format.as_str(), language) {
                 ("JSON", _) => json_array(&exchanges.iter().map(|x| crate::recorded::exchange_json(x)).collect::<Vec<_>>()),
                 ("LOG_ENTRIES", _) => log_entries(crate::recorded::EntryScope::RequestResponses),
-                ("CURL", _) => curl_commands(exchanges.iter().map(|x| &x.request)),
+                ("CURL", _) => curl_commands(exchanges.iter().map(|x| &*x.request)),
                 ("HAR", _) => har(exchanges.iter().map(|x| exchange_pair(state, x)).collect()),
                 ("OPENAPI", _) => openapi(exchanges.iter().map(|x| exchange_expectation(x)).collect()),
                 ("POSTMAN", _) => postman(exchanges.iter().map(|x| exchange_expectation(x)).collect()),
@@ -3449,7 +3449,7 @@ fn recorded_expectations(recorded: &[std::sync::Arc<crate::recorded::Exchange>])
 /// `toExpectationsFromPairs`: a recorded exchange as a synthetic expectation.
 fn exchange_expectation(x: &crate::recorded::Exchange) -> crate::export::Expectation {
     let request = x.shown_request.clone().unwrap_or_else(|| crate::recorded::input_request(&x.request));
-    crate::export::Expectation::synthetic(request, (!x.response.is_null()).then(|| x.response.clone()))
+    crate::export::Expectation::synthetic(request, (!x.response.is_null()).then(|| Value::clone(&x.response)))
 }
 
 /// `HarConverter.serialize`.

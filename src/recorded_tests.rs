@@ -408,3 +408,86 @@ fn max_event_log_size_in_bytes_keeps_the_newest_entries_that_fit() {
     forwarded(&log, request("/big"), binary(400));
     assert_eq!(log.exchanges().len(), 1);
 }
+
+// --- A served request's entries, built when the log is read ----------------------------------------------------
+
+fn served(path: &str, id: &str) -> HttpRequest {
+    let mut r = request(path);
+    r.headers = vec![("Host".into(), vec!["localhost:1080".into()]), ("Accept".into(), vec!["*/*".into()])];
+    r.protocol = "HTTP_1_1";
+    r.keep_alive = true;
+    r.local_address = "127.0.0.1:1080".into();
+    r.log_correlation_id = id.into();
+    r
+}
+
+const SERVED_FORMAT: &str = "returning response:{}for request:{}for action:{}from expectation:{}";
+
+/// The data plane's `returning response` entry for `x`, as it builds it for a static response.
+fn served_entry(x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest, action: &serde_json::Value) -> LogEntry {
+    use crate::recorded::{Arg, logged_response};
+    LogEntry::new(Kind::ExpectationResponse, SERVED_FORMAT)
+        .args([Arg::from(logged_response(&x.response)), logged.arg(), logged_response(action).into(), "e-1".into()])
+        .request_logged(&x.request, logged)
+}
+
+/// Every entry's JSON with its time left out, which differs between two logs.
+fn untimed(entries: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
+    entries
+        .into_iter()
+        .map(|mut e| {
+            if let Some(o) = e.as_object_mut() {
+                o.remove("epochTime");
+                o.remove("timestamp");
+            }
+            e
+        })
+        .collect()
+}
+
+#[test]
+fn a_served_request_is_logged_without_building_its_entry_and_reads_back_as_an_eagerly_built_one() {
+    let config = crate::Config::for_tests();
+    let response = json!({"statusCode": 200, "reasonPhrase": "OK", "headers": {"connection": ["keep-alive"]}, "body": "e0"});
+    let action = json!({"statusCode": 200, "reasonPhrase": "OK", "body": "e0"});
+    // capacity 3: the second request's exchange evicts the first's arrival
+    let (lazy, eager) = (RequestLog::new(3), RequestLog::new(3));
+    let builds = Arc::new(AtomicUsize::new(0));
+    for (i, path) in ["/a", "/b"].into_iter().enumerate() {
+        let id = format!("00000000-0000-0000-0000-00000000000{i}");
+        let request = Arc::new(served(path, &id));
+        let logged = crate::recorded::LoggedRequest::shared(request.clone());
+        lazy.received_logged(&logged, &request);
+        let (action_for_lazy, builds) = (action.clone(), builds.clone());
+        lazy.record_served(&logged, response.clone(), Some("e-1".into()), Kind::ExpectationResponse, move |x, logged| {
+            builds.fetch_add(1, Ordering::Relaxed);
+            served_entry(x, logged, &action_for_lazy)
+        });
+
+        let plain = served(path, &id);
+        let logged = crate::recorded::LoggedRequest::of(&plain);
+        eager.received(plain.clone());
+        let x = crate::recorded::Exchange::new(Arc::new(plain.clone()), response.clone(), Some("e-1".into()));
+        eager.record_with_message(plain, response.clone(), Some("e-1".into()), served_entry(&x, &logged, &action));
+    }
+    assert_eq!(builds.load(Ordering::Relaxed), 0, "logging a served request builds no entry");
+    assert_eq!((lazy.size(), lazy.evicted()), (eager.size(), eager.evicted()));
+    for scope in [crate::recorded::EntryScope::Messages, crate::recorded::EntryScope::RequestResponses] {
+        let read = |log: &RequestLog| untimed(log.log_entries(scope, |_| true, |_| true, Some(1080), &config));
+        assert_eq!(read(&lazy), read(&eager));
+    }
+    let lines = |log: &RequestLog| log.messages(|_| true, |_| true).into_iter().map(|(_, text)| text).collect::<Vec<_>>();
+    assert_eq!(lines(&lazy), lines(&eager));
+    assert_eq!(lazy.retained().1, eager.retained().1, "the same weight");
+    assert_eq!(builds.load(Ordering::Relaxed), 2, "each entry is built once, when first read");
+}
+
+#[test]
+fn a_log_that_keeps_nothing_builds_no_served_entry() {
+    let log = RequestLog::new(0);
+    let request = Arc::new(served("/a", "00000000-0000-0000-0000-000000000000"));
+    let logged = crate::recorded::LoggedRequest::shared(request.clone());
+    log.received_logged(&logged, &request);
+    log.record_served(&logged, json!({"statusCode": 200}), Some("e-1".into()), Kind::ExpectationResponse, |_, _| panic!("built for a log that keeps nothing"));
+    assert_eq!((log.size(), log.evicted()), (0, 0));
+}
