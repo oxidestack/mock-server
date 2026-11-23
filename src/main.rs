@@ -1,7 +1,14 @@
 // The `FROM scratch` image is static musl, whose malloc takes one global lock, which the throughput benchmark measured on amd64.
-#[cfg(target_env = "musl")]
+#[cfg(all(target_env = "musl", not(feature = "alloc-count")))]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
+// The benchmark's allocation count: the same allocator, counted (`--features alloc-count`, never in a release build).
+#[cfg(feature = "alloc-count")]
+mod alloc_count;
+#[cfg(feature = "alloc-count")]
+#[global_allocator]
+static GLOBAL: alloc_count::Counting = alloc_count::Counting;
 
 use std::collections::HashMap;
 use std::io::Write;
@@ -73,6 +80,8 @@ fn run_server(start: cli::Start, env: HashMap<String, String>) -> ExitCode {
     let code = runtime.block_on(async move {
         #[cfg(unix)]
         flush_on_terminate();
+        #[cfg(feature = "alloc-count")]
+        alloc_count::report_on_sigusr1();
         cli::startup_notices(&config);
         cli::jvm_only_notice(&config);
         if let Some(dump) = &dump {

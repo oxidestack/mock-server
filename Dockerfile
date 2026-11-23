@@ -33,9 +33,12 @@ ENV MOCK_SERVER_DASHBOARD_DIR=/dashboard
 # The commit `mock_server_native_build_info{git_hash}` reports (`make image` passes it; `unknown` without it). build.rs reads
 # it from the environment, which a build argument is in for the RUN steps after it.
 ARG MOCK_SERVER_GIT_HASH=
+# Cargo features, empty for every published image; bench/run.sh's allocation count builds with `alloc-count`.
+ARG CARGO_FEATURES=
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/src/target \
-    cargo auditable build --profile image --locked && cp target/image/mock-server /mock-server
+    cargo auditable build --profile image --locked ${CARGO_FEATURES:+--features "$CARGO_FEATURES"} \
+    && cp target/image/mock-server /mock-server
 
 FROM scratch AS standard
 COPY --from=build /mock-server /mock-server
