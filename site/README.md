@@ -86,24 +86,25 @@ date and the page carries Starlight's banner saying so, in its language, with a 
 ## The Benchmarks page
 
 [`public/benchmarks/results.json`](public/benchmarks/results.json) holds the results of the newest run of
-[`bench/run.sh`](../bench/run.sh) on record, committed as the script wrote them and served beside the page for
-download. [`scripts/benchmarks.mjs`](scripts/benchmarks.mjs) reads it on every build and writes the Benchmarks page:
-the run (date, commit, machine, load, both images) and, for each log level, the requests a second and the memory of
-each server and setting. Nothing on the page is typed by hand: every figure goes through the generator's `v()`, and
-the build fails on a digit of the page that is not a value of the results. Its tests:
-`node --test site/scripts/benchmarks.test.mjs`, which `build.sh` runs. The page is in English only; the other
-languages show it with Starlight's note that it is not translated.
+[`bench/run.sh`](../bench/run.sh) on record, as the script wrote them, and `public/benchmarks/results-raw.tar.gz` that
+run's directory: every round's `oha` output and readings, from which `bench/results.py` rebuilds the results. Both are
+served beside the page for download. [`scripts/benchmarks.mjs`](scripts/benchmarks.mjs) reads the results on every
+build and writes the Benchmarks page: the run (time, commit, images, machine, load, load average) and, for each log
+level, the requests a second, CPU time a request, latency percentiles, peak memory, console lines (and at `INFO` the
+requests no log line records) and, when the run counted them, allocator calls a request, of each server and setting.
+Nothing on the page is typed by hand: every figure goes through the generator's `v()`, and the build fails on a digit
+of the page that is not a value of the results. Its tests: `node --test site/scripts/benchmarks.test.mjs`, which
+`build.sh` runs. The page is in English only; the other languages show it with Starlight's note that it is not
+translated.
 
-A new run is published by running the script with `RESULTS`, then replacing the file and building:
+A new run is published by running the script with `RESULTS`, which writes both files, then building
+([`bench/README.md`](../bench/README.md) says what the run measures and how to set it):
 
 ```sh
 make image
 RESULTS=site/public/benchmarks/results.json bench/run.sh
 make site
 ```
-
-The file committed today was not written by the script: its run kept only a summary, so it was converted from that
-by hand, and its `meta.converted` says what the run measured and what it did not record. The next run replaces it.
 
 ## The checks
 

@@ -1,6 +1,13 @@
 # Benchmarks
 
-`bench/run.sh`: both images on one Docker network, each limited to **2 CPUs**, load from `oha` in a
+> **A log of earlier measurements.** Today's harness and what it records are in
+> [`bench/README.md`](../bench/README.md), and its newest published run is the site's Benchmarks page. The sections
+> below were measured with earlier versions of `bench/run.sh`, which sent `Host: <container name>` (so every
+> unmatched row of both servers measured a proxied request to the server itself, not the 404), warmed MockServer up
+> for 3-5 s (its JIT needs 10-20 s), reused one container per server across rows and kept no raw output. Compare
+> their figures with each other, not with a run of the current script.
+
+The first measurement, with an early `bench/run.sh`: both images on one Docker network, each limited to **2 CPUs**, load from `oha` in a
 container (64 connections, 15 s, after a warm-up — 5 s for the JVM). Expectations are `GET /e<n>` → `e<n>`; the
 request targets the last one created. Host: Apple Silicon, a Linux VM (8 vCPU, 24 GiB). Both servers in their default
 configuration: MockServer logs every request at `INFO`; mock-server keeps a 100 000-entry request log and does

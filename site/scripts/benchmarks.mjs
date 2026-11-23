@@ -2,13 +2,13 @@
 // which the site also serves beside the page for download. Nothing on the page is typed by hand: every value read from
 // the results goes through `v()`, which marks it, and the check strips the marked spans, the markup and the link
 // targets from the page and fails on any digit left over, so a figure written into a template below fails the build.
-// The few labels that hold a digit and are not figures (p50, x86_64, 2>&1) are listed in LABELS.
+// The few labels that hold a digit and are not figures (p50, p99.9, x86_64, 404) are listed in LABELS.
 //
 //   node scripts/benchmarks.mjs    the page into src/content/docs/benchmarks.md, after the check
 //
 // package.json's prebuild runs it after scripts/stage.mjs, which empties src/content/docs/; exit 1 on a finding.
-// A new run is published by replacing public/benchmarks/results.json with the file `RESULTS=<file> bench/run.sh`
-// writes (site/README.md, "The Benchmarks page").
+// A new run is published by replacing public/benchmarks/results.json and results-raw.tar.gz with the files
+// `RESULTS=<file> bench/run.sh` writes (site/README.md, "The Benchmarks page").
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -30,7 +30,7 @@ const CLOSE = '\u0002'
 export const v = (x) => `${OPEN}${x}${CLOSE}`
 
 /** Labels with a digit that are names, not figures. */
-const LABELS = [/\bp(50|99)\b/g, /\bx86_64\b/g, /\bamd64\b/g, /\barm64\b/g, /\b404\b/g]
+const LABELS = [/\bp99\.9\b/g, /\bp(50|99)\b/g, /\bx86_64\b/g, /\bamd64\b/g, /\barm64\b/g, /\b404\b/g]
 
 /** The digits of `text` that no value of the results accounts for, each with its context. */
 export function strays(text) {
@@ -51,14 +51,13 @@ export const plain = (text) => text.replaceAll(OPEN, '').replaceAll(CLOSE, '')
 /** A count with thousands separated by a thin space, as the rest of the documentation writes them. */
 const count = (n) => v(Math.round(n).toLocaleString('en-US').replace(/,/g, ' '))
 
-/** A memory range in MiB, `[low, high]`, as one figure when both rounds agree. */
-const mib = (range) => {
-  if (!range) return '—'
-  const [lo, hi] = range
-  return lo === hi ? `${count(lo)} MiB` : `${count(lo)}–${count(hi)} MiB`
-}
+/** A decimal figure with `digits` decimals, or a dash where the run has none. */
+const dec = (x, digits) => (x === null || x === undefined ? '—' : v(Number(x).toFixed(digits)))
 
 const reqs = (n) => (n === null || n === undefined ? '—' : count(n))
+
+/** Memory in MiB, or a dash. */
+const mib = (x) => (x === null || x === undefined ? '—' : `${count(x)} MiB`)
 
 /** The rows' cases in a fixed order: log level, then expectations, then matched before unmatched. */
 function cases(rows) {
@@ -92,79 +91,104 @@ function machine(meta) {
   const m = meta.machine
   const parts = [
     `${v(m.kind)}, ${v(m.arch)}`,
-    `${v(m.cpu_model)}`,
+    `${v(m.cpu_model ?? 'CPU not named')}`,
     `${v(m.vcpus)} vCPUs and ${v(m.memory_gib)} GiB`,
-    `${v(m.os)}, kernel ${v(m.kernel)}, Docker ${v(m.docker)}`,
+    `${v(m.os)}, kernel ${v(m.kernel)}, Docker ${v(m.docker)}, cgroup ${v(m.cgroup)}, log driver \`${v(m.log_driver)}\``,
   ]
   return parts.join('; ')
 }
 
-/** The warm-up: one length for both servers, or each server's. */
-const warmup = (w) =>
-  typeof w === 'object'
-    ? `warm-ups of ${Object.entries(w).map(([server, s]) => `${v(s)} s for ${v(server)}`).join(' and ')}`
-    : `a ${v(w)} s warm-up`
+const image = (i) => (i ? `\`${v(i.name)}\` (\`${v(i.id.replace(/^sha256:/, '').slice(0, 12))}\`)` : '—')
+
+const loadAverage = (l) => (l ? l.map((x) => v(x)).join(' / ') : '—')
+
+/** A table of one figure: a row per case of this level, a column per server and configuration. */
+function table(L, title, here, rows, cols, cell) {
+  L.push(title, '')
+  L.push(`| | ${cols.map(columnName).join(' | ')} |`, `| --- |${cols.map(() => ' ---: |').join('')}`)
+  for (const c of here) {
+    const at = (col) => rows.find((r) => sameCase(r, c) && r.server === col.server && r.config === col.config)
+    L.push(`| ${label(c)} | ${cols.map((col) => (at(col) ? cell(at(col)) : '—')).join(' | ')} |`)
+  }
+  L.push('')
+}
 
 /** The page, its values marked (`plain()` removes the marks). */
 export function page(results) {
   const { meta, rows } = results
-  const load = meta.load
+  const p = meta.params
   const cols = columns(rows)
-  const withReqs = cols.filter((c) => rows.some((r) => r.server === c.server && r.config === c.config && r.req_per_sec != null))
   const levels = [...new Set(rows.map((r) => r.log_level))]
+  const range = (r, field, fmt) => {
+    const xs = (r.rounds ?? []).map((x) => x[field]).filter((x) => x !== null && x !== undefined)
+    if (xs.length < 2) return fmt(r[field])
+    return `${fmt(r[field])} (${fmt(Math.min(...xs))}–${fmt(Math.max(...xs))})`
+  }
   const L = []
   L.push(
     '---',
     'title: Benchmarks',
-    'description: "mock-server and the MockServer image under the same load: requests a second and memory, from the committed results of bench/run.sh."',
+    'description: "mock-server and the MockServer image under the same load: requests a second, CPU time a request, latency and memory, from the committed results of bench/run.sh."',
     '---',
     '',
     `Every number on this page is read from one file, the [results](${BASE}/benchmarks/results.json) of the newest`,
-    `run of [\`bench/run.sh\`](${GITHUB}/blob/${REF}/bench/run.sh) on record. The site's build generates the page from`,
-    'it and fails on a number that is not read from it. Both servers run in their default configuration unless a column',
-    'names a setting, each alone in its container under the same CPU limit, and the load generator runs in a container on',
-    'the same Docker network.',
+    `run of [\`bench/run.sh\`](${GITHUB}/blob/${REF}/bench/run.sh) on record, as the script wrote it. The site's build`,
+    'generates the page from it and fails on a number that is not read from it. Both servers run in their default',
+    'configuration unless a column names a setting, each alone in a fresh container under the same CPU limit, and the',
+    'load generator runs in a container on the same Docker network.',
     '',
     '## The run',
     '',
     '| | |',
     '| --- | --- |',
-    `| When | ${v(meta.date)} |`,
-    `| Code | commit \`${v(meta.commit)}\`${meta.commit_note ? ` (${v(meta.commit_note)})` : ''}; the image ${v(meta.image)} |`,
-    `| MockServer | \`${v(meta.oracle_image)}\` |`,
+    `| When | ${v(meta.started)} to ${v(meta.finished)} |`,
+    `| Code | commit \`${v(meta.commit.slice(0, 12))}\`${meta.uncommitted_changes ? ' with uncommitted changes' : ''} |`,
+    `| mock-server | ${image(meta.images.ours)} |`,
+    `| MockServer | ${image(meta.images.oracle)} |`,
     `| Machine | ${machine(meta)} |`,
-    `| Load | \`oha\`, ${v(load.connections)} connections for ${v(load.duration_s)} s after ${warmup(load.warmup_s)}; each server limited to ${v(load.cpus)} CPUs, ${load.memory_limit ? `${v(load.memory_limit)} of memory` : 'no memory limit'}; ${v(load.rounds)} ${load.rounds === 1 ? 'round' : 'rounds'} a row |`,
-    `| Memory | ${v(meta.memory)} |`,
+    `| Load | \`oha\` ${v(meta.images.oha.name.split('@')[0].split(':').pop())}, ${v(p.connections)} connections for ${v(p.duration_s)} s after a ${v(p.warmup_s)} s warm-up, \`Host: ${v(p.host_header)}\`; each server limited to ${v(p.cpus)} CPUs, ${p.memory_limit ? `${v(p.memory_limit)} of memory` : 'no memory limit'}; ${v(p.rounds)} ${p.rounds === 1 ? 'round' : 'rounds'}, the servers' order alternating |`,
+    `| Load average | ${loadAverage(meta.load_average_start)} at the start, ${loadAverage(meta.load_average_end)} at the end |`,
   )
-  if (meta.converted) L.push(`| Note | ${v(meta.converted)} |`)
+  if (meta.note) L.push(`| Note | ${v(meta.note)} |`)
+  if (meta.raw) L.push(`| Raw data | [every round's \`oha\` output and readings](${BASE}/benchmarks/${meta.raw}) |`)
   L.push(
     '',
     'An expectation is `GET /e<n>` answered with `e<n>`; a matched request asks for the last one created, an unmatched',
     'one for a path none matches, which is answered 404 and, as in MockServer, logged with the closest expectation.',
+    'Each figure is the median over the rounds; where there were several, the lowest and highest follow in brackets.',
     '',
   )
+  const withAllocs = rows.some((r) => r.allocs_per_req != null)
   for (const level of levels) {
-    const here = cases(rows.filter((r) => r.log_level === level))
-    L.push(`## At ${v(level)}`, '', 'Requests a second:', '')
-    L.push(`| | ${withReqs.map(columnName).join(' | ')} |`, `| --- |${withReqs.map(() => ' ---: |').join('')}`)
-    for (const c of here) {
-      const cell = (col) => reqs(rows.find((r) => sameCase(r, c) && r.server === col.server && r.config === col.config)?.req_per_sec)
-      L.push(`| ${label(c)} | ${withReqs.map(cell).join(' | ')} |`)
+    const atLevel = rows.filter((r) => r.log_level === level)
+    const here = cases(atLevel)
+    L.push(`## At ${v(level)}`, '')
+    table(L, 'Requests a second:', here, atLevel, cols, (r) => range(r, 'req_per_sec', reqs))
+    table(L, 'CPU time a request, µs (the container\'s CPU time over the requests completed):', here, atLevel, cols, (r) =>
+      range(r, 'cpu_us_per_req', (x) => dec(x, 1)),
+    )
+    table(L, 'Latency p50 / p99 / p99.9, ms:', here, atLevel, cols, (r) => `${dec(r.p50_ms, 2)} / ${dec(r.p99_ms, 2)} / ${dec(r.p999_ms, 2)}`)
+    table(L, 'Peak memory (VmHWM) after the load:', here, atLevel, cols, (r) => mib(r.rss_mib))
+    table(L, level === 'INFO' ? 'Console lines written during the window; requests no `received request` line logs:' : 'Console lines written during the window:', here, atLevel, cols, (r) =>
+      r.unlogged_requests == null ? reqs(r.console_lines) : `${reqs(r.console_lines)}; ${reqs(r.unlogged_requests)} unlogged`,
+    )
+    if (withAllocs) {
+      table(L, 'Allocator calls a request (allocations, reallocations), from the counting build:', here, atLevel, cols, (r) =>
+        r.allocs_per_req == null ? '—' : `${dec(r.allocs_per_req, 1)}, ${dec(r.reallocs_per_req, 1)}`,
+      )
     }
-    L.push('', 'Memory after the load:', '')
-    L.push(`| | ${cols.map(columnName).join(' | ')} |`, `| --- |${cols.map(() => ' ---: |').join('')}`)
-    for (const c of here) {
-      const cell = (col) => mib(rows.find((r) => sameCase(r, c) && r.server === col.server && r.config === col.config)?.rss_mib)
-      L.push(`| ${label(c)} | ${cols.map(cell).join(' | ')} |`)
-    }
-    L.push('')
   }
   L.push(
     '## Reading the figures',
     '',
-    '- At `INFO` both servers print a console line for every request through Docker\'s `json-file` log driver, and',
-    '  mock-server waits on that pipe: its `INFO` throughput is the pipe\'s, and `WARN` (or a log driver that does not',
-    '  block) shows the server without it.',
+    '- CPU time a request holds up better than requests a second on a shared or noisy machine: it is the',
+    '  container\'s own CPU time (its cgroup\'s `cpu.stat`) from the window\'s start until its console stops growing,',
+    '  so the logging a server defers is counted too, divided by the requests `oha` completed.',
+    '- At `INFO` both servers print every request through Docker\'s `json-file` log driver. MockServer records its',
+    '  event log on one thread behind a ring buffer and drops entries when the buffer is full (it warns once): the',
+    '  unlogged requests are the requests completed in the window minus its `received request` lines, so they are',
+    '  requests the server neither printed nor kept for verification. The few requests still in flight when the',
+    '  window ends are logged without being counted as completed, so a server that drops none shows none.',
     '- Memory is mostly the retained event log. Its size is `maxLogEntries` (`MOCKSERVER_MAX_LOG_ENTRIES`), derived from',
     '  the available memory as MockServer derives it; a column with a smaller value shows what lowering it does',
     `  ([Configuration](${BASE}/configuration/#memory-bounding-properties)).`,
@@ -173,17 +197,17 @@ export function page(results) {
     '',
     '## Run it yourself',
     '',
-    'Docker is all it needs. Build the image, then run the same load against it and the MockServer image pinned in',
-    `[\`oracle.env\`](${GITHUB}/blob/${REF}/oracle.env):`,
+    'Docker and Python are all it needs. Build the image, then run the same load against it and the MockServer image',
+    `pinned in [\`oracle.env\`](${GITHUB}/blob/${REF}/oracle.env):`,
     '',
     '```sh',
     'make image',
     'RESULTS=results.json bench/run.sh',
     '```',
     '',
-    'It prints a table as it goes and writes a `results.json` like [this one](' + BASE + '/benchmarks/results.json).',
-    '`CPUS`, `DURATION`, `CONNECTIONS`, `RS_LOG_LEVEL`, `ORACLE_LOG_LEVEL` and `RS_DOCKER_ARGS` change the load and the',
-    'settings (the script\'s header says each).',
+    'It prints a line per measurement as it goes, keeps every reading in a run directory and writes a `results.json`',
+    'like [this one](' + BASE + '/benchmarks/results.json) with the run directory packed beside it.',
+    `[\`bench/README.md\`](${GITHUB}/blob/${REF}/bench/README.md) lists the settings and what each reading is.`,
   )
   return `${L.join('\n')}\n`
 }
@@ -191,7 +215,7 @@ export function page(results) {
 /** Every finding of the check: a digit on the page not read from the results, a row the page cannot place. */
 export function check(results) {
   const findings = []
-  if (results.schema !== 1) findings.push(`results.json has schema ${results.schema}, this script reads 1`)
+  if (results.schema !== 2) findings.push(`results.json has schema ${results.schema}, this script reads 2`)
   for (const r of results.rows ?? []) {
     for (const key of ['server', 'config', 'expectations', 'request', 'log_level']) {
       if (r[key] === undefined || r[key] === null) findings.push(`a row has no ${key}: ${JSON.stringify(r)}`)
@@ -213,7 +237,7 @@ function main() {
   }
   mkdirSync(dirname(PAGE), { recursive: true })
   writeFileSync(PAGE, plain(page(results)))
-  console.log(`benchmarks: the Benchmarks page from results.json (${results.meta.date}, commit ${results.meta.commit}, ${results.rows.length} rows)`)
+  console.log(`benchmarks: the Benchmarks page from results.json (${results.meta.date}, commit ${results.meta.commit.slice(0, 12)}, ${results.rows.length} rows)`)
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main()

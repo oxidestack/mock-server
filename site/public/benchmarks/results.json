@@ -1,303 +1,544 @@
 {
- "schema": 1,
+ "schema": 2,
  "meta": {
-  "date": "2026-11-17",
+  "started": "2026-11-23T04:29:25+00:00",
   "command": "bench/run.sh",
-  "converted": "Converted by hand from the run's recorded summary: its raw output was not kept. The run used bench/run.sh's load (oha in a container, each server alone with --cpus 2 on a user-defined bridge network, 64 connections, 15 s after a 3 s warm-up) at INFO and at WARN, two rounds a row: req/s is the mean of the two rounds, memory their range. Throughput was not recorded for the MOCKSERVER_MAX_LOG_ENTRIES=100000 rows (it stayed within the default rows' spread), and no latency percentile was recorded.",
-  "commit": "12562822b252",
-  "commit_note": "a commit of the history before the first public commit",
-  "image": "built from that commit by the image's recipe (a static musl binary with mimalloc, FROM scratch)",
-  "oracle_image": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
-  "machine": {
-   "kind": "cloud virtual machine",
-   "arch": "x86_64",
-   "cpu_model": "Intel(R) Xeon(R) Gold 6248R CPU @ 3.00GHz",
-   "vcpus": 16,
-   "memory_gib": 31,
-   "os": "Ubuntu 24.04",
-   "kernel": "6.8.0",
-   "docker": "29.1.3"
+  "commit": "5ae3cc5c5ee2182425c190552f1746f876a65f2c",
+  "uncommitted_changes": true,
+  "note": "A smoke run of the harness on a laptop: 3 s warm-up and window, 2 rounds, one log level and expectation count. It shows the script works end to end; it is not a measurement of either server.",
+  "oracle_version": "9.2.0",
+  "images": {
+   "ours": {
+    "name": "quay.io/oxidestack/mock-server:9.2.0-rc.1",
+    "id": "sha256:1c2e1845faa81a8e2fcb955514c599d685e593dbf41551bfcf060cf44d8aa44b",
+    "digests": [
+     "quay.io/oxidestack/mock-server@sha256:1c2e1845faa81a8e2fcb955514c599d685e593dbf41551bfcf060cf44d8aa44b"
+    ]
+   },
+   "oracle": {
+    "name": "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+    "id": "sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1",
+    "digests": [
+     "mockserver/mockserver@sha256:016f7d16bc88d2e1aa52d5a177f1aafee758cf70bea5e0624b0ab2c32f394df1"
+    ]
+   },
+   "oha": {
+    "name": "ghcr.io/hatoo/oha:1.17.0@sha256:9e8cd7468794d692acda410de42738aa1d2fa0268a5c56d1d58581874ee2b0eb",
+    "id": "sha256:9e8cd7468794d692acda410de42738aa1d2fa0268a5c56d1d58581874ee2b0eb",
+    "digests": [
+     "ghcr.io/hatoo/oha@sha256:9e8cd7468794d692acda410de42738aa1d2fa0268a5c56d1d58581874ee2b0eb"
+    ]
+   },
+   "alloc_count": {
+    "name": "mock-server-bench:alloc-count",
+    "id": "sha256:2e70ab8e65e0106f894da7a28673f54a524b9c1074de80bdeffe2cbfadc6478a",
+    "digests": [
+     "mock-server-bench@sha256:2e70ab8e65e0106f894da7a28673f54a524b9c1074de80bdeffe2cbfadc6478a"
+    ]
+   }
   },
-  "load": {
-   "cpus": 2,
+  "machine": {
+   "kind": "Docker VM on a MacBook",
+   "arch": "aarch64",
+   "cpu_model": "Apple M1 Max",
+   "vcpus": 6,
+   "memory_gib": 11.7,
+   "os": "Ubuntu 24.04.2 LTS",
+   "kernel": "6.8.0-64-generic",
+   "docker": "28.4.0",
+   "cgroup": "v2, cgroupfs",
+   "log_driver": "json-file"
+  },
+  "load_average_start": [
+   2.52,
+   3.72,
+   5.2
+  ],
+  "params": {
+   "cpus": 2.0,
    "connections": 64,
    "warmup_s": 3,
-   "duration_s": 15,
-   "memory_limit": null,
-   "rounds": 2
+   "duration_s": 3,
+   "rounds": 2,
+   "levels": [
+    "INFO"
+   ],
+   "expectations": [
+    1
+   ],
+   "requests": [
+    "matched",
+    "unmatched"
+   ],
+   "servers": [
+    "oracle",
+    "ours"
+   ],
+   "ours_configs": [
+    "default"
+   ],
+   "oracle_configs": [
+    "default"
+   ],
+   "metrics": false,
+   "settle_max_s": 60,
+   "host_header": "localhost:1080",
+   "memory_limit": null
   },
-  "memory": "VmHWM: the server process's peak resident memory, read after the load"
+  "finished": "2026-11-23T04:36:26+00:00",
+  "load_average_end": [
+   4.5,
+   3.22,
+   4.3
+  ],
+  "date": "2026-11-23",
+  "raw": "results-raw.tar.gz",
+  "metrics": {
+   "req_per_sec": "oha's requests a second over the window",
+   "cpu_us_per_req": "the container cgroup's cpu.stat usage_usec from the window's start until its console stopped growing, divided by the requests oha completed",
+   "latency": "oha's p50, p99 and p99.9 over the window",
+   "rss_mib": "VmHWM, the server process's peak resident memory since its container started, read after the window",
+   "memory_peak_mib": "the container cgroup's memory.peak, read after the window",
+   "console_lines": "lines the server wrote to its console during the window (Docker json-file log)",
+   "unlogged_requests": "at INFO, requests completed in the window minus the window's `received request` console lines: MockServer drops event log entries when its ring buffer is full",
+   "allocs_per_req": "allocator calls (alloc and alloc_zeroed) per request, from the alloc-count build of ours",
+   "median": "each row's figures are the median over its rounds; `rounds` holds every round's"
+  }
  },
  "rows": [
   {
-   "server": "mock-server",
-   "config": "default",
-   "expectations": 1,
-   "request": "matched",
-   "log_level": "INFO",
-   "req_per_sec": 7035,
-   "rss_mib": [
-    1167,
-    1171
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
    "server": "MockServer 9.2.0",
    "config": "default",
    "expectations": 1,
    "request": "matched",
    "log_level": "INFO",
-   "req_per_sec": 14367,
-   "rss_mib": [
-    1727,
-    1821
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "MOCKSERVER_MAX_LOG_ENTRIES=100000",
-   "expectations": 1,
-   "request": "matched",
-   "log_level": "INFO",
-   "req_per_sec": null,
-   "rss_mib": [
-    506,
-    508
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "default",
-   "expectations": 1,
-   "request": "unmatched",
-   "log_level": "INFO",
-   "req_per_sec": 2637,
-   "rss_mib": [
-    1669,
-    1671
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "MockServer 9.2.0",
-   "config": "default",
-   "expectations": 1,
-   "request": "unmatched",
-   "log_level": "INFO",
-   "req_per_sec": 1292,
-   "rss_mib": [
-    1765,
-    1766
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "MOCKSERVER_MAX_LOG_ENTRIES=100000",
-   "expectations": 1,
-   "request": "unmatched",
-   "log_level": "INFO",
-   "req_per_sec": null,
-   "rss_mib": [
-    769,
-    777
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "default",
-   "expectations": 1000,
-   "request": "unmatched",
-   "log_level": "INFO",
-   "req_per_sec": 122,
-   "rss_mib": [
-    704,
-    708
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "MockServer 9.2.0",
-   "config": "default",
-   "expectations": 1000,
-   "request": "unmatched",
-   "log_level": "INFO",
-   "req_per_sec": 474,
-   "rss_mib": [
-    4692,
-    4728
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "MOCKSERVER_MAX_LOG_ENTRIES=100000",
-   "expectations": 1000,
-   "request": "unmatched",
-   "log_level": "INFO",
-   "req_per_sec": null,
-   "rss_mib": [
-    440,
-    441
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "default",
-   "expectations": 1,
-   "request": "matched",
-   "log_level": "WARN",
-   "req_per_sec": 27938,
-   "rss_mib": [
-    1274,
-    1275
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "MockServer 9.2.0",
-   "config": "default",
-   "expectations": 1,
-   "request": "matched",
-   "log_level": "WARN",
-   "req_per_sec": 21948,
-   "rss_mib": [
-    2010,
-    2052
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "MOCKSERVER_MAX_LOG_ENTRIES=100000",
-   "expectations": 1,
-   "request": "matched",
-   "log_level": "WARN",
-   "req_per_sec": null,
-   "rss_mib": [
-    541,
-    541
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "default",
-   "expectations": 1,
-   "request": "unmatched",
-   "log_level": "WARN",
-   "req_per_sec": 6314,
-   "rss_mib": [
-    279,
-    280
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
+   "req_per_sec": 14034.55,
+   "cpu_us_per_req": 166.695,
+   "p50_ms": 1.579,
+   "p99_ms": 55.546,
+   "p999_ms": 70.107,
+   "rss_mib": 1114.2,
+   "memory_peak_mib": 1109.65,
+   "console_lines": 1133067.0,
+   "received_request_lines": 12184.5,
+   "unlogged_requests": 29932.5,
+   "requests": 42117.0,
+   "drop_warnings": 1,
+   "console_settled": true,
+   "allocs_per_req": null,
+   "reallocs_per_req": null,
+   "alloc_bytes_per_req": null,
+   "rounds": [
+    {
+     "round": 1,
+     "readings": "raw/r1-oracle-default-INFO-1-matched.readings.json",
+     "oha": "raw/r1-oracle-default-INFO-1-matched.oha.json",
+     "req_per_sec": 16374.3,
+     "requests": 49108,
+     "status_codes": {
+      "200": 49108
+     },
+     "errors": {
+      "aborted due to deadline": 64
+     },
+     "cpu_us_per_req": 141.33,
+     "cpu_us_per_req_window": 134.55,
+     "p50_ms": 1.295,
+     "p99_ms": 53.217,
+     "p999_ms": 72.689,
+     "rss_mib": 1174.7,
+     "memory_peak_mib": 1168.9,
+     "console_lines": 1132483,
+     "received_request_lines": 12180,
+     "console_settled": true,
+     "drop_warnings": 1,
+     "load_average_before": [
+      2.44,
+      3.66,
+      5.16
+     ],
+     "unlogged_requests": 36928,
+     "allocs_per_req": null,
+     "reallocs_per_req": null,
+     "alloc_bytes_per_req": null
+    },
+    {
+     "round": 2,
+     "readings": "raw/r2-oracle-default-INFO-1-matched.readings.json",
+     "oha": "raw/r2-oracle-default-INFO-1-matched.oha.json",
+     "req_per_sec": 11694.8,
+     "requests": 35126,
+     "status_codes": {
+      "200": 35126
+     },
+     "errors": {
+      "aborted due to deadline": 59
+     },
+     "cpu_us_per_req": 192.06,
+     "cpu_us_per_req_window": 191.79,
+     "p50_ms": 1.864,
+     "p99_ms": 57.875,
+     "p999_ms": 67.525,
+     "rss_mib": 1053.7,
+     "memory_peak_mib": 1050.4,
+     "console_lines": 1133651,
+     "received_request_lines": 12189,
+     "console_settled": true,
+     "drop_warnings": 1,
+     "load_average_before": [
+      1.91,
+      2.83,
+      4.56
+     ],
+     "unlogged_requests": 22937,
+     "allocs_per_req": null,
+     "reallocs_per_req": null,
+     "alloc_bytes_per_req": null
+    }
+   ]
   },
   {
    "server": "MockServer 9.2.0",
    "config": "default",
    "expectations": 1,
    "request": "unmatched",
-   "log_level": "WARN",
-   "req_per_sec": 2074,
-   "rss_mib": [
-    1712,
-    1731
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
+   "log_level": "INFO",
+   "req_per_sec": 9749.7,
+   "cpu_us_per_req": 231.915,
+   "p50_ms": 2.211,
+   "p99_ms": 63.432,
+   "p999_ms": 70.988,
+   "rss_mib": 1236.3,
+   "memory_peak_mib": 1230.8,
+   "console_lines": 1300703.5,
+   "received_request_lines": 9496.0,
+   "unlogged_requests": 19804.0,
+   "requests": 29300.0,
+   "drop_warnings": 1,
+   "console_settled": true,
+   "allocs_per_req": null,
+   "reallocs_per_req": null,
+   "alloc_bytes_per_req": null,
+   "rounds": [
+    {
+     "round": 1,
+     "readings": "raw/r1-oracle-default-INFO-1-unmatched.readings.json",
+     "oha": "raw/r1-oracle-default-INFO-1-unmatched.oha.json",
+     "req_per_sec": 9804.0,
+     "requests": 29564,
+     "status_codes": {
+      "404": 29564
+     },
+     "errors": {
+      "aborted due to deadline": 64
+     },
+     "cpu_us_per_req": 232.82,
+     "cpu_us_per_req_window": 230.82,
+     "p50_ms": 2.128,
+     "p99_ms": 63.86,
+     "p999_ms": 72.41,
+     "rss_mib": 1270.5,
+     "memory_peak_mib": 1267.4,
+     "console_lines": 1333224,
+     "received_request_lines": 9733,
+     "console_settled": true,
+     "drop_warnings": 1,
+     "load_average_before": [
+      2.49,
+      3.41,
+      4.97
+     ],
+     "unlogged_requests": 19831,
+     "allocs_per_req": null,
+     "reallocs_per_req": null,
+     "alloc_bytes_per_req": null
+    },
+    {
+     "round": 2,
+     "readings": "raw/r2-oracle-default-INFO-1-unmatched.readings.json",
+     "oha": "raw/r2-oracle-default-INFO-1-unmatched.oha.json",
+     "req_per_sec": 9695.4,
+     "requests": 29036,
+     "status_codes": {
+      "404": 29036
+     },
+     "errors": {
+      "aborted due to deadline": 64
+     },
+     "cpu_us_per_req": 231.01,
+     "cpu_us_per_req_window": 230.49,
+     "p50_ms": 2.293,
+     "p99_ms": 63.004,
+     "p999_ms": 69.566,
+     "rss_mib": 1202.1,
+     "memory_peak_mib": 1194.2,
+     "console_lines": 1268183,
+     "received_request_lines": 9259,
+     "console_settled": true,
+     "drop_warnings": 1,
+     "load_average_before": [
+      2.17,
+      2.7,
+      4.39
+     ],
+     "unlogged_requests": 19777,
+     "allocs_per_req": null,
+     "reallocs_per_req": null,
+     "alloc_bytes_per_req": null
+    }
+   ]
   },
   {
    "server": "mock-server",
-   "config": "MOCKSERVER_MAX_LOG_ENTRIES=100000",
+   "config": "default",
+   "expectations": 1,
+   "request": "matched",
+   "log_level": "INFO",
+   "req_per_sec": 12206.1,
+   "cpu_us_per_req": 69.04,
+   "p50_ms": 2.232,
+   "p99_ms": 31.952,
+   "p999_ms": 67.962,
+   "rss_mib": 731.8,
+   "memory_peak_mib": 725.55,
+   "console_lines": 3412774.5,
+   "received_request_lines": 36696.5,
+   "unlogged_requests": 0.0,
+   "requests": 36633.0,
+   "drop_warnings": 0,
+   "console_settled": true,
+   "allocs_per_req": 377.04,
+   "reallocs_per_req": 43.09,
+   "alloc_bytes_per_req": 100068.0,
+   "rounds": [
+    {
+     "round": 1,
+     "readings": "raw/r1-ours-default-INFO-1-matched.readings.json",
+     "oha": "raw/r1-ours-default-INFO-1-matched.oha.json",
+     "req_per_sec": 11941.5,
+     "requests": 35876,
+     "status_codes": {
+      "200": 35876
+     },
+     "errors": {
+      "aborted due to deadline": 64
+     },
+     "cpu_us_per_req": 71.0,
+     "cpu_us_per_req_window": 70.77,
+     "p50_ms": 2.285,
+     "p99_ms": 33.779,
+     "p999_ms": 67.871,
+     "rss_mib": 731.2,
+     "memory_peak_mib": 725.2,
+     "console_lines": 3342420,
+     "received_request_lines": 35940,
+     "console_settled": true,
+     "drop_warnings": 0,
+     "load_average_before": [
+      2.73,
+      3.66,
+      5.13
+     ],
+     "unlogged_requests": 0,
+     "allocs_per_req": null,
+     "reallocs_per_req": null,
+     "alloc_bytes_per_req": null
+    },
+    {
+     "round": 2,
+     "readings": "raw/r2-ours-default-INFO-1-matched.readings.json",
+     "oha": "raw/r2-ours-default-INFO-1-matched.oha.json",
+     "req_per_sec": 12470.7,
+     "requests": 37390,
+     "status_codes": {
+      "200": 37390
+     },
+     "errors": {
+      "aborted due to deadline": 63
+     },
+     "cpu_us_per_req": 67.08,
+     "cpu_us_per_req_window": 66.69,
+     "p50_ms": 2.18,
+     "p99_ms": 30.125,
+     "p999_ms": 68.052,
+     "rss_mib": 732.4,
+     "memory_peak_mib": 725.9,
+     "console_lines": 3483129,
+     "received_request_lines": 37453,
+     "console_settled": true,
+     "drop_warnings": 0,
+     "load_average_before": [
+      1.56,
+      2.95,
+      4.69
+     ],
+     "unlogged_requests": 0,
+     "allocs_per_req": null,
+     "reallocs_per_req": null,
+     "alloc_bytes_per_req": null
+    }
+   ],
+   "alloc_rounds": [
+    {
+     "round": 1,
+     "readings": "raw/r1-ours-default-INFO-1-matched-alloc.readings.json",
+     "oha": "raw/r1-ours-default-INFO-1-matched-alloc.oha.json",
+     "req_per_sec": 12142.1,
+     "requests": 36411,
+     "status_codes": {
+      "200": 36411
+     },
+     "errors": {
+      "aborted due to deadline": 63
+     },
+     "cpu_us_per_req": 95.96,
+     "cpu_us_per_req_window": 95.77,
+     "p50_ms": 3.198,
+     "p99_ms": 27.129,
+     "p999_ms": 63.443,
+     "rss_mib": 736.3,
+     "memory_peak_mib": 721.9,
+     "console_lines": 3392082,
+     "received_request_lines": 36474,
+     "console_settled": true,
+     "drop_warnings": 0,
+     "load_average_before": [
+      2.08,
+      2.62,
+      4.31
+     ],
+     "unlogged_requests": 0,
+     "allocs_per_req": 377.04,
+     "reallocs_per_req": 43.09,
+     "alloc_bytes_per_req": 100068.0
+    }
+   ]
+  },
+  {
+   "server": "mock-server",
+   "config": "default",
    "expectations": 1,
    "request": "unmatched",
-   "log_level": "WARN",
-   "req_per_sec": null,
-   "rss_mib": [
-    246,
-    248
+   "log_level": "INFO",
+   "req_per_sec": 7434.05,
+   "cpu_us_per_req": 104.06,
+   "p50_ms": 3.575,
+   "p99_ms": 48.239,
+   "p999_ms": 92.933,
+   "rss_mib": 611.5,
+   "memory_peak_mib": 606.8,
+   "console_lines": 3062772.0,
+   "received_request_lines": 22356.0,
+   "unlogged_requests": 0.0,
+   "requests": 22298.0,
+   "drop_warnings": 0,
+   "console_settled": true,
+   "allocs_per_req": 598.27,
+   "reallocs_per_req": 81.29,
+   "alloc_bytes_per_req": 120892.0,
+   "rounds": [
+    {
+     "round": 1,
+     "readings": "raw/r1-ours-default-INFO-1-unmatched.readings.json",
+     "oha": "raw/r1-ours-default-INFO-1-unmatched.oha.json",
+     "req_per_sec": 7819.4,
+     "requests": 23426,
+     "status_codes": {
+      "404": 23426
+     },
+     "errors": {
+      "aborted due to deadline": 53
+     },
+     "cpu_us_per_req": 100.6,
+     "cpu_us_per_req_window": 100.18,
+     "p50_ms": 3.263,
+     "p99_ms": 44.964,
+     "p999_ms": 83.753,
+     "rss_mib": 610.7,
+     "memory_peak_mib": 604.8,
+     "console_lines": 3216486,
+     "received_request_lines": 23478,
+     "console_settled": true,
+     "drop_warnings": 0,
+     "load_average_before": [
+      2.1,
+      3.25,
+      4.87
+     ],
+     "unlogged_requests": 0,
+     "allocs_per_req": null,
+     "reallocs_per_req": null,
+     "alloc_bytes_per_req": null
+    },
+    {
+     "round": 2,
+     "readings": "raw/r2-ours-default-INFO-1-unmatched.readings.json",
+     "oha": "raw/r2-ours-default-INFO-1-unmatched.oha.json",
+     "req_per_sec": 7048.7,
+     "requests": 21170,
+     "status_codes": {
+      "404": 21170
+     },
+     "errors": {
+      "aborted due to deadline": 64
+     },
+     "cpu_us_per_req": 107.52,
+     "cpu_us_per_req_window": 107.13,
+     "p50_ms": 3.886,
+     "p99_ms": 51.515,
+     "p999_ms": 102.112,
+     "rss_mib": 612.3,
+     "memory_peak_mib": 608.8,
+     "console_lines": 2909058,
+     "received_request_lines": 21234,
+     "console_settled": true,
+     "drop_warnings": 0,
+     "load_average_before": [
+      1.95,
+      2.77,
+      4.5
+     ],
+     "unlogged_requests": 0,
+     "allocs_per_req": null,
+     "reallocs_per_req": null,
+     "alloc_bytes_per_req": null
+    }
    ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "default",
-   "expectations": 1000,
-   "request": "unmatched",
-   "log_level": "WARN",
-   "req_per_sec": 4402,
-   "rss_mib": [
-    223,
-    227
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "MockServer 9.2.0",
-   "config": "default",
-   "expectations": 1000,
-   "request": "unmatched",
-   "log_level": "WARN",
-   "req_per_sec": 2165,
-   "rss_mib": [
-    1733,
-    1734
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
-  },
-  {
-   "server": "mock-server",
-   "config": "MOCKSERVER_MAX_LOG_ENTRIES=100000",
-   "expectations": 1000,
-   "request": "unmatched",
-   "log_level": "WARN",
-   "req_per_sec": null,
-   "rss_mib": [
-    221,
-    223
-   ],
-   "p50_ms": null,
-   "p99_ms": null,
-   "p999_ms": null
+   "alloc_rounds": [
+    {
+     "round": 1,
+     "readings": "raw/r1-ours-default-INFO-1-unmatched-alloc.readings.json",
+     "oha": "raw/r1-ours-default-INFO-1-unmatched-alloc.oha.json",
+     "req_per_sec": 6473.9,
+     "requests": 19386,
+     "status_codes": {
+      "404": 19386
+     },
+     "errors": {
+      "aborted due to deadline": 64
+     },
+     "cpu_us_per_req": 148.8,
+     "cpu_us_per_req_window": 148.27,
+     "p50_ms": 5.726,
+     "p99_ms": 58.262,
+     "p999_ms": 82.903,
+     "rss_mib": 622.1,
+     "memory_peak_mib": 610.5,
+     "console_lines": 2664650,
+     "received_request_lines": 19450,
+     "console_settled": true,
+     "drop_warnings": 0,
+     "load_average_before": [
+      3.22,
+      2.81,
+      4.25
+     ],
+     "unlogged_requests": 0,
+     "allocs_per_req": 598.27,
+     "reallocs_per_req": 81.29,
+     "alloc_bytes_per_req": 120892.0
+    }
+   ]
   }
  ]
 }
