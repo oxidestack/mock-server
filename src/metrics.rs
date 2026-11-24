@@ -1736,6 +1736,11 @@ fn process_metrics() -> Vec<Snapshot> {
     let mut families = vec![
         Snapshot::counter("process_cpu_seconds", "Total user and system CPU time spent in seconds", vec![(Vec::new(), p.cpu_user_seconds + p.cpu_system_seconds)]),
         Snapshot::gauge("process_max_resident_memory_bytes", "Maximum resident set size in bytes", vec![(Vec::new(), p.max_resident_bytes)]),
+        Snapshot::counter(
+            "process_console_lines_dropped",
+            "Console lines dropped because stdout did not keep up",
+            vec![(Vec::new(), crate::log::console_lines_dropped() as f64)],
+        ),
     ];
     for (name, help, value) in [
         ("process_resident_memory_bytes", "Resident memory size in bytes", p.resident_bytes),

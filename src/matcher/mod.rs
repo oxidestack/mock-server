@@ -1406,56 +1406,62 @@ impl Difference {
 /// `StringFormatter.formatLogMessage(indent, message, arguments)`: each `{}` becomes its argument on its own
 /// lines, indented one level deeper than the message.
 pub fn format_log_message(indent: usize, message: &str, arguments: &[&str]) -> String {
-    const INDENTS: [&str; 5] = ["", "  ", "    ", "      ", "        "];
-    // `String.split` drops trailing empty parts.
-    let mut parts: Vec<&str> = message.split("{}").collect();
-    while parts.len() > 1 && parts.last() == Some(&"") {
-        parts.pop();
-    }
     // the arguments' lines take an indent each; a guess that saves most of the growing
     let mut out = String::with_capacity(message.len() + arguments.iter().map(|a| a.len() + a.len() / 8 + 4).sum::<usize>());
-    for (i, part) in parts.iter().enumerate() {
+    format_log_message_into(&mut out, indent, message, arguments.len(), |i, write| write(arguments[i]));
+    out
+}
+
+/// [`format_log_message`] appended to `out`, with `arguments` arguments, each handed in as its turn comes by
+/// `argument(index, write)` calling `write` with its text: a caller that renders its arguments itself (the console)
+/// can render each into one reused buffer and keep no text per argument.
+pub fn format_log_message_into(out: &mut String, indent: usize, message: &str, arguments: usize, mut argument: impl FnMut(usize, &mut dyn FnMut(&str))) {
+    const INDENTS: [&str; 5] = ["", "  ", "    ", "      ", "        "];
+    // `String.split` drops trailing empty parts: the parts of the message without its trailing `{}`s.
+    let mut parts = message.trim_end_matches("{}").split("{}").enumerate().peekable();
+    while let Some((i, part)) = parts.next() {
         out.push_str(INDENTS[indent]);
         out.push_str(part);
-        if let Some(argument) = arguments.get(i) {
-            // `replaceAll("(?m)^", indent)`: every line start but one at the very end of the text, after any of Java's
-            // line terminators (`\n`, `\r\n`, `\r`, U+0085, U+2028, U+2029).
-            out.push_str("\n\n");
-            if !argument.is_empty() {
-                out.push_str(INDENTS[indent + 1]);
-            }
-            // Scanned as bytes, not chars: a terminator is `\n`, `\r` not before `\n`, or the UTF-8 of U+0085
-            // (`C2 85`), U+2028 (`E2 80 A8`) or U+2029 (`E2 80 A9`); every other byte is copied as it is.
-            let bytes = argument.as_bytes();
-            let (mut start, mut at) = (0, 0);
-            while let Some(found) = bytes[at..].iter().position(|b| matches!(b, b'\n' | b'\r' | 0xC2 | 0xE2)) {
-                let i = at + found;
-                let length = match (bytes[i], bytes.get(i + 1), bytes.get(i + 2)) {
-                    (b'\n', ..) => 1,
-                    (b'\r', next, _) => usize::from(next != Some(&b'\n')),
-                    (0xC2, Some(0x85), _) => 2,
-                    (0xE2, Some(0x80), Some(0xA8 | 0xA9)) => 3,
-                    _ => 0,
-                };
-                let end = i + length;
-                if length > 0 && end < bytes.len() {
-                    out.push_str(&argument[start..end]);
+        if i < arguments {
+            argument(i, &mut |argument: &str| {
+                // `replaceAll("(?m)^", indent)`: every line start but one at the very end of the text, after any of
+                // Java's line terminators (`\n`, `\r\n`, `\r`, U+0085, U+2028, U+2029).
+                out.push_str("\n\n");
+                if !argument.is_empty() {
                     out.push_str(INDENTS[indent + 1]);
-                    start = end;
                 }
-                at = i + 1;
-            }
-            out.push_str(&argument[start..]);
-            out.push('\n');
+                // Scanned as bytes, not chars: a terminator is `\n`, `\r` not before `\n`, or the UTF-8 of U+0085
+                // (`C2 85`), U+2028 (`E2 80 A8`) or U+2029 (`E2 80 A9`); every other byte is copied as it is.
+                let bytes = argument.as_bytes();
+                let (mut start, mut at) = (0, 0);
+                while let Some(found) = bytes[at..].iter().position(|b| matches!(b, b'\n' | b'\r' | 0xC2 | 0xE2)) {
+                    let i = at + found;
+                    let length = match (bytes[i], bytes.get(i + 1), bytes.get(i + 2)) {
+                        (b'\n', ..) => 1,
+                        (b'\r', next, _) => usize::from(next != Some(&b'\n')),
+                        (0xC2, Some(0x85), _) => 2,
+                        (0xE2, Some(0x80), Some(0xA8 | 0xA9)) => 3,
+                        _ => 0,
+                    };
+                    let end = i + length;
+                    if length > 0 && end < bytes.len() {
+                        out.push_str(&argument[start..end]);
+                        out.push_str(INDENTS[indent + 1]);
+                        start = end;
+                    }
+                    at = i + 1;
+                }
+                out.push_str(&argument[start..]);
+                out.push('\n');
+            });
         }
-        if i < parts.len() - 1 {
+        if let Some((_, next)) = parts.peek() {
             out.push('\n');
-            if !parts[i + 1].starts_with(' ') {
+            if !next.starts_with(' ') {
                 out.push(' ');
             }
         }
     }
-    out
 }
 
 impl PathMatcher {

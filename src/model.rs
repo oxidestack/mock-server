@@ -256,8 +256,9 @@ impl NString {
 
     /// `NottableString.compareTo`: by value, descending (`String.compareTo`, UTF-16 units).
     fn cmp_descending(&self, other: &NString) -> std::cmp::Ordering {
-        let units = |s: &NString| s.value.clone().unwrap_or_default().encode_utf16().collect::<Vec<_>>();
-        units(other).cmp(&units(self))
+        // compared unit by unit as they are encoded: nothing is copied
+        let (mine, theirs) = (self.value.as_deref().unwrap_or_default(), other.value.as_deref().unwrap_or_default());
+        theirs.encode_utf16().cmp(mine.encode_utf16())
     }
 
     /// Multimap key identity: `Objects.hash(value, not)`.

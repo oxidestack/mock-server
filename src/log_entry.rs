@@ -247,6 +247,25 @@ impl ArgText {
             }
         }
     }
+
+    /// [`ArgText::plain`] appended to `out`.
+    fn plain_into(&self, json: &Value, out: &mut String) {
+        match self {
+            ArgText::Json => crate::recorded::log_value_into(out, json),
+            ArgText::Custom(text) | ArgText::Sensitive(text) => out.push_str(text),
+            ArgText::List(items) => {
+                let elements = json.as_array().map_or(&[][..], Vec::as_slice);
+                out.push('[');
+                for (i, item) in items.iter().enumerate() {
+                    if i > 0 {
+                        out.push_str(", ");
+                    }
+                    item.plain_into(elements.get(i).unwrap_or(&Value::Null), out);
+                }
+                out.push(']');
+            }
+        }
+    }
 }
 
 impl Arg {
@@ -392,6 +411,23 @@ impl Pending {
             let refs: Vec<&str> = self.texts().iter().map(String::as_str).collect();
             crate::matcher::format_log_message(0, &self.format, &refs)
         })
+    }
+
+    /// [`Pending::text`] appended to `out`, each argument rendered into `scratch` and copied from there: the text is
+    /// not kept, so printing an entry leaves it as small as an entry nothing read.
+    fn write_text(&self, out: &mut String, scratch: &mut String) {
+        if let Some(text) = self.text.get() {
+            return out.push_str(text);
+        }
+        let texts = self.texts.get();
+        crate::matcher::format_log_message_into(out, 0, &self.format, self.arguments.len(), |i, write| match texts {
+            Some(texts) => write(&texts[i]),
+            None => {
+                scratch.clear();
+                self.shapes.get(i).unwrap_or(&ArgText::Json).plain_into(&self.arguments[i], scratch);
+                write(scratch);
+            }
+        });
     }
 
     fn compact(&self) -> &[String] {
@@ -664,6 +700,15 @@ impl LogEntry {
         match &self.text {
             MessageText::Own(text) => text,
             MessageText::Pending(pending) => pending.text(),
+        }
+    }
+
+    /// [`LogEntry::message_text`] appended to `out` without keeping it (`scratch` holds an argument's text on the way):
+    /// what the console prints.
+    pub fn write_message(&self, out: &mut String, scratch: &mut String) {
+        match &self.text {
+            MessageText::Own(text) => out.push_str(text),
+            MessageText::Pending(pending) => pending.write_text(out, scratch),
         }
     }
 

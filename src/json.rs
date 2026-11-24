@@ -364,6 +364,16 @@ pub fn pretty<T: Serialize + ?Sized>(value: &T) -> String {
     String::from_utf8(out).expect("serde_json emits UTF-8")
 }
 
+/// [`pretty`] of a JSON value, appended to `out`.
+pub fn pretty_into(out: &mut String, value: &serde_json::Value) {
+    // SAFETY: serde_json writes whole UTF-8 sequences only (keys and strings come from `str`, everything else is
+    // ASCII, and a string is cut only at an escape, which is ASCII), and a `Value` cannot fail to serialise, so `out`
+    // holds valid UTF-8 whenever this returns or unwinds
+    let bytes = unsafe { out.as_mut_vec() };
+    let mut ser = serde_json::Serializer::with_formatter(bytes, JacksonFormatter::default());
+    value.serialize(&mut ser).expect("serialising JSON into memory cannot fail");
+}
+
 /// [`pretty`] over a list of expectations (or an object holding one), with each expectation's `metadata` written as
 /// compact JSON on one line, as upstream's `MetadataJson` text is embedded.
 pub fn pretty_expectations(value: &serde_json::Value) -> String {

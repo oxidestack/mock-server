@@ -763,10 +763,10 @@ pub type ClearFilter<'a> = (&'a dyn Fn(&HttpRequest) -> bool, &'a dyn Fn(&Value)
 pub type ExchangeHook = Arc<dyn Fn(&Exchange) + Send + Sync>;
 /// A hook called with the log after its recorded expectations may have changed.
 pub type RecordedHook = Arc<dyn Fn(&RequestLog) + Send + Sync>;
-/// A hook that writes one event-log entry to the console: level, type, the entry's message and whether it carries
-/// no port; the compact message (`compactLogFormat`) is computed on demand.
+/// A hook that writes one event-log entry to the console: level, type, what writes the entry's message and whether it
+/// carries no port; the compact message (`compactLogFormat`) is computed on demand.
 pub type ConsoleGate = Arc<dyn Fn(Level, Kind) -> bool + Send + Sync>;
-pub type ConsoleHook = Arc<dyn Fn(Level, Kind, &str, &dyn Fn() -> String, bool) + Send + Sync>;
+pub type ConsoleHook = Arc<dyn Fn(Level, Kind, crate::log::Text, &dyn Fn() -> String, bool) + Send + Sync>;
 /// A hook that reads `redactSecretsInLog`'s body fields from the configuration in force (`None`: off).
 pub type RedactionHook = Arc<dyn Fn() -> Option<Vec<String>> + Send + Sync>;
 
@@ -928,10 +928,11 @@ impl RequestLog {
         }
         let redacted = self.redaction_fields().map(|f| entry.redacted(&f));
         let entry = redacted.as_ref().unwrap_or(entry);
-        self.console(entry.level, entry.kind, entry.message_text(), &|| entry.compact_text(), entry.portless);
+        // the message is rendered onto the console's line, not kept on the entry
+        self.console(entry.level, entry.kind, &|out, scratch| entry.write_message(out, scratch), &|| entry.compact_text(), entry.portless);
     }
 
-    fn console(&self, level: Level, kind: Kind, text: &str, compact: &dyn Fn() -> String, portless: bool) {
+    fn console(&self, level: Level, kind: Kind, text: crate::log::Text, compact: &dyn Fn() -> String, portless: bool) {
         if !console_kind(kind) {
             return;
         }
@@ -1227,11 +1228,9 @@ impl RequestLog {
         let text = keep_line.then(|| line.clone());
         let shown = (shown.headers != request.headers).then(|| line.clone());
         if self.console_wanted(Level::Info, Kind::ReceivedRequest) {
-            let console_text = match self.redaction_fields() {
-                Some(fields) => received_text_of(&redact_value(shown.as_deref().unwrap_or(&logged(&request)), &fields, true)),
-                None => received_text_of(line),
-            };
-            self.console(Level::Info, Kind::ReceivedRequest, &console_text, &|| format!("received request: {}", crate::log_entry::compact_argument("received request:", &logged(&request), "")), in_portless_scope());
+            let redacted = self.redaction_fields().map(|fields| redact_value(shown.as_deref().unwrap_or(&logged(&request)), &fields, true));
+            let shown_line: &Value = redacted.as_ref().unwrap_or(line);
+            self.console(Level::Info, Kind::ReceivedRequest, &|out, scratch| received_text_into(out, scratch, shown_line), &|| format!("received request: {}", crate::log_entry::compact_argument("received request:", &logged(&request), "")), in_portless_scope());
         }
         match self.truncated_request(&request) {
             // `replaceQuoted`: the log line and `arguments` show the cut copy the entry retains too.
@@ -2258,6 +2257,15 @@ fn received_text_of(logged: &Value) -> String {
     crate::matcher::format_log_message(0, "received request:{}", &[&log_value(logged)])
 }
 
+/// [`received_text_of`] appended to `out`, the request rendered into `scratch` on the way.
+fn received_text_into(out: &mut String, scratch: &mut String, logged: &Value) {
+    crate::matcher::format_log_message_into(out, 0, "received request:{}", 1, |_, write| {
+        scratch.clear();
+        log_value_into(scratch, logged);
+        write(scratch);
+    });
+}
+
 /// A received request as its `RECEIVED_REQUEST` log entry prints it: the ordered form, a JSON body as its bare
 /// value (the decoded body carries no content type of its own).
 /// A request as log lines print it (`received request`, `request … didn't match`, …): the ordered form with the
@@ -2459,6 +2467,14 @@ pub fn log_value(v: &Value) -> String {
     match v {
         Value::String(s) => s.clone(),
         other => crate::json::pretty(other),
+    }
+}
+
+/// [`log_value`] appended to `out`.
+pub fn log_value_into(out: &mut String, v: &Value) {
+    match v {
+        Value::String(s) => out.push_str(s),
+        other => crate::json::pretty_into(out, other),
     }
 }
 

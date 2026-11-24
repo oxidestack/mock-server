@@ -195,7 +195,8 @@ pub fn record(state: &State, request: &HttpRequest, forbidden: bool) {
     if state.info_enabled() {
         let argument = format!(" {} {} from {} as {} ({}) -> {outcome}", entry.method, entry.operation, entry.source_address, entry.principal, entry.principal_source);
         let logged = crate::recorded::LogEntry::new(crate::log_entry::Kind::ServerConfiguration, "control-plane audit{}").args([argument]).default_request();
-        crate::log::log_entry(state, crate::recorded::Level::Info, logged.kind, logged.message_text(), &|| logged.compact_text(), logged.portless || crate::recorded::in_portless_scope());
+        let portless = logged.portless || crate::recorded::in_portless_scope();
+        crate::log::log_entry(state, crate::recorded::Level::Info, logged.kind, &|out, scratch| logged.write_message(out, scratch), &|| logged.compact_text(), portless);
         state.log.message_about(logged, crate::recorded::Subject::Request(std::sync::Arc::new(HttpRequest { method: String::new(), ..HttpRequest::default() })));
     }
 }
