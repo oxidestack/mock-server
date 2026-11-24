@@ -512,55 +512,97 @@ pub fn redacted<'a>(state: &State, entry: &'a LogEntry) -> std::borrow::Cow<'a, 
     }
 }
 
-/// The most text the console's queue holds for the writer thread: a line that would take it past this is dropped and
-/// counted (see the module doc). A line longer than this still goes onto an empty queue.
-const CONSOLE_QUEUE: usize = 1 << 20;
+/// The most text a thread's console queue holds for the writer thread: a line that would take it past this is dropped
+/// and counted (see the module doc). A line longer than this still goes onto an empty queue.
+const CONSOLE_QUEUE: usize = 256 << 10;
 
-/// What a thread's line buffer starts with, and the most it keeps between lines: the buffer of a longer line is let
-/// go once the line is queued.
-const LINE_START: usize = 16 << 10;
-const LINE_KEPT: usize = 256 << 10;
+/// What a queue's buffer starts with, and the most a buffer keeps once written: one grown by a long line, or by the
+/// queues of several threads written at once, is let go.
+const QUEUE_START: usize = 64 << 10;
+const QUEUE_KEPT: usize = 2 * CONSOLE_QUEUE;
 
-/// How long the writer thread sleeps when it finds the queue empty, and how many empty looks in a row it takes before
-/// it parks until a line comes instead (an idle server).
+/// The most a thread's scratch buffer (an argument's text on the way onto the line) keeps between lines.
+const SCRATCH_KEPT: usize = 256 << 10;
+
+/// How long the writer thread sleeps when it finds every queue empty, and how many empty looks in a row it takes
+/// before it parks until a line comes instead (an idle server).
 const WRITER_POLL: std::time::Duration = std::time::Duration::from_millis(1);
 const WRITER_IDLE_POLLS: u32 = 100;
 
-/// The console of a `mock-server` process ([`install_console`]): a thread formats its line into a buffer of its own
-/// ([`format_line`]), copies it onto `queue` and returns; the writer thread ([`Console::run`]) swaps the queue's text
-/// for an empty buffer of the same size and writes what it took in one `write_all`, so the lock is held for a copy at
-/// most. A line that does not fit the queue is dropped, never waited for.
+/// The console of a `mock-server` process ([`install_console`]). Each thread that prints has a queue of its own
+/// ([`Queue`]) and formats its line straight onto it ([`format_line`]) under that queue's lock, which only the writer
+/// thread ([`Console::run`]) also takes; the line is numbered as it is queued. The writer takes from every queue the
+/// lines numbered below the count it read before it looked, merges them by number and writes them in one
+/// `write_all`: the lines come out whole and in the order they were queued, across threads too. A line that does not
+/// fit its queue is dropped, never waited for.
 ///
-/// While lines keep coming the writer polls the queue and sleeps between looks rather than parking: a parked writer
-/// makes every line signal it, and the signals serialised the request workers. It parks only once the queue stayed
+/// While lines keep coming the writer polls the queues and sleeps between looks rather than parking: a parked writer
+/// makes every line signal it, and the signals serialised the request workers. It parks only once the queues stayed
 /// empty for [`WRITER_IDLE_POLLS`] looks, so an idle server does not wake it.
 pub(crate) struct Console {
     /// Which lines `RUST_LOG` lets through, by [`Target`] and [`LEVELS`] index.
     enabled: [[bool; 5]; 7],
-    queue: parking_lot::Mutex<Queue>,
-    /// Wakes a parked writer.
+    /// Tells this console's queue from another's in a thread's [`LOCAL`] (tests make several consoles).
+    id: u64,
+    /// The number the next line queued takes.
+    next: std::sync::atomic::AtomicU64,
+    /// The queue of every thread that has printed; one whose thread has ended stays until what it holds is written.
+    queues: parking_lot::Mutex<Vec<std::sync::Arc<Queue>>>,
+    /// The writer is parked on `wake`, or about to park: a thread that queues a line wakes it.
+    parked: std::sync::atomic::AtomicBool,
+    wake_lock: parking_lot::Mutex<()>,
     wake: parking_lot::Condvar,
     /// Signalled after each write ([`flush_console`] waits on it).
+    wrote_lock: parking_lot::Mutex<()>,
     wrote: parking_lot::Condvar,
     /// Lines dropped since the process started, and those of them the console has not reported yet.
     dropped: std::sync::atomic::AtomicU64,
     unreported: std::sync::atomic::AtomicU64,
 }
 
+/// One thread's lines waiting for the writer.
 struct Queue {
-    text: Vec<u8>,
-    /// Lines queued since the process started, and of those, the lines written.
+    pending: parking_lot::Mutex<Pending>,
+    /// Of the lines queued here, how many are written.
+    written: std::sync::atomic::AtomicU64,
+}
+
+#[derive(Default)]
+struct Pending {
+    text: String,
+    /// Each line's number and where it ends in `text`.
+    lines: Vec<(u64, usize)>,
+    /// Lines queued here since the thread first printed, and of those, the lines the writer has taken.
     queued: u64,
-    written: u64,
-    /// The writer is parked on `wake`.
-    parked: bool,
+    taken: u64,
+}
+
+/// What the writer took from one queue: the text and its lines, and the queue's count of lines taken then.
+#[derive(Default)]
+struct Taken {
+    queue: Option<std::sync::Arc<Queue>>,
+    upto: u64,
+    text: String,
+    lines: Vec<(u64, usize)>,
 }
 
 static CONSOLE: std::sync::OnceLock<Console> = std::sync::OnceLock::new();
 
+/// Numbers [`Console::id`].
+static CONSOLES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// A thread's own: its queue (with the id of the console it belongs to) and the scratch buffer an argument's text is
+/// rendered into.
+struct Local {
+    queue: Option<(u64, std::sync::Arc<Queue>)>,
+    scratch: String,
+}
+
 thread_local! {
-    /// A thread's line buffer and the scratch buffer an argument's text is rendered into.
-    static LINE: std::cell::RefCell<(String, String)> = const { std::cell::RefCell::new((String::new(), String::new())) };
+    static LOCAL: std::cell::RefCell<Local> = const { std::cell::RefCell::new(Local { queue: None, scratch: String::new() }) };
+    /// Lines a thread printed while its queue was locked for another of its lines (one rendered from inside another's
+    /// message): queued before that line, as they were printed before it was done.
+    static NESTED: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
 fn level_index(level: Level) -> usize {
@@ -583,9 +625,14 @@ impl Console {
         }
         Console {
             enabled,
-            queue: parking_lot::Mutex::new(Queue { text: Vec::with_capacity(CONSOLE_QUEUE), queued: 0, written: 0, parked: false }),
-            wake: parking_lot::Condvar::new(),
-            wrote: parking_lot::Condvar::new(),
+            id: CONSOLES.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
+            next: Default::default(),
+            queues: Default::default(),
+            parked: Default::default(),
+            wake_lock: Default::default(),
+            wake: Default::default(),
+            wrote_lock: Default::default(),
+            wrote: Default::default(),
             dropped: Default::default(),
             unreported: Default::default(),
         }
@@ -597,101 +644,236 @@ impl Console {
             return;
         }
         let now = std::time::SystemTime::now();
-        LINE.with(|buffers| match buffers.try_borrow_mut() {
-            Ok(mut buffers) => {
-                let (line, scratch) = &mut *buffers;
-                line.clear();
-                line.reserve(LINE_START);
-                format_line(line, scratch, now, level, target, port, text);
-                self.push(line.as_bytes());
-                for buffer in [line, scratch] {
-                    if buffer.capacity() > LINE_KEPT {
-                        *buffer = String::new();
+        self.queue_with(|out, scratch| format_line(out, scratch, now, level, target, port, text));
+    }
+
+    /// Queues `line` (whole lines of text) for the writer, or drops and counts it when the thread's queue is full.
+    fn push(&self, line: &[u8]) {
+        let line = String::from_utf8_lossy(line);
+        self.queue_with(|out, _| out.push_str(&line));
+    }
+
+    /// Queues the line `write` appends onto the thread's queue (lending it the thread's scratch buffer), or drops and
+    /// counts it when the queue is full: nothing is written onto a full one.
+    fn queue_with(&self, write: impl FnOnce(&mut String, &mut String)) {
+        LOCAL.with(|local| match local.try_borrow_mut() {
+            Ok(mut local) => {
+                let Local { queue, scratch } = &mut *local;
+                let queue = match queue {
+                    Some((id, queue)) if *id == self.id => queue,
+                    _ => &mut queue.insert((self.id, self.register())).1,
+                };
+                let mut pending = queue.pending.lock();
+                let start = pending.text.len();
+                if start >= CONSOLE_QUEUE {
+                    drop(pending);
+                    return self.count_dropped();
+                }
+                write(&mut pending.text, scratch);
+                if start > 0 && pending.text.len() > CONSOLE_QUEUE {
+                    pending.text.truncate(start);
+                    drop(pending);
+                    return self.count_dropped();
+                }
+                // the lines printed while this one was written go before it
+                let nested = NESTED.with(|nested| std::mem::take(&mut *nested.borrow_mut()));
+                if nested.is_empty() {
+                    self.numbered(&mut pending);
+                } else {
+                    let line = pending.text.split_off(start);
+                    for text in nested.iter().map(String::as_str).chain([line.as_str()]) {
+                        pending.text.push_str(text);
+                        self.numbered(&mut pending);
                     }
                 }
+                drop(pending);
+                if scratch.capacity() > SCRATCH_KEPT {
+                    *scratch = String::new();
+                }
+                self.wake_writer();
             }
-            // a line written while this thread's buffer is in use (one rendered from inside another's message)
-            Err(_) => {
-                let (mut line, mut scratch) = (String::new(), String::new());
-                format_line(&mut line, &mut scratch, now, level, target, port, text);
-                self.push(line.as_bytes());
-            }
+            Err(_) => NESTED.with(|nested| match nested.try_borrow_mut() {
+                Ok(mut nested) => {
+                    let mut line = String::new();
+                    write(&mut line, &mut String::new());
+                    nested.push(line);
+                }
+                Err(_) => self.count_dropped(),
+            }),
         });
     }
 
-    /// Queues `line` for the writer, or drops and counts it when the queue is full.
-    fn push(&self, line: &[u8]) {
-        let mut queue = self.queue.lock();
-        if !queue.text.is_empty() && queue.text.len() + line.len() > CONSOLE_QUEUE {
-            drop(queue);
-            self.dropped.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-            self.unreported.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-            return;
-        }
-        queue.text.extend_from_slice(line);
-        queue.queued += 1;
-        if queue.parked {
-            queue.parked = false;
-            self.wake.notify_one();
+    /// Numbers the line that ends `pending`'s text (under the queue's lock, so the writer finds every line numbered
+    /// below a count it read before it locked the queue).
+    fn numbered(&self, pending: &mut Pending) {
+        let number = self.next.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let end = pending.text.len();
+        pending.lines.push((number, end));
+        pending.queued += 1;
+    }
+
+    /// A new queue, the calling thread's.
+    fn register(&self) -> std::sync::Arc<Queue> {
+        let pending = Pending { text: String::with_capacity(QUEUE_START), ..Pending::default() };
+        let queue = std::sync::Arc::new(Queue { pending: parking_lot::Mutex::new(pending), written: Default::default() });
+        self.queues.lock().push(queue.clone());
+        queue
+    }
+
+    fn count_dropped(&self) {
+        self.dropped.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.unreported.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    /// Wakes the writer if it parked. A line queued while the writer decides to park is seen by one of them: each side
+    /// fences between its own store (the line, `parked`) and its look at the other's.
+    fn wake_writer(&self) {
+        use std::sync::atomic::Ordering::{Relaxed, SeqCst};
+        std::sync::atomic::fence(SeqCst);
+        if self.parked.load(Relaxed) {
+            let _lock = self.wake_lock.lock();
+            if self.parked.swap(false, Relaxed) {
+                self.wake.notify_one();
+            }
         }
     }
 
-    /// Swaps what is queued into `batch` (empty, of the queue's size), waiting for a line when there is none, and
-    /// returns how many lines it took.
-    fn take(&self, batch: &mut Vec<u8>) -> u64 {
+    /// Takes the queued lines onto `batch` (empty) in the order they were queued, waiting for a line when there is
+    /// none, and notes in `taken` each queue taken from; `spare` keeps the emptied buffers. Returns how many lines it
+    /// took.
+    fn take(&self, batch: &mut String, spare: &mut Vec<Taken>, taken: &mut Vec<Taken>) -> u64 {
+        use std::sync::atomic::Ordering::{Relaxed, SeqCst};
         let mut idle = 0;
         loop {
-            let mut queue = self.queue.lock();
-            if !queue.text.is_empty() {
-                std::mem::swap(&mut queue.text, batch);
-                return queue.queued - queue.written;
+            let lines = self.take_queued(batch, spare, taken);
+            if lines > 0 {
+                return lines;
             }
             if idle < WRITER_IDLE_POLLS {
-                drop(queue);
                 idle += 1;
                 std::thread::sleep(WRITER_POLL);
-            } else {
-                queue.parked = true;
-                self.wake.wait(&mut queue);
+                continue;
             }
+            let mut lock = self.wake_lock.lock();
+            self.parked.store(true, Relaxed);
+            std::sync::atomic::fence(SeqCst);
+            if !self.queues.lock().iter().any(|queue| !queue.pending.lock().lines.is_empty()) {
+                self.wake.wait(&mut lock);
+                idle = 0;
+            }
+            self.parked.store(false, Relaxed);
         }
+    }
+
+    /// One look at every queue for [`Console::take`]: the lines numbered below the count read first (a line numbered
+    /// later stays for the next look, so none is written before one queued earlier), merged by number. A queue only
+    /// this list holds (its thread has ended) is let go once everything it held is written.
+    fn take_queued(&self, batch: &mut String, spare: &mut Vec<Taken>, taken: &mut Vec<Taken>) -> u64 {
+        use std::sync::atomic::Ordering::{Relaxed, SeqCst};
+        let below = self.next.load(SeqCst);
+        let mut lines = 0;
+        self.queues.lock().retain(|queue| {
+            let mut pending = queue.pending.lock();
+            let count = pending.lines.iter().take_while(|(number, _)| *number < below).count();
+            if count == 0 {
+                return !pending.lines.is_empty() || std::sync::Arc::strong_count(queue) > 1 || queue.written.load(Relaxed) < pending.queued;
+            }
+            let mut out = spare.pop().unwrap_or_default();
+            if count == pending.lines.len() {
+                std::mem::swap(&mut pending.text, &mut out.text);
+                std::mem::swap(&mut pending.lines, &mut out.lines);
+                if pending.text.capacity() == 0 {
+                    pending.text.reserve(QUEUE_START);
+                }
+            } else {
+                let cut = pending.lines[count - 1].1;
+                out.text.push_str(&pending.text[..cut]);
+                out.lines.extend_from_slice(&pending.lines[..count]);
+                pending.text.drain(..cut);
+                pending.lines.drain(..count);
+                for (_, end) in &mut pending.lines {
+                    *end -= cut;
+                }
+            }
+            pending.taken += count as u64;
+            out.upto = pending.taken;
+            out.queue = Some(queue.clone());
+            lines += count as u64;
+            taken.push(out);
+            true
+        });
+        // merged by number: the next line is always the lowest-numbered of the queues' first lines not yet written
+        let mut at = [0usize; 64];
+        let mut at_more = Vec::new();
+        let heads: &mut [usize] = if taken.len() <= at.len() {
+            &mut at[..taken.len()]
+        } else {
+            at_more.resize(taken.len(), 0);
+            &mut at_more
+        };
+        loop {
+            let next = (0..taken.len()).filter(|&i| heads[i] < taken[i].lines.len()).min_by_key(|&i| taken[i].lines[heads[i]].0);
+            let Some(i) = next else { break };
+            let from = if heads[i] == 0 { 0 } else { taken[i].lines[heads[i] - 1].1 };
+            batch.push_str(&taken[i].text[from..taken[i].lines[heads[i]].1]);
+            heads[i] += 1;
+        }
+        lines
     }
 
     /// Appends to `batch` the line that reports the lines dropped since the last report, if any were.
-    fn report_drops(&self, batch: &mut Vec<u8>) {
+    fn report_drops(&self, batch: &mut String) {
         let dropped = self.unreported.swap(0, std::sync::atomic::Ordering::Relaxed);
         if dropped == 0 || !self.enabled[Target::General as usize][level_index(Level::Warn)] {
             return;
         }
-        let mut line = String::new();
         let text = |out: &mut String, _: &mut String| {
             use std::fmt::Write;
             let _ = write!(out, "{dropped} console lines dropped: stdout was not keeping up");
         };
-        format_line(&mut line, &mut String::new(), std::time::SystemTime::now(), Level::Warn, Target::General, None, &text);
-        batch.extend_from_slice(line.as_bytes());
+        format_line(batch, &mut String::new(), std::time::SystemTime::now(), Level::Warn, Target::General, None, &text);
+    }
+
+    /// Counts what [`Console::take`] took as written, gives its buffers back to `spare` and wakes whoever waits.
+    fn written(&self, taken: &mut Vec<Taken>, spare: &mut Vec<Taken>) {
+        for mut done in taken.drain(..) {
+            if let Some(queue) = done.queue.take() {
+                queue.written.store(done.upto, std::sync::atomic::Ordering::Relaxed);
+            }
+            done.text.clear();
+            done.lines.clear();
+            if done.text.capacity() > QUEUE_KEPT {
+                done.text = String::with_capacity(QUEUE_START);
+            }
+            spare.push(done);
+        }
+        let _lock = self.wrote_lock.lock();
+        self.wrote.notify_all();
     }
 
     /// The writer thread: takes what is queued, writes it with `write`, and counts its lines written.
     fn run(&self, mut write: impl FnMut(&[u8])) {
-        let mut batch = Vec::with_capacity(CONSOLE_QUEUE);
+        let mut batch = String::with_capacity(QUEUE_START);
+        let (mut spare, mut taken) = (Vec::new(), Vec::new());
         loop {
-            let lines = self.take(&mut batch);
+            self.take(&mut batch, &mut spare, &mut taken);
             self.report_drops(&mut batch);
-            write(&batch);
+            write(batch.as_bytes());
             batch.clear();
-            // a line longer than the queue grew this buffer: it goes back to the queue's size
-            batch.shrink_to(CONSOLE_QUEUE);
-            self.queue.lock().written += lines;
-            self.wrote.notify_all();
+            if batch.capacity() > QUEUE_KEPT {
+                batch = String::with_capacity(QUEUE_START);
+            }
+            self.written(&mut taken, &mut spare);
         }
     }
 
+    /// Returns once every line queued before the call is written.
     fn flush(&self) {
-        let mut queue = self.queue.lock();
-        let target = queue.queued;
-        while queue.written < target {
-            self.wrote.wait(&mut queue);
+        use std::sync::atomic::Ordering::Relaxed;
+        let targets: Vec<(std::sync::Arc<Queue>, u64)> = self.queues.lock().iter().map(|queue| (queue.clone(), queue.pending.lock().queued)).collect();
+        let mut lock = self.wrote_lock.lock();
+        while targets.iter().any(|(queue, queued)| queue.written.load(Relaxed) < *queued) {
+            self.wrote.wait(&mut lock);
         }
     }
 }
@@ -998,8 +1180,15 @@ mod tests {
         super::Console::new(&console_filter(None))
     }
 
-    /// When stdout does not keep up and the queue is full, a line is dropped and counted at once instead of waiting
-    /// for room; the writer's next write reports how many, and the count since start stays.
+    /// What the writer would take now: the lines and the text, and the queues it took them from.
+    fn take(console: &super::Console) -> (u64, String, Vec<super::Taken>) {
+        let (mut batch, mut taken) = (String::new(), Vec::new());
+        let lines = console.take(&mut batch, &mut Vec::new(), &mut taken);
+        (lines, batch, taken)
+    }
+
+    /// When stdout does not keep up and a thread's queue is full, its line is dropped and counted at once instead of
+    /// waiting for room; the writer's next write reports how many, and the count since start stays.
     #[test]
     fn a_full_console_queue_drops_and_counts_lines() {
         use std::sync::atomic::Ordering::Relaxed;
@@ -1012,16 +1201,16 @@ mod tests {
         }
         assert!(started.elapsed() < std::time::Duration::from_secs(5), "pushing onto a full queue waited");
         assert_eq!(console.dropped.load(Relaxed), 300);
-        let mut batch = Vec::with_capacity(super::CONSOLE_QUEUE);
-        assert_eq!(console.take(&mut batch), (super::CONSOLE_QUEUE / line.len()) as u64);
+        let (lines, mut batch, mut taken) = take(&console);
+        assert_eq!(lines, (super::CONSOLE_QUEUE / line.len()) as u64);
         assert_eq!(batch.len(), super::CONSOLE_QUEUE);
         console.report_drops(&mut batch);
-        let report = String::from_utf8(batch[super::CONSOLE_QUEUE..].to_vec()).unwrap();
-        assert_eq!(&report[TIMESTAMP..], "  WARN mock_server::general: 300 console lines dropped: stdout was not keeping up\n");
+        assert_eq!(&batch[super::CONSOLE_QUEUE + TIMESTAMP..], "  WARN mock_server::general: 300 console lines dropped: stdout was not keeping up\n");
         // reported once; the queue takes lines again once the writer has taken what it held
         batch.truncate(super::CONSOLE_QUEUE);
         console.report_drops(&mut batch);
         assert_eq!(batch.len(), super::CONSOLE_QUEUE);
+        console.written(&mut taken, &mut Vec::new());
         console.push(&line);
         assert_eq!(console.dropped.load(Relaxed), 300);
     }
@@ -1034,8 +1223,8 @@ mod tests {
         console.push(&long);
         console.push(b"next\n");
         assert_eq!(console.dropped.load(std::sync::atomic::Ordering::Relaxed), 1);
-        let mut batch = Vec::new();
-        assert_eq!(console.take(&mut batch), 1);
+        let (lines, batch, _) = take(&console);
+        assert_eq!(lines, 1);
         assert_eq!(batch.len(), long.len());
     }
 
@@ -1047,8 +1236,99 @@ mod tests {
         console.line(L::Debug, Target::Server, None, &|out, _| out.push_str("debug"));
         console.line(L::Error, Target::Matching, None, &|out, _| out.push_str("off"));
         console.line(L::Info, Target::Server, Some(1080), &|out, _| out.push_str("kept"));
-        let mut batch = Vec::new();
-        assert_eq!(console.take(&mut batch), 1);
-        assert!(String::from_utf8(batch).unwrap().ends_with("  INFO mock_server::server: port=1080 kept\n"));
+        let (lines, batch, _) = take(&console);
+        assert_eq!(lines, 1);
+        assert!(batch.ends_with("  INFO mock_server::server: port=1080 kept\n"));
+    }
+
+    /// A line printed while another of the thread's lines is being written (from inside its message) goes before it, as
+    /// it was printed first.
+    #[test]
+    fn a_line_printed_inside_another_goes_before_it() {
+        use super::{Level as L, Target};
+        let console = console();
+        console.line(L::Info, Target::Server, None, &|out, _| out.push_str("first"));
+        console.line(L::Info, Target::Server, None, &|out, _| {
+            out.push_str("outer");
+            console.line(L::Warn, Target::Matching, None, &|out, _| out.push_str("inner"));
+        });
+        let (lines, batch, _) = take(&console);
+        assert_eq!(lines, 3);
+        let messages: Vec<&str> = batch.lines().map(|l| l.rsplit(": ").next().unwrap()).collect();
+        assert_eq!(messages, ["first", "inner", "outer"]);
+    }
+
+    /// Lines of many threads at once: each written whole, each thread's in the order it printed them, none lost, and a
+    /// flush returns once the lines queued before it are written.
+    #[test]
+    fn the_lines_of_many_threads_stay_whole_and_in_order() {
+        use super::{Level as L, Target};
+        let console: &'static super::Console = Box::leak(Box::new(console()));
+        let out = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        let sink = out.clone();
+        std::thread::spawn(move || console.run(|batch| sink.lock().unwrap().push_str(std::str::from_utf8(batch).unwrap())));
+        const THREADS: usize = 8;
+        const LINES: usize = 2000;
+        let threads: Vec<_> = (0..THREADS)
+            .map(|t| {
+                std::thread::spawn(move || {
+                    for i in 0..LINES {
+                        let body = format!("{t} {i} {}", "z".repeat(i % 97));
+                        console.line(L::Info, Target::General, None, &|out, _| out.push_str(&body));
+                    }
+                })
+            })
+            .collect();
+        for thread in threads {
+            thread.join().unwrap();
+        }
+        console.flush();
+        let text = out.lock().unwrap().clone();
+        let mut next = [0usize; THREADS];
+        for line in text.lines() {
+            let message = line.split_once("mock_server::general: ").unwrap().1;
+            let mut parts = message.split(' ');
+            let (t, i): (usize, usize) = (parts.next().unwrap().parse().unwrap(), parts.next().unwrap().parse().unwrap());
+            assert_eq!(parts.next().unwrap(), "z".repeat(i % 97));
+            assert_eq!(i, next[t], "thread {t}'s lines in order");
+            next[t] += 1;
+        }
+        assert_eq!(next, [LINES; THREADS], "every line written");
+        assert_eq!(console.dropped.load(std::sync::atomic::Ordering::Relaxed), 0);
+    }
+
+    /// Lines of different threads come out in the order they were queued, as a request's lines and the next request's
+    /// (served by another worker) are read.
+    #[test]
+    fn lines_of_different_threads_keep_the_order_they_were_queued_in() {
+        use super::{Level as L, Target};
+        let console: &'static super::Console = Box::leak(Box::new(console()));
+        let out = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        let sink = out.clone();
+        std::thread::spawn(move || console.run(|batch| sink.lock().unwrap().push_str(std::str::from_utf8(batch).unwrap())));
+        // the threads take turns: each line is queued after the previous one, on another thread
+        const THREADS: usize = 3;
+        const LINES: usize = 600;
+        let turn = std::sync::Arc::new((std::sync::Mutex::new(0usize), std::sync::Condvar::new()));
+        let threads: Vec<_> = (0..THREADS)
+            .map(|t| {
+                let turn = turn.clone();
+                std::thread::spawn(move || {
+                    let (lock, changed) = &*turn;
+                    for i in (t..LINES).step_by(THREADS) {
+                        let mut at = changed.wait_while(lock.lock().unwrap(), |at| *at != i).unwrap();
+                        console.line(L::Info, Target::General, None, &|out, _| out.push_str(&i.to_string()));
+                        *at += 1;
+                        changed.notify_all();
+                    }
+                })
+            })
+            .collect();
+        for thread in threads {
+            thread.join().unwrap();
+        }
+        console.flush();
+        let numbers: Vec<usize> = out.lock().unwrap().lines().map(|l| l.rsplit(": ").next().unwrap().parse().unwrap()).collect();
+        assert_eq!(numbers, (0..LINES).collect::<Vec<_>>());
     }
 }

@@ -213,12 +213,12 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         // skips and nothing else: `processActionAfterFilter`); `httpForward` rewrites `Host`
         // on the logged request before it is serialised. An upgrade it relays never reaches `HttpForwardActionHandler`,
         // so its `Host` stays as it arrived.
-        let logged = match matched.as_ref().map(|e| &e.action) {
-            Some(action @ Action::Forward(f)) if forward_relay_target(state, action, &request).is_none() => {
-                f.rewritten(&request).unwrap_or_else(|| request.clone())
-            }
-            _ => request.clone(),
+        let rewritten = match matched.as_ref().map(|e| &e.action) {
+            Some(action @ Action::Forward(f)) if forward_relay_target(state, action, &request).is_none() => f.rewritten(&request),
+            _ => None,
         };
+        let shown_is_request = rewritten.is_none();
+        let logged = rewritten.unwrap_or_else(|| request.clone());
         // The entries render the request they hold when the log is read (upstream's event log ring after 8.0.0), so
         // they show the path parameters the match set (oracle, scenario `path_parameters_log_entries`) and the `Host`
         // and scheme `httpForward` set (`log_ca_load_client_refused_forward`).
@@ -228,7 +228,8 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         }
         if state.info_enabled() {
             closest_scan = crate::blocking::off_worker_when_large(request.body.len(), || {
-                log_evaluations_logged(state, &request, shown, unmatched.as_ref(), &evaluated, matched.is_none().then_some(namespace.as_deref()), true)
+                let subject = shown_is_request.then_some(&shown.request);
+                log_evaluations_logged(state, &request, shown, subject, unmatched.as_ref(), &evaluated, matched.is_none().then_some(namespace.as_deref()), true)
             });
         } else {
             log_regex_timeouts(state, scan_timeouts);
@@ -2343,7 +2344,8 @@ pub(crate) fn log_evaluated(state: &State, request: &HttpRequest, evaluated: &[c
 /// nothing matched, so the closest expectation is logged, chosen among those its namespace admits.
 pub(crate) fn log_evaluations(state: &State, request: &HttpRequest, evaluated: &[crate::store::Evaluated], unmatched: Option<Option<&str>>, detailed: bool) {
     crate::blocking::off_worker_when_large(request.body.len(), || {
-        log_evaluations_logged(state, request, &crate::recorded::LoggedRequest::of(request), None, evaluated, unmatched, detailed)
+        let shown = crate::recorded::LoggedRequest::of(request);
+        log_evaluations_logged(state, request, &shown, Some(&shown.request), None, evaluated, unmatched, detailed)
     });
 }
 
@@ -2396,10 +2398,14 @@ fn logged_expectation(e: &crate::store::Evaluated) -> crate::log_entry::Json {
     })
 }
 
+/// The entries of [`log_evaluations`], the request's logged form (`shown`) built already; `subject`, when given, is a
+/// request held already that equals `request`, which the entries are about instead of a copy.
+#[allow(clippy::too_many_arguments)]
 fn log_evaluations_logged(
     state: &State,
     request: &HttpRequest,
     shown: &crate::recorded::LoggedRequest,
+    subject: Option<&Arc<HttpRequest>>,
     before: Option<&HttpRequest>,
     evaluated: &[crate::store::Evaluated],
     unmatched: Option<Option<&str>>,
@@ -2417,7 +2423,8 @@ fn log_evaluations_logged(
     let millis = regex_timeout_millis(state);
     // Without a context (`detailed` false) nothing records a difference, so none logs at TRACE.
     let trace = detailed && trace_enabled(state);
-    let logged = Arc::new(request.clone());
+    // the request the entries are about: `subject`, a request held already that equals it, or a copy
+    let logged = subject.cloned().unwrap_or_else(|| Arc::new(request.clone()));
     // the entry's expectation and its argument are one value
     let matched = |expectation: crate::log_entry::Json| {
         LogEntry::new(Kind::ExpectationMatched, "request:{}matched expectation:{}").request_logged(request, shown).args([shown.arg(), Arg::from(expectation.clone())]).expectation_shared(expectation)
@@ -2541,6 +2548,25 @@ fn log_evaluations_logged(
             continue;
         }
         let expectation = logged_expectation(e);
+        // A match's entry, of a request the log holds already: built when the log is read (or the console prints it).
+        if e.matched
+            && let Some(subject) = subject
+        {
+            let (shown, live) = (shown.clone(), e.expectation.clone());
+            state.log.message_about_deferred(crate::recorded::Level::Info, Kind::ExpectationMatched, subject.clone(), move || {
+                let live = live.clone();
+                LogEntry::new(Kind::ExpectationMatched, "request:{}matched expectation:{}")
+                    .request_logged(&shown.request, &shown)
+                    .args([shown.arg(), Arg::from(expectation.clone())])
+                    .expectation_shared(expectation.clone())
+                    .live_expectation(move || crate::canonical::logged_matched_expectation(&live.current(), live.end_date_millis()), None)
+            });
+            log_commit_warning(state, e);
+            if !e.active {
+                crate::control::log_lazy_removals(state, Some(&e.expectation.id));
+            }
+            continue;
+        }
         let entry = if e.matched {
             matched(expectation)
         } else if !e.active {

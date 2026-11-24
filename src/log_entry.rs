@@ -12,13 +12,15 @@ use crate::request::HttpRequest;
 /// too, its expectation its second, and a request's matched and response entries carry the same logged request. A
 /// `serde_json::Value` of a small request is ~10 times its text, so each copy was ~4 KB of the event log.
 ///
-/// It may also be built on first read: [`Json::lazy`] keeps the closure that renders it, so an entry nobody
-/// reads (the event log's usual fate at WARN or on the matched path) never pays for the rendering.
+/// A request's logged form may also be built on first read ([`Json::logged_request`]): it keeps the request, so an
+/// entry nobody reads (the event log's usual fate at WARN or on the matched path) never pays for the rendering, and a
+/// console line quoting it writes its text straight from the request ([`Json::write_text`]).
 pub struct Json(std::sync::Arc<JsonCell>);
 
 struct JsonCell {
     value: std::sync::OnceLock<Value>,
-    make: std::sync::Mutex<Option<Box<dyn FnOnce() -> Value + Send>>>,
+    /// The request whose logged form ([`crate::recorded::logged`]) the value is, rendered from it when first read.
+    request: Option<std::sync::Arc<HttpRequest>>,
     /// Known, without rendering it, to be a request `CredentialRedaction.forLog` leaves as it is (not a control-plane
     /// request), so attaching it to an entry need not read it.
     credential_free: bool,
@@ -28,20 +30,25 @@ impl Json {
     pub fn new(value: Value) -> Json {
         let cell = std::sync::OnceLock::new();
         let _ = cell.set(value);
-        Json(std::sync::Arc::new(JsonCell { value: cell, make: std::sync::Mutex::new(None), credential_free: false }))
+        Json(std::sync::Arc::new(JsonCell { value: cell, request: None, credential_free: false }))
     }
 
-    /// A value rendered by `make` the first time it is read.
-    pub fn lazy(make: impl FnOnce() -> Value + Send + 'static) -> Json {
-        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), make: std::sync::Mutex::new(Some(Box::new(make))), credential_free: false }))
+    /// [`crate::recorded::logged`] of `request`, rendered the first time it is read; `credential_free` when the request
+    /// is known to carry nothing `CredentialRedaction.forLog` masks.
+    pub fn logged_request(request: std::sync::Arc<HttpRequest>, credential_free: bool) -> Json {
+        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), request: Some(request), credential_free }))
     }
 
-    /// [`Json::lazy`] for a request already known to carry nothing `CredentialRedaction.forLog` masks.
-    pub fn lazy_credential_free(make: impl FnOnce() -> Value + Send + 'static) -> Json {
-        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), make: std::sync::Mutex::new(Some(Box::new(make))), credential_free: true }))
+    /// [`crate::recorded::log_value`] of the value, appended to `out`: a request's logged form nothing has rendered is
+    /// written straight from the request, and stays unrendered.
+    pub fn write_text(&self, out: &mut String) {
+        match (self.0.value.get(), &self.0.request) {
+            (None, Some(request)) => crate::recorded::logged_text_into(out, request),
+            _ => crate::recorded::log_value_into(out, self),
+        }
     }
 
-    /// See [`Json::lazy_credential_free`].
+    /// See [`Json::logged_request`].
     pub fn is_credential_free(&self) -> bool {
         self.0.credential_free
     }
@@ -70,10 +77,7 @@ impl Clone for Json {
 impl std::ops::Deref for Json {
     type Target = Value;
     fn deref(&self) -> &Value {
-        self.0.value.get_or_init(|| {
-            let make = self.0.make.lock().unwrap_or_else(|e| e.into_inner()).take();
-            make.map_or(Value::Null, |make| make())
-        })
+        self.0.value.get_or_init(|| self.0.request.as_deref().map_or(Value::Null, crate::recorded::logged))
     }
 }
 
@@ -249,7 +253,15 @@ impl ArgText {
     }
 
     /// [`ArgText::plain`] appended to `out`.
-    fn plain_into(&self, json: &Value, out: &mut String) {
+    fn plain_into(&self, json: &Json, out: &mut String) {
+        match self {
+            ArgText::Json => json.write_text(out),
+            other => other.plain_value_into(json, out),
+        }
+    }
+
+    /// [`ArgText::plain_into`] of a value.
+    fn plain_value_into(&self, json: &Value, out: &mut String) {
         match self {
             ArgText::Json => crate::recorded::log_value_into(out, json),
             ArgText::Custom(text) | ArgText::Sensitive(text) => out.push_str(text),
@@ -260,7 +272,7 @@ impl ArgText {
                     if i > 0 {
                         out.push_str(", ");
                     }
-                    item.plain_into(elements.get(i).unwrap_or(&Value::Null), out);
+                    item.plain_value_into(elements.get(i).unwrap_or(&Value::Null), out);
                 }
                 out.push(']');
             }

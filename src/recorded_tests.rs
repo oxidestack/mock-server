@@ -491,3 +491,133 @@ fn a_log_that_keeps_nothing_builds_no_served_entry() {
     log.record_served(&logged, json!({"statusCode": 200}), Some("e-1".into()), Kind::ExpectationResponse, |_, _| panic!("built for a log that keeps nothing"));
     assert_eq!((log.size(), log.evicted()), (0, 0));
 }
+
+#[test]
+fn a_deferred_message_is_built_when_read_and_reads_back_as_an_eagerly_built_one() {
+    use crate::recorded::{Arg, Subject};
+    let config = crate::Config::for_tests();
+    let expectation = crate::log_entry::Json::new(json!({"id": "e-1", "httpRequest": {"path": "/a"}, "times": {"unlimited": true}}));
+    let matched = |logged: &crate::recorded::LoggedRequest| {
+        LogEntry::new(Kind::ExpectationMatched, "request:{}matched expectation:{}")
+            .request_logged(&logged.request, logged)
+            .args([logged.arg(), Arg::from(expectation.clone())])
+            .expectation_shared(expectation.clone())
+    };
+    // capacity 3: the second request's entries evict the first's arrival
+    let (lazy, eager) = (RequestLog::new(3), RequestLog::new(3));
+    let builds = Arc::new(AtomicUsize::new(0));
+    for (i, path) in ["/a", "/b"].into_iter().enumerate() {
+        let id = format!("00000000-0000-0000-0000-00000000000{i}");
+        let request = Arc::new(served(path, &id));
+        let logged = crate::recorded::LoggedRequest::shared(request.clone());
+        lazy.received_logged(&logged, &request);
+        let (template, builds) = (matched(&logged), builds.clone());
+        lazy.message_about_deferred(crate::recorded::Level::Info, Kind::ExpectationMatched, request.clone(), move || {
+            builds.fetch_add(1, Ordering::Relaxed);
+            template.clone()
+        });
+
+        let plain = Arc::new(served(path, &id));
+        let logged = crate::recorded::LoggedRequest::shared(plain.clone());
+        eager.received_logged(&logged, &plain);
+        eager.message_about(matched(&logged), Subject::Request(plain));
+    }
+    assert_eq!(builds.load(Ordering::Relaxed), 0, "logging the message builds no entry");
+    assert_eq!((lazy.size(), lazy.evicted()), (eager.size(), eager.evicted()));
+    let read = |log: &RequestLog| untimed(log.log_entries(crate::recorded::EntryScope::Messages, |_| true, |_| true, Some(1080), &config));
+    assert_eq!(read(&lazy), read(&eager));
+    let lines = |log: &RequestLog| log.messages(|_| true, |_| true).into_iter().map(|(_, text)| text).collect::<Vec<_>>();
+    assert_eq!(lines(&lazy), lines(&eager));
+    assert_eq!(builds.load(Ordering::Relaxed), 2, "each entry is built once, when first read");
+}
+
+/// The requests a log line can quote: headers, query parameters and cookies (repeated, blank, marked, out of order,
+/// non-ASCII), bodies of each kind, control characters, the socket and TLS fields.
+fn quoted_requests() -> Vec<HttpRequest> {
+    let base = || HttpRequest {
+        method: "POST".into(),
+        path: "/p".into(),
+        protocol: "HTTP_1_1",
+        keep_alive: true,
+        local_address: "127.0.0.1:1080".into(),
+        remote_address: "127.0.0.1:50000".into(),
+        ..HttpRequest::default()
+    };
+    let with = |headers: &[(&str, &[&str])], body: &[u8]| HttpRequest {
+        headers: headers.iter().map(|(k, vs)| (k.to_string(), vs.iter().map(|v| v.to_string()).collect())).collect(),
+        body: bytes::Bytes::copy_from_slice(body),
+        ..base()
+    };
+    let mut out = vec![
+        HttpRequest { method: "GET".into(), ..HttpRequest::default() },
+        HttpRequest { method: "GET".into(), path: "/a".into(), secure: true, ..HttpRequest::default() },
+        base(),
+        HttpRequest { protocol: "HTTP_3", secure: true, ..base() },
+        with(&[("Host", &["localhost:1080"]), ("User-Agent", &["ApacheBench/2.3"]), ("Accept", &["*/*"]), ("Connection", &["keep-alive"])], b""),
+        with(&[("b", &["1"]), ("a", &["2", "3"]), ("b", &["4"]), ("C", &[""]), ("Z", &["  "])], b""),
+        with(&[("x-mark", &["!not", "?opt", "!", "?", " ! "]), ("ünï", &["ç\u{1}\u{7f}\u{85}\u{2028}\"\\\n\r\t"]), ("\u{10000}", &["a"]), ("\u{ffff}", &["b"])], b""),
+        with(&[("!marked", &["v"])], b""),
+        with(&[(" ", &["blank name"])], b""),
+        with(&[("Content-Type", &["application/json"])], br#"{"b":1,"a":[1,2.50,{"c":null}],"s":"\u0001\u00e9"}"#),
+        with(&[("Content-Type", &["application/json; charset=utf-8"])], b"[1, 2]"),
+        with(&[("Content-Type", &["application/json"])], b"12.0"),
+        with(&[("Content-Type", &["application/json"])], b"{not json"),
+        with(&[("Content-Type", &["application/json"])], b"   "),
+        with(&[("Content-Type", &["text/plain"])], "caf\u{e9} \u{1b}[31m".as_bytes()),
+        with(&[("Content-Type", &["text/plain; charset=utf-16"])], &[0xfe, 0xff, 0, b'h', 0, b'i']),
+        with(&[("Content-Type", &["application/xml"])], b"<a>1</a>"),
+        with(&[("Content-Type", &["application/x-www-form-urlencoded"])], b"a=1&b=2"),
+        with(&[("Content-Type", &["application/octet-stream"])], &[0, 1, 2, 255]),
+        with(&[], b"plain text without a type"),
+        with(&[], &[0xff, 0xfe, 0]),
+        HttpRequest { body: bytes::Bytes::from_static(b"cut"), body_kind: crate::request::BodyKind::Binary, ..base() },
+        HttpRequest { body: bytes::Bytes::from_static(b"text"), body_kind: crate::request::BodyKind::PlainString, ..base() },
+        HttpRequest { original_body: Some(bytes::Bytes::from_static(b"gz")), body: bytes::Bytes::from_static(b"x"), ..base() },
+    ];
+    let mut query = base();
+    query.query = vec![("b".into(), vec!["1".into()]), ("a".into(), vec!["x y".into(), "".into()]), ("b".into(), vec!["2".into()])];
+    query.path_parameters = vec![("id".into(), vec!["7".into()]), ("name".into(), vec!["n".into()])];
+    out.push(query);
+    let mut marked_query = base();
+    marked_query.query = vec![("?x".into(), vec!["1".into()])];
+    out.push(marked_query);
+    let mut cookies = base();
+    cookies.cookies = vec![("s".into(), "1".into()), ("a".into(), "".into()), ("s".into(), "2".into()), ("m".into(), "!v".into())];
+    out.push(cookies);
+    let mut marked_cookie = base();
+    marked_cookie.cookies = vec![("!c".into(), "1".into())];
+    out.push(marked_cookie);
+    let mut socket = base();
+    socket.socket_address = Some(("example.com".into(), 443, true));
+    socket.client_certificates = Arc::new(vec![
+        crate::tls::client_cert::ClientCertificate { der: Vec::new(), model: json!({"issuerDistinguishedName": "CN=a", "serialNumber": "1", "empty": {}, "list": []}) },
+        crate::tls::client_cert::ClientCertificate { der: Vec::new(), model: json!({"subjectDistinguishedName": "CN=b"}) },
+    ]);
+    out.push(socket);
+    let mut untransported = base();
+    untransported.protocol = "";
+    untransported.keep_alive = false;
+    out.push(untransported);
+    let mut many = base();
+    many.headers = (0..100).map(|i| (format!("h{:03}", (i * 37) % 100), vec![i.to_string()])).collect();
+    out.push(many);
+    out
+}
+
+#[test]
+fn a_quoted_request_is_written_as_its_logged_json_prints() {
+    for request in quoted_requests() {
+        let mut direct = String::from("before:");
+        crate::recorded::logged_text_into(&mut direct, &request);
+        assert_eq!(direct, format!("before:{}", crate::json::pretty(&crate::recorded::logged(&request))), "{request:?}");
+        // a log line's argument: the same text before and after its JSON is rendered
+        let json = crate::recorded::LoggedRequest::of(&request).json;
+        let mut unrendered = String::new();
+        json.write_text(&mut unrendered);
+        assert!(!json.is_rendered(), "writing the text renders nothing");
+        assert_eq!(*json, crate::recorded::logged(&request));
+        let mut rendered = String::new();
+        json.write_text(&mut rendered);
+        assert_eq!(unrendered, rendered);
+    }
+}

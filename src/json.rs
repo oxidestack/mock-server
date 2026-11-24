@@ -12,30 +12,70 @@ use serde_json::ser::Formatter;
 #[derive(Default)]
 pub struct JacksonFormatter {
     depth: usize,
-    /// Per open container: whether it has had a value yet.
-    has_value: Vec<bool>,
+    /// Per open container, innermost last: whether it has had a value yet. The first 64 are bits of `open`, any deeper in
+    /// `deeper`, so printing a value allocates nothing of its own.
+    open: u64,
+    opened: usize,
+    deeper: Vec<bool>,
 }
 
 impl JacksonFormatter {
     fn newline_indent<W: ?Sized + io::Write>(&self, w: &mut W) -> io::Result<()> {
-        w.write_all(b"\n")?;
-        for _ in 0..self.depth {
-            w.write_all(b"  ")?;
+        const SPACES: &[u8; 64] = &[b' '; 64];
+        w.write_all(b"
+")?;
+        let mut left = self.depth * 2;
+        while left > 0 {
+            let n = left.min(SPACES.len());
+            w.write_all(&SPACES[..n])?;
+            left -= n;
         }
         Ok(())
+    }
+
+    /// A container opened, with no value yet.
+    fn push(&mut self) {
+        if self.opened < 64 {
+            self.open &= !(1 << self.opened);
+        } else {
+            self.deeper.push(false);
+        }
+        self.opened += 1;
+    }
+
+    /// The innermost container closed: whether it had a value.
+    fn pop(&mut self) -> bool {
+        if self.opened == 0 {
+            return false;
+        }
+        self.opened -= 1;
+        if self.opened < 64 { self.open & (1 << self.opened) != 0 } else { self.deeper.pop().unwrap_or(false) }
+    }
+
+    /// The innermost container has a value.
+    fn mark(&mut self) {
+        match self.opened {
+            0 => {}
+            n if n <= 64 => self.open |= 1 << (n - 1),
+            _ => {
+                if let Some(v) = self.deeper.last_mut() {
+                    *v = true;
+                }
+            }
+        }
     }
 }
 
 impl Formatter for JacksonFormatter {
     fn begin_object<W: ?Sized + io::Write>(&mut self, w: &mut W) -> io::Result<()> {
         self.depth += 1;
-        self.has_value.push(false);
+        self.push();
         w.write_all(b"{")
     }
 
     fn end_object<W: ?Sized + io::Write>(&mut self, w: &mut W) -> io::Result<()> {
         self.depth -= 1;
-        if self.has_value.pop().unwrap_or(false) {
+        if self.pop() {
             self.newline_indent(w)?;
             w.write_all(b"}")
         } else {
@@ -47,9 +87,7 @@ impl Formatter for JacksonFormatter {
         if !first {
             w.write_all(b",")?;
         }
-        if let Some(v) = self.has_value.last_mut() {
-            *v = true;
-        }
+        self.mark();
         self.newline_indent(w)
     }
 
@@ -58,19 +96,17 @@ impl Formatter for JacksonFormatter {
     }
 
     fn begin_array<W: ?Sized + io::Write>(&mut self, w: &mut W) -> io::Result<()> {
-        self.has_value.push(false);
+        self.push();
         w.write_all(b"[")
     }
 
     fn end_array<W: ?Sized + io::Write>(&mut self, w: &mut W) -> io::Result<()> {
-        self.has_value.pop();
+        self.pop();
         w.write_all(b" ]")
     }
 
     fn begin_array_value<W: ?Sized + io::Write>(&mut self, w: &mut W, first: bool) -> io::Result<()> {
-        if let Some(v) = self.has_value.last_mut() {
-            *v = true;
-        }
+        self.mark();
         w.write_all(if first { b" " } else { b", " })
     }
 
@@ -364,11 +400,11 @@ pub fn pretty<T: Serialize + ?Sized>(value: &T) -> String {
     String::from_utf8(out).expect("serde_json emits UTF-8")
 }
 
-/// [`pretty`] of a JSON value, appended to `out`.
-pub fn pretty_into(out: &mut String, value: &serde_json::Value) {
+/// [`pretty`] of a JSON value (or of anything that serialises as one without failing), appended to `out`.
+pub fn pretty_into<T: Serialize + ?Sized>(out: &mut String, value: &T) {
     // SAFETY: serde_json writes whole UTF-8 sequences only (keys and strings come from `str`, everything else is
-    // ASCII, and a string is cut only at an escape, which is ASCII), and a `Value` cannot fail to serialise, so `out`
-    // holds valid UTF-8 whenever this returns or unwinds
+    // ASCII, and a string is cut only at an escape, which is ASCII), and what is written here cannot fail to serialise
+    // (a `Value`, or a view of one with string keys), so `out` holds valid UTF-8 whenever this returns or unwinds
     let bytes = unsafe { out.as_mut_vec() };
     let mut ser = serde_json::Serializer::with_formatter(bytes, JacksonFormatter::default());
     value.serialize(&mut ser).expect("serialising JSON into memory cannot fail");

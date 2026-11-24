@@ -369,8 +369,28 @@ pub struct Explainable {
 
 pub struct Message {
     pub timestamp: DateTime<Local>,
-    pub entry: LogEntry,
+    /// The entry's type, known without building it.
+    kind: Kind,
+    entry: MessageEntry,
     pub subject: Subject,
+}
+
+/// A message's entry: built when it was logged, or the first time the log is read. An entry nothing prints and nobody
+/// reads (most of a request's INFO entries) costs its builder, not the entry.
+enum MessageEntry {
+    /// Boxed: a `LogEntry` is ~500 bytes, which a deferred entry does not take.
+    Built(Box<LogEntry>),
+    Deferred { make: Box<dyn Fn() -> LogEntry + Send + Sync>, built: std::sync::OnceLock<Box<LogEntry>> },
+}
+
+impl Message {
+    /// The entry, built now if it was deferred.
+    fn entry(&self) -> &LogEntry {
+        match &self.entry {
+            MessageEntry::Built(entry) => entry,
+            MessageEntry::Deferred { make, built } => built.get_or_init(|| Box::new(make())),
+        }
+    }
 }
 
 /// What a log line is about, for `retrieve?type=LOGS` with a request filter (`LogEntry.matches`): lines about
@@ -395,7 +415,7 @@ enum Entry {
     /// line's text shows, when that is neither (`httpForward` rewrote `Host` on the retained one).
     Received(Arc<HttpRequest>, DateTime<Local>, Option<String>, Option<crate::log_entry::Json>, Option<crate::log_entry::Json>, Option<crate::log_entry::Json>),
     Exchange(Arc<Exchange>),
-    /// Boxed: a `LogEntry` is ~500 bytes, and every slot of the log is as large as its largest variant.
+    /// Boxed: every slot of the log is as large as its largest variant.
     Message(Box<Message>),
 }
 
@@ -423,7 +443,7 @@ impl Entry {
                 (x.timestamp, fields.map_or_else(|| entry.message_text().to_string(), |f| entry.redacted(f).message_text().to_string()))
             }
             Entry::Message(m) => {
-                let entry = m.entry.settled();
+                let entry = m.entry().settled();
                 (m.timestamp, fields.map_or_else(|| entry.message_text().to_string(), |f| entry.redacted(f).message_text().to_string()))
             }
         }
@@ -437,7 +457,7 @@ impl Entry {
                 .entry()
                 .and_then(|e| e.correlation_id.as_deref())
                 .or_else(|| (!x.request.log_correlation_id.is_empty()).then_some(x.request.log_correlation_id.as_str())),
-            Entry::Message(m) => m.entry.correlation_id.as_deref(),
+            Entry::Message(m) => m.entry().correlation_id.as_deref(),
         }
     }
 
@@ -451,7 +471,7 @@ impl Entry {
             Entry::Received(r, ..) => (weight::request(r), 0),
             Entry::Exchange(x) => (weight::request(&x.request) + weight::response_json(&x.response), 0),
             Entry::Message(m) => {
-                let entry = &m.entry;
+                let entry = m.entry();
                 let requests: u64 = match &m.subject {
                     Subject::Request(r) if entry.requests.as_ref().is_some_and(|own| own.len() == 1) => weight::request(r),
                     _ => entry.requests.iter().flatten().map(|r| weight::request_json(r)).sum(),
@@ -1228,8 +1248,8 @@ impl RequestLog {
         let text = keep_line.then(|| line.clone());
         let shown = (shown.headers != request.headers).then(|| line.clone());
         if self.console_wanted(Level::Info, Kind::ReceivedRequest) {
-            let redacted = self.redaction_fields().map(|fields| redact_value(shown.as_deref().unwrap_or(&logged(&request)), &fields, true));
-            let shown_line: &Value = redacted.as_ref().unwrap_or(line);
+            let redacted = self.redaction_fields().map(|fields| crate::log_entry::Json::new(redact_value(shown.as_deref().unwrap_or(&logged(&request)), &fields, true)));
+            let shown_line = redacted.as_ref().unwrap_or(line);
             self.console(Level::Info, Kind::ReceivedRequest, &|out, scratch| received_text_into(out, scratch, shown_line), &|| format!("received request: {}", crate::log_entry::compact_argument("received request:", &logged(&request), "")), in_portless_scope());
         }
         match self.truncated_request(&request) {
@@ -1410,7 +1430,35 @@ impl RequestLog {
         }
         self.console_entry(&entry);
         share_expectation(&mut entry);
-        self.push(Entry::Message(Box::new(Message { timestamp: Local::now(), entry, subject })));
+        let kind = entry.kind;
+        self.push(Entry::Message(Box::new(Message { timestamp: Local::now(), kind, entry: MessageEntry::Built(Box::new(entry)), subject })));
+    }
+
+    /// [`RequestLog::message_about`] `request` of the entry `make` builds, of type `kind` at `level`, with `request`
+    /// (as its logged form) attached. The entry is built when the log is first read, unless something needs it kept as
+    /// built: `maxLoggedBodyBytes` cuts what it quotes, a byte budget weighs it, or the request is a control-plane one
+    /// whose credentials the log masks. One the console prints is built for it and let go. `make` builds the same
+    /// entry each time it is called.
+    pub fn message_about_deferred(&self, level: Level, kind: Kind, request: Arc<HttpRequest>, make: impl Fn() -> LogEntry + Send + Sync + 'static) {
+        use std::sync::atomic::Ordering::Relaxed;
+        let printed = self.console_wanted(level, kind);
+        if self.capacity.load(Relaxed) == 0 && !printed {
+            return;
+        }
+        if self.capacity.load(Relaxed) == 0 || self.max_logged_body_bytes.load(Relaxed) > 0 || self.max_bytes.load(Relaxed) > 0 || crate::credential_redaction::for_log(&request).is_some() {
+            return self.message_about(make(), Subject::Request(request));
+        }
+        let portless = in_portless_scope();
+        let make = move || {
+            let mut entry = make();
+            entry.portless |= portless;
+            entry
+        };
+        if printed {
+            self.console_entry(&make());
+        }
+        let entry = MessageEntry::Deferred { make: Box::new(make), built: Default::default() };
+        self.push(Entry::Message(Box::new(Message { timestamp: Local::now(), kind, entry, subject: Subject::Request(request) })));
     }
 
     /// Completed exchanges, oldest first.
@@ -1448,9 +1496,9 @@ impl RequestLog {
                     expectation_id: x.expectation_id.clone(),
                     millis: x.timestamp.timestamp_millis(),
                 }),
-                Entry::Message(m) if m.entry.kind == Kind::ReceivedRequest && (!answered || m.entry.expectation_id.is_some()) => match &m.subject {
+                Entry::Message(m) if m.kind == Kind::ReceivedRequest && (!answered || m.entry().expectation_id.is_some()) => match &m.subject {
                     Subject::Definition(d) if canonical::is_dns_request(d) || canonical::is_binary_request(d) => {
-                        Some(RecordedRequest { request: Received::Definition(d.clone()), expectation_id: m.entry.expectation_id.clone(), millis: m.timestamp.timestamp_millis() })
+                        Some(RecordedRequest { request: Received::Definition(d.clone()), expectation_id: m.entry().expectation_id.clone(), millis: m.timestamp.timestamp_millis() })
                     }
                     _ => None,
                 },
@@ -1507,7 +1555,7 @@ impl RequestLog {
         for e in self.locked().entries() {
             match e {
                 Entry::Exchange(x) if x.entry_kind() == Some(kind) => exchanges.push(x.clone()),
-                Entry::Message(m) if m.entry.kind == kind => {
+                Entry::Message(m) if m.kind == kind => {
                     if let Subject::Request(r) = &m.subject {
                         messages.push(r.clone());
                     }
@@ -1614,7 +1662,7 @@ impl RequestLog {
                         Subject::Request(r) => Some(HttpRequest::clone(r)),
                         _ => None,
                     };
-                    Some(Explainable { kind: m.entry.kind, request, timestamp: m.timestamp, entry: Some(m.entry.clone()) })
+                    Some(Explainable { kind: m.kind, request, timestamp: m.timestamp, entry: Some(m.entry().clone()) })
                 }
             })
             .filter(|e| matches!(e.kind, Kind::ReceivedRequest | Kind::ExpectationResponse | Kind::ForwardedRequest | Kind::NoMatchResponse))
@@ -1669,11 +1717,11 @@ impl RequestLog {
                         Subject::Definition(d) => definition(d),
                         Subject::Definitions(ds) => ds.is_empty() || ds.iter().any(&definition),
                     };
-                    keep.then(|| redact_entry_json(render(&m.entry, &m.timestamp), fields.as_deref()))
+                    keep.then(|| redact_entry_json(render(m.entry(), &m.timestamp), fields.as_deref()))
                 }
-                (EntryScope::ReceivedDefinitions, Entry::Message(m)) if m.entry.kind == Kind::ReceivedRequest => match &m.subject {
+                (EntryScope::ReceivedDefinitions, Entry::Message(m)) if m.kind == Kind::ReceivedRequest => match &m.subject {
                     Subject::Definition(d) if (canonical::is_dns_request(d) || canonical::is_binary_request(d)) && definition(d) => {
-                        Some(redact_entry_json(render(&m.entry, &m.timestamp), fields.as_deref()))
+                        Some(redact_entry_json(render(m.entry(), &m.timestamp), fields.as_deref()))
                     }
                     _ => None,
                 },
@@ -2231,14 +2279,11 @@ impl LoggedRequest {
 
     /// [`LoggedRequest::of`] a request held already.
     pub fn shared(request: Arc<HttpRequest>) -> LoggedRequest {
-        let source = request.clone();
-        let make = move || logged(&source);
         // `CredentialRedaction.forLog` reads only a control-plane request (its JSON `path`, or a preflight's): any
         // other is attached to an entry without rendering it to look
         let path = request.path.as_str();
         let credential_free = !crate::cors_origin::is_control_plane_route(Some(&request.method), path) && !crate::cors_origin::is_control_plane_path_candidate(path);
-        let json = if credential_free { crate::log_entry::Json::lazy_credential_free(make) } else { crate::log_entry::Json::lazy(make) };
-        LoggedRequest { json, request }
+        LoggedRequest { json: crate::log_entry::Json::logged_request(request.clone(), credential_free), request }
     }
 
     /// The request as a message argument: what `Arg::from(logged(request))` gives, without rendering it again.
@@ -2257,11 +2302,12 @@ fn received_text_of(logged: &Value) -> String {
     crate::matcher::format_log_message(0, "received request:{}", &[&log_value(logged)])
 }
 
-/// [`received_text_of`] appended to `out`, the request rendered into `scratch` on the way.
-fn received_text_into(out: &mut String, scratch: &mut String, logged: &Value) {
+/// [`received_text_of`] appended to `out`, the request rendered into `scratch` on the way (from the request itself
+/// while nothing has rendered its JSON).
+fn received_text_into(out: &mut String, scratch: &mut String, logged: &crate::log_entry::Json) {
     crate::matcher::format_log_message_into(out, 0, "received request:{}", 1, |_, write| {
         scratch.clear();
-        log_value_into(scratch, logged);
+        logged.write_text(scratch);
         write(scratch);
     });
 }
@@ -2309,20 +2355,210 @@ pub fn with_bare_body(v: &Value) -> Value {
 }
 
 fn bare_body(mut logged: Value) -> Value {
-    let bare = logged.get("body").and_then(Value::as_object).and_then(|b| {
-        let field = match b.get("type").and_then(Value::as_str)? {
-            "JSON" => "json",
-            "XML" => "xml",
-            "STRING" => "string",
-            "BINARY" => "base64Bytes",
-            _ => return None,
-        };
-        b.get(field).cloned()
-    });
-    if let Some(body) = bare {
-        logged["body"] = body;
+    if let Some(body) = logged.get_mut("body") {
+        *body = bare(std::mem::take(body));
     }
     logged
+}
+
+/// A body as [`bare_body`] leaves it: a typed JSON, XML, string or binary body as its payload, any other as it is.
+fn bare(body: Value) -> Value {
+    let field = match body.get("type").and_then(Value::as_str) {
+        Some("JSON") => "json",
+        Some("XML") => "xml",
+        Some("STRING") => "string",
+        Some("BINARY") => "base64Bytes",
+        _ => return body,
+    };
+    match body {
+        Value::Object(mut o) if o.contains_key(field) => o.swap_remove(field).unwrap_or_default(),
+        other => other,
+    }
+}
+
+/// [`log_value`] of [`logged`]`(request)`, appended to `out` straight from the request: the text a log line quoting the
+/// request prints, without building the request's JSON. Only a body, path parameters, and headers, query parameters or
+/// cookies with a name that is blank or starts with a marker are built as [`logged`] builds them.
+pub fn logged_text_into(out: &mut String, request: &HttpRequest) {
+    crate::json::pretty_into(out, &LoggedView(request));
+}
+
+/// [`logged`] as `serde` writes it, field by field from the request.
+struct LoggedView<'a>(&'a HttpRequest);
+
+impl serde::Serialize for LoggedView<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let request = self.0;
+        // the fields of `ordered_with` in its order, the body bare and no `originalBody`
+        let mut o = s.serialize_map(None)?;
+        o.serialize_entry("method", &request.method)?;
+        if !request.path.is_empty() {
+            o.serialize_entry("path", &request.path)?;
+        }
+        if !request.path_parameters.is_empty() {
+            o.serialize_entry("pathParameters", &path_parameters_value(&request.path_parameters))?;
+        }
+        if !request.query.is_empty() {
+            o.serialize_entry("queryStringParameters", &LiteralMap(&request.query))?;
+        }
+        if !request.headers.is_empty() {
+            o.serialize_entry("headers", &LiteralMap(&request.headers))?;
+        }
+        if !request.cookies.is_empty() {
+            o.serialize_entry("cookies", &LiteralCookies(&request.cookies))?;
+        }
+        let untransported = request.protocol.is_empty();
+        if request.transport() != crate::request::Protocol::Http3 && !(untransported && !request.keep_alive) {
+            o.serialize_entry("keepAlive", &request.keep_alive)?;
+        }
+        if !(untransported && !request.secure) {
+            o.serialize_entry("secure", &request.secure)?;
+        }
+        if !request.client_certificates.is_empty() {
+            o.serialize_entry("clientCertificateChain", &Certificates(&request.client_certificates))?;
+        }
+        if let Some((host, port, secure)) = &request.socket_address {
+            o.serialize_entry("socketAddress", &SocketAddress(host, *port, *secure))?;
+        }
+        if !request.protocol.is_empty() {
+            o.serialize_entry("protocol", request.protocol)?;
+        }
+        if !request.local_address.is_empty() {
+            o.serialize_entry("localAddress", &request.local_address)?;
+        }
+        if !request.remote_address.is_empty() {
+            o.serialize_entry("remoteAddress", &request.remote_address)?;
+        }
+        if let Some(body) = request_body_json(request, BodyForm::Ordered) {
+            o.serialize_entry("body", &bare(body))?;
+        }
+        o.end()
+    }
+}
+
+/// A name [`literal`] does not write as itself: blank (written `""`), or starting with a marker (the object form).
+fn literal_name_rewritten(name: &str) -> bool {
+    name.starts_with(['!', '?']) || name.trim().is_empty()
+}
+
+/// [`literal_json`] as `serde` writes it.
+struct LiteralValue<'a>(&'a str);
+
+impl serde::Serialize for LiteralValue<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let value = self.0;
+        if value.trim().is_empty() {
+            return s.serialize_str("");
+        }
+        if !value.starts_with(['!', '?']) {
+            return s.serialize_str(value);
+        }
+        let mut o = s.serialize_map(Some(2))?;
+        o.serialize_entry("not", &false)?;
+        o.serialize_entry("value", value)?;
+        o.end()
+    }
+}
+
+/// [`literal_map_value`] as `serde` writes it.
+struct LiteralMap<'a>(&'a MultiMap);
+
+impl serde::Serialize for LiteralMap<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let map = self.0;
+        if map.iter().any(|(name, _)| literal_name_rewritten(name)) {
+            return serde::Serialize::serialize(&literal_map_value(map), s);
+        }
+        // the names in descending order (`NottableString.compareTo`, UTF-16 units) by a stable sort, which keeps a
+        // repeated name's entries together and in their order: written as one name with all their values
+        let mut small = [0u32; 64];
+        let mut large = Vec::new();
+        let order: &mut [u32] = if map.len() <= small.len() {
+            &mut small[..map.len()]
+        } else {
+            large.resize(map.len(), 0);
+            &mut large
+        };
+        for (i, at) in order.iter_mut().enumerate() {
+            *at = i as u32;
+        }
+        let name = |i: u32| map[i as usize].0.as_str();
+        order.sort_by(|&a, &b| name(b).encode_utf16().cmp(name(a).encode_utf16()));
+        let mut o = s.serialize_map(None)?;
+        let mut from = 0;
+        while from < order.len() {
+            let first = name(order[from]);
+            let to = from + 1 + order[from + 1..].iter().take_while(|&&i| name(i) == first).count();
+            o.serialize_entry(first, &LiteralValues(map, &order[from..to]))?;
+            from = to;
+        }
+        o.end()
+    }
+}
+
+/// The values of the entries of a multimap at these indices, one list, each [`LiteralValue`].
+struct LiteralValues<'a>(&'a MultiMap, &'a [u32]);
+
+impl serde::Serialize for LiteralValues<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeSeq;
+        let mut seq = s.serialize_seq(None)?;
+        for &i in self.1 {
+            for value in &self.0[i as usize].1 {
+                seq.serialize_element(&LiteralValue(value))?;
+            }
+        }
+        seq.end()
+    }
+}
+
+/// [`literal_cookies_value`] as `serde` writes it.
+struct LiteralCookies<'a>(&'a [(String, String)]);
+
+impl serde::Serialize for LiteralCookies<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let cookies = self.0;
+        if cookies.iter().any(|(name, _)| literal_name_rewritten(name)) {
+            return serde::Serialize::serialize(&literal_cookies_value(cookies), s);
+        }
+        let mut o = s.serialize_map(None)?;
+        for (i, (name, _)) in cookies.iter().enumerate() {
+            // a repeated name keeps its first position and its last value
+            if cookies[..i].iter().any(|(earlier, _)| earlier == name) {
+                continue;
+            }
+            let last = cookies[i..].iter().rev().find(|(later, _)| later == name).map_or("", |(_, value)| value.as_str());
+            o.serialize_entry(name, &LiteralValue(last))?;
+        }
+        o.end()
+    }
+}
+
+/// `clientCertificateChain` as [`ordered_with`] writes it.
+struct Certificates<'a>(&'a [crate::tls::client_cert::ClientCertificate]);
+
+impl serde::Serialize for Certificates<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_seq(self.0.iter().map(|c| &c.model))
+    }
+}
+
+/// `socketAddress` as [`ordered_with`] writes it.
+struct SocketAddress<'a>(&'a str, u16, bool);
+
+impl serde::Serialize for SocketAddress<'_> {
+    fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let mut o = s.serialize_map(Some(3))?;
+        o.serialize_entry("host", self.0)?;
+        o.serialize_entry("port", &self.1)?;
+        o.serialize_entry("scheme", if self.2 { "HTTPS" } else { "HTTP" })?;
+        o.end()
+    }
 }
 
 /// A request as its model's `toString` prints it (verification failures in the log): the ordered form with the
