@@ -380,7 +380,9 @@ pub struct Message {
 enum MessageEntry {
     /// Boxed: a `LogEntry` is ~500 bytes, which a deferred entry does not take.
     Built(Box<LogEntry>),
-    Deferred { make: Box<dyn Fn() -> LogEntry + Send + Sync>, built: std::sync::OnceLock<Box<LogEntry>> },
+    /// `weight`: what the entry weighs against the byte budget, worked out without building it (`None`: weighed from
+    /// the entry).
+    Deferred { make: Box<dyn Fn() -> LogEntry + Send + Sync>, built: std::sync::OnceLock<Box<LogEntry>>, weight: Option<u64> },
 }
 
 impl Message {
@@ -388,7 +390,7 @@ impl Message {
     fn entry(&self) -> &LogEntry {
         match &self.entry {
             MessageEntry::Built(entry) => entry,
-            MessageEntry::Deferred { make, built } => built.get_or_init(|| Box::new(make())),
+            MessageEntry::Deferred { make, built, .. } => built.get_or_init(|| Box::new(make())),
         }
     }
 }
@@ -471,6 +473,9 @@ impl Entry {
             Entry::Received(r, ..) => (weight::request(r), 0),
             Entry::Exchange(x) => (weight::request(&x.request) + weight::response_json(&x.response), 0),
             Entry::Message(m) => {
+                if let MessageEntry::Deferred { weight: Some(weight), .. } = m.entry {
+                    return weight;
+                }
                 let entry = m.entry();
                 let requests: u64 = match &m.subject {
                     Subject::Request(r) if entry.requests.as_ref().is_some_and(|own| own.len() == 1) => weight::request(r),
@@ -484,6 +489,42 @@ impl Entry {
         };
         if messages > 0 { messages + weight::BASE_ENTRY_OVERHEAD_BYTES + rest } else { rest }
     }
+}
+
+/// [`Entry::weight`] of a message about a request (its own and only request) holding a real expectation and the
+/// `because` text, with no response, from the weights of the request ([`request_weight`]) and the expectation
+/// ([`expectation_weight`]).
+pub fn message_weight(request: u64, expectation: u64, because: &str) -> u64 {
+    match request {
+        0 => expectation,
+        _ => request + weight::BASE_ENTRY_OVERHEAD_BYTES + expectation + weight::java_length(because),
+    }
+}
+
+/// In debug builds (every test run): the weight and console message a deferred entry was logged with are the built
+/// entry's own.
+#[cfg(debug_assertions)]
+fn deferred_parts_check(entry: &LogEntry, request: &Arc<HttpRequest>, weight: Option<u64>, text: Option<crate::log::Text>) {
+    if let Some(weight) = weight {
+        let built = Entry::Message(Box::new(Message { timestamp: Local::now(), kind: entry.kind, entry: MessageEntry::Built(Box::new(entry.clone())), subject: Subject::Request(request.clone()) }));
+        assert_eq!(weight, built.weight(), "a deferred entry's weight");
+    }
+    if let Some(text) = text {
+        let (mut given, mut built, mut scratch) = (String::new(), String::new(), String::new());
+        text(&mut given, &mut scratch);
+        entry.write_message(&mut built, &mut scratch);
+        assert_eq!(given, built, "a deferred entry's console message");
+    }
+}
+
+/// The request's part of [`message_weight`].
+pub fn request_weight(request: &HttpRequest) -> u64 {
+    weight::request(request)
+}
+
+/// The expectation's part of [`message_weight`].
+pub fn expectation_weight(expectation: &Value) -> u64 {
+    weight::expectation(expectation)
 }
 
 /// `LogEntry.estimatedHeapSize` and `Expectation.estimatedHeapSize`, the weights of the event log's byte budget.
@@ -1436,16 +1477,32 @@ impl RequestLog {
 
     /// [`RequestLog::message_about`] `request` of the entry `make` builds, of type `kind` at `level`, with `request`
     /// (as its logged form) attached. The entry is built when the log is first read, unless something needs it kept as
-    /// built: `maxLoggedBodyBytes` cuts what it quotes, a byte budget weighs it, or the request is a control-plane one
-    /// whose credentials the log masks. One the console prints is built for it and let go. `make` builds the same
+    /// built: `maxLoggedBodyBytes` cuts what it quotes, a byte budget weighs it (and its weight was not given), or the
+    /// request is a control-plane one whose credentials the log masks. One the console prints is built for it and let go. `make` builds the same
     /// entry each time it is called.
     pub fn message_about_deferred(&self, level: Level, kind: Kind, request: Arc<HttpRequest>, make: impl Fn() -> LogEntry + Send + Sync + 'static) {
+        self.message_about_deferred_with(level, kind, request, None, None, make)
+    }
+
+    /// [`RequestLog::message_about_deferred`] given what the entry weighs (`weight`, asked only under a byte budget) and
+    /// its console message (`text`, written as [`LogEntry::write_message`] writes it), so that neither builds it.
+    pub fn message_about_deferred_with(
+        &self,
+        level: Level,
+        kind: Kind,
+        request: Arc<HttpRequest>,
+        weight: Option<&dyn Fn() -> u64>,
+        text: Option<crate::log::Text>,
+        make: impl Fn() -> LogEntry + Send + Sync + 'static,
+    ) {
         use std::sync::atomic::Ordering::Relaxed;
         let printed = self.console_wanted(level, kind);
-        if self.capacity.load(Relaxed) == 0 && !printed {
+        let capacity = self.capacity.load(Relaxed);
+        if capacity == 0 && !printed {
             return;
         }
-        if self.capacity.load(Relaxed) == 0 || self.max_logged_body_bytes.load(Relaxed) > 0 || self.max_bytes.load(Relaxed) > 0 || crate::credential_redaction::for_log(&request).is_some() {
+        let budget = self.max_bytes.load(Relaxed) > 0;
+        if capacity == 0 || self.max_logged_body_bytes.load(Relaxed) > 0 || (budget && weight.is_none()) || crate::credential_redaction::for_log(&request).is_some() {
             return self.message_about(make(), Subject::Request(request));
         }
         let portless = in_portless_scope();
@@ -1455,9 +1512,18 @@ impl RequestLog {
             entry
         };
         if printed {
-            self.console_entry(&make());
+            // a redacted line is rendered from the redacted entry
+            match text.filter(|_| self.redaction_fields().is_none()) {
+                Some(text) => self.console(level, kind, text, &|| make().compact_text(), portless),
+                None => self.console_entry(&make()),
+            }
         }
-        let entry = MessageEntry::Deferred { make: Box::new(make), built: Default::default() };
+        let weight = weight.filter(|_| budget).map(|weight| weight());
+        #[cfg(debug_assertions)]
+        if weight.is_some() || text.is_some() {
+            deferred_parts_check(&make(), &request, weight, text);
+        }
+        let entry = MessageEntry::Deferred { make: Box::new(make), built: Default::default(), weight };
         self.push(Entry::Message(Box::new(Message { timestamp: Local::now(), kind, entry, subject: Subject::Request(request) })));
     }
 

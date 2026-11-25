@@ -949,13 +949,20 @@ fn push_timestamp(out: &mut String, now: std::time::SystemTime) {
     out.push_str(std::str::from_utf8(&text).expect("ASCII timestamp"));
 }
 
+/// Whether `bytes` hold a byte [`escape_controls`] may rewrite. Compared 32 at a time with no early exit inside a
+/// block, which the compiler turns into vector compares: a console line is kilobytes.
+fn has_suspect(bytes: &[u8]) -> bool {
+    // 0xC2 leads the UTF-8 of every C1 control (U+0080 .. U+009F)
+    let suspect = |b: u8| (b == 0x1b) | (b == 0x07) | (b == 0x08) | (b == 0x0c) | (b == 0x7f) | (b == 0xc2);
+    let (blocks, rest) = bytes.as_chunks::<32>();
+    blocks.iter().any(|block| block.iter().fold(0u8, |found, &b| found | u8::from(suspect(b))) != 0) || rest.iter().any(|&b| suspect(b))
+}
+
 /// The message from `start` on with ESC, BEL, BS, FF and DEL written `\x1b` .. and C1 controls `\u{85}` .., as
 /// `tracing-subscriber` escapes a message against terminal injection. Most messages have none of them: those are only
-/// scanned, 64 bytes at a time.
+/// scanned ([`has_suspect`]).
 fn escape_controls(out: &mut String, start: usize, scratch: &mut String) {
-    // 0xC2 leads the UTF-8 of every C1 control (U+0080 .. U+009F)
-    let suspect = |b: u8| matches!(b, 0x1b | 0x07 | 0x08 | 0x0c | 0x7f | 0xc2);
-    if !out.as_bytes()[start..].chunks(64).any(|chunk| chunk.iter().fold(false, |found, &b| found | suspect(b))) {
+    if !has_suspect(&out.as_bytes()[start..]) {
         return;
     }
     scratch.clear();

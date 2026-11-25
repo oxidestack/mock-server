@@ -633,6 +633,12 @@ impl RequestMatcher {
 }
 
 impl RequestMatcher {
+    /// Whether a request whose lower-cased path is not [`RequestMatcher::index_key`] fails this matcher at its path,
+    /// with nothing evaluated before it able to time out: a plain method (or none) and no condition.
+    pub fn fails_by_literal_path(&self) -> bool {
+        self.conditional.is_none() && self.method.as_ref().is_none_or(StringMatcher::is_plain) && self.index_key().is_some()
+    }
+
     /// The lower-cased path when this matcher only matches requests with exactly that path; used to index
     /// expectations. `None` for regex, template, negated or absent paths, or a negated matcher.
     pub fn index_key(&self) -> Option<String> {
@@ -836,36 +842,66 @@ impl RequestMatcher {
         let prior_texts = |field: &str| -> Vec<String> {
             prior.iter().filter(|(f, _)| *f == field).flat_map(|(_, ds)| ds.iter().map(Difference::log_text)).filter(|t| !t.is_empty()).collect()
         };
-        let mut lines: Vec<String> = Vec::new();
+        // a field's texts after those the context held for it (most often none)
+        let with_prior = |mut prior: Vec<String>, own: Vec<String>| if prior.is_empty() { own } else { prior.extend(own); prior };
+        // `before` and the texts on lines of their own; with `unless_blank`, nothing when they join to nothing
+        let texts_into = |out: &mut String, texts: &[String], before: &str, unless_blank: bool| {
+            if unless_blank && texts.len() == 1 && texts[0].is_empty() {
+                return;
+            }
+            for (i, text) in texts.iter().enumerate() {
+                out.push_str(if i == 0 { before } else { "\n" });
+                out.push_str(text);
+            }
+        };
+        // one line per field, written straight into the text
+        let mut out = String::with_capacity(256);
+        // Most often the method matched and the path did not: its lines are written without evaluating every field.
+        if prior.is_empty() && !self.not && self.fails_at_method_or_path(request) && !self.method.as_ref().is_some_and(|m| !request.method.is_empty() && !m.matches(&request.method, !self.exact_case)) {
+            out.push_str("method matched\npath didn't match");
+            if detailed {
+                let texts: Vec<String> = self.path_differences(request).iter().map(Difference::log_text).filter(|t| !t.is_empty()).collect();
+                texts_into(&mut out, &texts, ": \n\n", true);
+            }
+            if hints {
+                for hint in self.hints("path", request) {
+                    out.push('\n');
+                    out.push_str(&hint);
+                }
+            }
+            return out;
+        }
         for (field, difference) in self.field_results_until(request, !self.not) {
+            if !out.is_empty() {
+                out.push('\n');
+            }
+            out.push_str(field);
             let Some(difference) = difference else {
                 // What a field recorded on its way to a match is printed too (`failFast`).
-                let texts = if detailed { [prior_texts(field), self.recorded_texts(field, request, None)].concat() } else { Vec::new() };
-                match texts.is_empty() {
-                    true => lines.push(format!("{field} matched")),
-                    false => lines.push(format!("{field} matched: \n\n{}", texts.join("\n"))),
+                out.push_str(" matched");
+                if detailed {
+                    texts_into(&mut out, &with_prior(prior_texts(field), self.recorded_texts(field, request, None)), ": \n\n", false);
                 }
                 continue;
             };
-            let mut line = format!("{field} didn't match");
-            let text = if detailed { [prior_texts(field), self.recorded_texts(field, request, Some(&difference))].concat().join("\n") } else { String::new() };
-            if !text.is_empty() {
-                line.push_str(": \n\n");
-                line.push_str(&text);
+            out.push_str(" didn't match");
+            if detailed {
+                texts_into(&mut out, &with_prior(prior_texts(field), self.recorded_texts(field, request, Some(&difference))), ": \n\n", true);
             }
-            for hint in if hints { self.hints(field, request) } else { Vec::new() } {
-                line.push('\n');
-                line.push_str(&hint);
+            if hints {
+                for hint in self.hints(field, request) {
+                    out.push('\n');
+                    out.push_str(&hint);
+                }
             }
             if self.not {
-                line.push_str(",\nexpectation's request 'not' operator is enabled");
+                out.push_str(",\nexpectation's request 'not' operator is enabled");
             }
-            lines.push(line);
             if !self.not {
                 break;
             }
         }
-        lines.join("\n")
+        out
     }
 
     /// Every field's recorded differences with nothing failing fast (`MatchDifference.collectAllDifferences`), as
@@ -1019,13 +1055,13 @@ impl RequestMatcher {
         let mut hints = Vec::new();
         match field {
             "path" => {
-                let Some(expected) = self.path.as_ref().map(|p| p.original().to_string()) else { return hints };
-                let found = &request.path;
+                let Some(expected) = self.path.as_ref().map(|p| p.original()) else { return hints };
+                let found = request.path.as_str();
                 if expected.ends_with('/') != found.ends_with('/') && expected.trim_end_matches('/') == found.trim_end_matches('/') {
                     let describe = |p: &str| if p.ends_with('/') { "ends with '/'" } else { "has no trailing '/'" };
-                    hints.push(format!("HINT: trailing slash mismatch - expected path {} but received path {}", describe(&expected), describe(found)));
+                    hints.push(format!("HINT: trailing slash mismatch - expected path {} but received path {}", describe(expected), describe(found)));
                 }
-                if expected.contains('.') && !expected.contains("\\.") && expected != *found {
+                if expected.contains('.') && !expected.contains("\\.") && expected != found {
                     hints.push("HINT: path contains '.' which matches any character in regex - if you want a literal dot, use '\\.' instead".into());
                 }
             }
@@ -1407,7 +1443,7 @@ impl Difference {
 /// lines, indented one level deeper than the message.
 pub fn format_log_message(indent: usize, message: &str, arguments: &[&str]) -> String {
     // the arguments' lines take an indent each; a guess that saves most of the growing
-    let mut out = String::with_capacity(message.len() + arguments.iter().map(|a| a.len() + a.len() / 8 + 4).sum::<usize>());
+    let mut out = String::with_capacity(message.len() + arguments.iter().map(|a| a.len() + a.len() / 8 + 4 + 2 * (indent + 1)).sum::<usize>() + 2 * indent);
     format_log_message_into(&mut out, indent, message, arguments.len(), |i, write| write(arguments[i]));
     out
 }
@@ -1416,44 +1452,19 @@ pub fn format_log_message(indent: usize, message: &str, arguments: &[&str]) -> S
 /// `argument(index, write)` calling `write` with its text: a caller that renders its arguments itself (the console)
 /// can render each into one reused buffer and keep no text per argument.
 pub fn format_log_message_into(out: &mut String, indent: usize, message: &str, arguments: usize, mut argument: impl FnMut(usize, &mut dyn FnMut(&str))) {
-    const INDENTS: [&str; 5] = ["", "  ", "    ", "      ", "        "];
+    format_log_message_blocks_into(out, indent, message, arguments, |i, out| argument(i, &mut |text: &str| argument_block_into(out, indent, text)));
+}
+
+/// [`format_log_message_into`] with each argument handed in as its whole block ([`argument_block_into`]), which a
+/// caller printing the same argument in many messages works out once.
+pub fn format_log_message_blocks_into(out: &mut String, indent: usize, message: &str, arguments: usize, mut block: impl FnMut(usize, &mut String)) {
     // `String.split` drops trailing empty parts: the parts of the message without its trailing `{}`s.
     let mut parts = message.trim_end_matches("{}").split("{}").enumerate().peekable();
     while let Some((i, part)) = parts.next() {
         out.push_str(INDENTS[indent]);
         out.push_str(part);
         if i < arguments {
-            argument(i, &mut |argument: &str| {
-                // `replaceAll("(?m)^", indent)`: every line start but one at the very end of the text, after any of
-                // Java's line terminators (`\n`, `\r\n`, `\r`, U+0085, U+2028, U+2029).
-                out.push_str("\n\n");
-                if !argument.is_empty() {
-                    out.push_str(INDENTS[indent + 1]);
-                }
-                // Scanned as bytes, not chars: a terminator is `\n`, `\r` not before `\n`, or the UTF-8 of U+0085
-                // (`C2 85`), U+2028 (`E2 80 A8`) or U+2029 (`E2 80 A9`); every other byte is copied as it is.
-                let bytes = argument.as_bytes();
-                let (mut start, mut at) = (0, 0);
-                while let Some(found) = bytes[at..].iter().position(|b| matches!(b, b'\n' | b'\r' | 0xC2 | 0xE2)) {
-                    let i = at + found;
-                    let length = match (bytes[i], bytes.get(i + 1), bytes.get(i + 2)) {
-                        (b'\n', ..) => 1,
-                        (b'\r', next, _) => usize::from(next != Some(&b'\n')),
-                        (0xC2, Some(0x85), _) => 2,
-                        (0xE2, Some(0x80), Some(0xA8 | 0xA9)) => 3,
-                        _ => 0,
-                    };
-                    let end = i + length;
-                    if length > 0 && end < bytes.len() {
-                        out.push_str(&argument[start..end]);
-                        out.push_str(INDENTS[indent + 1]);
-                        start = end;
-                    }
-                    at = i + 1;
-                }
-                out.push_str(&argument[start..]);
-                out.push('\n');
-            });
+            block(i, out);
         }
         if let Some((_, next)) = parts.peek() {
             out.push('\n');
@@ -1462,6 +1473,41 @@ pub fn format_log_message_into(out: &mut String, indent: usize, message: &str, a
             }
         }
     }
+}
+
+const INDENTS: [&str; 5] = ["", "  ", "    ", "      ", "        "];
+
+/// An argument as a formatted message shows it at `indent`: on lines of its own, each indented one step further.
+pub fn argument_block_into(out: &mut String, indent: usize, argument: &str) {
+    // `replaceAll("(?m)^", indent)`: every line start but one at the very end of the text, after any of
+    // Java's line terminators (`\n`, `\r\n`, `\r`, U+0085, U+2028, U+2029).
+    out.push_str("\n\n");
+    if !argument.is_empty() {
+        out.push_str(INDENTS[indent + 1]);
+    }
+    // Scanned as bytes, not chars: a terminator is `\n`, `\r` not before `\n`, or the UTF-8 of U+0085
+    // (`C2 85`), U+2028 (`E2 80 A8`) or U+2029 (`E2 80 A9`); every other byte is copied as it is.
+    let bytes = argument.as_bytes();
+    let (mut start, mut at) = (0, 0);
+    while let Some(found) = bytes[at..].iter().position(|b| matches!(b, b'\n' | b'\r' | 0xC2 | 0xE2)) {
+        let i = at + found;
+        let length = match (bytes[i], bytes.get(i + 1), bytes.get(i + 2)) {
+            (b'\n', ..) => 1,
+            (b'\r', next, _) => usize::from(next != Some(&b'\n')),
+            (0xC2, Some(0x85), _) => 2,
+            (0xE2, Some(0x80), Some(0xA8 | 0xA9)) => 3,
+            _ => 0,
+        };
+        let end = i + length;
+        if length > 0 && end < bytes.len() {
+            out.push_str(&argument[start..end]);
+            out.push_str(INDENTS[indent + 1]);
+            start = end;
+        }
+        at = i + 1;
+    }
+    out.push_str(&argument[start..]);
+    out.push('\n');
 }
 
 impl PathMatcher {
@@ -1725,6 +1771,40 @@ mod tests {
             }
         }
         assert!(claimed > 10, "{claimed}");
+    }
+
+    #[test]
+    fn a_literal_path_that_differs_fails_the_matcher_at_its_path() {
+        let matchers = [
+            json!({"method": "GET", "path": "/e1"}),
+            json!({"path": "/E1", "headers": {"x-a": ["b"]}}),
+            json!({"method": "!POST", "path": "/e1", "body": "x"}),
+            json!({"method": "P.*", "path": "/e1"}),
+            json!({"path": "/e.*"}),
+            json!({"path": "/somePath/{p}", "pathParameters": {"p": ["1"]}}),
+            json!({"path": "/e1", "not": true}),
+            json!({"path": "!/e1"}),
+            json!({"path": "/e1", "matchExactCase": true}),
+        ];
+        let requests = [get("/e1"), get("/E1"), get("/e2"), get("/none"), get("/e1/"), get("/somePath/1")];
+        let mut claimed = 0;
+        for definition in &matchers {
+            let m = RequestMatcher::compile(definition);
+            if !m.fails_by_literal_path() {
+                continue;
+            }
+            let key = m.index_key().expect("a literal path");
+            for r in requests.iter().filter(|r| r.path.to_ascii_lowercase() != key) {
+                claimed += 1;
+                assert!(m.fails_at_method_or_path(r), "{definition} {}", r.path);
+                assert!(!m.matches(r, Mode::DataPlane), "{definition} {}", r.path);
+                assert!(!m.differences(r).is_empty(), "{definition} {}", r.path);
+            }
+        }
+        assert!(claimed > 10, "{claimed}");
+        for unplain in [json!({"method": "P.*", "path": "/e1"}), json!({"path": "/e.*"}), json!({"path": "/e1", "not": true})] {
+            assert!(!RequestMatcher::compile(&unplain).fails_by_literal_path(), "{unplain}");
+        }
     }
 
     #[test]

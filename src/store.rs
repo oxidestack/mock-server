@@ -331,34 +331,102 @@ struct Inner {
 /// takes seconds (a WASM module, a regex up to its timeout) delays neither readers nor writers.
 pub struct Candidates {
     list: Arc<Vec<Arc<Expectation>>>,
-    positions: Vec<u32>,
+    /// The path index taken with `list`.
+    index: Arc<PathIndex>,
+    /// The positions in `list`; `None`: every one, in order, without a list of them built.
+    positions: Option<Vec<u32>>,
 }
 
 impl Candidates {
+    pub fn len(&self) -> usize {
+        self.positions.as_ref().map_or(self.list.len(), Vec::len)
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    fn position(&self, i: usize) -> usize {
+        self.positions.as_ref().map_or(i, |p| p[i] as usize)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Arc<Expectation>> + Clone {
-        self.positions.iter().map(|&i| &self.list[i as usize])
+        (0..self.len()).map(|i| &self.list[self.position(i)])
+    }
+
+    /// The `i`th of these.
+    pub fn get(&self, i: usize) -> &Arc<Expectation> {
+        &self.list[self.position(i)]
+    }
+
+    /// Each of these with whether it fails at its literal path for a request of `path`, known from the path index
+    /// alone ([`crate::matcher::RequestMatcher::fails_by_literal_path`]): such a one cannot match, has at least one
+    /// difference, and evaluating it meets no regex timeout.
+    pub fn iter_with_path_misses(&self, path: &str) -> impl Iterator<Item = (&Arc<Expectation>, bool)> + Clone {
+        // an empty path matches any path matcher, and an index out of step with the list decides nothing
+        let usable = !path.is_empty() && self.index.classes.len() == self.list.len();
+        let own = if usable { self.index.class_of(path) } else { NO_CLASS };
+        let classes = if usable { self.index.classes.as_slice() } else { &[] };
+        (0..self.len()).map(move |i| {
+            let at = self.position(i);
+            let class = classes.get(at).copied().unwrap_or(NO_CLASS);
+            (&self.list[at], class != NO_CLASS && class != own)
+        })
     }
 
     /// The first `n` of these, and whether any were left out.
     pub fn first(&self, n: usize) -> (Candidates, bool) {
-        let positions = self.positions.iter().take(n).copied().collect();
-        (Candidates { list: self.list.clone(), positions }, self.positions.len() > n)
+        let positions = match &self.positions {
+            None if self.list.len() <= n => None,
+            None => Some((0..n as u32).collect()),
+            Some(p) => Some(p.iter().take(n).copied().collect()),
+        };
+        (Candidates { list: self.list.clone(), index: self.index.clone(), positions }, self.len() > n)
     }
 
     /// Whether `other` goes through the same expectations in the same order.
     pub fn same(&self, other: &Candidates) -> bool {
-        if Arc::ptr_eq(&self.list, &other.list) {
-            return self.positions == other.positions;
+        if self.len() != other.len() {
+            return false;
         }
-        self.positions.len() == other.positions.len() && self.iter().zip(other.iter()).all(|(a, b)| Arc::ptr_eq(a, b))
+        if Arc::ptr_eq(&self.list, &other.list) {
+            return match (&self.positions, &other.positions) {
+                (None, None) => true,
+                (Some(a), Some(b)) => a == b,
+                _ => (0..self.len()).all(|i| self.position(i) == other.position(i)),
+            };
+        }
+        self.iter().zip(other.iter()).all(|(a, b)| Arc::ptr_eq(a, b))
     }
 }
+
+/// [`PathIndex::classes`] of an expectation its literal path does not decide.
+const NO_CLASS: u32 = u32::MAX;
 
 /// The positions in a store's list by lower-cased literal path, and those of the expectations without one.
 #[derive(Default)]
 struct PathIndex {
     by_path: rustc_hash::FxHashMap<String, Vec<usize>>,
     unindexed: Vec<usize>,
+    /// Per position: for an expectation whose literal path alone fails a request of another path, the first position
+    /// of that path's expectations (its class); else [`NO_CLASS`].
+    classes: Vec<u32>,
+    /// Per position: for a global expectation with unlimited uses (which stays so), the instant it expires
+    /// (`i64::MAX`: never); else [`MORTAL`]. Telling which are alive without reading each expectation was most of a
+    /// 1,000-expectation closest-match scan.
+    deadlines: Vec<i64>,
+}
+
+/// [`PathIndex::deadlines`] of an expectation whose uses are counted or that has a namespace: read from it.
+const MORTAL: i64 = i64::MIN;
+
+impl PathIndex {
+    /// The class of a request of `path`: that of the expectations with `path` as their literal path, else none of theirs.
+    fn class_of(&self, path: &str) -> u32 {
+        // the keys are lower-cased; a path that already is one is looked up as it is
+        let key = if path.bytes().any(|b| b.is_ascii_uppercase()) { std::borrow::Cow::Owned(path.to_ascii_lowercase()) } else { std::borrow::Cow::Borrowed(path) };
+        self.by_path.get(key.as_ref()).and_then(|v| v.first()).map_or(NO_CLASS - 1, |&first| first as u32)
+    }
 }
 
 /// The list and its path index as a scan goes through them: two reference counts, no lock of the store held.
@@ -417,21 +485,44 @@ impl Inner {
         Arc::make_mut(&mut self.list)
     }
 
-    /// The expectations for which `keep` is true, over a snapshot of the list.
-    fn candidates_where(&self, keep: impl Fn(&Expectation) -> bool) -> Candidates {
-        let mut positions = Vec::with_capacity(self.list.len());
-        positions.extend((0..self.list.len() as u32).filter(|&i| keep(&self.list[i as usize])));
-        Candidates { list: self.list.clone(), positions }
+    /// The expectations alive at `now` a request of `namespace` may see (`None`: every one alive): [`Expectation::alive`]
+    /// and the namespace gate, read from the index for the global unlimited ones.
+    fn live_candidates(&self, namespace: Option<Option<&str>>, now: i64) -> Candidates {
+        let deadlines = Some(self.index.deadlines.as_slice()).filter(|d| d.len() == self.list.len()).unwrap_or(&[]);
+        let keep = |i: usize| match deadlines.get(i) {
+            Some(&deadline) if deadline != MORTAL => deadline > now,
+            _ => {
+                let e = &self.list[i];
+                namespace.is_none_or(|namespace| crate::namespace::admits(e.namespace.as_deref(), namespace)) && e.alive(now)
+            }
+        };
+        let positions = (0..self.list.len()).position(|i| !keep(i)).map(|first| {
+            let mut positions = Vec::with_capacity(self.list.len() - 1);
+            positions.extend(0..first as u32);
+            positions.extend((first as u32 + 1..self.list.len() as u32).filter(|&i| keep(i as usize)));
+            positions
+        });
+        Candidates { list: self.list.clone(), index: self.index.clone(), positions }
     }
 
     fn reindex(&mut self) {
         self.list_mut().sort_by(|a, b| b.priority.cmp(&a.priority).then(a.created.cmp(&b.created)).then_with(|| a.id.cmp(&b.id)));
         self.early = self.list.iter().filter(|e| e.early).count();
-        let mut index = PathIndex::default();
+        let mut index = PathIndex { classes: Vec::with_capacity(self.list.len()), deadlines: Vec::with_capacity(self.list.len()), ..PathIndex::default() };
         for (i, e) in self.list.iter().enumerate() {
+            // an unlimited count is never lowered (`lower_remaining`, `consume`)
+            let unlimited = e.remaining.load(Ordering::Acquire) < 0 && e.namespace.is_none();
+            index.deadlines.push(if unlimited { e.end_date.unwrap_or(i64::MAX) } else { MORTAL });
             match &e.index_key {
-                Some(key) => index.by_path.entry(key.clone()).or_default().push(i),
-                None => index.unindexed.push(i),
+                Some(key) => {
+                    let bucket = index.by_path.entry(key.clone()).or_default();
+                    bucket.push(i);
+                    index.classes.push(if e.matcher.fails_by_literal_path() { bucket[0] as u32 } else { NO_CLASS });
+                }
+                None => {
+                    index.unindexed.push(i);
+                    index.classes.push(NO_CLASS);
+                }
             }
         }
         self.index = Arc::new(index);
@@ -1296,13 +1387,13 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
     /// Live expectations a request of `namespace` may see, in match order.
     pub fn admissible(&self, namespace: Option<&str>) -> Candidates {
         let now = self.clock.now_millis();
-        self.view().candidates_where(|e| crate::namespace::admits(e.namespace.as_deref(), namespace) && e.alive(now))
+        self.view().live_candidates(Some(namespace), now)
     }
 
     /// [`Store::active`] as [`Candidates`].
     pub fn active_candidates(&self) -> Candidates {
         let now = self.clock.now_millis();
-        self.view().candidates_where(|e| e.alive(now))
+        self.view().live_candidates(None, now)
     }
 
     /// `retrieveActiveExpectations`: live expectations and used-up ones still serving a request, in match order.

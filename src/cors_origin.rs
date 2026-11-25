@@ -157,12 +157,17 @@ pub fn is_control_plane_route(method: Option<&str>, path: &str) -> bool {
     // the listed methods are upper case: compared ignoring ASCII case, as the upper-cased method was
     let method = java_trim(method);
     let has = |methods: &[&str]| methods.iter().any(|m| m.eq_ignore_ascii_case(method));
-    BARE_ROUTE_METHODS.iter().any(|(p, m)| *p == path && has(m)) || BARE_PREFIX_METHODS.iter().any(|(p, m)| path.starts_with(p) && has(m))
+    bare_route_methods(path).is_some_and(has) || BARE_PREFIX_METHODS.iter().any(|(p, m)| path.starts_with(p) && has(m))
+}
+
+/// The methods [`BARE_ROUTE_METHODS`] lists for `path`, found by binary search (the list is sorted by path).
+fn bare_route_methods(path: &str) -> Option<&'static [&'static str]> {
+    BARE_ROUTE_METHODS.binary_search_by(|(p, _)| (*p).cmp(path)).ok().map(|i| BARE_ROUTE_METHODS[i].1)
 }
 
 /// `HttpState.isControlPlanePathCandidate`: under `/mockserver/`, a bare alias, or a bare `{name}`-route prefix.
 pub fn is_control_plane_path_candidate(path: &str) -> bool {
-    path.starts_with("/mockserver/") || BARE_ROUTE_METHODS.iter().any(|(p, _)| *p == path) || BARE_PREFIX_METHODS.iter().any(|(p, _)| path.starts_with(p))
+    path.starts_with("/mockserver/") || bare_route_methods(path).is_some() || BARE_PREFIX_METHODS.iter().any(|(p, _)| path.starts_with(p))
 }
 
 /// `HttpState.isControlPlaneRequest(request)`: the control plane serves it (or, for a preflight, the request it
@@ -508,3 +513,13 @@ impl WebOrigin {
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn bare_routes_are_sorted_by_path_for_their_binary_search() {
+        assert!(super::BARE_ROUTE_METHODS.windows(2).all(|w| w[0].0 < w[1].0));
+        assert!(super::BARE_ROUTE_METHODS.iter().all(|(path, _)| super::bare_route_methods(path).is_some()));
+        assert_eq!(super::bare_route_methods("/e0"), None);
+    }
+}

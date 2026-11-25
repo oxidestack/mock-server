@@ -370,6 +370,11 @@ impl StringMatcher {
         Kind::Regex { sensitive: java_pattern_for(s, false).ok(), insensitive: java_pattern_for(s, true).ok(), java }
     }
 
+    /// Matched by comparing strings alone, with no regex that could time out.
+    pub fn is_plain(&self) -> bool {
+        matches!(self.kind, Kind::Literal | Kind::Blank) && !self.reverse
+    }
+
     /// The lower-cased value when this matcher can only ever match that exact string (case-insensitively).
     pub fn literal_key(&self) -> Option<String> {
         (matches!(self.kind, Kind::Literal) && !self.not && !self.optional).then(|| self.value.to_ascii_lowercase())

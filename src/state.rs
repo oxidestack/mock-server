@@ -464,7 +464,9 @@ impl State {
     }
 
     pub fn is_local_host(&self, host: &str) -> bool {
-        self.local_hosts.read().unwrap().contains(&host.to_ascii_lowercase())
+        // a host already in lower case is looked up as it is
+        let host = if host.bytes().any(|b| b.is_ascii_uppercase()) { std::borrow::Cow::Owned(host.to_ascii_lowercase()) } else { std::borrow::Cow::Borrowed(host) };
+        self.local_hosts.read().unwrap().contains(host.as_ref())
     }
 
     pub fn ports(&self) -> Vec<u16> {

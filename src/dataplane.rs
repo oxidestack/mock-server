@@ -344,6 +344,9 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     let mut stored_entry: Option<crate::recorded::LogEntry> = None;
     // A static file answers the request: no response breakpoint holds it (`serveStaticFile` writes it directly).
     let mut static_served = false;
+    // Whether a response breakpoint may hold the response: decided once, so a not-found answer nothing else logs is
+    // not built for it.
+    let response_holds = !state.breakpoints.is_empty();
     // `validateOpenAPIResponse`: the OpenAPI operation a mock response is checked against before it is written,
     // a response list's (`httpResponses`) and a rate limit's 429 included (oracle).
     let mock_validation = matched
@@ -575,6 +578,8 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
             let (reply, after) = no_match(state, &request, closest_scan.take()).await;
             after_not_found = after;
             let logged = match reply.status {
+                // only its INFO entry and a response breakpoint read it
+                404 if !state.info_enabled() && !response_holds => serde_json::Value::Null,
                 404 => not_found_json(),
                 status => serde_json::json!({"statusCode": status, "reasonPhrase": reason(status)}),
             };
@@ -582,7 +587,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         }
     };
     // `attemptResponseBreakpoint`: the response the client writes instead, if it changes it.
-    if breakpoint_eligible && !static_served {
+    if breakpoint_eligible && !static_served && response_holds {
         let paused = std::time::Instant::now();
         let continued = crate::breakpoint::Continued::default();
         let decision = crate::breakpoint::hold_response(state, &request, &logged_response, Some(continued.clone())).await;
@@ -641,6 +646,10 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
             None
         }
     };
+    // INFO switched on since the not-found answer was left unbuilt
+    if served_by.is_none() && reply.status == 404 && logged_response.is_null() && state.info_enabled() {
+        logged_response = not_found_json();
+    }
     let ordered = || logged_request.arg();
     // `LogEntry.setArguments`: an `HttpResponse` argument (the response, a response action) prints its body bare.
     let with_empty = |v: &serde_json::Value, is_action: bool| with_empty_body(v, log.empty_body.as_ref(), is_action);
@@ -2366,11 +2375,11 @@ fn log_commit_warning(state: &State, e: &crate::store::Evaluated) {
 /// depends only on the expectation (its canonical form and end date never change) and the snapshot's `times`.
 /// Remembered per thread, keyed by the expectation's address; each entry holds a weak reference to it, which keeps
 /// that address from being reused by a new expectation while the entry exists.
-fn logged_expectation(e: &crate::store::Evaluated) -> crate::log_entry::Json {
+fn logged_expectation(e: &crate::store::Evaluated) -> std::rc::Rc<LoggedExpectation> {
     use std::cell::RefCell;
     use std::collections::HashMap;
     // the snapshot's `times` follow from its remaining count alone, which keys the printed form
-    type Cached = (std::sync::Weak<crate::store::Expectation>, i64, crate::log_entry::Json);
+    type Cached = (std::sync::Weak<crate::store::Expectation>, i64, std::rc::Rc<LoggedExpectation>);
     thread_local! {
         static LOGGED: RefCell<HashMap<usize, Cached>> = RefCell::new(HashMap::new());
     }
@@ -2381,17 +2390,38 @@ fn logged_expectation(e: &crate::store::Evaluated) -> crate::log_entry::Json {
     LOGGED.with(|logged| {
         let mut logged = logged.borrow_mut();
         // the weak reference keeps the address taken while it is remembered, so an entry is always this expectation's
-        if let Some((.., json)) = logged.get(&key).filter(|(_, cached, _)| *cached == remaining) {
-            return json.clone();
+        if let Some((.., shown)) = logged.get(&key).filter(|(_, cached, _)| *cached == remaining) {
+            return shown.clone();
         }
         let snapshot = e.expectation.current_at(remaining);
         let json = crate::log_entry::Json::new(crate::canonical::logged_matched_expectation(&snapshot, e.expectation.end_date_millis()));
+        let shown = std::rc::Rc::new(LoggedExpectation { json, block: Default::default(), weight: Default::default() });
         if logged.len() >= REMEMBERED {
             logged.clear();
         }
-        logged.insert(key, (Arc::downgrade(&e.expectation), remaining, json.clone()));
-        json
+        logged.insert(key, (Arc::downgrade(&e.expectation), remaining, shown.clone()));
+        shown
     })
+}
+
+/// [`logged_expectation`]: the printed form, with its block in a message and its weight worked out the first time they
+/// are needed.
+struct LoggedExpectation {
+    json: crate::log_entry::Json,
+    block: std::cell::OnceCell<String>,
+    weight: std::cell::OnceCell<u64>,
+}
+
+impl LoggedExpectation {
+    /// Its text (`log_value`) as an argument of a log message shows it ([`crate::matcher::argument_block_into`]).
+    fn block(&self) -> &str {
+        self.block.get_or_init(|| argument_block(|text| crate::recorded::log_value_into(text, &self.json)))
+    }
+
+    /// Its weight against the event log's byte budget.
+    fn weight(&self) -> u64 {
+        *self.weight.get_or_init(|| crate::recorded::expectation_weight(&self.json))
+    }
 }
 
 /// The entries of [`log_evaluations`], the request's logged form (`shown`) built already; `subject`, when given, is a
@@ -2439,15 +2469,22 @@ fn log_evaluations_logged(
         }
     };
     let mut budget = NotMatchedLogBudget::of(state);
+    // The request's weight against the event log's byte budget, which each of its deferred entries adds.
+    let request_weight = std::cell::OnceCell::new();
+    // The request's block in a message, which each of its printed entries quotes.
+    let shown_block = std::cell::OnceCell::new();
     // `fullScanClosestMatchAndLazyRemoval`: when the candidate index narrowed the scan and nothing matched, the
     // expectations outside it are evaluated (and logged) after it, in match order, at most
     // `CLOSEST_MATCH_MAX_EVALUATIONS` of them; the rest are counted as not checked.
     let mut walk = ClosestWalk::default();
+    // The expectations the walk goes through, which its entries name by place.
+    let mut walked = None;
     if let Some(namespace) = unmatched {
         let scanned: std::collections::HashSet<*const crate::store::Expectation> = evaluated.iter().map(|e| Arc::as_ptr(&e.expectation)).collect();
-        let admissible = state.store.admissible(namespace);
-        for e in admissible.iter() {
-            if scanned.contains(&Arc::as_ptr(e)) {
+        let admissible = walked.insert(state.store.admissible(namespace));
+        walk.extra.reserve(admissible.len().saturating_sub(scanned.len()).min(CLOSEST_MATCH_MAX_EVALUATIONS));
+        for (at, (e, path_misses)) in admissible.iter_with_path_misses(&request.path).enumerate() {
+            if !scanned.is_empty() && scanned.contains(&Arc::as_ptr(e)) {
                 walk.checked += 1;
                 continue;
             }
@@ -2456,32 +2493,48 @@ fn log_evaluations_logged(
                 continue;
             }
             walk.checked += 1;
+            // One its literal path fails is not evaluated: it cannot match and meets no regex timeout.
+            if path_misses {
+                walk.extra.push(Walked { at: at as u32, matched: false, plain: true, timeouts: NO_TIMEOUTS });
+                continue;
+            }
             // Its regex timeouts are met again, from the cache, by the logging below; past the budget they are kept
             // for it instead.
             let (matched, timeouts) = crate::matcher::regex_timeouts(millis, || e.matcher.matches(request, crate::matcher::Mode::DataPlane));
-            // No snapshot: the few entries the budget admits read the expectation when they are logged.
-            walk.extra.push(crate::store::Evaluated { expectation: e.clone(), remaining: None, matched, active: true, warning: None });
-            walk.timeouts.push(timeouts);
+            let kept = if timeouts.is_empty() {
+                NO_TIMEOUTS
+            } else {
+                walk.timeouts.push(timeouts);
+                (walk.timeouts.len() - 1) as u32
+            };
+            walk.extra.push(Walked { at: at as u32, matched, plain: false, timeouts: kept });
         }
     }
     let debug = crate::log::debug_enabled(state);
-    for (i, e) in evaluated.iter().chain(walk.extra.iter()).enumerate() {
-        // `DnsRequestPropertiesMatcher.matches` and `BinaryRequestPropertiesMatcher.matches` reject an HTTP request
-        // without logging anything. Only an unsupported matcher is either.
-        if e.expectation.matcher.is_unsupported() && (e.expectation.dns.is_some() || crate::canonical::is_binary_request(&e.expectation.canonical["httpRequest"])) {
-            continue;
-        }
-        // A walk entry past the budget: withheld, and the regex timeouts its walk match met are logged,
-        // which is all the general path below does for it (the re-evaluation meets the same ones), without the second
-        // match of each of up to 1,000 expectations.
-        if let Some(j) = i.checked_sub(evaluated.len())
-            && !debug
-            && !e.matched
-            && e.expectation.matcher.logs_as_expectation()
-            && budget.exhausted()
-        {
-            budget.admit();
-            log_regex_timeouts(state, std::mem::take(&mut walk.timeouts[j]));
+    for i in 0..evaluated.len() + walk.extra.len() {
+        // A walk entry takes no snapshot: the few entries the budget admits read the expectation when they are logged.
+        let made;
+        let e = match i.checked_sub(evaluated.len()) {
+            None => &evaluated[i],
+            Some(j) => {
+                let w = &walk.extra[j];
+                let expectation = walked.as_ref().map(|a| a.get(w.at as usize)).expect("walked");
+                // A walk entry past the budget: withheld, and the regex timeouts its walk match met are logged,
+                // which is all the general path below does for it (the re-evaluation meets the same ones), without the
+                // second match of each of up to 1,000 expectations.
+                let logs_as_expectation = || w.plain || (!skipped_unsupported(expectation) && expectation.matcher.logs_as_expectation());
+                if !debug && !w.matched && budget.exhausted() && logs_as_expectation() {
+                    budget.admit();
+                    if w.timeouts != NO_TIMEOUTS {
+                        log_regex_timeouts(state, std::mem::take(&mut walk.timeouts[w.timeouts as usize]));
+                    }
+                    continue;
+                }
+                made = crate::store::Evaluated { expectation: expectation.clone(), remaining: None, matched: w.matched, active: true, warning: None };
+                &made
+            }
+        };
+        if skipped_unsupported(&e.expectation) {
             continue;
         }
         // A conditional or OpenAPI expectation logs from the matchers it is made of.
@@ -2543,20 +2596,56 @@ fn log_evaluations_logged(
             }
             continue;
         }
-        let expectation = logged_expectation(e);
-        // A match's entry, of a request the log holds already: built when the log is read (or the console prints it).
-        if e.matched
-            && let Some(subject) = subject
-        {
-            let (shown, live) = (shown.clone(), e.expectation.clone());
-            state.log.message_about_deferred(crate::recorded::Level::Info, Kind::ExpectationMatched, subject.clone(), move || {
-                let live = live.clone();
-                LogEntry::new(Kind::ExpectationMatched, "request:{}matched expectation:{}")
-                    .request_logged(&shown.request, &shown)
-                    .args([shown.arg(), Arg::from(expectation.clone())])
-                    .expectation_shared(expectation.clone())
-                    .live_expectation(move || crate::canonical::logged_matched_expectation(&live.current(), live.end_date_millis()), None)
-            });
+        let logged_form = logged_expectation(e);
+        let expectation = logged_form.json.clone();
+        // An entry about a request the log holds already: built when the log is read, its console line written from
+        // its parts.
+        if let Some(subject) = subject {
+            let weight_of_request = || *request_weight.get_or_init(|| crate::recorded::request_weight(subject));
+            let live = e.expectation.clone();
+            if e.matched {
+                const FORMAT: &str = "request:{}matched expectation:{}";
+                let weight = || crate::recorded::message_weight(weight_of_request(), logged_form.weight(), "");
+                let text = |out: &mut String, _: &mut String| {
+                    crate::matcher::format_log_message_blocks_into(out, 0, FORMAT, 2, |i, out| match i {
+                        0 => out.push_str(request_block(&shown_block, shown)),
+                        _ => out.push_str(logged_form.block()),
+                    })
+                };
+                let shown = shown.clone();
+                state.log.message_about_deferred_with(crate::recorded::Level::Info, Kind::ExpectationMatched, subject.clone(), Some(&weight), Some(&text), move || {
+                    let live = live.clone();
+                    LogEntry::new(Kind::ExpectationMatched, FORMAT)
+                        .request_logged(&shown.request, &shown)
+                        .args([shown.arg(), Arg::from(expectation.clone())])
+                        .expectation_shared(expectation.clone())
+                        .live_expectation(move || crate::canonical::logged_matched_expectation(&live.current(), live.end_date_millis()), None)
+                });
+            } else {
+                // A used-up or expired one has an empty because, which the format drops and the arguments keep.
+                let because = if e.active { because.unwrap_or_default() } else { String::new() };
+                let format = not_matched_format(&e.expectation.id, &because);
+                let weight = || crate::recorded::message_weight(weight_of_request(), logged_form.weight(), &because);
+                let arguments = if e.active && because.is_empty() { 2 } else { 3 };
+                let text = |out: &mut String, _: &mut String| {
+                    crate::matcher::format_log_message_blocks_into(out, 0, &format, arguments, |i, out| match i {
+                        0 => out.push_str(request_block(&shown_block, shown)),
+                        1 => out.push_str(logged_form.block()),
+                        _ => crate::matcher::argument_block_into(out, 0, &because),
+                    })
+                };
+                let (shown, active, because) = (shown.clone(), e.active, because.clone());
+                state.log.message_about_deferred_with(crate::recorded::Level::Info, Kind::ExpectationNotMatched, subject.clone(), Some(&weight), Some(&text), move || {
+                    let entry = LogEntry::new(Kind::ExpectationNotMatched, not_matched_format(&live.id, "")).request_logged(&shown.request, &shown).expectation_shared(expectation.clone());
+                    let entry = match (active, because.is_empty()) {
+                        (false, _) => entry.because("").args([shown.arg(), expectation.clone().into(), String::new().into()]),
+                        (true, true) => entry.args([shown.arg(), Arg::from(expectation.clone())]),
+                        (true, false) => entry.with_format(not_matched_format(&live.id, &because)).because(because.clone()).args([shown.arg(), expectation.clone().into(), because.clone().into()]),
+                    };
+                    let live = live.clone();
+                    entry.live_expectation(move || crate::canonical::logged_matched_expectation(&live.current(), live.end_date_millis()), None)
+                });
+            }
             log_commit_warning(state, e);
             if !e.active {
                 crate::control::log_lazy_removals(state, Some(&e.expectation.id));
@@ -2592,10 +2681,12 @@ fn log_evaluations_logged(
     let records = state.config.bool_property("detailedMatchFailures", true);
     let candidates = state.store.admissible(namespace);
     // Past the evaluation cap only the expectations checked compete.
-    let checked: Option<std::collections::HashSet<*const crate::store::Expectation>> = (walk.not_checked > 0)
-        .then(|| evaluated.iter().chain(walk.extra.iter()).map(|e| Arc::as_ptr(&e.expectation)).collect());
+    let checked: Option<std::collections::HashSet<*const crate::store::Expectation>> = (walk.not_checked > 0).then(|| {
+        let walked = walked.as_ref().map(|a| walk.extra.iter().map(|w| Arc::as_ptr(a.get(w.at as usize)))).into_iter().flatten();
+        evaluated.iter().map(|e| Arc::as_ptr(&e.expectation)).chain(walked).collect()
+    });
     let (live_closest, timeouts) = crate::matcher::regex_timeouts(millis, || {
-        closest_match(candidates.iter().filter(|e| checked.as_ref().is_none_or(|c| c.contains(&Arc::as_ptr(e)))), request, |_| records)
+        closest_match(candidates.iter_with_path_misses(&request.path).filter(|(e, _)| checked.as_ref().is_none_or(|c| c.contains(&Arc::as_ptr(e)))), request, |_| records)
     });
     // Under `detailedMatchFailures=false` the hint's scan records what an OpenAPI matcher's own contexts record, so it
     // differs from this one; otherwise the two are the same evaluation (unless this one stopped at the cap).
@@ -2610,17 +2701,80 @@ fn log_evaluations_logged(
         log_match_notes(state, notes, request);
         (closest, count)
     });
-    if let Some((closest, count)) = closest {
-        let expectation = crate::canonical::logged_matched_expectation(&closest.current(), closest.end_date_millis());
-        let live = closest.clone();
-        let entry = LogEntry::new(Kind::ExpectationNotMatched, format!("closest expectation:{{}}matched {count}/10 fields for request:{{}}{}", walk.note(&budget)))
-            .request_logged(request, shown)
-            .expectation(expectation.clone())
-            .args([Arg::from(&expectation), shown.arg()])
-            .live_expectation(move || crate::canonical::logged_matched_expectation(&live.current(), live.end_date_millis()), None);
-        state.log.message_about(entry, Subject::Request(logged));
+    match (closest, subject) {
+        (Some((closest, count)), Some(subject)) => {
+            // the expectation as it is now, as a walk entry shows it
+            let logged_form = logged_expectation(&crate::store::Evaluated { expectation: closest.clone(), remaining: None, matched: false, active: true, warning: None });
+            let format = format!("closest expectation:{{}}matched {count}/10 fields for request:{{}}{}", walk.note(&budget));
+            let weight = || crate::recorded::message_weight(*request_weight.get_or_init(|| crate::recorded::request_weight(subject)), logged_form.weight(), "");
+            let text = |out: &mut String, _: &mut String| {
+                crate::matcher::format_log_message_blocks_into(out, 0, &format, 2, |i, out| match i {
+                    0 => out.push_str(logged_form.block()),
+                    _ => out.push_str(request_block(&shown_block, shown)),
+                })
+            };
+            let (shown, expectation, live, format) = (shown.clone(), logged_form.json.clone(), closest.clone(), format.clone());
+            state.log.message_about_deferred_with(crate::recorded::Level::Info, Kind::ExpectationNotMatched, subject.clone(), Some(&weight), Some(&text), move || {
+                let live = live.clone();
+                LogEntry::new(Kind::ExpectationNotMatched, format.clone())
+                    .request_logged(&shown.request, &shown)
+                    .expectation(serde_json::Value::clone(&expectation))
+                    .args([Arg::from(expectation.clone()), shown.arg()])
+                    .live_expectation(move || crate::canonical::logged_matched_expectation(&live.current(), live.end_date_millis()), None)
+            });
+        }
+        (Some((closest, count)), None) => {
+            let expectation = crate::canonical::logged_matched_expectation(&closest.current(), closest.end_date_millis());
+            let live = closest.clone();
+            let entry = LogEntry::new(Kind::ExpectationNotMatched, format!("closest expectation:{{}}matched {count}/10 fields for request:{{}}{}", walk.note(&budget)))
+                .request_logged(request, shown)
+                .expectation(expectation.clone())
+                .args([Arg::from(&expectation), shown.arg()])
+                .live_expectation(move || crate::canonical::logged_matched_expectation(&live.current(), live.end_date_millis()), None);
+            state.log.message_about(entry, Subject::Request(logged));
+        }
+        (None, _) => {}
     }
     scan
+}
+
+/// A did-not-match entry's format: with its because, when it has one.
+fn not_matched_format(id: &str, because: &str) -> String {
+    let mut format = String::with_capacity(id.len() + 64);
+    format.push_str("request:{}didn't match expectation \"");
+    format.push_str(id);
+    format.push('"');
+    if !because.is_empty() {
+        format.push_str(":{}because:{}");
+    }
+    format
+}
+
+/// The request's text as an argument of a log message shows it, rendered the first time one of its entries prints it.
+fn request_block<'a>(block: &'a std::cell::OnceCell<String>, shown: &crate::recorded::LoggedRequest) -> &'a str {
+    block.get_or_init(|| argument_block(|text| shown.json.write_text(text)))
+}
+
+/// The text `write` writes, as an argument of a log message shows it ([`crate::matcher::argument_block_into`]); the
+/// text is written into a buffer the thread keeps, so only the block is allocated.
+fn argument_block(write: impl FnOnce(&mut String)) -> String {
+    thread_local! {
+        static TEXT: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) };
+    }
+    let block_of = |text: &str| {
+        // each line takes an indent
+        let mut block = String::with_capacity(text.len() + 2 * text.bytes().filter(|&b| b == b'\n').count() + 8);
+        crate::matcher::argument_block_into(&mut block, 0, text);
+        block
+    };
+    TEXT.with(|kept| {
+        let mut text = kept.take();
+        text.clear();
+        write(&mut text);
+        let block = block_of(&text);
+        *kept.borrow_mut() = text;
+        block
+    })
 }
 
 /// `RequestMatchers.DEFAULT_CLOSEST_MATCH_MAX_EVALUATIONS`: the most expectations an unmatched request's INFO
@@ -2631,11 +2785,31 @@ const CLOSEST_MATCH_MAX_EVALUATIONS: usize = 1000;
 /// and how many were checked in all and how many were left unchecked past the cap.
 #[derive(Default)]
 struct ClosestWalk {
-    extra: Vec<crate::store::Evaluated>,
-    /// The regex timeouts each of `extra` met when the walk evaluated it.
+    extra: Vec<Walked>,
+    /// The regex timeouts the walk met: those of each of `extra` that met any.
     timeouts: Vec<Vec<crate::matcher::RegexTimeout>>,
     checked: usize,
     not_checked: usize,
+}
+
+/// One expectation the closest-match walk evaluated, held by its place among the admissible ones rather than by a
+/// reference count: up to 1,000 of them per request, shared by every request worker.
+struct Walked {
+    at: u32,
+    matched: bool,
+    /// Its literal path failed the request ([`crate::store::Candidates::iter_with_path_misses`]): a plain matcher, which
+    /// logs as the expectation.
+    plain: bool,
+    /// Its regex timeouts' place in [`ClosestWalk::timeouts`]; [`NO_TIMEOUTS`] when it met none.
+    timeouts: u32,
+}
+
+const NO_TIMEOUTS: u32 = u32::MAX;
+
+/// `DnsRequestPropertiesMatcher.matches` and `BinaryRequestPropertiesMatcher.matches` reject an HTTP request without
+/// logging anything. Only an unsupported matcher is either.
+fn skipped_unsupported(e: &crate::store::Expectation) -> bool {
+    e.matcher.is_unsupported() && (e.dns.is_some() || crate::canonical::is_binary_request(&e.canonical["httpRequest"]))
 }
 
 impl ClosestWalk {
@@ -3689,20 +3863,25 @@ fn closest_match_traced(
     detailed_match_failures: bool,
 ) -> (Option<Closest>, Vec<crate::matcher::MatchNote>) {
     let notes = if debug { candidates.iter().flat_map(|e| e.matcher.match_notes(request, true, trace)).collect() } else { Vec::new() };
-    (closest_match(candidates.iter(), request, |e| detailed_match_failures || !e.matcher.is_openapi()), notes)
+    (closest_match(candidates.iter_with_path_misses(&request.path), request, |e| detailed_match_failures || !e.matcher.is_openapi()), notes)
 }
 
 /// The unmatched expectation with the fewest differing fields: strictly-fewer wins, in match order.
 /// `records(e)`: whether `e`'s `MatchDifference` context records anything (under `detailedMatchFailures=false` the
 /// scan's shared context records nothing, nor do an OpenAPI matcher's per-operation contexts): one that records
 /// nothing counts as no differences, so the first such one is the closest.
+/// `candidates` come with whether their literal path alone fails the request ([`crate::store::Candidates::iter_with_path_misses`]).
 fn closest_match<'a>(
-    candidates: impl Iterator<Item = &'a Arc<crate::store::Expectation>>,
+    candidates: impl Iterator<Item = (&'a Arc<crate::store::Expectation>, bool)>,
     request: &HttpRequest,
     records: impl Fn(&crate::store::Expectation) -> bool,
 ) -> Option<Closest> {
     let mut closest: Option<Closest> = None;
-    for e in candidates {
+    for (e, path_misses) in candidates {
+        // At least one difference, which cannot beat a closest one with at most one: skipped without evaluating it.
+        if path_misses && closest.as_ref().is_some_and(|(_, best)| best.len() <= 1) {
+            continue;
+        }
         if e.matcher.matches(request, crate::matcher::Mode::DataPlane) {
             continue;
         }

@@ -281,9 +281,15 @@ pub fn retrieve(method: &str, path: &str) -> Option<String> {
     if !method.eq_ignore_ascii_case("GET") {
         return None;
     }
-    static PATH: LazyLock<regex::Regex> = LazyLock::new(|| regex::Regex::new(r"(?:^|/)responses/([^/?#]+)$").expect("valid"));
-    let id = PATH.captures(path)?.get(1)?.as_str().to_string();
-    STORE.read(&id, |s| s.body.clone())
+    STORE.read(stored_id(path)?, |s| s.body.clone())
+}
+
+/// The id `GET …/responses/{id}` names: `(?:^|/)responses/([^/?#]+)$`, read without a regex, which allocated on every
+/// unmatched `GET`.
+fn stored_id(path: &str) -> Option<&str> {
+    let (head, id) = path.rsplit_once('/')?;
+    let prefix = head.strip_suffix("responses")?;
+    (!id.is_empty() && !id.contains(['?', '#']) && (prefix.is_empty() || prefix.ends_with('/'))).then_some(id)
 }
 
 pub fn reset() {
@@ -294,6 +300,15 @@ pub fn reset() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_stored_response_is_named_as_the_pattern_names_it() {
+        let pattern = regex::Regex::new(r"(?:^|/)responses/([^/?#]+)$").expect("valid");
+        for path in ["/v1/responses/resp_1", "responses/a", "/responses/a", "/xresponses/a", "/responses/", "/responses", "/v1/responses/a/b", "/responses/a?b", "/responses/a#", "/a/responses/responses/b", "", "/", "/e0"] {
+            let expected = pattern.captures(path).and_then(|c| c.get(1)).map(|m| m.as_str());
+            assert_eq!(stored_id(path), expected, "{path}");
+        }
+    }
 
     fn message(role: Role, text: &str) -> Message {
         Message { role, text: text.to_string(), tool_calls: Vec::new(), tool_results: Vec::new() }
