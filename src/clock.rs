@@ -76,8 +76,8 @@ tokio::task_local! {
 }
 
 /// Runs `f` with `clock` as the current server's clock.
-pub async fn scope<F: std::future::Future>(clock: Arc<Clock>, f: F) -> F::Output {
-    CURRENT.scope(clock, f).await
+pub fn scope<F: std::future::Future>(clock: Arc<Clock>, f: F) -> impl std::future::Future<Output = F::Output> {
+    CURRENT.scope(clock, f)
 }
 
 /// `TimeService.now()` of the current server.

@@ -73,8 +73,8 @@ tokio::task_local! {
 }
 
 /// Runs `work` with `state` as the server WASM matchers consult.
-pub async fn scope<F: std::future::Future>(state: Arc<State>, work: F) -> F::Output {
-    SERVER.scope(state, VERDICTS.scope(Default::default(), work)).await
+pub fn scope<F: std::future::Future>(state: Arc<State>, work: F) -> impl std::future::Future<Output = F::Output> {
+    SERVER.scope(state, VERDICTS.scope(Default::default(), work))
 }
 
 /// The server the current request is handled for, outside a request `None` (also read by `XML_SCHEMA` compiles,

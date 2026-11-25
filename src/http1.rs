@@ -70,7 +70,7 @@ where
         crate::server::log_no_client_certificate(&state, &conn);
     }
     let worker = Some(conn.event_loop);
-    crate::server::on_worker(worker, crate::grpc_plane::PIPELINE.scope(grpc, serve_connection(state, conn, stream, buf, secure, true, true))).await
+    crate::boxed::connection(crate::server::on_worker(worker, crate::grpc_plane::PIPELINE.scope(grpc, serve_connection(state, conn, stream, buf, secure, true, true)))).await
 }
 
 /// Whether what is buffered holds the whole head of another request: one pipelined behind the exchange being served.
@@ -299,7 +299,7 @@ where
                 if let Some(found) = found {
                     let head_only = early.method.eq_ignore_ascii_case("HEAD");
                     let mut observed = handler::observe(&state, &early);
-                    let outcome = handler::dispatch_detached(&state, early, &trace, Some(found)).await;
+                    let outcome = handler::dispatch_early(&state, early, &trace, found).await;
                     handler::answered(&mut observed, &outcome, "HTTP_1_1");
                     match outcome {
                         Outcome::Respond(mut reply) => {
@@ -573,11 +573,12 @@ where
             if out_of_order {
                 // `http1PipeliningInOrder=false`: no gate; each request is handled as it arrives, and answered as it completes
                 let flight = Flight { head_only, tunnel, stream_intent, observed, exchange, decoded };
-                in_flight.push(Box::pin(async move { (handler::dispatch_detached(&state_flight, http_request, &trace_flight, None).await, flight) }));
+                in_flight.push(Box::pin(async move { (handler::dispatch_detached(&state_flight, http_request, &trace_flight).await, flight) }));
                 continue 'conn;
             }
+            // handled on the connection's task, its deep, rarely taken branches boxed where they are entered ([`crate::boxed`])
+            let answered = handler::dispatch(&state, http_request, &trace);
             let outcome = if held_behind {
-                let answered = Box::pin(handler::dispatch_detached(&state, http_request, &trace, None));
                 tokio::select! {
                     outcome = answered => outcome,
                     _ = wedge_backstop(&state, conn.event_loop) => {
@@ -593,7 +594,7 @@ where
                     }
                 }
             } else {
-                handler::dispatch_detached(&state, http_request, &trace, None).await
+                answered.await
             };
             (outcome, Flight { head_only, tunnel, stream_intent, observed, exchange, decoded })
         };

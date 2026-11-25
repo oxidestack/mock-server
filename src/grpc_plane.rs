@@ -370,6 +370,12 @@ fn installed(state: &State) -> bool {
     PIPELINE.try_with(|p| *p).unwrap_or_else(|_| state.grpc.has_services())
 }
 
+/// Whether [`dispatch`] may take the request: any over HTTP/3, or any on a connection whose pipeline has the gRPC
+/// handlers; the others are plain HTTP requests.
+pub fn converts(state: &State, request: &HttpRequest) -> bool {
+    request.protocol == "HTTP_3" || installed(state)
+}
+
 /// Serves a gRPC request: `Err` hands the request back (boxed: it is large) when it is not one this server converts
 /// (no descriptors, not gRPC).
 pub async fn dispatch(state: &Arc<State>, mut request: HttpRequest, channel: &TraceChannel) -> Result<Outcome, Box<HttpRequest>> {

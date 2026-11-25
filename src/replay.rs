@@ -24,7 +24,8 @@ pub async fn route(state: &Arc<State>, request: &HttpRequest) -> Option<Reply> {
     if let Some(reply) = crate::auth::control_plane_refusal(state, request) {
         return Some(reply);
     }
-    Some(handle(state, request).await)
+    // boxed: its future is large, and the request path awaits this one in place ([`crate::boxed`])
+    Some(Box::pin(handle(state, request)).await)
 }
 
 fn error(status: u32, message: &str) -> Reply {

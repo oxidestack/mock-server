@@ -475,17 +475,25 @@ fn raw_status(bytes: &[u8]) -> Option<u32> {
     std::str::from_utf8(line).ok()?.parse().ok()
 }
 
+/// A request's handling. Its common path (a data-plane or control-plane request answered from what the server holds)
+/// is a chain of [`crate::boxed::layer`]s, awaited in place in an optimised build; its deep, rarely taken branches
+/// (MCP, gRPC, forwards and proxies, callbacks, templates, the contract-test and replay endpoints) are
+/// [`crate::boxed::Boxed`], so that neither the caller's frames nor its future carry them.
 pub async fn dispatch(state: &Arc<State>, request: HttpRequest, channel: &TraceChannel) -> Outcome {
-    // `TimeService`: what the request reads as now is this server's clock. Boxed: the handling future is large.
-    crate::clock::scope(state.clock.clone(), Box::pin(dispatch_scoped(state, request, channel))).await
+    // `TimeService`: what the request reads as now is this server's clock.
+    crate::clock::scope(state.clock.clone(), crate::boxed::layer(dispatch_scoped(state, request, channel))).await
 }
 
-/// [`dispatch`] on a task of its own, as HTTP/2 answers each stream: the request's handling (a forward's outbound
-/// TLS handshake included) starts at the bottom of a worker's stack instead of on top of the connection's frames
-/// ([`crate::boxed`]). `early` is the expectation `EarlyMatchingHandler` already matched for it. The
-/// connection's gRPC pipeline flag goes with it; dropping the returned future aborts the task, and a panic in it
-/// unwinds here, as it did when the handling ran inline.
-pub async fn dispatch_detached(state: &Arc<State>, request: HttpRequest, channel: &Arc<TraceChannel>, early: Option<crate::store::Found>) -> Outcome {
+/// [`dispatch`] of a request `EarlyMatchingHandler` answers from its head alone, `found` the expectation it matched.
+/// Boxed: a connection answers one at most, its first ([`crate::boxed`]).
+pub fn dispatch_early<'a>(state: &'a Arc<State>, request: HttpRequest, channel: &'a TraceChannel, found: crate::store::Found) -> crate::boxed::Boxed<'a, Outcome> {
+    Box::pin(crate::dataplane::with_early_match(found, dispatch(state, request, channel)))
+}
+
+/// [`dispatch`] on a task of its own, for `http1PipeliningInOrder=false`, which handles the requests pipelined on a
+/// connection concurrently: it runs on the connection's worker event loop and carries the connection's gRPC pipeline
+/// flag; dropping the returned future aborts the task, and a panic in it unwinds here, as it does inline.
+pub async fn dispatch_detached(state: &Arc<State>, request: HttpRequest, channel: &Arc<TraceChannel>) -> Outcome {
     struct AbortOnDrop(tokio::task::AbortHandle);
     impl Drop for AbortOnDrop {
         fn drop(&mut self) {
@@ -493,13 +501,7 @@ pub async fn dispatch_detached(state: &Arc<State>, request: HttpRequest, channel
         }
     }
     let (state, channel) = (state.clone(), channel.clone());
-    let work = async move {
-        let dispatched = dispatch(&state, request, &channel);
-        match early {
-            Some(found) => crate::dataplane::with_early_match(found, dispatched).await,
-            None => dispatched.await,
-        }
-    };
+    let work = async move { dispatch(&state, request, &channel).await };
     // on the connection's event loop, as the handling it is detached from
     let work = crate::server::on_worker(crate::server::current_worker(), work);
     let task = match crate::grpc_plane::PIPELINE.try_with(|grpc| *grpc) {
@@ -520,17 +522,35 @@ pub async fn dispatch_detached(state: &Arc<State>, request: HttpRequest, channel
 async fn dispatch_scoped(state: &Arc<State>, request: HttpRequest, channel: &TraceChannel) -> Outcome {
     // `McpStreamableHttpHandler` sits before `HttpRequestHandler`: not counted, not logged, not decorated.
     if crate::mcp::serves(state, &request.path) {
-        // handled on the MCP session manager's executor, off the worker event loop
+        return mcp(state, request).await;
+    }
+    // `GrpcToHttpRequestHandler` / `GrpcToHttpResponseHandler` wrap the HTTP handling of a gRPC request, on a
+    // connection whose pipeline has them.
+    if crate::grpc_plane::converts(state, &request) {
+        return grpc(state, request, channel).await;
+    }
+    dispatch_http(state, request, channel).await
+}
+
+/// An MCP request, handled on the MCP session manager's executor, off the worker event loop.
+/// Boxed: its future is large ([`crate::boxed`]).
+fn mcp(state: &Arc<State>, request: HttpRequest) -> crate::boxed::Boxed<'_, Outcome> {
+    Box::pin(async move {
         let mut reply = crate::server::on_worker(None, crate::recorded::portless(crate::mcp::handle(state, &request))).await;
         reply.route = Some("/mockserver/mcp");
-        return Outcome::Respond(reply);
-    }
-    // `GrpcToHttpRequestHandler` / `GrpcToHttpResponseHandler` wrap the HTTP handling of a gRPC request.
-    // Boxed: the HTTP handling future is large, and nesting it here twice over would exhaust a worker's stack.
-    match Box::pin(crate::grpc_plane::dispatch(state, request, channel)).await {
-        Ok(outcome) => outcome,
-        Err(request) => Box::pin(dispatch_http(state, *request, channel)).await,
-    }
+        Outcome::Respond(reply)
+    })
+}
+
+/// A request on a connection with the gRPC handlers, its HTTP handling inside them unless it is not gRPC.
+/// Boxed: its future is large ([`crate::boxed`]).
+fn grpc<'a>(state: &'a Arc<State>, request: HttpRequest, channel: &'a TraceChannel) -> crate::boxed::Boxed<'a, Outcome> {
+    Box::pin(async move {
+        match crate::grpc_plane::dispatch(state, request, channel).await {
+            Ok(outcome) => outcome,
+            Err(request) => dispatch_http(state, *request, channel).await,
+        }
+    })
 }
 
 /// The HTTP handling of a request (gRPC ones arrive here converted).
@@ -572,9 +592,9 @@ fn alt_svc(state: &State, reply: &mut Reply) {
     }
 }
 
-/// Boxed: its future is large ([`crate::boxed`]).
-fn handle(state: &Arc<State>, request: HttpRequest) -> crate::boxed::Boxed<'_, Outcome> {
-    Box::pin(handle_inline(state, request))
+/// A layer of the request path ([`crate::boxed::layer`]).
+fn handle(state: &Arc<State>, request: HttpRequest) -> impl std::future::Future<Output = Outcome> + Send + '_ {
+    crate::boxed::layer(handle_inline(state, request))
 }
 
 async fn handle_inline(state: &Arc<State>, request: HttpRequest) -> Outcome {
@@ -589,22 +609,23 @@ async fn handle_inline(state: &Arc<State>, request: HttpRequest) -> Outcome {
     }
     let started = std::time::Instant::now();
     // `HttpRequestHandler`: the preemption cordon turns new data-plane exchanges away before anything else.
-    if let Some(decision) = state.chaos.preemption.decide(state, &request) {
-        let then = match decision.reject {
-            Some(reply) => Outcome::Respond(reply),
-            None => serve(state, request, metrics, started).await,
-        };
-        return match decision.go_away {
-            Some(last_stream_id) => Outcome::GoAway { last_stream_id, error_code: 0, then: Box::new(then) },
-            None => then,
-        };
+    let (reject, go_away) = match state.chaos.preemption.decide(state, &request) {
+        Some(decision) => (decision.reject, decision.go_away),
+        None => (None, None),
+    };
+    let then = match reject {
+        Some(reply) => Outcome::Respond(reply),
+        None => serve(state, request, metrics, started).await,
+    };
+    match go_away {
+        Some(last_stream_id) => Outcome::GoAway { last_stream_id, error_code: 0, then: Box::new(then) },
+        None => then,
     }
-    serve(state, request, metrics, started).await
 }
 
-/// Boxed: its future is large ([`crate::boxed`]).
-fn serve(state: &Arc<State>, request: HttpRequest, metrics: bool, started: std::time::Instant) -> crate::boxed::Boxed<'_, Outcome> {
-    Box::pin(serve_inline(state, request, metrics, started))
+/// A layer of the request path ([`crate::boxed::layer`]).
+fn serve(state: &Arc<State>, request: HttpRequest, metrics: bool, started: std::time::Instant) -> impl std::future::Future<Output = Outcome> + Send + '_ {
+    crate::boxed::layer(serve_inline(state, request, metrics, started))
 }
 
 async fn serve_inline(state: &Arc<State>, mut request: HttpRequest, metrics: bool, started: std::time::Instant) -> Outcome {

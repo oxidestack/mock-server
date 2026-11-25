@@ -22,8 +22,8 @@ tokio::task_local! {
 }
 
 /// Runs `f` (the dispatch of an early, `respondBeforeBody`, request) with `found` as the expectation it serves.
-pub async fn with_early_match<F: std::future::Future>(found: crate::store::Found, f: F) -> F::Output {
-    EARLY_MATCH.scope(std::cell::RefCell::new(Some(found)), f).await
+pub fn with_early_match<F: std::future::Future>(found: crate::store::Found, f: F) -> impl std::future::Future<Output = F::Output> {
+    EARLY_MATCH.scope(std::cell::RefCell::new(Some(found)), f)
 }
 
 /// Whether this dispatch serves an early (`respondBeforeBody`) match: `EarlyMatchingHandler` hands it to
@@ -116,9 +116,9 @@ impl Matched<'_> {
     }
 }
 
-/// Boxed: its future is large ([`crate::boxed`]).
-pub fn handle(state: &Arc<State>, request: HttpRequest) -> crate::boxed::Boxed<'_, Outcome> {
-    Box::pin(handle_inline(state, request))
+/// A data-plane request's handling, a layer of the request path ([`crate::boxed::layer`]).
+pub fn handle(state: &Arc<State>, request: HttpRequest) -> impl std::future::Future<Output = Outcome> + Send + '_ {
+    crate::boxed::layer(handle_inline(state, request))
 }
 
 async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome {
@@ -731,10 +731,10 @@ fn served_entry(x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedR
         .request_logged(&x.request, logged)
 }
 
-/// `Action::Respond`: a mock response, maybe a `recoverAfter` failure or a synthesized GraphQL body.
-/// Boxed: its future is large ([`crate::boxed`]).
-fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a mut ArmLog) -> crate::boxed::Boxed<'a, Arm> {
-    Box::pin(async move {
+/// `Action::Respond`: a mock response, maybe a `recoverAfter` failure or a synthesized GraphQL body; a layer of the
+/// request path ([`crate::boxed::layer`]).
+fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a mut ArmLog) -> impl std::future::Future<Output = Arm> + Send + 'a {
+    crate::boxed::layer(async move {
         let Matched { state, request, generation, expectation, injection, match_count, .. } = *m;
         let (reply, logged) = {
             // `selectRecoveryResponse`: a `recoverAfter` clause serves its failure response first.

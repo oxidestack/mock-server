@@ -221,8 +221,8 @@ tokio::task_local! {
 }
 
 /// Runs `work` with every entry it logs stamped with no port (an MCP request's).
-pub async fn portless<F: std::future::Future>(work: F) -> F::Output {
-    PORTLESS.scope(true, work).await
+pub fn portless<F: std::future::Future>(work: F) -> impl std::future::Future<Output = F::Output> {
+    PORTLESS.scope(true, work)
 }
 
 /// [`portless`] for synchronous work: what `work` logs carries no port (a forward's `responseTemplate`, rendered on

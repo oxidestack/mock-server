@@ -759,8 +759,8 @@ tokio::task_local! {
 }
 
 /// Runs `work` as handled on `event_loop`'s thread (`None`: off the worker group).
-pub async fn on_worker<F: std::future::Future>(event_loop: Option<usize>, work: F) -> F::Output {
-    WORKER.scope(event_loop, work).await
+pub fn on_worker<F: std::future::Future>(event_loop: Option<usize>, work: F) -> impl std::future::Future<Output = F::Output> {
+    WORKER.scope(event_loop, work)
 }
 
 /// The worker event loop handling the current request, if it is handled on one.

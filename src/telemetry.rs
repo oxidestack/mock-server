@@ -452,8 +452,8 @@ tokio::task_local! {
 }
 
 /// Runs `f` with `context` as the current channel's trace context, for the [`request_span`]s it records.
-pub async fn with_channel<F: std::future::Future>(context: Option<TraceContext>, f: F) -> F::Output {
-    CHANNEL.scope(context, f).await
+pub fn with_channel<F: std::future::Future>(context: Option<TraceContext>, f: F) -> impl std::future::Future<Output = F::Output> {
+    CHANNEL.scope(context, f)
 }
 
 fn channel_context() -> Option<TraceContext> {
