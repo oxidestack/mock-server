@@ -99,12 +99,29 @@ fn actions(expectation: &Map<String, Value>) -> Vec<&'static str> {
     TOP_LEVEL_ACTIONS.iter().copied().filter(|k| present(expectation, k).is_some() && !(responses && *k == "httpResponse")).collect()
 }
 
+/// How many [`actions`] the expectation sets, told from its own (few) keys, without looking each action name up.
+fn action_count(expectation: &Map<String, Value>) -> usize {
+    let mut count = 0;
+    let mut response = false;
+    for (key, value) in expectation {
+        if !value.is_null() && TOP_LEVEL_ACTIONS.contains(&key.as_str()) {
+            count += 1;
+            response |= key == "httpResponse";
+        }
+    }
+    // a non-empty `httpResponses` stands in for `httpResponse`
+    if response && present(expectation, "httpResponses").and_then(Value::as_array).is_some_and(|r| !r.is_empty()) {
+        count -= 1;
+    }
+    count
+}
+
 /// `getPrimaryAction` with several action types: the one marked `primary`, or why there is none.
 pub fn primary(expectation: &Map<String, Value>) -> Result<Option<&'static str>, &'static str> {
-    let actions = actions(expectation);
-    if actions.len() < 2 || !steps(expectation).is_empty() {
+    if action_count(expectation) < 2 || !steps(expectation).is_empty() {
         return Ok(None);
     }
+    let actions = actions(expectation);
     let marked: Vec<&str> = actions.into_iter().filter(|k| expectation[*k].get("primary").and_then(Value::as_bool) == Some(true)).collect();
     match marked.as_slice() {
         [one] => Ok(Some(one)),
@@ -142,7 +159,7 @@ pub fn responder(expectation: &Map<String, Value>) -> Option<&Map<String, Value>
 /// Whether serving the expectation involves anything this module runs.
 pub fn any(expectation: &Value) -> bool {
     ["beforeActions", "afterActions", "steps"].iter().any(|k| expectation.get(k).and_then(Value::as_array).is_some_and(|a| !a.is_empty()))
-        || expectation.as_object().is_some_and(|o| actions(o).len() > 1)
+        || expectation.as_object().is_some_and(|o| action_count(o) > 1)
 }
 
 /// `dispatchSecondaryAction`: every action but the primary, fire-and-forget after its own delay. Only forwards and

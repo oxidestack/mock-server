@@ -1,6 +1,11 @@
 //! Reason phrases exactly as Netty's `HttpResponseStatus` writes them, which is what MockServer puts on the wire.
 
 pub fn reason_phrase(code: u32) -> String {
+    reason(code).into_owned()
+}
+
+/// [`reason_phrase`], borrowed for a known status.
+pub fn reason(code: u32) -> std::borrow::Cow<'static, str> {
     let known = match code {
         100 => "Continue",
         101 => "Switching Protocols",
@@ -69,8 +74,8 @@ pub fn reason_phrase(code: u32) -> String {
                 500..=599 => "Server Error",
                 _ => "Unknown Status",
             };
-            return format!("{class} ({code})");
+            return format!("{class} ({code})").into();
         }
     };
-    known.to_string()
+    known.into()
 }

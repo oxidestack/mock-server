@@ -1557,17 +1557,16 @@ struct SanSets {
 /// value of at most 253 characters made of dot-separated LDH labels (letters, digits, hyphen) of at most 63
 /// characters each, optionally with a leading `*` wildcard label. `None` when invalid, so the caller drops it
 /// rather than baking a bogus SAN into the leaf.
-fn normalise_subject_alternative_name_domain(host: &str) -> Option<String> {
-    let mut normalised = host.trim().to_ascii_lowercase();
-    if normalised.ends_with('.') {
-        normalised.pop();
-    }
+fn normalise_subject_alternative_name_domain(host: &str) -> Option<std::borrow::Cow<'_, str>> {
+    let host = host.trim();
+    let host = host.strip_suffix('.').unwrap_or(host);
+    // a name already in lower case (nearly every `Host`) is borrowed as it is
+    let normalised = if host.bytes().any(|b| b.is_ascii_uppercase()) { std::borrow::Cow::Owned(host.to_ascii_lowercase()) } else { std::borrow::Cow::Borrowed(host) };
     if normalised.is_empty() || normalised.len() > 253 {
         return None;
     }
-    let labels: Vec<&str> = normalised.split('.').collect();
-    for (i, label) in labels.iter().enumerate() {
-        if i == 0 && *label == "*" {
+    for (i, label) in normalised.split('.').enumerate() {
+        if i == 0 && label == "*" {
             continue;
         }
         if label.is_empty() || label.len() > 63 {
@@ -1844,16 +1843,17 @@ impl Resolver {
         // read lock, with the normalising done before any lock (the one write lock every request worker
         // queued behind).
         let ip = host_without_port.parse::<std::net::IpAddr>().is_ok();
-        let value = if ip { Some(host_without_port.to_string()) } else { normalise_subject_alternative_name_domain(host_without_port) };
+        let value = if ip { Some(std::borrow::Cow::Borrowed(host_without_port)) } else { normalise_subject_alternative_name_domain(host_without_port) };
         let Some(value) = value.filter(|v| !v.is_empty()) else { return };
         {
             let sans = self.sans.read();
-            if (if ip { &sans.ips } else { &sans.domains }).members.contains(&value) {
+            if (if ip { &sans.ips } else { &sans.domains }).members.contains(value.as_ref()) {
                 return;
             }
         }
         let max = self.config.int_property("maxSubjectAlternativeNames", MAX_SUBJECT_ALTERNATIVE_NAMES_DEFAULT);
         let mut sans = self.sans.write();
+        let value = value.into_owned();
         let added = if ip { sans.ips.bounded_add(value, max) } else { sans.domains.bounded_add(value, max) };
         drop(sans);
         if added {

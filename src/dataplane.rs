@@ -201,6 +201,8 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     if !path_parameters.is_empty() {
         request.path_parameters = path_parameters;
     }
+    // From here on the request no longer changes: it is shared with the log entries that hold it, not copied.
+    let request = Arc::new(request);
     // The request as its log lines show it, built once for its received, matching and response entries.
     let mut logged_request = None;
     // The closest-match scan the unmatched request's log entries made, which `returnNotFound`'s hint reuses when
@@ -218,11 +220,11 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
             _ => None,
         };
         let shown_is_request = rewritten.is_none();
-        let logged = rewritten.unwrap_or_else(|| request.clone());
+        let logged = rewritten.map_or_else(|| request.clone(), Arc::new);
         // The entries render the request they hold when the log is read (upstream's event log ring after 8.0.0), so
         // they show the path parameters the match set (oracle, scenario `path_parameters_log_entries`) and the `Host`
         // and scheme `httpForward` set (`log_ca_load_client_refused_forward`).
-        let shown = logged_request.insert(crate::recorded::LoggedRequest::shared(Arc::new(logged)));
+        let shown = logged_request.insert(crate::recorded::LoggedRequest::shared(logged));
         if !looped {
             state.log.received_logged(shown, &request);
         }
@@ -273,7 +275,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     // response went out.
     let _after = match matched.as_ref().filter(|e| crate::side_actions::any(&e.input)) {
         Some(e) => {
-            let trigger = crate::side_actions::Trigger { state: state.clone(), request: request.clone(), path: e.matcher.path_match(&request) };
+            let trigger = crate::side_actions::Trigger { state: state.clone(), request: HttpRequest::clone(&request), path: e.matcher.path_match(&request) };
             if let Err(body) = crate::side_actions::before(&trigger, &e.input).await {
                 crate::side_actions::after(&trigger, &e.input, false);
                 return Outcome::Respond(crate::side_actions::bad_gateway(body).finalize(&request, &state.config));
@@ -286,7 +288,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     // `dispatchPrimaryActionInternal`: a WebSocket upgrade matched by a plain `httpForward` is relayed to its host
     // and port (or, without a host, where an unmatched one would go) before rate limits, breakpoints and chaos.
     if let Some((host, port, tls)) = matched.as_ref().and_then(|e| forward_relay_target(state, &e.action, &request)) {
-        return Outcome::WebSocketRelay { request: Box::new(request), host, port, tls, guarded: true };
+        return Outcome::WebSocketRelay { request: Box::new(Arc::unwrap_or_clone(request)), host, port, tls, guarded: true };
     }
     let served_by = matched.as_ref().map(|e| e.id.clone());
     // What the action's arm sets for the response entry logged below.
@@ -418,7 +420,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
                             .expectation_id(expectation.id.clone())
                             .args([crate::recorded::Arg::from(kind.to_string()), crate::recorded::Arg::from(crate::recorded::logged(&request))]);
                         crate::log::entry_as(state, crate::recorded::Level::Warn, &entry);
-                        state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(request.clone())));
+                        state.log.message_about(entry, crate::recorded::Subject::Request(request.clone()));
                     }
                     let key = if *kind == "DNS_RESPONSE" { "dnsResponse" } else { "binaryResponse" };
                     log.served_action = Some(expectation.canonical.get(key).cloned().unwrap_or_default());
@@ -464,7 +466,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
                             .expectation_id(expectation.id.clone())
                             .args([crate::recorded::Arg::from(crate::recorded::logged(&request)), (&expectation.id).into()]);
                         crate::log::entry_as(state, crate::recorded::Level::Warn, &entry);
-                        state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(request.clone())));
+                        state.log.message_about(entry, crate::recorded::Subject::Request(request.clone()));
                     }
                     // `writeResponseActionResponse(…, action, …)`: logged as returned for the WebSocket action
                     log.served_action = Some(expectation.canonical.get("httpWebSocketResponse").cloned().unwrap_or_default());
@@ -482,7 +484,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
                         .args([crate::recorded::Arg::from(crate::recorded::logged(&request)), (&action).into(), (&expectation.id).into()]);
                     // an `EXPECTATION_RESPONSE`, kept whatever the `logLevel` (`HttpActionHandler`)
                     state.log.record_with_message(request.clone(), serde_json::Value::Null, Some(expectation.id.clone()), message);
-                    return Outcome::WebSocket { request: Box::new(request), response: response.clone() };
+                    return Outcome::WebSocket { request: Box::new(Arc::unwrap_or_clone(request)), response: response.clone() };
                 }
                 Action::Sse(sse) => {
                     if let Err(cut) = action_dispatch_delay(state, sse.delay.as_ref().map(|d| d.resolve(state, &request))).await {
@@ -507,7 +509,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         None if !looped && crate::ws_relay::is_upgrade(&request) && websocket_target(state, &request).is_some() => {
             let (host, port) = websocket_target(state, &request).expect("websocket_target");
             let tls = request.secure;
-            return Outcome::WebSocketRelay { request: Box::new(request), host, port, tls, guarded: false };
+            return Outcome::WebSocketRelay { request: Box::new(Arc::unwrap_or_clone(request)), host, port, tls, guarded: false };
         }
         // `handleProxyPass` throws on a target `URI.create` refuses: answered as a data-plane fault.
         None if !is_preflight(&request) && crate::forward::proxy_pass_refusal(state, &request).is_some() => {
@@ -516,7 +518,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
             return Outcome::Respond(reply.finalize(&request, &state.config));
         }
         // `handleProxyPass`: a request under a proxy-pass prefix goes to its target.
-        None if !is_preflight(&request) && crate::forward::proxy_pass_mapping(state, &request).is_some() => return proxy_pass(state, request).await,
+        None if !is_preflight(&request) && crate::forward::proxy_pass_mapping(state, &request).is_some() => return proxy_pass(state, Arc::unwrap_or_clone(request)).await,
         // `returnNotFound` for a request that looped back through a proxy: the 404 carries the loop-prevention
         // header, so the MockServer that sent it logs it as no match.
         None if looped && !is_preflight(&request) && unmatched_target(state, &request).is_some() => {
@@ -532,7 +534,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         }
         // `handleUnmatchedProxyForward`: in a tunnel or port-forwarding mode whatever no expectation matches goes to
         // the remote socket; otherwise a request for a non-local `Host` is proxied there (exploratory proxy).
-        None if !looped && !is_preflight(&request) && unmatched_target(state, &request).is_some() => return unmatched_forward(state, request).await,
+        None if !looped && !is_preflight(&request) && unmatched_target(state, &request).is_some() => return unmatched_forward(state, Arc::unwrap_or_clone(request)).await,
         // OpenAI Responses API server-side state: a stored response answers `GET …/responses/{id}`.
         None if stored.is_some() => {
             let body = stored.clone().unwrap_or_default();
@@ -648,7 +650,8 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
             LogEntry::new(Kind::ExpectationResponse, SERVED_FORMAT).args([response(), ordered(), crate::recorded::logged_response(&with_empty(action, true)).into(), id.into()]),
         ),
         (None, _) if stored_entry.is_some() => stored_entry.take(),
-        (None, _) if reply.status == 404 => Some(LogEntry::new(Kind::NoMatchResponse, "no expectation for:{}returning response:{}").args([ordered(), response()]).other_argument(1)),
+        // built only when kept (below INFO the filter that follows drops it)
+        (None, _) if reply.status == 404 => state.info_enabled().then(|| LogEntry::new(Kind::NoMatchResponse, "no expectation for:{}returning response:{}").args([ordered(), response()]).other_argument(1)),
         _ => None,
     };
     // the completion's entry attaches the request (`push_exchange`) in the form already built
@@ -665,11 +668,11 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         }
         None => (message, logged_response),
     };
-    let after_warn = log.after_warn.take().map(|entry| (entry, Arc::new(request.clone())));
+    let after_warn = log.after_warn.take().map(|entry| (entry, request.clone()));
     if served_by.is_none() && reply.status == 404 {
         // an entry with the request set (`setHttpRequest`: a difference's TRACE entry, the closest match diff) is
         // about it, so a log clear that matches the request removes it
-        let about = after_not_found.iter().any(|e| e.requests.is_some()).then(|| Arc::new(request.clone()));
+        let about = after_not_found.iter().any(|e| e.requests.is_some()).then(|| request.clone());
         state.log.record_no_match(request, logged_response, message);
         for entry in std::mem::take(&mut after_not_found) {
             crate::log::entry(state, &entry);
@@ -687,7 +690,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         match (served, message) {
             (Some(make), _) => state.log.record_served(&logged_request, logged_response, served_by, Kind::ExpectationResponse, make),
             (None, Some(message)) => state.log.record_with_message(request, logged_response, served_by, message),
-            (None, None) => state.log.record(request, logged_response, served_by),
+            (None, None) => state.log.record(Arc::unwrap_or_clone(request), logged_response, served_by),
         }
         if let (Some(entry), Some(request)) = (informational_warning, warned_request) {
             crate::log::warn_event_about(state, entry, &request);
@@ -759,7 +762,7 @@ fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a
             match materialised {
                 Ok(mut reply) => {
                     // `WasmResponseShaper`: a WASM body matcher's module may rewrite the static response.
-                    if let Some(module) = expectation.canonical.pointer("/httpRequest/body").filter(|b| b.get("type").and_then(serde_json::Value::as_str) == Some("WASM")).and_then(|b| b.get("moduleName")).and_then(serde_json::Value::as_str) {
+                    if let Some(module) = expectation.canonical.get("httpRequest").and_then(|r| r.get("body")).filter(|b| b.get("type").and_then(serde_json::Value::as_str) == Some("WASM")).and_then(|b| b.get("moduleName")).and_then(serde_json::Value::as_str) {
                         crate::wasm::shape(state, module, request, &mut reply);
                     }
                     let delay = || respond.delay.as_ref().map(|d| d.resolve(state, generation));
@@ -773,7 +776,7 @@ fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a
                     log.served_action = Some(unserved.clone());
                     let action = respond.served(unserved);
                     if recovery.is_none() && synthesized.is_none() && respond.generated.is_none() {
-                        log.empty_body = expectation.input.get("httpResponse").and_then(crate::canonical::empty_response_body).map(|b| (b, true));
+                        log.empty_body = expectation.empty_response_body().map(|b| (b.clone(), true));
                     }
                     // a synthesized GraphQL body is logged with the response (a plain string), not the action
                     let logged = match (&synthesized, action) {
@@ -2366,34 +2369,27 @@ fn log_commit_warning(state: &State, e: &crate::store::Evaluated) {
 fn logged_expectation(e: &crate::store::Evaluated) -> crate::log_entry::Json {
     use std::cell::RefCell;
     use std::collections::HashMap;
-    type Cached = (std::sync::Weak<crate::store::Expectation>, Option<serde_json::Value>, crate::log_entry::Json);
+    // the snapshot's `times` follow from its remaining count alone, which keys the printed form
+    type Cached = (std::sync::Weak<crate::store::Expectation>, i64, crate::log_entry::Json);
     thread_local! {
         static LOGGED: RefCell<HashMap<usize, Cached>> = RefCell::new(HashMap::new());
     }
     const REMEMBERED: usize = 256;
     let key = Arc::as_ptr(&e.expectation) as usize;
-    // A walk entry took no snapshot (`Null`): its `times` are the expectation's own now.
-    let taken = !e.snapshot.is_null();
-    let now_times = (!taken).then(|| e.expectation.current_times()).flatten();
-    let times = if taken { e.snapshot.get("times") } else { now_times.as_ref() };
+    // A walk entry took no snapshot: its `times` are the expectation's own now.
+    let remaining = e.snapshot_remaining();
     LOGGED.with(|logged| {
         let mut logged = logged.borrow_mut();
         // the weak reference keeps the address taken while it is remembered, so an entry is always this expectation's
-        if let Some((.., json)) = logged.get(&key).filter(|(_, cached_times, _)| cached_times.as_ref() == times) {
+        if let Some((.., json)) = logged.get(&key).filter(|(_, cached, _)| *cached == remaining) {
             return json.clone();
         }
-        let current;
-        let snapshot = if taken {
-            &e.snapshot
-        } else {
-            current = e.expectation.current();
-            &current
-        };
-        let json = crate::log_entry::Json::new(crate::canonical::logged_matched_expectation(snapshot, e.expectation.end_date_millis()));
+        let snapshot = e.expectation.current_at(remaining);
+        let json = crate::log_entry::Json::new(crate::canonical::logged_matched_expectation(&snapshot, e.expectation.end_date_millis()));
         if logged.len() >= REMEMBERED {
             logged.clear();
         }
-        logged.insert(key, (Arc::downgrade(&e.expectation), times.cloned(), json.clone()));
+        logged.insert(key, (Arc::downgrade(&e.expectation), remaining, json.clone()));
         json
     })
 }
@@ -2464,7 +2460,7 @@ fn log_evaluations_logged(
             // for it instead.
             let (matched, timeouts) = crate::matcher::regex_timeouts(millis, || e.matcher.matches(request, crate::matcher::Mode::DataPlane));
             // No snapshot: the few entries the budget admits read the expectation when they are logged.
-            walk.extra.push(crate::store::Evaluated { expectation: e.clone(), snapshot: serde_json::Value::Null, matched, active: true, warning: None });
+            walk.extra.push(crate::store::Evaluated { expectation: e.clone(), remaining: None, matched, active: true, warning: None });
             walk.timeouts.push(timeouts);
         }
     }
@@ -2842,7 +2838,7 @@ fn graphql_synthesized(state: &State, canonical: &serde_json::Value, respond: &a
     if response.get("body").is_some_and(|b| !b.is_null()) || response.get("generateFromSchema").is_some_and(|g| !g.is_null()) {
         return None;
     }
-    let body = canonical.pointer("/httpRequest/body").filter(|b| b.get("type").and_then(serde_json::Value::as_str) == Some("GRAPHQL"))?;
+    let body = canonical.get("httpRequest").and_then(|r| r.get("body")).filter(|b| b.get("type").and_then(serde_json::Value::as_str) == Some("GRAPHQL"))?;
     let schema = body.get("schema").and_then(serde_json::Value::as_str).filter(|s| !s.trim().is_empty())?;
     let query = request.body_str();
     if query.trim().is_empty() {

@@ -54,6 +54,8 @@ pub struct Expectation {
     weight: u64,
     /// `httpRequest.respondBeforeBody` is `true`: read from `input` once, when the expectation is built.
     early: bool,
+    /// [`crate::canonical::empty_response_body`] of the `httpResponse` as given, worked out when first served.
+    empty_response_body: std::sync::OnceLock<Option<Value>>,
 }
 
 impl Expectation {
@@ -103,7 +105,14 @@ impl Expectation {
             first_match: AtomicI64::new(0),
             rotation: Default::default(),
             in_progress: Default::default(),
+            empty_response_body: Default::default(),
         }
+    }
+
+    /// The body a `returning response` entry prints for its `httpResponse` (as given) whose echo leaves an empty body
+    /// out ([`crate::canonical::empty_response_body`]); it depends on the expectation alone, so it is worked out once.
+    pub fn empty_response_body(&self) -> Option<&Value> {
+        self.empty_response_body.get_or_init(|| self.input.get("httpResponse").and_then(crate::canonical::empty_response_body)).as_ref()
     }
 
     /// `matchesByPercentage`: `percentage` of matches are served (all when absent or 100, none at 0).
@@ -250,19 +259,26 @@ impl Expectation {
         self.with_remaining(&self.canonical)
     }
 
-    /// The `times` of [`Expectation::current`], without copying the rest.
-    pub fn current_times(&self) -> Option<Value> {
-        let remaining = self.remaining.load(Ordering::Acquire);
-        if remaining >= 0 { Some(serde_json::json!({"remainingTimes": remaining})) } else { self.canonical.get("times").cloned() }
-    }
-
     /// [`Expectation::current`] with default values written out.
     pub fn current_default_values(&self) -> Value {
         self.with_remaining(&self.default_values)
     }
 
+    /// The remaining count [`Expectation::current`] shows (negative: unlimited, the canonical `times` shown).
+    pub fn remaining_now(&self) -> i64 {
+        self.remaining.load(Ordering::Acquire)
+    }
+
+    /// [`Expectation::current`] as it is with `remaining` as its count.
+    pub fn current_at(&self, remaining: i64) -> Value {
+        Self::with_remaining_at(&self.canonical, remaining)
+    }
+
     fn with_remaining(&self, v: &Value) -> Value {
-        let remaining = self.remaining.load(Ordering::Acquire);
+        Self::with_remaining_at(v, self.remaining.load(Ordering::Acquire))
+    }
+
+    fn with_remaining_at(v: &Value, remaining: i64) -> Value {
         let mut v = v.clone();
         if remaining >= 0 {
             v["times"] = serde_json::json!({"remainingTimes": remaining});
@@ -303,8 +319,8 @@ const CANDIDATE_INDEX_THRESHOLD: usize = 64;
 #[derive(Default)]
 struct Inner {
     list: Arc<Vec<Arc<Expectation>>>,
-    by_path: HashMap<String, Vec<usize>>,
-    unindexed: Vec<usize>,
+    /// Rebuilt whole by every [`Inner::reindex`], so a scan shares it as it shares `list`.
+    index: Arc<PathIndex>,
     /// How many of `list` carry `respondBeforeBody: true`, recounted by every [`Inner::reindex`], which
     /// every change to the list ends with.
     early: usize,
@@ -338,40 +354,32 @@ impl Candidates {
     }
 }
 
-impl Inner {
-    fn list_mut(&mut self) -> &mut Vec<Arc<Expectation>> {
-        Arc::make_mut(&mut self.list)
-    }
+/// The positions in a store's list by lower-cased literal path, and those of the expectations without one.
+#[derive(Default)]
+struct PathIndex {
+    by_path: rustc_hash::FxHashMap<String, Vec<usize>>,
+    unindexed: Vec<usize>,
+}
 
-    /// The expectations for which `keep` is true, over a snapshot of the list.
-    fn candidates_where(&self, keep: impl Fn(&Expectation) -> bool) -> Candidates {
-        let positions = (0..self.list.len() as u32).filter(|&i| keep(&self.list[i as usize])).collect();
-        Candidates { list: self.list.clone(), positions }
-    }
+/// The list and its path index as a scan goes through them: two reference counts, no lock of the store held.
+struct View {
+    list: Arc<Vec<Arc<Expectation>>>,
+    index: Arc<PathIndex>,
+}
 
-    fn reindex(&mut self) {
-        self.list_mut().sort_by(|a, b| b.priority.cmp(&a.priority).then(a.created.cmp(&b.created)).then_with(|| a.id.cmp(&b.id)));
-        self.by_path.clear();
-        self.unindexed.clear();
-        self.early = self.list.iter().filter(|e| e.early).count();
-        for (i, e) in self.list.iter().enumerate() {
-            match &e.index_key {
-                Some(key) => self.by_path.entry(key.clone()).or_default().push(i),
-                None => self.unindexed.push(i),
-            }
-        }
-    }
-
-    /// Positions that could match `path`, ascending.
+impl View {
+    /// The expectations that could match `path`, in match order.
     fn candidates(&self, path: &str) -> impl Iterator<Item = &Arc<Expectation>> {
-        let indexed: &[usize] = if path.is_empty() {
+        let everything = path.is_empty() || self.list.len() < CANDIDATE_INDEX_THRESHOLD;
+        let indexed: &[usize] = if everything {
             &[]
         } else {
-            self.by_path.get(&path.to_ascii_lowercase()).map(Vec::as_slice).unwrap_or(&[])
+            // the index keys are lower-cased; a path that already is one is looked up as it is
+            let key = if path.bytes().any(|b| b.is_ascii_uppercase()) { std::borrow::Cow::Owned(path.to_ascii_lowercase()) } else { std::borrow::Cow::Borrowed(path) };
+            self.index.by_path.get(key.as_ref()).map(Vec::as_slice).unwrap_or(&[])
         };
-        let everything = path.is_empty() || self.list.len() < CANDIDATE_INDEX_THRESHOLD;
         let (mut a, mut b) = (0, 0);
-        let unindexed = &self.unindexed;
+        let unindexed = &self.index.unindexed;
         let mut next_all = 0;
         std::iter::from_fn(move || {
             if everything {
@@ -399,6 +407,37 @@ impl Inner {
     }
 }
 
+impl Inner {
+    /// What a scan goes through, held without this store's lock.
+    fn shared(&self) -> View {
+        View { list: self.list.clone(), index: self.index.clone() }
+    }
+
+    fn list_mut(&mut self) -> &mut Vec<Arc<Expectation>> {
+        Arc::make_mut(&mut self.list)
+    }
+
+    /// The expectations for which `keep` is true, over a snapshot of the list.
+    fn candidates_where(&self, keep: impl Fn(&Expectation) -> bool) -> Candidates {
+        let mut positions = Vec::with_capacity(self.list.len());
+        positions.extend((0..self.list.len() as u32).filter(|&i| keep(&self.list[i as usize])));
+        Candidates { list: self.list.clone(), positions }
+    }
+
+    fn reindex(&mut self) {
+        self.list_mut().sort_by(|a, b| b.priority.cmp(&a.priority).then(a.created.cmp(&b.created)).then_with(|| a.id.cmp(&b.id)));
+        self.early = self.list.iter().filter(|e| e.early).count();
+        let mut index = PathIndex::default();
+        for (i, e) in self.list.iter().enumerate() {
+            match &e.index_key {
+                Some(key) => index.by_path.entry(key.clone()).or_default().push(i),
+                None => index.unindexed.push(i),
+            }
+        }
+        self.index = Arc::new(index);
+    }
+}
+
 /// One expectation [`Store::first_dns_match`] evaluated: DNS ones are logged, and every unmatched one competes for
 /// the closest match by its recorded differences (none for a non-DNS matcher, which rejects a DNS query outright).
 pub struct DnsEvaluated {
@@ -421,10 +460,10 @@ pub struct Found {
 /// One expectation [`Store::first_match_traced`] evaluated: its state at the time and the result.
 pub struct Evaluated {
     pub expectation: Arc<Expectation>,
-    /// [`Expectation::current`] when it was evaluated; `Null` when not taken (the unmatched request's closest-match
-    /// walk: a copy of each of up to 1,000 expectations per request was most of its cost, and only the
-    /// few it logs need one), and then read from the expectation when it is logged.
-    pub snapshot: Value,
+    /// The remaining count when it was evaluated, which with the expectation's unchanging canonical form makes
+    /// [`Expectation::current`] as it was then ([`Evaluated::snapshot`]); `None` when not taken (the unmatched
+    /// request's closest-match walk), and then read from the expectation when it is logged.
+    pub remaining: Option<i64>,
     pub matched: bool,
     /// `false` for a used-up or expired expectation still stored: its matcher rejects the request before looking
     /// at it (`isActive()`), so there are no reasons.
@@ -432,6 +471,18 @@ pub struct Evaluated {
     /// A WARN the commit of this matched expectation logged, right after its matched entry: its clustered
     /// shared-`Times` counter was evicted (`warnIfCounterEvictedWhileLive`).
     pub warning: Option<String>,
+}
+
+impl Evaluated {
+    /// The remaining count its snapshot shows: as evaluated, or the expectation's own now when none was taken.
+    pub fn snapshot_remaining(&self) -> i64 {
+        self.remaining.unwrap_or_else(|| self.expectation.remaining_now())
+    }
+
+    /// [`Expectation::current`] as it was when evaluated (or now, when not taken).
+    pub fn snapshot(&self) -> Value {
+        self.expectation.current_at(self.snapshot_remaining())
+    }
 }
 
 /// `RequestMatchers.update`'s distinct-by-id batch (upstream #106, 33cdd577e): one entry per id, the last one given,
@@ -1006,8 +1057,8 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
         // spends up to `wasmExecutionTimeoutMillis`), and meanwhile an expectation is still created at once (scenario
         // `wasm_slow_module_concurrency`); clustered, consuming a limited `Times` is a backend round trip, which a
         // remote node's listener may need this store to answer.
-        let snapshot: Vec<Arc<Expectation>> = self.view().candidates(&request.path).cloned().collect();
-        let (found, prune) = self.scan(admissible(snapshot.iter(), namespace), request, now, &mut evaluated);
+        let snapshot = self.view().shared();
+        let (found, prune) = self.scan(admissible(snapshot.candidates(&request.path), namespace), request, now, &mut evaluated);
         if prune {
             self.drop_lazily(now);
         }
@@ -1024,14 +1075,14 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
             // is in flight (`postProcess` removes it then), this scan drops it (`scheduleLazyRemoval`).
             if !e.alive(now) {
                 prune |= !e.in_progress.load(Ordering::Acquire);
-                evaluated.push(Evaluated { expectation: e.clone(), snapshot: e.current(), matched: false, active: false, warning: None });
+                evaluated.push(Evaluated { expectation: e.clone(), remaining: Some(e.remaining_now()), matched: false, active: false, warning: None });
                 continue;
             }
             // Logged as it was when matched, before this match is counted.
-            let snapshot = e.current();
+            let remaining = Some(e.remaining_now());
             let matched = e.matcher.matches(request, Mode::DataPlane);
             // Logged as matched by the request matcher, even when the conversation predicates then reject it.
-            evaluated.push(Evaluated { expectation: e.clone(), snapshot, matched, active: true, warning: None });
+            evaluated.push(Evaluated { expectation: e.clone(), remaining, matched, active: true, warning: None });
             // `LlmConversationMatcher`: an `httpLlmResponse` with conversation predicates must accept the request's
             // conversation too; a rejection logs nothing of its own.
             let matched = matched && crate::llm::conversation::matches(&e.input, request, Self::MAX_LLM_CONVERSATION_BODY, self.semantic.get());
@@ -1190,11 +1241,11 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
         let mut evaluated = Vec::new();
         let now = self.clock.now_millis();
         let early = |e: &&Arc<Expectation>| {
-            e.early && e.input.pointer("/httpRequest/body").is_none_or(Value::is_null)
+            e.early && e.input.get("httpRequest").and_then(|r| r.get("body")).is_none_or(Value::is_null)
         };
         // As `first_match_traced`: over a snapshot, no lock of this store held while matching.
-        let snapshot: Vec<Arc<Expectation>> = self.view().candidates(&request.path).cloned().collect();
-        let (found, _) = self.scan(admissible(snapshot.iter(), namespace).filter(early), request, now, &mut evaluated);
+        let snapshot = self.view().shared();
+        let (found, _) = self.scan(admissible(snapshot.candidates(&request.path), namespace).filter(early), request, now, &mut evaluated);
         (found, evaluated)
     }
 
@@ -1202,7 +1253,7 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
     pub fn evaluate_all(&self, request: &HttpRequest) -> Vec<Evaluated> {
         let now = self.clock.now_millis();
         let snapshot: Vec<Arc<Expectation>> = self.view().list.to_vec();
-        snapshot.iter().filter(|e| e.alive(now)).map(|e| Evaluated { expectation: e.clone(), snapshot: e.current(), matched: e.matcher.matches(request, Mode::DataPlane), active: true, warning: None }).collect()
+        snapshot.iter().filter(|e| e.alive(now)).map(|e| Evaluated { expectation: e.clone(), remaining: Some(e.remaining_now()), matched: e.matcher.matches(request, Mode::DataPlane), active: true, warning: None }).collect()
     }
 
     /// `firstMatchingExpectation` for a binary request: every live expectation is evaluated in match order until a

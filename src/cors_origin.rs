@@ -154,8 +154,9 @@ pub fn is_control_plane_route(method: Option<&str>, path: &str) -> bool {
         return true;
     }
     let Some(method) = method else { return false };
-    let method = java_trim(method).to_ascii_uppercase();
-    let has = |methods: &[&str]| methods.contains(&method.as_str());
+    // the listed methods are upper case: compared ignoring ASCII case, as the upper-cased method was
+    let method = java_trim(method);
+    let has = |methods: &[&str]| methods.iter().any(|m| m.eq_ignore_ascii_case(method));
     BARE_ROUTE_METHODS.iter().any(|(p, m)| *p == path && has(m)) || BARE_PREFIX_METHODS.iter().any(|(p, m)| path.starts_with(p) && has(m))
 }
 
@@ -176,8 +177,7 @@ pub fn is_control_plane_method_path(method: Option<&str>, path: &str, config: &c
     if is_control_plane_route(method, path) {
         return true;
     }
-    let liveness = config.property("livenessHttpGetPath").filter(|p| !is_blank(p));
-    method.is_some_and(|m| java_trim(m).eq_ignore_ascii_case("GET")) && liveness.is_some_and(|l| l == path)
+    method.is_some_and(|m| java_trim(m).eq_ignore_ascii_case("GET")) && config.read_property("livenessHttpGetPath", |l| l.is_some_and(|l| !is_blank(l) && l == path))
 }
 
 /// `HttpState.isControlPlaneOriginRefused(request)`: a request the control plane serves whose browser `Origin` the

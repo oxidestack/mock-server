@@ -379,9 +379,9 @@ impl Reply {
     fn last_chunk(&self, out: &mut Vec<u8>) {
         out.extend_from_slice(b"0\r\n");
         for (name, value) in &self.trailers {
-            out.extend_from_slice(&crate::request::header_bytes(name));
+            crate::request::push_header_bytes(out, name);
             out.extend_from_slice(b": ");
-            out.extend_from_slice(&crate::request::header_bytes(value));
+            crate::request::push_header_bytes(out, value);
             out.extend_from_slice(b"\r\n");
         }
         out.extend_from_slice(b"\r\n");
@@ -414,16 +414,23 @@ impl Reply {
     }
 
     pub fn encode_http1(&self, head_only: bool) -> Vec<u8> {
-        let reason = self.reason.clone().filter(|r| !r.is_empty()).unwrap_or_else(|| crate::status::reason_phrase(self.status));
-        let mut out = Vec::with_capacity(128 + self.body.len());
-        out.extend_from_slice(format!("HTTP/1.1 {} {reason}\r\n", self.status).as_bytes());
+        use std::io::Write;
+        let reason = match self.reason.as_deref().filter(|r| !r.is_empty()) {
+            Some(reason) => std::borrow::Cow::Borrowed(reason),
+            None => crate::status::reason(self.status),
+        };
+        // the status line (`HTTP/1.1 `, the status, a space, CRLF), every header (with `: ` and CRLF; a header's bytes
+        // are at most its text's), the blank line and an unchunked body
+        let head = 9 + 10 + 1 + reason.len() + 2 + self.headers.iter().map(|(name, value)| name.len() + value.len() + 4).sum::<usize>() + 2;
+        let mut out = Vec::with_capacity(head + self.body.len());
+        let _ = write!(out, "HTTP/1.1 {} {reason}\r\n", self.status);
         for (name, value) in &self.headers {
             if name.bytes().any(|b| b == b'\r' || b == b'\n' || b == b':') || value.bytes().any(|b| b == b'\r' || b == b'\n') {
                 continue;
             }
-            out.extend_from_slice(&crate::request::header_bytes(name));
+            crate::request::push_header_bytes(&mut out, name);
             out.extend_from_slice(b": ");
-            out.extend_from_slice(&crate::request::header_bytes(value));
+            crate::request::push_header_bytes(&mut out, value);
             out.extend_from_slice(b"\r\n");
         }
         out.extend_from_slice(b"\r\n");

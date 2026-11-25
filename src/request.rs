@@ -147,7 +147,18 @@ pub fn header_text(bytes: &[u8]) -> String {
 
 /// A header value as Netty writes it: one byte per char, `?` for chars above U+00FF (`AsciiString.c2b`).
 pub fn header_bytes(text: &str) -> Vec<u8> {
-    text.chars().map(|c| if (c as u32) > 0xff { b'?' } else { c as u8 }).collect()
+    let mut out = Vec::with_capacity(text.len());
+    push_header_bytes(&mut out, text);
+    out
+}
+
+/// [`header_bytes`] of `text`, appended to `out`.
+pub fn push_header_bytes(out: &mut Vec<u8>, text: &str) {
+    if text.is_ascii() {
+        out.extend_from_slice(text.as_bytes());
+    } else {
+        out.extend(text.chars().map(|c| if (c as u32) > 0xff { b'?' } else { c as u8 }));
+    }
 }
 
 /// `MockServerHttpRequestToFullHttpRequest.getURI`: the path with the raw query when there is one, else with the

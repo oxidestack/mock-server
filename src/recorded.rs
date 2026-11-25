@@ -1271,8 +1271,8 @@ impl RequestLog {
     }
 
     /// [`RequestLog::record`] with the completion's log line.
-    pub fn record_with_message(&self, request: HttpRequest, response: Value, expectation_id: Option<String>, message: impl Into<LogEntry>) {
-        self.push_exchange(Exchange::new(Arc::new(request), response, expectation_id).with_entry(Some(message.into())));
+    pub fn record_with_message(&self, request: impl Into<Arc<HttpRequest>>, response: Value, expectation_id: Option<String>, message: impl Into<LogEntry>) {
+        self.push_exchange(Exchange::new(request.into(), response, expectation_id).with_entry(Some(message.into())));
     }
 
     /// A served request's completion whose entry `make` builds from the exchange (its request, its response). The
@@ -1337,13 +1337,13 @@ impl RequestLog {
     }
 
     /// A `NO_MATCH_RESPONSE`: the request no expectation matched, its 404 and (with INFO) its log line.
-    pub fn record_no_match(&self, request: HttpRequest, response: Value, message: Option<LogEntry>) {
+    pub fn record_no_match(&self, request: impl Into<Arc<HttpRequest>>, response: Value, message: Option<LogEntry>) {
         // Below INFO the `NO_MATCH_RESPONSE` entry is not logged (`MockServerLogger`), and the exchange lives in that
         // entry: `REQUEST_RESPONSES`, `explainUnmatched` and the verifications read none of it (oracle).
         if message.is_none() {
             return;
         }
-        let mut x = Exchange::new(Arc::new(request), response, None).with_entry(message);
+        let mut x = Exchange::new(request.into(), response, None).with_entry(message);
         x.no_match = true;
         self.push_exchange(x);
     }

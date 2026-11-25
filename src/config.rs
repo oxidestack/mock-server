@@ -226,6 +226,44 @@ impl Config {
         self.startup_property(name)
     }
 
+    /// [`Config::property`] handed to `read` as it is held, not copied.
+    pub fn read_property<R>(&self, name: &str, read: impl FnOnce(Option<&str>) -> R) -> R {
+        if self.runtime_set.load(std::sync::atomic::Ordering::Acquire) {
+            let runtime = self.runtime.read();
+            if let Some(value) = runtime.get(name) {
+                return read(Some(value));
+            }
+        }
+        self.read_startup_property(name, read)
+    }
+
+    /// [`Config::startup_property`] handed to `read` as it is held, not copied.
+    fn read_startup_property<R>(&self, name: &str, read: impl FnOnce(Option<&str>) -> R) -> R {
+        if MILLIS_ALIASES.iter().any(|(alias, ..)| *alias == name) {
+            return read(self.startup_property(name).as_deref());
+        }
+        self.read_cached_startup_property(name, read)
+    }
+
+    /// The startup tiers' value of `name` (no `…InMillis` alias resolved), handed to `read` as it is held.
+    fn read_cached_startup_property<R>(&self, name: &str, read: impl FnOnce(Option<&str>) -> R) -> R {
+        let cache = self.startup_cache();
+        if let Some(value) = cache.full.get(name) {
+            return read(value.as_deref());
+        }
+        if let Some(value) = cache.others.read().get(name) {
+            return read(value.as_deref());
+        }
+        let value = self.resolve_startup_property(name).map(|v| startup_read(name, v));
+        let result = read(value.as_deref());
+        // the code reads a bounded set of names; past this many, a name is resolved each time rather than kept
+        let mut others = cache.others.write();
+        if others.len() < 256 {
+            others.insert(name.to_string(), value);
+        }
+        result
+    }
+
     /// A value `PUT /mockserver/configuration` (or an embedder) set, without locking while none was ever set.
     fn runtime_value(&self, name: &str) -> Option<String> {
         if !self.runtime_set.load(std::sync::atomic::Ordering::Acquire) {
@@ -241,6 +279,7 @@ impl Config {
             std::sync::Arc::new(StartupCache {
                 full: names.clone().map(|name| (name, self.resolve_startup_property(name).map(|v| startup_read(name, v)))).collect(),
                 outside_file: names.map(|name| (name, self.resolve_startup_property_outside_file(name))).collect(),
+                others: Default::default(),
             })
         })
     }
@@ -284,10 +323,7 @@ impl Config {
         if let Some(&(_, primary, default)) = MILLIS_ALIASES.iter().find(|(alias, ..)| *alias == name) && let Some(value) = self.startup_property(primary).and_then(|v| v.parse::<i64>().ok()).filter(|v| *v != default) {
             return Some(value.to_string());
         }
-        match self.startup_cache().full.get(name) {
-            Some(value) => value.clone(),
-            None => self.resolve_startup_property(name).map(|v| startup_read(name, v)),
-        }
+        self.read_cached_startup_property(name, |v| v.map(str::to_string))
     }
 
     fn resolve_startup_property(&self, name: &str) -> Option<String> {
@@ -314,16 +350,16 @@ impl Config {
     }
 
     pub fn bool_property(&self, name: &str, default: bool) -> bool {
-        self.property(name).map(|v| v.trim().eq_ignore_ascii_case("true")).unwrap_or(default)
+        self.read_property(name, |v| v.map(|v| v.trim().eq_ignore_ascii_case("true")).unwrap_or(default))
     }
 
     pub fn int_property(&self, name: &str, default: i64) -> i64 {
-        self.property(name).and_then(|v| v.trim().parse().ok()).unwrap_or(default)
+        self.read_property(name, |v| v.and_then(|v| v.trim().parse().ok()).unwrap_or(default))
     }
 
     /// [`Config::bool_property`] as the server started with it, ignoring runtime changes.
     pub fn bool_startup_property(&self, name: &str, default: bool) -> bool {
-        self.startup_property(name).map(|v| v.trim().eq_ignore_ascii_case("true")).unwrap_or(default)
+        self.read_startup_property(name, |v| v.map(|v| v.trim().eq_ignore_ascii_case("true")).unwrap_or(default))
     }
 
     /// `matchExactCase`: data-plane matching of the method, the path and `REGEX` bodies is case-sensitive. Read when an
@@ -701,8 +737,11 @@ fn remote_port(v: &str) -> Result<u16, String> {
 /// [`Config::startup_property`] and [`Config::startup_property_outside_file`] of every recognised property.
 #[derive(Debug)]
 struct StartupCache {
-    full: HashMap<&'static str, Option<String>>,
-    outside_file: HashMap<&'static str, Option<String>>,
+    full: rustc_hash::FxHashMap<&'static str, Option<String>>,
+    outside_file: rustc_hash::FxHashMap<&'static str, Option<String>>,
+    /// `full` for the names outside the recognised list (`proxyPass`, `proxyPassMappings`, …), each resolved when
+    /// first read: the startup tiers do not change once the configuration is built.
+    others: parking_lot::RwLock<rustc_hash::FxHashMap<String, Option<String>>>,
 }
 
 /// `mockserver.fooBarBaz` → `MOCKSERVER_FOO_BAR_BAZ`, except for the literal names in [`ENV_NAME_EXCEPTIONS`].

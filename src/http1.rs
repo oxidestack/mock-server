@@ -168,6 +168,11 @@ where
     // closes. Until then `Http1PipeliningGate` answers a request sent without pipelining, as it would without the gate,
     // and holds one pipelined behind it until the close (9.2.0).
     let mut closing_at: Option<tokio::time::Instant> = None;
+    // the connection's addresses as its requests record them (`localAddress`, `remoteAddress`), formatted once
+    let local_address = crate::server::java_local_address(&conn);
+    let remote_address = crate::server::java_socket_address(conn.client_address());
+    // Netty's direct-memory limit, which only the process's environment sets
+    let direct_memory = crate::config::netty_max_direct_memory(&state.config);
     'conn: loop {
         if let Some(at) = closing_at.filter(|at| !buf.is_empty() || tokio::time::Instant::now() >= *at) {
             tokio::time::sleep_until(at).await;
@@ -271,8 +276,8 @@ where
                     keep_alive,
                     secure,
                     protocol: "HTTP_1_1",
-                    local_address: crate::server::java_local_address(&conn),
-                    remote_address: crate::server::java_socket_address(conn.client_address()),
+                    local_address: local_address.clone(),
+                    remote_address: remote_address.clone(),
                     client_certificates: conn.client_certificates.clone(),
                     ..HttpRequest::default()
                 };
@@ -445,15 +450,15 @@ where
                 keep_alive,
                 secure,
                 protocol: "HTTP_1_1",
-                local_address: crate::server::java_local_address(&conn),
-                remote_address: crate::server::java_socket_address(conn.client_address()),
+                local_address: local_address.clone(),
+                remote_address: remote_address.clone(),
                 client_certificates: conn.client_certificates.clone(),
                 remote_target: conn.proxy_target.clone(),
                 ..HttpRequest::default()
             };
             // Netty's direct-memory limit (`io.netty.maxDirectMemory`): the aggregator's buffers outgrow it, the
             // pool's ERROR is logged, the request is reported cut short and the connection closes without an answer.
-            if let Some((used, max)) = crate::config::netty_max_direct_memory(&state.config).and_then(|max| crate::client::request_direct_memory_refusal(http_request.body.len(), max)) {
+            if let Some((used, max)) = direct_memory.and_then(|max| crate::client::request_direct_memory_refusal(http_request.body.len(), max)) {
                 let channel = crate::server::channel_description(&conn);
                 let reached = format!("direct memory limit (io.netty.maxDirectMemory) reached - raise it with -XX:MaxDirectMemorySize or -Dio.netty.maxDirectMemory - closing connection {channel} - failed to allocate 65536 byte(s) of direct memory (used: {used}, max: {max})");
                 crate::log::error_event(&state, crate::recorded::LogEntry::at(crate::recorded::Level::Error, reached));
@@ -1057,45 +1062,26 @@ async fn read_head<S: AsyncRead + Unpin>(stream: &mut S, buf: &mut BytesMut, lim
                 buf.clear();
                 return Err(Error::Refused(400, head.decode_error.unwrap_or_else(|| LINE_SEPARATOR.into())));
             }
-            let mut capacity = 128;
-            loop {
-                let mut headers = vec![httparse::EMPTY_HEADER; capacity];
-                let mut req = httparse::Request::new(&mut headers);
-                match req.parse(buf) {
-                    Ok(httparse::Status::Complete(len)) => {
-                        let mut map = MultiMap::new();
-                        for h in req.headers.iter() {
-                            request::append(&mut map, h.name, request::header_text(h.value));
-                        }
-                        let head = Head {
-                            method: req.method.unwrap_or("GET").to_string(),
-                            target: req.path.unwrap_or("/").to_string(),
-                            http10: req.version == Some(0),
-                            http11: req.version == Some(1),
-                            headers: map,
-                            decode_error: None,
-                        };
-                        if let Some(message) = content_length_fault(&head) {
+            match parse_head(buf) {
+                Ok(Some((head, len))) => {
+                    if let Some(message) = content_length_fault(&head) {
+                        buf.clear();
+                        return Err(Error::Refused(400, message));
+                    }
+                    buf.advance(len);
+                    return Ok(head);
+                }
+                Ok(None) => {}
+                Err(()) => {
+                    // `httparse` is stricter than Netty's decoder: once the head is complete, read it as Netty does.
+                    if let Some(end) = head_end(buf) {
+                        let head = netty_head(&buf[..end]);
+                        if let Some(message) = head.decode_error {
                             buf.clear();
                             return Err(Error::Refused(400, message));
                         }
-                        buf.advance(len);
+                        buf.advance(end);
                         return Ok(head);
-                    }
-                    Ok(httparse::Status::Partial) => break,
-                    Err(httparse::Error::TooManyHeaders) if capacity < 8192 => capacity *= 4,
-                    Err(_) => {
-                        // `httparse` is stricter than Netty's decoder: once the head is complete, read it as Netty does.
-                        if let Some(end) = head_end(buf) {
-                            let head = netty_head(&buf[..end]);
-                            if let Some(message) = head.decode_error {
-                                buf.clear();
-                                return Err(Error::Refused(400, message));
-                            }
-                            buf.advance(end);
-                            return Ok(head);
-                        }
-                        break;
                     }
                 }
             }
@@ -1104,6 +1090,47 @@ async fn read_head<S: AsyncRead + Unpin>(stream: &mut S, buf: &mut BytesMut, lim
             }
         }
         fill(stream, buf).await?;
+    }
+}
+
+/// `httparse`'s reading of the head at the start of `buf`: the head and its length, `None` while it is incomplete,
+/// `Err` for one it rejects. Up to 128 headers are parsed into an array on this call's stack, more (up to 8,192) into
+/// one on the heap; kept out of line, so the array is not part of the caller's frame.
+#[inline(never)]
+fn parse_head(buf: &[u8]) -> Result<Option<(Head, usize)>, ()> {
+    const ON_STACK: usize = 128;
+    let mut stack = [httparse::EMPTY_HEADER; ON_STACK];
+    let mut heap: Vec<httparse::Header<'_>>;
+    let mut capacity = ON_STACK;
+    loop {
+        let headers: &mut [httparse::Header<'_>] = if capacity == ON_STACK {
+            &mut stack
+        } else {
+            heap = vec![httparse::EMPTY_HEADER; capacity];
+            &mut heap
+        };
+        let mut req = httparse::Request::new(headers);
+        match req.parse(buf) {
+            Ok(httparse::Status::Complete(len)) => {
+                // with room for the `content-length` the aggregator adds
+                let mut map = MultiMap::with_capacity(req.headers.len() + 1);
+                for h in req.headers.iter() {
+                    request::append(&mut map, h.name, request::header_text(h.value));
+                }
+                let head = Head {
+                    method: req.method.unwrap_or("GET").to_string(),
+                    target: req.path.unwrap_or("/").to_string(),
+                    http10: req.version == Some(0),
+                    http11: req.version == Some(1),
+                    headers: map,
+                    decode_error: None,
+                };
+                return Ok(Some((head, len)));
+            }
+            Ok(httparse::Status::Partial) => return Ok(None),
+            Err(httparse::Error::TooManyHeaders) if capacity < 8192 => capacity *= 4,
+            Err(_) => return Err(()),
+        }
     }
 }
 
@@ -1215,6 +1242,20 @@ fn strict_line_fault(buf: &[u8]) -> Option<Head> {
     let control = |b: u8| b < 0x20 || (0x7f..=0x9f).contains(&b);
     if buf.first().is_some_and(|b| control(*b)) {
         return Some(netty_invalid(LINE_SEPARATOR.into()));
+    }
+    // A head whose lines all end with CRLF up to its blank line, or that is not complete yet, has no fault: told
+    // without recording where its lines start, which only a fault's message needs.
+    let (mut start, mut lines) = (0, 0);
+    loop {
+        let lf = start + buf[start..].iter().position(|b| *b == b'\n')?;
+        if lf == start || buf[lf - 1] != b'\r' {
+            break;
+        }
+        if lf == start + 1 && lines > 0 {
+            return None;
+        }
+        lines += 1;
+        start = lf + 1;
     }
     let mut starts = vec![0];
     loop {

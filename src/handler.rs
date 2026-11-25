@@ -641,7 +641,8 @@ async fn serve_inline(state: &Arc<State>, mut request: HttpRequest, metrics: boo
         state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(request.clone())));
     }
     let host = request.first_header("host").map(str::to_string);
-    let method = request.method.clone();
+    // the method a duration by route is labelled with (a startup choice), copied only for it
+    let method = (metrics && state.config.bool_startup_property("metricsRequestDurationRouteLabels", false)).then(|| request.method.clone());
     // `HttpRequestHandler.channelRead0`: every exchange's `Host` header grows the leaf's SAN set, not only
     // CONNECT/SOCKS targets (confirmed against the oracle: a plain HTTP request with an unseen `Host` shows up
     // on a later, unrelated TLS handshake). `Tls::add_subject_alternative_name` normalises/validates/caps it.
@@ -677,8 +678,8 @@ async fn serve_inline(state: &Arc<State>, mut request: HttpRequest, metrics: boo
     if metrics {
         let seconds = started.elapsed().as_secs_f64();
         state.config.metrics.request_handled(seconds);
-        if state.config.bool_startup_property("metricsRequestDurationRouteLabels", false) {
-            state.config.metrics.request_handled_by_method(&method, seconds);
+        if let Some(method) = &method {
+            state.config.metrics.request_handled_by_method(method, seconds);
         }
     }
     match host.and_then(|h| crate::chaos::lifecycle_profile(state, &h)) {
