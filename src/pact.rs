@@ -347,7 +347,7 @@ fn pact_request(node: &Value) -> crate::request::HttpRequest {
     if let Some(Value::Object(headers)) = node.get("headers") {
         for (name, v) in headers {
             for value in values(v) {
-                crate::request::push(&mut request.headers, name, value);
+                request.headers.push_merged(name, &value);
             }
         }
     }

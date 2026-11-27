@@ -49,7 +49,7 @@ fn request(method: &str, path: &str) -> HttpRequest {
 }
 
 fn header(request: &mut HttpRequest, name: &str, value: &str) {
-    request.headers.push((name.into(), vec![value.into()]));
+    request.headers.push((name.to_string(), vec![value.to_string()]));
 }
 
 /// Runs `work` and fails the test when it does not finish in `seconds`: a watchdog for deadlocks, never a

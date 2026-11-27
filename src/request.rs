@@ -4,6 +4,7 @@ use bytes::Bytes;
 
 /// Ordered multi-valued map; names keep their original case and compare case-insensitively.
 pub type MultiMap = Vec<(String, Vec<String>)>;
+pub use crate::headers::Headers;
 
 #[derive(Debug, Clone, Default)]
 pub struct HttpRequest {
@@ -17,7 +18,8 @@ pub struct HttpRequest {
     pub query: MultiMap,
     /// `Parameters.rawParameterString`: the query string as received, forwarded unchanged until `query` is modified.
     pub raw_query: Option<String>,
-    pub headers: MultiMap,
+    /// One buffer and one index for all of them ([`Headers`]): the bulk of what the event log retains of a request.
+    pub headers: Headers,
     pub cookies: Vec<(String, String)>,
     pub body: Bytes,
     /// The body as received when Netty's decompressor inflated it (`Content-Encoding: gzip|deflate`).
@@ -32,16 +34,18 @@ pub struct HttpRequest {
     pub secure: bool,
     /// `HTTP_1_1` or `HTTP_2`.
     pub protocol: &'static str,
-    pub local_address: String,
-    pub remote_address: String,
+    /// Shared by the connection's requests.
+    pub local_address: std::sync::Arc<str>,
+    pub remote_address: std::sync::Arc<str>,
     /// `clientCertificateChain`: the TLS client's certificates, as serialised.
     pub client_certificates: std::sync::Arc<Vec<crate::tls::client_cert::ClientCertificate>>,
-    /// The connection's `REMOTE_SOCKET`: the `CONNECT` (or SOCKS) target unmatched requests are proxied to.
-    pub remote_target: Option<(String, u16)>,
+    /// The connection's `REMOTE_SOCKET`: the `CONNECT` (or SOCKS) target unmatched requests are proxied to. Boxed, as the
+    /// socket address: both are rare, and the log keeps every request it holds whole.
+    pub remote_target: Option<Box<(String, u16)>>,
     /// `socketAddress` (host, port, secure): set only on a request matched from its head (`respondBeforeBody`).
-    pub socket_address: Option<(String, u16, bool)>,
+    pub socket_address: Option<Box<(String, u16, bool)>>,
     /// `logCorrelationId`: given on arrival at the data plane, shared by the request's log entries (empty before).
-    pub log_correlation_id: String,
+    pub log_correlation_id: CorrelationId,
     /// Built in-process on behalf of an already authorised caller (an MCP tool calling `httpState` directly), so
     /// control-plane authentication and authorization do not apply again. Never set from a parsed request.
     pub trusted: bool,
@@ -86,13 +90,13 @@ impl HttpRequest {
     /// The content type the body is classified by: `None` for a [`BodyKind::PlainString`] or [`BodyKind::Binary`] body.
     pub fn body_content_type(&self) -> Option<&str> {
         match self.body_kind {
-            BodyKind::Received => self.first_header("content-type"),
+            BodyKind::Received => self.headers.content_type(),
             BodyKind::PlainString | BodyKind::Binary => None,
         }
     }
 
     pub fn first_header(&self, name: &str) -> Option<&str> {
-        first(&self.headers, name)
+        self.headers.first(name)
     }
 
     /// `getBodyAsString()`: the body as upstream decodes a received one (`BodyDecoderEncoder.bytesToBody`), in the
@@ -140,10 +144,97 @@ pub fn append(map: &mut MultiMap, name: &str, value: String) {
     }
 }
 
-/// A new `logCorrelationId`: a random UUID, written straight into its string rather than through `Display`.
-pub fn new_correlation_id() -> String {
+/// A new `logCorrelationId`: a random UUID, written straight into the request rather than through `Display`.
+pub fn new_correlation_id() -> CorrelationId {
     let mut text = [0u8; uuid::fmt::Hyphenated::LENGTH];
-    uuid::Uuid::new_v4().hyphenated().encode_lower(&mut text).to_string()
+    uuid::Uuid::new_v4().hyphenated().encode_lower(&mut text);
+    CorrelationId::Uuid(text)
+}
+
+/// `logCorrelationId`: a random UUID's 36 characters held in the request itself, not on the heap; any other id (a
+/// test's, one read back from JSON) boxed.
+#[derive(Clone, Default, PartialEq, Eq, Hash)]
+pub enum CorrelationId {
+    #[default]
+    Empty,
+    /// Lower-case hyphenated, ASCII.
+    Uuid([u8; uuid::fmt::Hyphenated::LENGTH]),
+    Other(Box<str>),
+}
+
+impl CorrelationId {
+    pub fn as_str(&self) -> &str {
+        match self {
+            CorrelationId::Empty => "",
+            CorrelationId::Uuid(text) => std::str::from_utf8(text).unwrap_or_default(),
+            CorrelationId::Other(text) => text,
+        }
+    }
+
+    pub fn clear(&mut self) {
+        *self = CorrelationId::Empty;
+    }
+}
+
+impl std::ops::Deref for CorrelationId {
+    type Target = str;
+    fn deref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl AsRef<str> for CorrelationId {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl std::fmt::Display for CorrelationId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::fmt::Debug for CorrelationId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self.as_str(), f)
+    }
+}
+
+impl From<&str> for CorrelationId {
+    fn from(text: &str) -> CorrelationId {
+        if text.is_empty() { CorrelationId::Empty } else { CorrelationId::Other(text.into()) }
+    }
+}
+
+impl From<String> for CorrelationId {
+    fn from(text: String) -> CorrelationId {
+        if text.is_empty() { CorrelationId::Empty } else { CorrelationId::Other(text.into_boxed_str()) }
+    }
+}
+
+impl From<CorrelationId> for String {
+    fn from(id: CorrelationId) -> String {
+        id.as_str().to_string()
+    }
+}
+
+impl From<&CorrelationId> for String {
+    fn from(id: &CorrelationId) -> String {
+        id.as_str().to_string()
+    }
+}
+
+impl PartialEq<str> for CorrelationId {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == other
+    }
+}
+
+impl PartialEq<&str> for CorrelationId {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
 }
 
 /// A header value as Netty reads it: one char per byte (`AsciiString.b2c`).
@@ -202,7 +293,7 @@ pub fn parse_query(query: &str) -> MultiMap {
 /// Cookies as upstream's decoder builds them: each `Cookie` header through Netty's `ServerCookieDecoder`
 /// (a set ordered by name that keeps the first of a repeated name), then into an insertion-ordered map where a
 /// later header's value replaces an earlier one in place.
-pub fn parse_cookies(headers: &MultiMap) -> Vec<(String, String)> {
+pub fn parse_cookies(headers: &Headers) -> Vec<(String, String)> {
     let mut cookies: Vec<(String, String)> = Vec::new();
     for (name, values) in headers {
         if !name.eq_ignore_ascii_case("cookie") {

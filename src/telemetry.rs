@@ -1783,7 +1783,7 @@ mod tests {
     fn traced_request(path: &str, headers: &[(&str, &str)]) -> crate::request::HttpRequest {
         let mut request = crate::request::HttpRequest { path: path.into(), ..Default::default() };
         for (name, value) in headers {
-            crate::request::push(&mut request.headers, name, value.to_string());
+            request.headers.push_merged(name, value);
         }
         request
     }

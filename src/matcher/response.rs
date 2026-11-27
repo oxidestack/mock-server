@@ -102,7 +102,7 @@ impl ResponseMatcher {
             ));
         }
         if let Some(headers) = &self.headers {
-            out.push(("headers", (!headers.matches(&actual.headers, true)).then(|| headers.recorded_differences(&actual.headers))));
+            out.push(("headers", (!headers.matches(&actual.headers, true)).then(|| headers.recorded_differences(&actual.headers.to_multimap()))));
         }
         if let Some(cookies) = &self.cookies {
             let found: MultiMap = actual.cookies.iter().map(|(k, v)| (k.clone(), vec![v.clone()])).collect();
@@ -172,7 +172,7 @@ fn as_request(response: &Value) -> HttpRequest {
         _ => {}
     }
     let body = response.get("body").map(|b| crate::action::response_body(b, None).0).unwrap_or_default();
-    HttpRequest { headers, cookies, body, ..HttpRequest::default() }
+    HttpRequest { headers: headers.into(), cookies, body, ..HttpRequest::default() }
 }
 
 /// `MatchDifferenceFormatter.truncateDiffLine`.

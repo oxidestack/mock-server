@@ -122,7 +122,7 @@ impl Envelope {
             method: Some(request.method.clone()),
             path: Some(request.path.clone()),
             query: request.query.clone(),
-            headers: request.headers.clone(),
+            headers: request.headers.to_multimap(),
             cookies: request.cookies.clone(),
             body: Some(request.body_str().into_owned()),
         }

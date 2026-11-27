@@ -19,6 +19,7 @@ use crate::canonical;
 use crate::config::Config;
 pub use crate::log_entry::{Arg, Kind, Level, LogEntry};
 use crate::matcher::{Mode, RequestMatcher};
+use crate::headers::{Entries, Values};
 use crate::request::{BodyKind, HttpRequest, MultiMap};
 
 const B64: base64::engine::GeneralPurpose = base64::engine::general_purpose::STANDARD;
@@ -56,10 +57,12 @@ pub struct Exchange {
     /// with the earlier exchanges that logged an equal one ([`interned_shared`]).
     pub response: Arc<Value>,
     pub timestamp: DateTime<Local>,
-    /// For forwarded exchanges: the expectation `retrieve?type=RECORDED_EXPECTATIONS` reports.
-    pub recorded: Option<Value>,
+    /// For forwarded exchanges: the expectation `retrieve?type=RECORDED_EXPECTATIONS` reports. Boxed, as the two
+    /// below: a `Value` is 80 bytes, and in all but a forwarded or re-imported exchange the three were 240 bytes of
+    /// nothing in every exchange the log keeps.
+    pub recorded: Option<Box<Value>>,
     /// The same expectation in input form, keeping header order (read by the Java code format).
-    pub recorded_input: Option<Value>,
+    pub recorded_input: Option<Box<Value>>,
     /// The expectation that produced the response, if any (verification by expectation id).
     pub expectation_id: Option<String>,
     /// Its entry (and line in `retrieve?type=LOGS`), when upstream writes one for this kind of completion: see
@@ -69,7 +72,7 @@ pub struct Exchange {
     pub no_match: bool,
     /// The request as `REQUEST_RESPONSES` shows it, for an exchange re-imported from an archive (the model object
     /// it was read into, not a received request).
-    pub shown_request: Option<Value>,
+    pub shown_request: Option<Box<Value>>,
 }
 
 /// An exchange's entry: none, built when the exchange was logged, or built the first time the log is read. Most
@@ -79,16 +82,20 @@ enum ExchangeEntry {
     None,
     /// Boxed: a `LogEntry` is ~600 bytes, and most exchanges hold a deferred one.
     Built(Box<LogEntry>),
-    Deferred(Box<Deferred>),
+    Deferred(Box<Deferred<DeferredMake>>),
 }
 
+/// What builds a deferred exchange entry.
+type DeferredMake = dyn Fn(&Exchange) -> LogEntry + Send + Sync;
+
 /// What a deferred entry is built from: its call site's builder, then what logging it adds ([`completed_entry`]) in
-/// the port scope it was logged in. The type is known without building it.
-struct Deferred {
+/// the port scope it was logged in. The type is known without building it. The builder is the last field, held in
+/// the same allocation (one box, one free on eviction, where a boxed closure inside took two).
+struct Deferred<F: ?Sized> {
     kind: Kind,
     portless: bool,
-    make: Box<dyn Fn(&Exchange) -> LogEntry + Send + Sync>,
     built: std::sync::OnceLock<Box<LogEntry>>,
+    make: F,
 }
 
 impl Exchange {
@@ -178,7 +185,7 @@ fn completed_entry(mut entry: LogEntry, x: &Exchange, portless: bool) -> LogEntr
         entry = entry.request(&x.request);
     }
     if entry.correlation_id.is_none() && !x.request.log_correlation_id.is_empty() {
-        entry.correlation_id = Some(x.request.log_correlation_id.clone());
+        entry.correlation_id = Some(x.request.log_correlation_id.to_string());
     }
     if entry.response.is_none() && !x.response.is_null() {
         entry.response = Some(logged_response_json(&x.response));
@@ -199,7 +206,7 @@ fn completed_entry(mut entry: LogEntry, x: &Exchange, portless: bool) -> LogEntr
     // `setExpectation(request, response)`: the recorded expectation, its response as the entry's.
     if entry.expectation.is_none() && entry.kind == Kind::ForwardedRequest {
         entry.expectation = x.recorded.as_ref().map(|recorded| {
-            let mut recorded = recorded.clone();
+            let mut recorded = Value::clone(recorded);
             if let Some(o) = recorded.as_object_mut() {
                 if let Some(r) = o.get("httpRequest").cloned().map(model_json) {
                     o.insert("httpRequest".into(), r);
@@ -600,7 +607,7 @@ mod weight {
 
     /// A received request, as the entry retains it.
     pub fn request(r: &HttpRequest) -> u64 {
-        let headers = r.headers.iter().flat_map(|(name, values)| values.iter().map(move |value| (name.as_str(), value.as_str())));
+        let headers = r.headers.pairs();
         PER_REQUEST_MESSAGE_OVERHEAD_BYTES + r.body.len() as u64 + header_bytes(headers, HEADER_ENTRY_OVERHEAD_BYTES)
     }
 
@@ -1062,10 +1069,12 @@ impl RequestLog {
         cut.original_body = None;
         cut.body_kind = BodyKind::Binary;
         let length = vec![request.body.len().to_string()];
-        match cut.headers.iter_mut().find(|(k, _)| k.eq_ignore_ascii_case(TRUNCATED_BODY_HEADER)) {
+        let mut headers = cut.headers.to_multimap();
+        match headers.iter_mut().find(|(k, _)| k.eq_ignore_ascii_case(TRUNCATED_BODY_HEADER)) {
             Some((_, values)) => *values = length,
-            None => cut.headers.push((TRUNCATED_BODY_HEADER.to_string(), length)),
+            None => headers.push((TRUNCATED_BODY_HEADER.to_string(), length)),
         }
+        cut.headers = headers.into();
         Some(cut)
     }
 
@@ -1392,7 +1401,7 @@ impl RequestLog {
         }
         let kind = if kind == Kind::Info { x.completion_kind() } else { kind };
         let make = move |x: &Exchange| make(x, &LoggedRequest::shared(x.request.clone()));
-        x.entry = ExchangeEntry::Deferred(Box::new(Deferred { kind, portless, make: Box::new(make), built: Default::default() }));
+        x.entry = ExchangeEntry::Deferred(Box::new(Deferred { kind, portless, built: Default::default(), make }));
         self.push(Entry::Exchange(Arc::new(x)));
     }
 
@@ -1402,8 +1411,8 @@ impl RequestLog {
         // `CredentialRedaction.forLog`: a control-plane request's entry holds it without its credentials
         if let Some(masked) = crate::credential_redaction::for_log(&x.request) {
             x.request = Arc::new(masked);
-            if let Some((shown, _)) = x.shown_request.as_ref().and_then(crate::credential_redaction::json_for_log) {
-                x.shown_request = Some(shown);
+            if let Some((shown, _)) = x.shown_request.as_deref().and_then(crate::credential_redaction::json_for_log) {
+                x.shown_request = Some(Box::new(shown));
             }
         }
         if let Some(entry) = x.take_entry() {
@@ -1451,7 +1460,7 @@ impl RequestLog {
     ) {
         let (recorded, recorded_input) = recorded.map(|(c, i)| (Some(c), Some(i))).unwrap_or_default();
         let mut x = Exchange::new(Arc::new(request), response, expectation_id).with_entry(message);
-        (x.recorded, x.recorded_input) = (recorded, recorded_input);
+        (x.recorded, x.recorded_input) = (recorded.map(Box::new), recorded_input.map(Box::new));
         self.push_exchange(x);
     }
 
@@ -1460,7 +1469,7 @@ impl RequestLog {
     pub fn record_reimported(&self, request: HttpRequest, shown: Value, response: Value, recorded: (Value, Value), message: impl Into<LogEntry>) {
         let (recorded, recorded_input) = (Some(recorded.0), Some(recorded.1));
         let mut x = Exchange::new(Arc::new(request), response, None).with_entry(Some(message.into()));
-        (x.recorded, x.recorded_input, x.shown_request) = (recorded, recorded_input, Some(shown));
+        (x.recorded, x.recorded_input, x.shown_request) = (recorded.map(Box::new), recorded_input.map(Box::new), Some(Box::new(shown)));
         self.push_exchange(x);
     }
 
@@ -2065,7 +2074,11 @@ fn redact_body_text(text: &str, fields: &[String]) -> Option<String> {
 /// oracle) and by `REQUEST_RESPONSES`'s request side.
 fn redact_request(request: &HttpRequest, fields: &[String]) -> HttpRequest {
     let mut r = request.clone();
-    redact_multimap(&mut r.headers, LOG_REDACT_HEADERS);
+    if r.headers.iter().any(|(name, _)| LOG_REDACT_HEADERS.iter().any(|n| n.eq_ignore_ascii_case(name))) {
+        let mut headers = r.headers.to_multimap();
+        redact_multimap(&mut headers, LOG_REDACT_HEADERS);
+        r.headers = headers.into();
+    }
     // `redactCookies` (upstream c76143e4a): the parsed cookies too, which `cookies`, HAR and the cURL form's
     // rebuilt `Cookie` header show
     r.cookies.iter_mut().for_each(|(_, v)| *v = LOG_REDACTED.to_string());
@@ -2153,7 +2166,7 @@ pub fn redact_exchanges(exchanges: Vec<Arc<Exchange>>, config: &Config) -> Vec<A
                 body.remove("json");
             }
             if let Some(shown) = &e.shown_request {
-                e.shown_request = Some(redact_value(shown, &fields, true));
+                e.shown_request = Some(Box::new(redact_value(shown, &fields, true)));
             }
             Arc::new(e)
         })
@@ -2529,17 +2542,17 @@ impl serde::Serialize for LoggedView<'_> {
         if !request.client_certificates.is_empty() {
             o.serialize_entry("clientCertificateChain", &Certificates(&request.client_certificates))?;
         }
-        if let Some((host, port, secure)) = &request.socket_address {
+        if let Some((host, port, secure)) = request.socket_address.as_deref() {
             o.serialize_entry("socketAddress", &SocketAddress(host, *port, *secure))?;
         }
         if !request.protocol.is_empty() {
             o.serialize_entry("protocol", request.protocol)?;
         }
         if !request.local_address.is_empty() {
-            o.serialize_entry("localAddress", &request.local_address)?;
+            o.serialize_entry("localAddress", &*request.local_address)?;
         }
         if !request.remote_address.is_empty() {
-            o.serialize_entry("remoteAddress", &request.remote_address)?;
+            o.serialize_entry("remoteAddress", &*request.remote_address)?;
         }
         if let Some(body) = request_body_json(request, BodyForm::Ordered) {
             o.serialize_entry("body", &bare(body))?;
@@ -2574,15 +2587,16 @@ impl serde::Serialize for LiteralValue<'_> {
 }
 
 /// [`literal_map_value`] as `serde` writes it.
-struct LiteralMap<'a>(&'a MultiMap);
+struct LiteralMap<'a, M: Entries>(&'a M);
 
-impl serde::Serialize for LiteralMap<'_> {
+impl<M: Entries> serde::Serialize for LiteralMap<'_, M> {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeMap;
-        let map = self.0;
-        if map.iter().any(|(name, _)| literal_name_rewritten(name)) {
-            return serde::Serialize::serialize(&literal_map_value(map), s);
+        if self.0.entries().any(|(name, _)| literal_name_rewritten(name)) {
+            return serde::Serialize::serialize(&literal_map_value(self.0), s);
         }
+        let map: Vec<(&str, Values<'_>)> = self.0.entries().collect();
+        let map = map.as_slice();
         // the names in descending order (`NottableString.compareTo`, UTF-16 units) by a stable sort, which keeps a
         // repeated name's entries together and in their order: written as one name with all their values
         let mut small = [0u32; 64];
@@ -2596,7 +2610,7 @@ impl serde::Serialize for LiteralMap<'_> {
         for (i, at) in order.iter_mut().enumerate() {
             *at = i as u32;
         }
-        let name = |i: u32| map[i as usize].0.as_str();
+        let name = |i: u32| map[i as usize].0;
         order.sort_by(|&a, &b| name(b).encode_utf16().cmp(name(a).encode_utf16()));
         let mut o = s.serialize_map(None)?;
         let mut from = 0;
@@ -2611,14 +2625,14 @@ impl serde::Serialize for LiteralMap<'_> {
 }
 
 /// The values of the entries of a multimap at these indices, one list, each [`LiteralValue`].
-struct LiteralValues<'a>(&'a MultiMap, &'a [u32]);
+struct LiteralValues<'a>(&'a [(&'a str, Values<'a>)], &'a [u32]);
 
 impl serde::Serialize for LiteralValues<'_> {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeSeq;
         let mut seq = s.serialize_seq(None)?;
         for &i in self.1 {
-            for value in &self.0[i as usize].1 {
+            for value in self.0[i as usize].1 {
                 seq.serialize_element(&LiteralValue(value))?;
             }
         }
@@ -2891,17 +2905,19 @@ fn hashmap_order(keys: &[String], capacity: usize) -> Vec<usize> {
     order
 }
 
-pub fn map_value(map: &MultiMap, hash_order: bool) -> Value {
+pub fn map_value(map: &impl Entries, hash_order: bool) -> Value {
     let mut out = Map::new();
+    let values = |vs: Values<'_>| Value::Array(vs.iter().map(|v| Value::String(v.to_string())).collect());
     if hash_order {
-        let keys: Vec<String> = map.iter().map(|(k, _)| k.clone()).collect();
+        let map: Vec<(&str, Values<'_>)> = map.entries().collect();
+        let keys: Vec<String> = map.iter().map(|(k, _)| k.to_string()).collect();
         for i in java_hashmap_order(&keys) {
-            out.insert(map[i].0.clone(), json!(map[i].1));
+            out.insert(map[i].0.to_string(), values(map[i].1));
         }
         Value::Object(out)
     } else {
-        for (k, vs) in map {
-            out.insert(k.clone(), json!(vs));
+        for (k, vs) in map.entries() {
+            out.insert(k.to_string(), values(vs));
         }
         canonical::multi_map(&Value::Object(out))
     }
@@ -2932,11 +2948,11 @@ pub fn literal_json(s: &str) -> Value {
 
 /// The headers or query parameters of a real HTTP message as `KeysToMultiValuesSerializer` writes them: map form in
 /// descending name order, or the list form when a name starts with a marker; names and values literal.
-pub fn literal_map_value(map: &MultiMap) -> Value {
+pub fn literal_map_value(map: &impl Entries) -> Value {
     let mut entries = crate::model::Entries::new();
-    for (k, vs) in map {
+    for (k, vs) in map.entries() {
         let values = vs.iter().map(|v| Some(literal(v)));
-        match entries.iter_mut().find(|(n, _)| n.value.as_deref() == Some(k.as_str())) {
+        match entries.iter_mut().find(|(n, _)| n.value.as_deref() == Some(k)) {
             Some((_, existing)) => existing.extend(values),
             None => entries.push((literal(k), values.collect())),
         }
@@ -2958,8 +2974,8 @@ pub fn literal_cookies_value(cookies: &[(String, String)]) -> Value {
 }
 
 /// A multimap of a real HTTP message in list form (`[{"name", "values"}]`), names and values [`literal_json`].
-pub fn literal_list_form(map: &MultiMap) -> Value {
-    Value::Array(map.iter().map(|(k, vs)| json!({"name": literal_json(k), "values": vs.iter().map(|v| literal_json(v)).collect::<Vec<_>>()})).collect())
+pub fn literal_list_form(map: &impl Entries) -> Value {
+    Value::Array(map.entries().map(|(k, vs)| json!({"name": literal_json(k), "values": vs.iter().map(literal_json).collect::<Vec<_>>()})).collect())
 }
 
 fn cookies_value(cookies: &[(String, String)]) -> Value {
@@ -3239,7 +3255,7 @@ pub fn ordered_with(request: &HttpRequest, form: BodyForm) -> Value {
     if !request.client_certificates.is_empty() {
         o.insert("clientCertificateChain".into(), Value::Array(request.client_certificates.iter().map(|c| c.model.clone()).collect()));
     }
-    if let Some((host, port, secure)) = &request.socket_address {
+    if let Some((host, port, secure)) = request.socket_address.as_deref() {
         o.insert("socketAddress".into(), serde_json::json!({"host": host, "port": port, "scheme": if *secure { "HTTPS" } else { "HTTP" }}));
     }
     // A request without a protocol (built from a callback's answer) has none to print.
@@ -3247,10 +3263,10 @@ pub fn ordered_with(request: &HttpRequest, form: BodyForm) -> Value {
         o.insert("protocol".into(), request.protocol.into());
     }
     if !request.local_address.is_empty() {
-        o.insert("localAddress".into(), request.local_address.clone().into());
+        o.insert("localAddress".into(), Value::String(request.local_address.to_string()));
     }
     if !request.remote_address.is_empty() {
-        o.insert("remoteAddress".into(), request.remote_address.clone().into());
+        o.insert("remoteAddress".into(), Value::String(request.remote_address.to_string()));
     }
     if let Some(body) = request_body_json(request, form) {
         o.insert("body".into(), body);
@@ -3281,7 +3297,7 @@ fn path_parameters_value(parameters: &MultiMap) -> Value {
 
 pub fn exchange_json(x: &Exchange) -> Value {
     let mut o = Map::new();
-    o.insert("httpRequest".into(), x.shown_request.clone().unwrap_or_else(|| ordered(&x.request)));
+    o.insert("httpRequest".into(), x.shown_request.as_deref().cloned().unwrap_or_else(|| ordered(&x.request)));
     if !x.response.is_null() {
         o.insert("httpResponse".into(), Value::clone(&x.response));
     }

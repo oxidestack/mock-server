@@ -50,7 +50,7 @@ pub fn consistent_host<'a>(hosts: &[&'a str]) -> Option<&'a str> {
 
 /// The request's consistent `Host` (all `host` header values; an HTTP/2 `:authority` arrives as `host`).
 pub fn request_host(request: &crate::request::HttpRequest) -> Option<String> {
-    let hosts: Vec<&str> = request.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("host")).flat_map(|(_, v)| v.iter().map(String::as_str)).collect();
+    let hosts: Vec<&str> = request.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("host")).flat_map(|(_, v)| v.iter()).collect();
     consistent_host(&hosts).map(str::to_string)
 }
 

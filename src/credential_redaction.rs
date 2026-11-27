@@ -48,17 +48,19 @@ pub fn without_credentials(request: &HttpRequest) -> Option<HttpRequest> {
     }
     let mut copy = request.clone();
     let mut seen: Vec<String> = Vec::new();
-    copy.headers.retain_mut(|(name, values)| {
-        if !is_credential_header(name) {
-            return true;
-        }
-        let lower = name.to_ascii_lowercase();
-        if seen.contains(&lower) {
-            return false;
-        }
-        seen.push(lower);
-        *values = vec![LOG_REDACTED.to_string()];
-        true
+    copy.headers.edit(|headers| {
+        headers.retain_mut(|(name, values)| {
+            if !is_credential_header(name) {
+                return true;
+            }
+            let lower = name.to_ascii_lowercase();
+            if seen.contains(&lower) {
+                return false;
+            }
+            seen.push(lower);
+            *values = vec![LOG_REDACTED.to_string()];
+            true
+        })
     });
     copy.cookies.clear();
     Some(copy)
@@ -67,7 +69,7 @@ pub fn without_credentials(request: &HttpRequest) -> Option<HttpRequest> {
 /// The credential values [`without_credentials`] masks in `request` (`maskedCredentialValues`), kept so
 /// `redactSecretsInLog` can still scrub them from an entry's other text.
 pub fn masked_values(request: &HttpRequest) -> Vec<String> {
-    let mut values: Vec<String> = request.headers.iter().filter(|(name, _)| is_credential_header(name)).flat_map(|(_, vs)| vs.iter().cloned()).collect();
+    let mut values: Vec<String> = request.headers.iter().filter(|(name, _)| is_credential_header(name)).flat_map(|(_, vs)| vs.iter().map(str::to_string)).collect();
     values.extend(request.cookies.iter().map(|(_, v)| v.clone()));
     values.retain(|v| v != LOG_REDACTED);
     values

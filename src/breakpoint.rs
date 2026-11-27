@@ -426,7 +426,7 @@ async fn dispatch(state: &State, matcher: &Matcher, request: &HttpRequest, respo
             let mut clone = request.clone();
             clone.log_correlation_id.clear();
             clone.headers.push((callback::CORRELATION_HEADER.into(), vec![correlation]));
-            clone.headers.extend(headers.iter().map(|(name, value)| ((*name).to_string(), vec![value.clone()])));
+            clone.headers.extend(headers.iter().map(|(name, value)| ((*name).to_string(), vec![value.to_string()])));
             let shown_clone = crate::recorded::logged(&clone);
             // The registry map (client id to channel), which holds no one the message could go to: its `toString` in
             // the message (`{}` when empty; the channels' own texts are not reproduced), its JSON as the argument.

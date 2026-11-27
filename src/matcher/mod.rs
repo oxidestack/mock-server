@@ -597,7 +597,7 @@ impl RequestMatcher {
             }
         }
         let query = if control_plane { std::borrow::Cow::Borrowed(&request.query) } else { std::borrow::Cow::Owned(self.query.split_values(&request.query)) };
-        if !self.query.matches(&query, true) {
+        if !self.query.matches(&*query, true) {
             return false;
         }
         // `BooleanMatcher`: a null keep-alive (HTTP/3) satisfies no keepAlive matcher.
@@ -627,8 +627,8 @@ impl RequestMatcher {
     fn jwt_difference(&self, request: &HttpRequest) -> Option<Difference> {
         let jwt = self.jwt.as_ref()?;
         let name = jwt.header_name();
-        let value = request.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case(name)).and_then(|(_, vs)| vs.first());
-        jwt.difference(value.map(String::as_str))
+        let value = request.headers.first(name);
+        jwt.difference(value)
     }
 }
 
@@ -1002,7 +1002,7 @@ impl RequestMatcher {
     fn map_field(&self, field: &str, request: &HttpRequest) -> Option<(&MultiMapMatcher, MultiMap, multimap::MapKind)> {
         use multimap::MapKind;
         Some(match field {
-            "headers" => (&self.headers, request.headers.clone(), MapKind::Headers),
+            "headers" => (&self.headers, request.headers.to_multimap(), MapKind::Headers),
             "cookies" => (&self.cookies, request.cookies.iter().map(|(k, v)| (k.clone(), vec![v.clone()])).collect(), MapKind::Cookies),
             "pathParameters" => {
                 // a path with another number of parts extracts nothing: the parameters are matched against none
@@ -1068,7 +1068,7 @@ impl RequestMatcher {
             "headers" => {
                 let expected = self.headers.values_of("content-type");
                 let found: Vec<&str> =
-                    request.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("content-type")).flat_map(|(_, vs)| vs.iter().map(String::as_str)).collect();
+                    request.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("content-type")).flat_map(|(_, vs)| vs.iter()).collect();
                 for e in &expected {
                     for a in &found {
                         let base = |v: &str| v.split(';').next().unwrap_or_default().trim().to_string();
@@ -1670,12 +1670,12 @@ mod tests {
                 .collect()
         };
         let mut request = get("/a.c");
-        request.headers = vec![("x-key".into(), vec!["ab.*".into()])];
+        request.headers = vec![("x-key".into(), vec!["ab.*".into()])].into();
         assert_eq!(pairs(&request, true), vec![("/abc".to_string(), "/a.c".to_string())]);
         assert_eq!(pairs(&request, false), vec![("/abc".to_string(), "/a.c".to_string()), ("abcdef".to_string(), "ab.*".to_string())]);
         // A plain literal is never read as a regex, and a value that matches outright notes nothing.
         let mut literal = get("/abd");
-        literal.headers = vec![("x-key".into(), vec!["abcdef".into()])];
+        literal.headers = vec![("x-key".into(), vec!["abcdef".into()])].into();
         assert!(pairs(&literal, false).is_empty());
     }
 
@@ -1776,7 +1776,7 @@ mod tests {
         post.method = "POST".into();
         requests.push(post);
         let mut headed = get("/none");
-        headed.headers = vec![("x-a".into(), vec!["c".into()])];
+        headed.headers = vec![("x-a".into(), vec!["c".into()])].into();
         requests.push(headed);
         let mut claimed = 0;
         for definition in &matchers {
@@ -1885,7 +1885,7 @@ mod tests {
     fn list_form_input_is_accepted() {
         let m = RequestMatcher::compile(&json!({"headers": [{"name": "X-A", "values": ["1"]}]}));
         let mut r = get("/");
-        r.headers = vec![("x-a".into(), vec!["1".into()])];
+        r.headers = vec![("x-a".into(), vec!["1".into()])].into();
         assert!(m.matches(&r, Mode::DataPlane));
     }
 

@@ -287,7 +287,7 @@ fn parse_port(port: &str) -> Option<i32> {
 
 impl Derived {
     fn new(request: &HttpRequest) -> Derived {
-        let host_header = request.headers.iter().find(|(k, _)| equals_ignore_case(k, "host")).and_then(|(_, vs)| vs.first().cloned());
+        let host_header = request.headers.iter().find(|(k, _)| equals_ignore_case(k, "host")).and_then(|(_, vs)| vs.first().map(str::to_string));
         let (mut host, mut port) = (None, None);
         match host_header.as_deref().map(|h| h.trim_matches(|c: char| c <= ' ')).filter(|h| !h.is_empty()).and_then(host_and_port) {
             Some(parts) => {
@@ -298,7 +298,7 @@ impl Derived {
                 };
             }
             None => {
-                let local = request.local_address.as_str();
+                let local = &*request.local_address;
                 let address = local[local.rfind('/').map_or(0, |i| i + 1)..].trim();
                 if let Some(parts) = host_and_port(address) {
                     host = Some(parts[0].clone());
@@ -580,10 +580,10 @@ impl RequestObject {
     /// reads a map (`containsKey`, then `get`), so it gets a plain map with the same case-insensitive lookups.
     pub fn new(request: &HttpRequest, path: &PathMatch, velocity: bool) -> RequestObject {
         let (headers, headers_value) = if velocity {
-            let map = HeaderMap::new(&request.headers);
+            let map = HeaderMap::new(&request.headers.to_multimap());
             (map.map.clone(), JValue::Object(Arc::new(map)))
         } else {
-            let map = multi_map(MapKind::CaseInsensitive, &request.headers);
+            let map = multi_map(MapKind::CaseInsensitive, &request.headers.to_multimap());
             (map.clone(), JValue::Map(map))
         };
         let body = DecodedBody::decode(&request.body, request.first_header("content-type"));
@@ -600,8 +600,8 @@ impl RequestObject {
             cookies: JMap::from_entries(MapKind::Hash, request.cookies.iter().map(|(k, v)| (JValue::str(k.as_str()), JValue::str(v.as_str())))),
             body: body.map(|b| b.template_string()).unwrap_or_default(),
             secure: Some(request.secure),
-            local_address: Some(request.local_address.clone()).filter(|a| !a.is_empty()),
-            remote_address: Some(request.remote_address.clone()).filter(|a| !a.is_empty()),
+            local_address: Some(request.local_address.to_string()).filter(|a| !a.is_empty()),
+            remote_address: Some(request.remote_address.to_string()).filter(|a| !a.is_empty()),
             keep_alive: request.keep_alive_flag(),
             json_rpc_id,
             json_rpc_raw_id,
@@ -613,7 +613,7 @@ impl RequestObject {
                     request.client_certificates.iter().map(|c| JValue::Object(Arc::new(CertificateObject { model: c.model.clone() }))).collect(),
                 ))
             },
-            id: Some(request.log_correlation_id.clone()).filter(|id| !id.is_empty()),
+            id: Some(request.log_correlation_id.to_string()).filter(|id| !id.is_empty()),
             derived: Derived::new(request),
         }
     }

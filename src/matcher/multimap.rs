@@ -3,6 +3,7 @@
 use serde_json::Value;
 
 use super::string::StringMatcher;
+use crate::headers::Entries;
 use crate::request::MultiMap;
 
 /// Unit tests mirroring the upstream contain-all matrix (`SubSetMatcherTest`,
@@ -123,11 +124,11 @@ impl MultiMapMatcher {
         self
     }
 
-    pub fn matches(&self, actual: &MultiMap, case_insensitive_values: bool) -> bool {
+    pub fn matches(&self, actual: &impl Entries, case_insensitive_values: bool) -> bool {
         if self.entries.is_empty() {
             return true;
         }
-        if actual.iter().all(|(_, vs)| vs.is_empty()) {
+        if actual.entries().all(|(_, vs)| vs.is_empty()) {
             // `allKeysNotted() || allKeysOptional()`
             return self.entries.iter().all(|e| e.name.not) || self.entries.iter().all(|e| e.name.optional);
         }
@@ -140,8 +141,8 @@ impl MultiMapMatcher {
     /// `SubSetMatcher.containsSubset`: every expected (name, value) pair needs an actual pair it matches (negation
     /// included), a negated name must be absent unless its value is negated too, and the matched actual pairs must
     /// be at least as many as the required expected pairs, so one actual pair cannot satisfy two expected ones.
-    fn contains_subset(&self, actual: &MultiMap, ci: bool) -> bool {
-        let pairs: Vec<(&str, &str)> = actual.iter().flat_map(|(k, vs)| vs.iter().map(move |v| (k.as_str(), v.as_str()))).collect();
+    fn contains_subset(&self, actual: &impl Entries, ci: bool) -> bool {
+        let pairs: Vec<(&str, &str)> = actual.entries().flat_map(|(k, vs)| vs.iter().map(move |v| (k, v))).collect();
         let mut matched = std::collections::HashSet::new();
         let mut required = 0;
         for entry in &self.entries {
@@ -176,21 +177,17 @@ impl MultiMapMatcher {
         matched.len() >= required
     }
 
-    fn entry_matches(&self, entry: &Entry, actual: &MultiMap, ci: bool) -> bool {
+    fn entry_matches(&self, entry: &Entry, actual: &impl Entries, ci: bool) -> bool {
         if entry.name.not {
             // `!Name`: the key itself must be ABSENT — no un-notted actual key equals it — never "aggregate
             // every non-matching key's values and compare them against the pattern's value", which is not a
             // meaningful "this key must be absent" assertion and was fixed upstream for exactly that reason
             // (`NottableStringMultiMap.containsAll`'s `containsUnNottedKey`, regression W3-3b). This mirrors
             // `contains_subset`'s own `notted_and_present`, so the two key-match styles agree.
-            return !actual.iter().any(|(k, _)| entry.name.matches_positive(k, true));
+            return !actual.entries().any(|(k, _)| entry.name.matches_positive(k, true));
         }
-        let binary = self.binary_headers && actual.iter().any(|(k, _)| entry.name.matches_positive(k, true) && is_binary_header(k));
-        let values: Vec<&str> = actual
-            .iter()
-            .filter(|(k, _)| entry.name.matches_positive(k, true))
-            .flat_map(|(_, vs)| vs.iter().map(String::as_str))
-            .collect();
+        let binary = self.binary_headers && actual.entries().any(|(k, _)| entry.name.matches_positive(k, true) && is_binary_header(k));
+        let values: Vec<&str> = actual.entries().filter(|(k, _)| entry.name.matches_positive(k, true)).flat_map(|(_, vs)| vs.iter()).collect();
         let key = if binary { "-bin" } else { "" };
         let matches = |m: &StringMatcher, a: &str| self.value_matches(&entry.name, key, m, a, ci);
         if values.is_empty() {

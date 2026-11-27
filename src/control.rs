@@ -1610,7 +1610,7 @@ fn debug_mismatch(state: &State, request: &HttpRequest) -> Reply {
         Some(Value::Array(items)) => items.iter().filter_map(|i| i.get("name").and_then(Value::as_str).map(str::to_string)).collect(),
         _ => Vec::new(),
     };
-    probe.headers.sort_by_key(|(k, _)| given.iter().position(|g| g == k).unwrap_or(usize::MAX));
+    probe.headers.edit(|h| h.sort_by_key(|(k, _)| given.iter().position(|g| g == k).unwrap_or(usize::MAX)));
     let expectations = state.store.active();
     let evaluated = expectations.len().min(DEBUG_MISMATCH_MAX_EXPECTATIONS);
     let mut closest: Option<(usize, String, usize)> = None;
@@ -2873,7 +2873,7 @@ fn pseudo_request(v: &Value) -> HttpRequest {
         method: s("method"),
         path: s("path"),
         query: map("queryStringParameters"),
-        headers: map("headers"),
+        headers: map("headers").into(),
         cookies: v
             .get("cookies")
             .and_then(Value::as_object)
@@ -3316,7 +3316,7 @@ fn retrieve(state: &State, request: &HttpRequest) -> Reply {
                 Some(extractor) => extractor.extract(state, recorded),
                 None => recorded,
             };
-            let canonical: Vec<Value> = recorded.iter().filter_map(|x| x.recorded.clone()).collect();
+            let canonical: Vec<Value> = recorded.iter().filter_map(|x| x.recorded.as_deref().cloned()).collect();
             let reply = match (format.as_str(), language) {
                 ("JSON", _) => json_array(&canonical),
                 ("JAVA", _) => {
@@ -3469,7 +3469,7 @@ fn recorded_expectations(recorded: &[std::sync::Arc<crate::recorded::Exchange>])
 
 /// `toExpectationsFromPairs`: a recorded exchange as a synthetic expectation.
 fn exchange_expectation(x: &crate::recorded::Exchange) -> crate::export::Expectation {
-    let request = x.shown_request.clone().unwrap_or_else(|| crate::recorded::input_request(&x.request));
+    let request = x.shown_request.as_deref().cloned().unwrap_or_else(|| crate::recorded::input_request(&x.request));
     crate::export::Expectation::synthetic(request, (!x.response.is_null()).then(|| Value::clone(&x.response)))
 }
 

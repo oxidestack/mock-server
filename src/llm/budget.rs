@@ -264,7 +264,7 @@ fn first_header(headers: &serde_json::Value, name: &str) -> Option<String> {
 
 /// `LlmProviderSniffer.extractHost`: the socket address, else `Host`.
 fn request_host(request: &HttpRequest) -> Option<String> {
-    if let Some((host, ..)) = request.socket_address.as_ref().filter(|(h, ..)| !h.is_empty()) {
+    if let Some((host, ..)) = request.socket_address.as_deref().filter(|(h, ..)| !h.is_empty()) {
         return Some(host.clone());
     }
     request.first_header("Host").filter(|h| !h.is_empty()).map(str::to_string)

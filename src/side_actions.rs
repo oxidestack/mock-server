@@ -734,7 +734,7 @@ mod tests {
             method: "POST".into(),
             path: "/orders".into(),
             body: bytes::Bytes::from_static(br#"{"id":42,"cb":"https://hooks.example:8443/cb/x","o":{"a":1}}"#),
-            headers: vec![("Host".into(), vec!["localhost:1080".into()])],
+            headers: crate::request::MultiMap::from([("Host".into(), vec!["localhost:1080".into()])]).into(),
             ..HttpRequest::default()
         };
         let path = PathMatch::default();

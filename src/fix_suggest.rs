@@ -112,7 +112,7 @@ fn fix(field: &str, candidate: &mut Map<String, Value>, actual: &HttpRequest, bo
             set(candidate, "queryStringParameters", fixed);
         }
         "headers" => {
-            let fixed = fix_entries(candidate.get("headers"), &actual.headers, true, |entries| json!({"headers": entries}), actual);
+            let fixed = fix_entries(candidate.get("headers"), &actual.headers.to_multimap(), true, |entries| json!({"headers": entries}), actual);
             set(candidate, "headers", fixed);
         }
         "cookies" => {

@@ -294,7 +294,7 @@ pub fn forward_failures(state: &State, correlation_id: Option<&str>, limit: i64)
 
 /// A failed forward's log correlation id: its entry's, else its request's.
 fn failure_correlation_id(x: &crate::recorded::Exchange) -> String {
-    x.entry().and_then(|e| e.correlation_id.clone()).unwrap_or_else(|| x.request.log_correlation_id.clone())
+    x.entry().and_then(|e| e.correlation_id.clone()).unwrap_or_else(|| x.request.log_correlation_id.to_string())
 }
 
 /// `PUT /mockserver/explain` (`HttpState.explainWithOptionalNarration`).

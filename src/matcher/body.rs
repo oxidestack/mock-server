@@ -237,7 +237,7 @@ impl BodyMatcher {
                 ))
             }
             // Only a decoded body's field maps record differences.
-            Kind::Multipart { fields, filenames, part_content_types, .. } => match decode_multipart(request.first_header("content-type"), &request.body) {
+            Kind::Multipart { fields, filenames, part_content_types, .. } => match decode_multipart(request.headers.content_type(), &request.body) {
                 None => super::Difference::None,
                 Some((f, n, t)) => match self.recorded_maps(request, false).and_then(|texts| texts.into_iter().next()) {
                     Some(first) => super::Difference::Text(first),
@@ -522,7 +522,7 @@ impl BodyMatcher {
             // `ParameterStringMatcher` always hands `MultiValueMapMatcher` a parameters object, `{ }` when the body is empty.
             Kind::Parameters(m) => Some(m.recorded(&m.split_values(&request::parse_query(&request.body_str())), false, MapKind::PathParameters)),
             Kind::Multipart { fields, filenames, part_content_types, .. } => {
-                let (f, n, t) = decode_multipart(request.first_header("content-type"), &request.body)?;
+                let (f, n, t) = decode_multipart(request.headers.content_type(), &request.body)?;
                 let mut texts = Vec::new();
                 for (matcher, actual) in [(fields, &f), (filenames, &n), (part_content_types, &t)] {
                     let matched = matcher.matches(actual, false);
@@ -654,7 +654,7 @@ impl BodyMatcher {
             }
             Kind::Multipart { fields, filenames, part_content_types, blank } => {
                 *blank
-                    || decode_multipart(request.first_header("content-type"), &request.body).is_some_and(|(f, n, t)| {
+                    || decode_multipart(request.headers.content_type(), &request.body).is_some_and(|(f, n, t)| {
                         fields.matches(&f, ci) && filenames.matches(&n, ci) && part_content_types.matches(&t, ci)
                     })
             }
@@ -717,7 +717,7 @@ fn json_matched(request: &HttpRequest, styles: &[(String, String)]) -> Option<St
     if request.body.is_empty() {
         return request.empty_body_given.then(String::new);
     }
-    let content_type = request.first_header("content-type").unwrap_or_default();
+    let content_type = request.headers.content_type().unwrap_or_default();
     let body = request.body_str().into_owned();
     if content_type.contains("application/xml") || content_type.contains("text/xml") {
         return Some(xml_to_json(&body).map(|v| crate::json::pretty(&v)).unwrap_or(body));
@@ -1512,7 +1512,7 @@ impl JsonRpc {
 /// The body a JSON matcher sees (`JsonSchemaBodyDecoder.convertToJson`): a form body becomes an object of its
 /// parameters (styled ones split first), each value typed as upstream's `toJsonObject` guesses.
 fn json_body(request: &HttpRequest, styles: &[(String, String)]) -> Option<Value> {
-    let content_type = request.first_header("content-type").unwrap_or_default();
+    let content_type = request.headers.content_type().unwrap_or_default();
     // `JsonSchemaBodyDecoder.convertToJson`: an XML body is matched as the JSON `xmlToMap` makes of it, or, when it
     // does not parse, as the body itself.
     if content_type.contains("application/xml") || content_type.contains("text/xml") {
@@ -1566,7 +1566,7 @@ fn json_body_once(request: &HttpRequest) -> std::rc::Rc<JsonBody> {
     if request.body.len() >= crate::blocking::LARGE_BODY {
         return std::rc::Rc::new(read_json_body(request));
     }
-    let content_type = request.first_header("content-type");
+    let content_type = request.headers.content_type();
     let remembered = READ_BODY.with_borrow_mut(|read| {
         let read = read.as_mut().filter(|r| r.kind == request.body_kind && r.content_type.as_deref() == content_type)?;
         let held = read.body.as_ptr() == request.body.as_ptr() && read.body.len() == request.body.len();
@@ -1592,7 +1592,7 @@ fn json_body_once(request: &HttpRequest) -> std::rc::Rc<JsonBody> {
 fn read_json_body(request: &HttpRequest) -> JsonBody {
     #[cfg(test)]
     BODIES_READ.with(|n| n.set(n.get() + 1));
-    let content_type = request.first_header("content-type").unwrap_or_default();
+    let content_type = request.headers.content_type().unwrap_or_default();
     let xml = content_type.contains("application/xml") || content_type.contains("text/xml");
     let form = content_type.contains("application/x-www-form-urlencoded");
     JsonBody { value: json_body(request, &[]), as_received: !xml && !form }
@@ -2449,7 +2449,7 @@ mod tests {
             .collect();
         let typed = |body: String, content_type: &str| {
             let mut r = req(&body);
-            r.headers.push(("Content-Type".into(), vec![content_type.into()]));
+            r.headers.push(("Content-Type".to_string(), vec![content_type.to_string()]));
             r
         };
         let read = || super::BODIES_READ.with(std::cell::Cell::get);

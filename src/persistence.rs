@@ -280,7 +280,7 @@ fn start_recorded_requests(state: &Arc<State>) {
         let redacted = crate::recorded::redact_exchanges(vec![Arc::new(exchange.clone())], &state.config);
         let x = &redacted[0];
         let mut line = serde_json::Map::new();
-        line.insert("httpRequest".into(), x.shown_request.clone().unwrap_or_else(|| crate::recorded::ordered(&x.request)));
+        line.insert("httpRequest".into(), x.shown_request.as_deref().cloned().unwrap_or_else(|| crate::recorded::ordered(&x.request)));
         if !x.response.is_null() {
             line.insert("httpResponse".into(), serde_json::Value::clone(&x.response));
         }

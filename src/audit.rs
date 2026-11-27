@@ -161,7 +161,7 @@ pub fn record(state: &State, request: &HttpRequest, forbidden: bool) {
     if !forbidden && !config.bool_property("controlPlaneAuditReads", false) && crate::auth::is_read(request) {
         return;
     }
-    let source_address = if request.remote_address.is_empty() { "unknown".to_string() } else { request.remote_address.clone() };
+    let source_address = if request.remote_address.is_empty() { "unknown".to_string() } else { request.remote_address.to_string() };
     // `ChainedAuthenticationHandler.authenticate`: a verified principal other than mTLS's first, then mTLS's
     // `AnyOfAuthenticationHandler`: Basic's verified user when Basic admitted the request
     let (principal, principal_source) = crate::auth::basic_principal(config, request)

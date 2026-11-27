@@ -417,7 +417,7 @@ mod tests {
         crate::request::HttpRequest {
             method: "GET".into(),
             path: "/callback".into(),
-            headers: vec![("Authorization".into(), vec!["Bearer CALLBACK-SECRET-353".into()])],
+            headers: crate::request::MultiMap::from([("Authorization".into(), vec!["Bearer CALLBACK-SECRET-353".into()])]).into(),
             ..Default::default()
         }
     }

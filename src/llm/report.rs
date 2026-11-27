@@ -360,7 +360,7 @@ static MESSAGES_ARRAY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#""message
 
 /// `LlmProviderSniffer.extractHost` / `LlmOptimisationReportService.upstreamHost`: the socket address, else `Host`.
 pub(crate) fn upstream_host(request: &HttpRequest) -> Option<String> {
-    if let Some((host, ..)) = request.socket_address.as_ref().filter(|(h, ..)| !h.is_empty()) {
+    if let Some((host, ..)) = request.socket_address.as_deref().filter(|(h, ..)| !h.is_empty()) {
         return Some(telemetry::strip_port(host).to_string());
     }
     request.first_header("Host").filter(|h| !h.is_empty()).map(|h| telemetry::strip_port(h).to_string())

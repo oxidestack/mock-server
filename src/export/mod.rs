@@ -168,13 +168,13 @@ impl Request {
             method: Some(request.method.clone()),
             path: Some(request.path.clone()),
             secure: request.secure,
-            socket: request.socket_address.as_ref().map(|(h, p, _)| (Some(h.clone()), Some(i64::from(*p)))),
+            socket: request.socket_address.as_deref().map(|(h, p, _)| (Some(h.clone()), Some(i64::from(*p)))),
             query: request.query.clone(),
-            headers: request.headers.clone(),
+            headers: request.headers.to_multimap(),
             cookies: request.cookies.clone(),
             body,
             protocol: Some(request.protocol.to_string()),
-            remote_address: Some(request.remote_address.clone()).filter(|a| !a.is_empty()),
+            remote_address: Some(request.remote_address.to_string()).filter(|a| !a.is_empty()),
             stream_id: None,
         }
     }

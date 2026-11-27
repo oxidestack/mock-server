@@ -9,7 +9,7 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
 use crate::handler::{self, Connection, Outcome};
 use crate::reply::Reply;
-use crate::request::{self, HttpRequest, MultiMap};
+use crate::request::{self, Headers, HttpRequest, MultiMap};
 use crate::state::State;
 
 const MAX_HEAD: usize = 1024 * 1024;
@@ -45,7 +45,7 @@ struct Head {
     http10: bool,
     /// Exactly HTTP/1.1 (Netty's `HttpVersion.HTTP_1_1`), which alone may carry a `Transfer-Encoding`.
     http11: bool,
-    headers: MultiMap,
+    headers: Headers,
     /// The message of the `DecoderResult` failure Netty's decoder attached to the request: such a request is
     /// refused, never dispatched (`Error::Refused`).
     decode_error: Option<String>,
@@ -81,10 +81,10 @@ fn head_buffered(buf: &BytesMut) -> bool {
 
 /// Whether a request whose head is read has its whole body in `buf` already (a chunked one: its last chunk).
 fn held_request_complete(head: &Head, buf: &BytesMut) -> bool {
-    if request::first(&head.headers, "transfer-encoding").is_some() {
+    if head.headers.first("transfer-encoding").is_some() {
         return buf.windows(5).any(|w| w == b"0\r\n\r\n");
     }
-    let length = request::first(&head.headers, "content-length").and_then(|l| l.trim().parse::<usize>().ok()).unwrap_or(0);
+    let length = head.headers.first("content-length").and_then(|l| l.trim().parse::<usize>().ok()).unwrap_or(0);
     buf.len() >= length
 }
 
@@ -168,9 +168,10 @@ where
     // closes. Until then `Http1PipeliningGate` answers a request sent without pipelining, as it would without the gate,
     // and holds one pipelined behind it until the close (9.2.0).
     let mut closing_at: Option<tokio::time::Instant> = None;
-    // the connection's addresses as its requests record them (`localAddress`, `remoteAddress`), formatted once
-    let local_address = crate::server::java_local_address(&conn);
-    let remote_address = crate::server::java_socket_address(conn.client_address());
+    // the connection's addresses as its requests record them (`localAddress`, `remoteAddress`), formatted once and
+    // shared by its requests (a copy of each was two allocations a request, and two frees when the log let it go)
+    let local_address: Arc<str> = crate::server::java_local_address(&conn).into();
+    let remote_address: Arc<str> = crate::server::java_socket_address(conn.client_address()).into();
     // Netty's direct-memory limit, which only the process's environment sets
     let direct_memory = crate::config::netty_max_direct_memory(&state.config);
     'conn: loop {
@@ -256,24 +257,25 @@ where
             let mut head = head;
             // A held request that arrived whole loses its `Expect` header: the client sent the body already, so the
             // aggregator's `100 Continue` would be spurious when the gate releases it.
-            if held && request::first(&head.headers, "expect").is_some() && held_request_complete(&head, &buf) {
+            if held && head.headers.first("expect").is_some() && held_request_complete(&head, &buf) {
                 head.headers.retain(|(name, _)| !name.eq_ignore_ascii_case("expect"));
             }
-            let expects_continue = request::first(&head.headers, "expect").is_some_and(|e| e.eq_ignore_ascii_case("100-continue"));
+            let expects_continue = head.headers.first("expect").is_some_and(|e| e.eq_ignore_ascii_case("100-continue"));
             // Any `Transfer-Encoding` left on a request the decoder accepted ends with `chunked`.
-            let chunked = request::first(&head.headers, "transfer-encoding").is_some();
-            let length = request::first(&head.headers, "content-length").and_then(|l| l.trim().parse::<usize>().ok());
-            let connection = request::first(&head.headers, "connection").map(str::to_ascii_lowercase);
+            let chunked = head.headers.first("transfer-encoding").is_some();
+            let length = head.headers.first("content-length").and_then(|l| l.trim().parse::<usize>().ok());
+            // read without a lower-cased copy
+            let connection = head.headers.first("connection");
             let keep_alive = if head.http10 {
-                connection.as_deref().is_some_and(|c| c.contains("keep-alive"))
+                connection.is_some_and(|c| contains_ignore_ascii_case(c, "keep-alive"))
             } else {
-                !connection.as_deref().is_some_and(|c| c.contains("close"))
+                !connection.is_some_and(|c| contains_ignore_ascii_case(c, "close"))
             };
             // `EarlyMatchingHandler`: the connection's first request may be answered from its head alone, by a
             // `respondBeforeBody` expectation; everything after it on the connection is then discarded.
             if early_matching {
                 let mut headers = head.headers.clone();
-                let (path, query) = split_target(&head.target, &mut headers);
+                let (path, query) = split_target(head.target.clone(), &mut headers);
                 let mut early = HttpRequest {
                     method: head.method.clone(),
                     path,
@@ -295,7 +297,7 @@ where
                 if !framed {
                     early.headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-length"));
                 }
-                early.socket_address = host_socket_address(&early, conn.local.port(), secure);
+                early.socket_address = host_socket_address(&early, conn.local.port(), secure).map(Box::new);
                 early.log_correlation_id = crate::request::new_correlation_id();
                 // `firstMatchingEarlyExpectation`: a request the control plane serves never is (`isControlPlaneRequest`).
                 // `EarlyMatchingHandler` checks data-plane credentials first, since the match uses up `Times` and moves
@@ -391,7 +393,7 @@ where
                 return;
             }
             let mut headers = head.headers;
-            let (path, query) = split_target(&head.target, &mut headers);
+            let (path, query) = split_target(std::mem::take(&mut head.target), &mut headers);
             // What the aggregator holds of a request whose connection ends before its body is complete
             // (`Http1RequestCutShort`): the head as read.
             let cut_short = |state: &State| {
@@ -467,9 +469,9 @@ where
                 local_address: local_address.clone(),
                 remote_address: remote_address.clone(),
                 client_certificates: conn.client_certificates.clone(),
-                remote_target: conn.proxy_target.clone(),
+                remote_target: conn.proxy_target.clone().map(Box::new),
                 socket_address: None,
-                log_correlation_id: String::new(),
+                log_correlation_id: crate::request::CorrelationId::Empty,
                 trusted: false,
             };
             // Netty's direct-memory limit (`io.netty.maxDirectMemory`): the aggregator's buffers outgrow it, the
@@ -567,7 +569,7 @@ where
                 // then control-plane authentication, which names the caller for a client-id takeover
                 // the gate maps the upgrade with the local port (`FullHttpRequestToMockServerHttpRequest`), so the request its
                 // log entries show has a socket address
-                let gated = HttpRequest { socket_address: host_socket_address(&http_request, conn.local.port(), secure), ..http_request.clone() };
+                let gated = HttpRequest { socket_address: host_socket_address(&http_request, conn.local.port(), secure).map(Box::new), ..http_request.clone() };
                 let Some(identity) = crate::auth::upgrade_authenticated(&state, &gated, "callback", &mut io).await else {
                     return;
                 };
@@ -1000,24 +1002,37 @@ fn connect_target(authority: &str) -> (String, u16) {
 
 /// The path (`URLParser.returnPath`) and the raw query of a request target; absolute-form (proxy) targets also supply
 /// a missing `Host`.
-fn split_target(target: &str, headers: &mut MultiMap) -> (String, Option<String>) {
+fn split_target(target: String, headers: &mut Headers) -> (String, Option<String>) {
     if let Some(after_scheme) = target.strip_prefix("http://").or_else(|| target.strip_prefix("https://")) {
         let authority = &after_scheme[..after_scheme.find(['/', '?']).unwrap_or(after_scheme.len())];
-        if request::first(headers, "host").is_none() {
+        if headers.first("host").is_none() {
             headers.insert(0, ("Host".into(), vec![authority.to_string()]));
         }
     }
     let query = target.split_once('?').map(|(_, q)| q.to_string());
-    let path = return_path(target);
-    (path.split('?').next().unwrap_or_default().to_string(), query)
+    let path = match return_path(&target) {
+        // the target's own buffer, cut at its query: a path that is the whole target costs no copy
+        std::borrow::Cow::Borrowed(_) => {
+            let mut path = target;
+            path.truncate(path.find('?').unwrap_or(path.len()));
+            path
+        }
+        std::borrow::Cow::Owned(path) => path.split('?').next().unwrap_or_default().to_string(),
+    };
+    (path, query)
+}
+
+/// Whether `text` contains `needle` (ASCII), in any case.
+fn contains_ignore_ascii_case(text: &str, needle: &str) -> bool {
+    text.as_bytes().windows(needle.len()).any(|w| w.eq_ignore_ascii_case(needle.as_bytes()))
 }
 
 /// `URLParser.returnPath` before its cut at `?`: for a full URL (`http://` or `https://`, a request line holds no line
 /// terminator), every match of `https?://([A-Za-z0-9-_.:]*@)?[A-Za-z0-9-_.]*(:[0-9]*)?` removed; an empty result
 /// is an empty path, which the received request shows without one..
-fn return_path(target: &str) -> String {
+fn return_path(target: &str) -> std::borrow::Cow<'_, str> {
     if !(target.starts_with("http://") || target.starts_with("https://")) {
-        return target.to_string();
+        return std::borrow::Cow::Borrowed(target);
     }
     let host = |c: u8| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_' | b'.');
     let bytes = target.as_bytes();
@@ -1047,7 +1062,7 @@ fn return_path(target: &str) -> String {
         i = end;
     }
     out.push_str(&target[copied..]);
-    out
+    std::borrow::Cow::Owned(out)
 }
 
 async fn fill<S: AsyncRead + Unpin>(stream: &mut S, buf: &mut BytesMut) -> Result<(), Error> {
@@ -1131,9 +1146,12 @@ fn parse_head(buf: &[u8]) -> Result<Option<(Head, usize)>, ()> {
         match req.parse_with_uninit_headers(buf, headers) {
             Ok(httparse::Status::Complete(len)) => {
                 // with room for the `content-length` the aggregator adds
-                let mut map = MultiMap::with_capacity(req.headers.len() + 1);
+                // sized for the head as read (a non-ASCII byte may take two), and for the `content-length` the
+                // aggregator adds
+                let text: usize = req.headers.iter().map(|h| h.name.len() + h.value.len()).sum();
+                let mut map = Headers::with_capacity(text + 24, req.headers.len() + 1);
                 for h in req.headers.iter() {
-                    request::append(&mut map, h.name, request::header_text(h.value));
+                    map.append_wire(h.name, h.value);
                 }
                 let head = Head {
                     method: req.method.unwrap_or("GET").to_string(),
@@ -1211,7 +1229,7 @@ fn netty_lines(raw: &[u8]) -> Head {
         target,
         http10: version == "HTTP/1.0",
         http11: version == "HTTP/1.1",
-        headers: MultiMap::new(),
+        headers: Headers::new(),
         decode_error: None,
     };
     let mut last: Option<String> = None;
@@ -1221,9 +1239,13 @@ fn netty_lines(raw: &[u8]) -> Head {
         }
         // A line starting with SP or HT is folded into the header before it; with none, `splitHeader` reads it.
         if last.is_some() && line.starts_with([' ', '\t']) {
-            if let Some((_, values)) = last.as_ref().and_then(|name| head.headers.iter_mut().find(|(k, _)| k == name)) && let Some(value) = values.last_mut() {
-                value.push(' ');
-                value.push_str(line.trim());
+            if let Some(name) = &last {
+                head.headers.edit(|headers| {
+                    if let Some((_, values)) = headers.iter_mut().find(|(k, _)| k == name) && let Some(value) = values.last_mut() {
+                        value.push(' ');
+                        value.push_str(line.trim());
+                    }
+                });
             }
             continue;
         }
@@ -1241,7 +1263,7 @@ fn netty_lines(raw: &[u8]) -> Head {
             head.decode_error = Some(format!("Validation failed for header '{name}'"));
             break;
         }
-        request::append(&mut head.headers, name, value.to_string());
+        head.headers.append(name, value);
         last = Some(name.to_string());
     }
     head
@@ -1341,7 +1363,7 @@ fn netty_invalid(message: String) -> Head {
         target: "/bad-request".into(),
         http10: true,
         http11: false,
-        headers: MultiMap::new(),
+        headers: Headers::new(),
         decode_error: Some(message),
     }
 }
@@ -1388,12 +1410,12 @@ fn limit_fault(buf: &[u8], limits: &Limits) -> Option<Error> {
 /// for a `Content-Length` that is not one number, or a `Transfer-Encoding` on anything but HTTP/1.1, whose final coding
 /// is not `chunked`, with `chunked` more than once, or together with a `Content-Length`.
 fn content_length_fault(head: &Head) -> Option<String> {
-    let lengths: Vec<&String> = head.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("content-length")).flat_map(|(_, v)| v.iter()).collect();
-    let codings: Vec<&String> = head.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding")).flat_map(|(_, v)| v.iter()).collect();
+    let lengths: Vec<&str> = head.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("content-length")).flat_map(|(_, v)| v.iter()).collect();
+    let codings: Vec<&str> = head.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding")).flat_map(|(_, v)| v.iter()).collect();
     // `HttpUtil.normalizeAndGetContentLength`, duplicates not allowed
     if let Some(first) = lengths.first() {
         if lengths.len() > 1 || first.contains(',') {
-            return Some(format!("Multiple Content-Length values found: [{}]", lengths.iter().map(|l| l.as_str()).collect::<Vec<_>>().join(", ")));
+            return Some(format!("Multiple Content-Length values found: [{}]", lengths.join(", ")));
         }
         if !first.starts_with(|c: char| c.is_ascii_digit()) || first.parse::<i64>().is_err() {
             return Some(format!("Content-Length value is not a number: {first}"));

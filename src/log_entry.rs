@@ -711,7 +711,7 @@ impl LogEntry {
 
     /// `setHttpRequest(request)`: the request as log lines show it, and its correlation id.
     pub fn request(self, request: &HttpRequest) -> LogEntry {
-        let id = (!request.log_correlation_id.is_empty()).then(|| request.log_correlation_id.clone());
+        let id = (!request.log_correlation_id.is_empty()).then(|| request.log_correlation_id.to_string());
         let mut entry = self.request_json(crate::recorded::logged(request));
         if id.is_some() {
             entry.correlation_id = id;
@@ -721,7 +721,7 @@ impl LogEntry {
 
     /// [`LogEntry::request`] with the request's logged form already built.
     pub fn request_logged(self, request: &HttpRequest, logged: &crate::recorded::LoggedRequest) -> LogEntry {
-        let id = (!request.log_correlation_id.is_empty()).then(|| request.log_correlation_id.clone());
+        let id = (!request.log_correlation_id.is_empty()).then(|| request.log_correlation_id.to_string());
         let mut entry = self.request_shared(logged.json.clone());
         if id.is_some() {
             entry.correlation_id = id;

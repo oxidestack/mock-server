@@ -113,6 +113,7 @@ pub mod scenario;
 mod schema;
 mod scim;
 mod schema_files;
+pub mod headers;
 pub mod request;
 mod proxy_resolvers;
 mod inbound;

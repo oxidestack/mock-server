@@ -413,7 +413,7 @@ fn max_event_log_size_in_bytes_keeps_the_newest_entries_that_fit() {
 
 fn served(path: &str, id: &str) -> HttpRequest {
     let mut r = request(path);
-    r.headers = vec![("Host".into(), vec!["localhost:1080".into()]), ("Accept".into(), vec!["*/*".into()])];
+    r.headers = crate::request::MultiMap::from([("Host".into(), vec!["localhost:1080".into()]), ("Accept".into(), vec!["*/*".into()])]).into();
     r.protocol = "HTTP_1_1";
     r.keep_alive = true;
     r.local_address = "127.0.0.1:1080".into();
@@ -588,7 +588,7 @@ fn quoted_requests() -> Vec<HttpRequest> {
     marked_cookie.cookies = vec![("!c".into(), "1".into())];
     out.push(marked_cookie);
     let mut socket = base();
-    socket.socket_address = Some(("example.com".into(), 443, true));
+    socket.socket_address = Some(Box::new(("example.com".into(), 443, true)));
     socket.client_certificates = Arc::new(vec![
         crate::tls::client_cert::ClientCertificate { der: Vec::new(), model: json!({"issuerDistinguishedName": "CN=a", "serialNumber": "1", "empty": {}, "list": []}) },
         crate::tls::client_cert::ClientCertificate { der: Vec::new(), model: json!({"subjectDistinguishedName": "CN=b"}) },

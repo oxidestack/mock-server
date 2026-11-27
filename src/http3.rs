@@ -441,8 +441,8 @@ async fn decompress(state: &State, request: &mut HttpRequest, max: usize, stream
             return false;
         }
     };
-    let had_length = request.headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("content-length"));
-    let encodings: Vec<(String, Vec<String>)> = request.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("content-encoding")).cloned().collect();
+    let had_length = request.headers.contains("content-length");
+    let encodings: Vec<(String, Vec<String>)> = request.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("content-encoding")).map(|(k, v)| (k.to_string(), v.to_vec())).collect();
     request.headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-length") && !k.eq_ignore_ascii_case("content-encoding"));
     if had_length {
         request.headers.push(("content-length".into(), vec![decoded.len().to_string()]));
@@ -637,12 +637,12 @@ fn to_request(head: &http::Request<()>, body: Bytes, peer: &Peer) -> HttpRequest
         Some((p, q)) => (p.to_string(), Some(q.to_string())),
         None => (target, None),
     };
-    let mut headers = MultiMap::new();
+    let mut headers = request::Headers::new();
     if let Some(authority) = head.uri().authority() {
-        request::push(&mut headers, "host", authority.as_str().to_string());
+        headers.push_merged("host", authority.as_str());
     }
     for (name, value) in head.headers() {
-        request::push(&mut headers, name.as_str(), request::header_text(value.as_bytes()));
+        headers.push_merged(name.as_str(), &request::header_text(value.as_bytes()));
     }
     // `Http3MockServerHandler`: only a request for a control-plane path candidate gets the peer as its remote address
     // (Basic throttles guesses per peer; upstream 29a26d650), whoever then serves it
@@ -662,7 +662,7 @@ fn to_request(head: &http::Request<()>, body: Bytes, peer: &Peer) -> HttpRequest
         secure: true,
         protocol: "HTTP_3",
         client_certificates: peer.client_certificates.clone(),
-        remote_address,
+        remote_address: remote_address.into(),
         ..HttpRequest::default()
     }
 }

@@ -319,8 +319,8 @@ pub fn post_process_recorded(state: &State, request: &HttpRequest, recorded: Vec
                 let mut exchange = (*recorded[0]).clone();
                 let id = model.get("id").and_then(Value::as_str).map(str::to_string).unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
                 let canonical = model.as_object().map(|o| crate::canonical::expectation(o, &id)).unwrap_or_default();
-                exchange.recorded = Some(recording::typed_bodies(canonical));
-                exchange.recorded_input = Some(model);
+                exchange.recorded = Some(Box::new(recording::typed_bodies(canonical)));
+                exchange.recorded_input = Some(Box::new(model));
                 std::sync::Arc::new(exchange)
             }
         })

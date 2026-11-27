@@ -538,7 +538,7 @@ impl Forward {
                 apply_request_override(&mut target, &generated);
                 // The callback's `HttpRequest` keeps its headers in the order it added them.
                 if let Some(Value::Object(order)) = generated.get("headers") {
-                    target.headers.sort_by_key(|(k, _)| order.keys().position(|o| o.eq_ignore_ascii_case(k)).unwrap_or(usize::MAX));
+                    target.headers.edit(|h| h.sort_by_key(|(k, _)| order.keys().position(|o| o.eq_ignore_ascii_case(k)).unwrap_or(usize::MAX)));
                 }
                 let (host, port, secure) = destination(&target, Some(&generated));
                 // A forward-only class streams (`sendRequest(request, null, fn)` with the identity); a response
@@ -825,7 +825,7 @@ fn condition_matches(c: &Value, status: u32, headers: &MultiMap, request: &HttpR
         return false;
     }
     if let Some(name) = not_blank("requestHasHeader")
-        && !has(&request.headers, name)
+        && !has(&request.headers.to_multimap(), name)
     {
         return false;
     }
@@ -1567,7 +1567,7 @@ fn outbound(r: &HttpRequest) -> Outbound {
             continue;
         }
         for v in values {
-            headers.push((name.clone(), v.clone()));
+            headers.push((name.to_string(), v.to_string()));
         }
     }
     if let Some(host) = r.first_header("host").filter(|h| !h.trim().is_empty()) {
@@ -1578,7 +1578,7 @@ fn outbound(r: &HttpRequest) -> Outbound {
         .headers
         .iter()
         .filter(|(k, _)| k.eq_ignore_ascii_case("accept-encoding"))
-        .flat_map(|(_, values)| if values.is_empty() { vec![""] } else { values.iter().map(String::as_str).collect() })
+        .flat_map(|(_, values)| if values.is_empty() { vec![""] } else { values.iter().collect() })
         .collect();
     if let Some(forwarded) = forwarded_accept_encoding(&accept_encoding) {
         headers.push(("accept-encoding".into(), forwarded));
@@ -1685,10 +1685,12 @@ fn java_parse_double(text: &str) -> Option<f64> {
 /// body is still in it and goes out as it is.
 fn encoded_body(r: &HttpRequest) -> bytes::Bytes {
     use std::io::Write;
-    let coding = request::first(&r.headers, "content-encoding").map(|c| c.trim().to_ascii_lowercase());
+    let coding = r.headers.first("content-encoding").map(|c| c.trim().to_ascii_lowercase());
     let Some(coding) = coding.filter(|_| !r.body.is_empty()) else { return r.body.clone() };
     if let Some(original) = &r.original_body {
-        let received = HttpRequest { headers: vec![("content-encoding".into(), vec![coding.clone()])], body: original.clone(), ..HttpRequest::default() };
+        let mut headers = crate::request::Headers::new();
+        headers.push_entry("content-encoding", [coding.as_str()]);
+        let received = HttpRequest { headers, body: original.clone(), ..HttpRequest::default() };
         if crate::handler::decode(&received, usize::MAX).ok().flatten().is_some_and(|decoded| decoded == r.body) {
             return original.clone();
         }
@@ -2414,7 +2416,7 @@ fn apply_request_override(r: &mut HttpRequest, o: &Value) {
         r.path = p.to_string();
     }
     if let Some(h) = o.get("headers") {
-        merge_map(&mut r.headers, h);
+        r.headers.edit(|headers| merge_map(headers, h));
     }
     if let Some(q) = o.get("queryStringParameters") {
         merge_map(&mut r.query, q);
@@ -2446,7 +2448,7 @@ fn apply_request_modifier(r: &mut HttpRequest, m: &Value) {
         }
     }
     if let Some(h) = m.get("headers") {
-        modify_map(&mut r.headers, h);
+        r.headers.edit(|headers| modify_map(headers, h));
     }
     if let Some(q) = m.get("queryStringParameters") {
         modify_map(&mut r.query, q);

@@ -212,7 +212,7 @@ fn as_request(d: &Value) -> HttpRequest {
     HttpRequest {
         method: d.get("method").and_then(Value::as_str).unwrap_or_default().to_string(),
         path: d.get("path").and_then(Value::as_str).unwrap_or_default().to_string(),
-        headers,
+        headers: headers.into(),
         body: body.into(),
         body_kind: BodyKind::PlainString,
         ..HttpRequest::default()

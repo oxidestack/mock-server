@@ -306,7 +306,7 @@ fn unauthenticated_reply(state: &State, request: &HttpRequest, challenge: Option
     // one has a socket address
     let port = request.local_address.rsplit(':').next().and_then(|p| p.parse().ok());
     let socket_address = port.and_then(|port| crate::http1::host_socket_address(request, port, request.secure));
-    let mapped = HttpRequest { socket_address, ..request.clone() };
+    let mapped = HttpRequest { socket_address: socket_address.map(Box::new), ..request.clone() };
     let unauthorized = crate::dataplane::unauthorized_response(state, &mapped, challenge.clone());
     let (code, _, message, _) = resolve_status(&unauthorized);
     let mut reply = Reply::status(200);

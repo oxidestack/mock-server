@@ -194,7 +194,7 @@ fn reimport(state: &State, request: &Value, response: Option<&Value>) {
         let host = sa.get("host").and_then(Value::as_str).unwrap_or_default().to_string();
         let secure = sa.get("scheme").and_then(Value::as_str).is_some_and(|s| s.eq_ignore_ascii_case("HTTPS"));
         let port = sa.get("port").and_then(Value::as_u64).and_then(|p| u16::try_from(p).ok()).unwrap_or(if secure { 443 } else { 80 });
-        model.socket_address = Some((host, port, secure));
+        model.socket_address = Some(Box::new((host, port, secure)));
     }
     state.log.record_reimported(
         model,

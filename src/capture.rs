@@ -28,13 +28,10 @@ pub fn process(state: &crate::state::State, rules: Option<&Value>, request: &Htt
 }
 
 fn extract(source: &str, expression: &str, request: &HttpRequest, path: &PathMatch) -> Option<String> {
-    let first = |map: &crate::request::MultiMap| {
-        map.iter().find(|(k, _)| k.eq_ignore_ascii_case(expression)).and_then(|(_, vs)| vs.first().cloned())
-    };
     match source {
         "jsonPath" if !expression.trim().is_empty() => stringify(crate::templates::extract::json_path(request, expression)),
         "xpath" if !expression.trim().is_empty() => Some(crate::templates::extract::xpath(request, expression)),
-        "header" => first(&request.headers),
+        "header" => request.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case(expression)).and_then(|(_, vs)| vs.first().map(str::to_string)),
         "queryStringParameter" => request.query.iter().find(|(k, _)| k == expression).and_then(|(_, vs)| vs.first().cloned()),
         "pathParameter" => path.parameters.iter().find(|(k, _)| k == expression).and_then(|(_, vs)| vs.first().cloned()),
         "cookie" => request.cookies.iter().find(|(k, _)| k == expression).map(|(_, v)| v.clone()),

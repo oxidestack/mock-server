@@ -14,7 +14,7 @@ use tokio::sync::mpsc;
 
 use crate::handler::{self, Connection, Outcome};
 use crate::reply::Reply;
-use crate::request::{self, HttpRequest, MultiMap};
+use crate::request::{self, HttpRequest};
 use crate::state::State;
 
 const PREFACE: &[u8] = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n";
@@ -770,8 +770,13 @@ impl Reader {
                         body.extend_from_slice(&chunk);
                     }
                     request.body = body.freeze();
-                    if let Some((_, v)) = request.headers.iter_mut().find(|(k, _)| k.eq_ignore_ascii_case("content-length")) {
-                        *v = vec![request.body.len().to_string()];
+                    if request.headers.contains("content-length") {
+                        let length = request.body.len().to_string();
+                        request.headers.edit(|headers| {
+                            if let Some((_, v)) = headers.iter_mut().find(|(k, _)| k.eq_ignore_ascii_case("content-length")) {
+                                *v = vec![length];
+                            }
+                        });
                     }
                     respond(state, tx, &backlog, stream, request, false).await;
                 }
@@ -828,10 +833,10 @@ impl Reader {
 /// with the HEADERS frame's non-pseudo fields only (no `host`, scheme or stream id, no keep-alive, protocol or TLS
 /// flags), `content-type: application/grpc` when it carried none (`grpc_plane::open_bidi` adds the derived ones).
 fn bidi_request(fields: &[(Vec<u8>, Vec<u8>)], path: &str) -> HttpRequest {
-    let mut headers = MultiMap::new();
+    let mut headers = request::Headers::new();
     for (name, value) in fields {
         if !name.is_empty() && name[0] != b':' {
-            request::append(&mut headers, &request::header_text(name), request::header_text(value));
+            headers.append_wire_pair(name, value);
         }
     }
     HttpRequest { method: "POST".into(), path: path.to_string(), headers, ..HttpRequest::default() }
@@ -846,7 +851,7 @@ fn bidi_request(fields: &[(Vec<u8>, Vec<u8>)], path: &str) -> HttpRequest {
 fn to_request(incoming: Incoming, conn: &Connection, secure: bool, max_body: Option<usize>) -> Result<HttpRequest, handler::DecodeFailure> {
     let mut method = String::new();
     let mut target = String::from("/");
-    let mut headers = MultiMap::new();
+    let mut headers = request::Headers::with_capacity(incoming.fields.iter().map(|(n, v)| n.len() + v.len()).sum::<usize>() + 24, incoming.fields.len() + 1);
     // `HttpConversionUtil.addHttp2ToHttpHeaders`: the fields in arrival order, `:authority` as `host` where it arrives;
     // it removes `Transfer-Encoding` and `Trailer`, and `HttpUtil.setKeepAlive` the `Connection` header, whatever their
     // case (the request headers are not validated, so a client can send any of them).
@@ -854,22 +859,22 @@ fn to_request(incoming: Incoming, conn: &Connection, secure: bool, max_body: Opt
         match name.as_slice() {
             b":method" => method = request::header_text(value),
             b":path" => target = request::header_text(value),
-            b":authority" => request::append(&mut headers, "host", request::header_text(value)),
+            b":authority" => headers.append_wire("host", value),
             n if n.starts_with(b":") || is_extension_header(n) => {}
             n if [&b"transfer-encoding"[..], b"trailer", b"connection"].iter().any(|r| r.eq_ignore_ascii_case(n)) => {}
-            n => request::append(&mut headers, &request::header_text(n), request::header_text(value)),
+            n => headers.append_wire_pair(n, value),
         }
     }
     let (path, query) = match target.split_once('?') {
         Some((p, q)) => (p.to_string(), Some(q.to_string())),
         None => (target, None),
     };
-    let sent_framing = request::first(&headers, "content-length").is_some() || request::first(&headers, "transfer-encoding").is_some();
+    let sent_framing = headers.first("content-length").is_some() || headers.first("transfer-encoding").is_some();
     // `Http2StreamFrameToHttpObjectCodec`: a request whose HEADERS frame did not end the stream and announced no length
     // is chunked, whatever body follows; one that ended with its HEADERS frame has no framing
     // header at all. `PreserveHeadersNettyRemoves` sees it so, ahead of the decompressor and the aggregator.
     if !sent_framing && !incoming.headers_only {
-        request::push(&mut headers, "transfer-encoding", "chunked".into());
+        headers.push_merged("transfer-encoding", "chunked");
     }
     let mut request = HttpRequest {
         method,
@@ -881,10 +886,10 @@ fn to_request(incoming: Incoming, conn: &Connection, secure: bool, max_body: Opt
         keep_alive: true,
         secure,
         protocol: "HTTP_2",
-        local_address: crate::server::java_local_address(conn),
-        remote_address: crate::server::java_socket_address(conn.client_address()),
+        local_address: crate::server::java_local_address(conn).into(),
+        remote_address: crate::server::java_socket_address(conn.client_address()).into(),
         client_certificates: conn.client_certificates.clone(),
-        remote_target: conn.proxy_target.clone(),
+        remote_target: conn.proxy_target.clone().map(Box::new),
         ..HttpRequest::default()
     };
     match max_body {

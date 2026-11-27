@@ -90,7 +90,7 @@ pub fn forwarded_entries(state: &State, received: &HttpRequest) -> Option<Vec<St
     if max_hops(state) == 0 {
         return None;
     }
-    let mut entries: Vec<String> = received.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case(HEADER)).flat_map(|(_, v)| v.iter().cloned()).collect();
+    let mut entries: Vec<String> = received.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case(HEADER)).flat_map(|(_, v)| v.iter().map(str::to_string)).collect();
     entries.push(state.forward_loop_id.clone());
     Some(entries)
 }

@@ -455,7 +455,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
                     // `HttpActionHandler` names the transport when the response writer is `Http3GrpcResponseWriter`.
                     // `Http3GrpcResponseWriter` serves gRPC requests only; any other request's stream goes through
                     // the plain HTTP/3 writer, which logs no transport (upstream 18b3a36e7).
-                    let grpc_request = crate::grpc_plane::is_grpc_content_type(request.first_header("content-type"));
+                    let grpc_request = crate::grpc_plane::is_grpc_content_type(request.headers.content_type());
                     let format = match request.protocol {
                         "HTTP_3" if grpc_request => "returning gRPC stream response over HTTP/3 for request:{}for action:{}from expectation:{}",
                         _ => "returning gRPC stream response for request:{}for action:{}from expectation:{}",
@@ -650,8 +650,9 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
     // does not).
     let served = match (&served_by, log.served_action.take()) {
         (Some(_), Some(action)) if logged_is_request && logged_response.get("timing").is_none() => {
-            let (empty_body, action) = (log.empty_body.clone(), crate::recorded::interned_shared(action));
-            Some(move |x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest| served_entry(x, logged, &action, empty_body.as_ref()))
+            // the empty body boxed: the builder is kept with the exchange in the log, and an absent one took 88 bytes
+            let (empty_body, action) = (log.empty_body.clone().map(Box::new), crate::recorded::interned_shared(action));
+            Some(move |x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest| served_entry(x, logged, &action, empty_body.as_deref()))
         }
         (_, action) => {
             log.served_action = action;
@@ -1559,7 +1560,7 @@ fn unmatched_forward(state: &Arc<State>, request: HttpRequest) -> crate::boxed::
                 Some(error) if error.is_named_failure() => {
                     let reason = error.exception_message().unwrap_or_default();
                     // `getRemoteAddressWithFallback`: the channel's remote socket, else the unresolved proxyRemoteHost
-                    let remote = match (&request.remote_target, state.config.port_forward.clone().or_else(|| state.config.proxy_remote())) {
+                    let remote = match (request.remote_target.as_deref(), state.config.port_forward.clone().or_else(|| state.config.proxy_remote())) {
                         (Some((host, port)), _) => java_socket_address(host, *port),
                         (None, Some((host, port))) => format!("{host}/<unresolved>:{port}"),
                         (None, None) => String::new(),
@@ -1662,7 +1663,7 @@ struct LlmSent {
 
 fn llm_sent(forwarded: &crate::forward::Forwarded) -> LlmSent {
     let logged = &forwarded.logged_request;
-    let logged_host = match &logged.socket_address {
+    let logged_host = match logged.socket_address.as_deref() {
         Some((host, _, _)) if !host.is_empty() => Some(host.clone()),
         _ => logged.first_header("host").map(str::to_string),
     };
@@ -3681,7 +3682,7 @@ fn is_preflight(request: &HttpRequest) -> bool {
 /// `getRemoteAddressWithFallback`: the connection's tunnel target, else the port-forward remote, else the live
 /// `proxyRemoteHost`/`proxyRemotePort` ([`crate::config::Config::proxy_remote`]).
 fn remote_socket(state: &State, request: &HttpRequest) -> Option<(String, u16)> {
-    request.remote_target.clone().or_else(|| state.config.port_forward.clone()).or_else(|| state.config.proxy_remote())
+    request.remote_target.as_deref().cloned().or_else(|| state.config.port_forward.clone()).or_else(|| state.config.proxy_remote())
 }
 
 /// `retrievalResponseOrNull`: the stored OpenAI Responses API answer an unmatched request names, when no relay,

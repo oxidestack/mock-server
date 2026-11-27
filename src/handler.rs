@@ -103,15 +103,15 @@ pub fn complete_head(request: &mut HttpRequest) {
         let mut head = vec![("content-encoding".to_string(), coding)];
         if let Ok(Some(_)) = crate::client::decoding::Decoder::for_head(&mut head, false) {
             let headers = &mut request.headers;
-            if headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("content-length")) {
+            if headers.contains("content-length") {
                 headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-length") && !k.eq_ignore_ascii_case("transfer-encoding"));
-                headers.push(("transfer-encoding".into(), vec!["chunked".into()]));
+                headers.push_entry("transfer-encoding", ["chunked"]);
             }
-            headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-encoding"));
+            headers.remove("content-encoding");
         }
     }
-    if request::first(&request.headers, "content-length").is_none() && request::first(&request.headers, "transfer-encoding").is_none() {
-        request.headers.push(("content-length".into(), vec![request.body.len().to_string()]));
+    if request.headers.first("content-length").is_none() && request.headers.first("transfer-encoding").is_none() {
+        request.headers.push_entry_display("content-length", request.body.len());
     }
     request.cookies = request::parse_cookies(&request.headers);
 }
@@ -128,8 +128,8 @@ pub fn complete_head(request: &mut HttpRequest) {
 /// ([`DecodeFailure::too_large`]).
 pub fn complete(request: &mut HttpRequest, max_body: usize) -> Result<(), DecodeFailure> {
     let preserved = |name: &str| -> Option<Vec<String>> {
-        let values: Vec<String> = request.headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case(name)).flat_map(|(_, v)| v.iter().cloned()).collect();
-        request.headers.iter().any(|(k, _)| k.eq_ignore_ascii_case(name)).then_some(values)
+        let named = |(k, _): &(&str, crate::headers::Values<'_>)| k.eq_ignore_ascii_case(name);
+        request.headers.contains(name).then(|| request.headers.iter().filter(named).flat_map(|(_, v)| v.iter().map(str::to_string)).collect())
     };
     let (content_encoding, transfer_encoding) = (preserved("content-encoding"), preserved("transfer-encoding"));
     let decoded = decode(request, max_body)?;
@@ -143,30 +143,30 @@ pub fn complete(request: &mut HttpRequest, max_body: usize) -> Result<(), Decode
         if content_encoding.is_some() && !raw.is_empty() && raw != request.body {
             request.original_body = Some(raw);
         }
-        if headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("content-length")) {
+        if headers.contains("content-length") {
             headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-length") && !k.eq_ignore_ascii_case("transfer-encoding"));
-            headers.push(("transfer-encoding".into(), vec!["chunked".into()]));
+            headers.push_entry("transfer-encoding", ["chunked"]);
         }
-        headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-encoding"));
+        headers.remove("content-encoding");
     }
     // `HttpUtil.setTransferEncodingChunked(m, false)`: values that are exactly `chunked` go; the others are `set`
     // again, under the lower-case name at the end, or the header goes when none is left.
-    let remaining: Vec<String> = headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding")).flat_map(|(_, v)| v.iter()).filter(|v| !v.eq_ignore_ascii_case("chunked")).cloned().collect();
-    if headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding")) {
-        headers.retain(|(k, _)| !k.eq_ignore_ascii_case("transfer-encoding"));
+    if headers.contains("transfer-encoding") {
+        let remaining: Vec<String> = headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding")).flat_map(|(_, v)| v.iter()).filter(|v| !v.eq_ignore_ascii_case("chunked")).map(str::to_string).collect();
+        headers.remove("transfer-encoding");
         if !remaining.is_empty() {
-            headers.push(("transfer-encoding".into(), remaining));
+            headers.push_entry("transfer-encoding", remaining.iter().map(String::as_str));
         }
     }
-    if !headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("content-length")) {
-        headers.push(("content-length".into(), vec![request.body.len().to_string()]));
+    if !headers.contains("content-length") {
+        headers.push_entry_display("content-length", request.body.len());
     }
     if transfer_encoding.is_some() {
-        headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-length"));
+        headers.remove("content-length");
     }
     for (name, values) in [("content-encoding", content_encoding), ("transfer-encoding", transfer_encoding)] {
-        if let Some(values) = values.filter(|_| !headers.iter().any(|(k, _)| k.eq_ignore_ascii_case(name))) {
-            headers.push((name.into(), values));
+        if let Some(values) = values.filter(|_| !headers.contains(name)) {
+            headers.push_entry(name, values.iter().map(String::as_str));
         }
     }
     request.cookies = request::parse_cookies(&request.headers);
@@ -226,19 +226,19 @@ pub fn http1_decode_failed(state: &State, failure: &DecodeFailure, request: &Htt
         let mut head = vec![("content-encoding".to_string(), coding)];
         if !matches!(crate::client::decoding::Decoder::for_head(&mut head, false), Ok(None)) {
             let headers = &mut held.headers;
-            if headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("content-length")) {
+            if headers.contains("content-length") {
                 headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-length") && !k.eq_ignore_ascii_case("transfer-encoding"));
-                headers.push(("transfer-encoding".into(), vec!["chunked".into()]));
+                headers.push_entry("transfer-encoding", ["chunked"]);
             }
-            headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-encoding"));
+            headers.remove("content-encoding");
         }
     }
     let headers = &mut held.headers;
-    let remaining: Vec<String> = headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding")).flat_map(|(_, v)| v.iter()).filter(|v| !v.eq_ignore_ascii_case("chunked")).cloned().collect();
-    if headers.iter().any(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding")) {
-        headers.retain(|(k, _)| !k.eq_ignore_ascii_case("transfer-encoding"));
+    let remaining: Vec<String> = headers.iter().filter(|(k, _)| k.eq_ignore_ascii_case("transfer-encoding")).flat_map(|(_, v)| v.iter()).filter(|v| !v.eq_ignore_ascii_case("chunked")).map(str::to_string).collect();
+    if headers.contains("transfer-encoding") {
+        headers.remove("transfer-encoding");
         if !remaining.is_empty() {
-            headers.push(("transfer-encoding".into(), remaining));
+            headers.push_entry("transfer-encoding", remaining.iter().map(String::as_str));
         }
     }
     // `NettyMessageForLog.request`: always without credentials (upstream 29a26d650), whether or not the half-received
@@ -379,9 +379,9 @@ pub fn decode(request: &HttpRequest, max_body: usize) -> Result<Option<bytes::By
 /// `HttpContentDecoder`'s coding, lower-cased: the first `Content-Encoding` value, else the first `Transfer-Encoding`
 /// value up to its first comma (`Transfer-Encoding: gzip, chunked` is decoded as gzip).
 fn coding(request: &HttpRequest) -> Option<String> {
-    let coding = match request::first(&request.headers, "content-encoding") {
+    let coding = match request.headers.first("content-encoding") {
         Some(coding) => coding,
-        None => request::first(&request.headers, "transfer-encoding")?.split(',').next().unwrap_or_default(),
+        None => request.headers.first("transfer-encoding")?.split(',').next().unwrap_or_default(),
     };
     Some(coding.trim().to_ascii_lowercase())
 }

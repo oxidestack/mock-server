@@ -280,7 +280,7 @@ pub(crate) fn request_from_json(v: &Value) -> crate::request::HttpRequest {
         Some(object.iter().map(|(k, vs)| (k.clone(), vs.as_array().map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_string)).collect()).unwrap_or_else(|| vs.as_str().map(|x| vec![x.to_string()]).unwrap_or_default()))).collect())
     };
     if let Some(headers) = flat_map("headers") {
-        request.headers = headers;
+        request.headers = headers.into();
     }
     if let Some(query) = flat_map("queryStringParameters") {
         request.query = query;
@@ -302,6 +302,6 @@ pub(crate) fn exchange_from_json(v: &Value) -> Exchange {
         .unwrap_or_else(chrono::Local::now);
     let mut x = Exchange::new(std::sync::Arc::new(request_from_json(&request)), v.get("httpResponse").cloned().unwrap_or(Value::Null), None);
     x.timestamp = timestamp;
-    x.shown_request = Some(request);
+    x.shown_request = Some(Box::new(request));
     x
 }
