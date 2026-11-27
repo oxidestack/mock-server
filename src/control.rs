@@ -1956,6 +1956,8 @@ fn create_expectations(state: &State, request: &HttpRequest) -> Reply {
             return text(400, message);
         }
     };
+    // each form of the expectations is let go once the next is built: a large array was held in every form at once
+    drop(given);
     // `HttpState.add`.
     if let Some(error) = items.iter().filter_map(Value::as_object).find_map(crate::side_actions::validate_steps) {
         return text(400, format!("invalid expectation steps: {error}"));
@@ -1963,7 +1965,14 @@ fn create_expectations(state: &State, request: &HttpRequest) -> Reply {
     if let Some(error) = items.iter().filter_map(Value::as_object).find_map(crate::side_actions::validate_respond_before_body) {
         return text(400, error);
     }
-    let expectations: Vec<Expectation> = items.iter().filter_map(Value::as_object).map(|o| compile_expectation(state, o)).collect();
+    let expectations: Vec<Expectation> = items
+        .into_iter()
+        .filter_map(|item| match item {
+            Value::Object(o) => Some(o),
+            _ => None,
+        })
+        .map(|o| compile_expectation_owned(state, o))
+        .collect();
     if let Some(error) = expectations.iter().find_map(|e| e.matcher.load_error()) {
         return text(400, error);
     }
@@ -1971,9 +1980,10 @@ fn create_expectations(state: &State, request: &HttpRequest) -> Reply {
         log_exception(state, request, error);
         return text(400, error);
     }
-    let mut created: Vec<Value> = expectations.iter().map(|e| e.canonical.clone()).collect();
-    // what `ExpectationLinter.adviseOnUpsert` reads of each upserted expectation (input, canonical form)
-    let mut upserted: Vec<(Value, Value)> = expectations.iter().map(|e| (e.input.clone(), e.canonical.clone())).collect();
+    let mut created: Vec<Value> = Vec::with_capacity(expectations.len());
+    // `ExpectationLinter.adviseOnUpsert` of each upserted expectation (input, canonical form), as it is stored; an MCP
+    // tool calls `httpState.add` directly, which the lint advice is not part of
+    let mut advice = (!request.trusted).then(crate::lint::UpsertAdvice::default);
     let unwritable = expectations.iter().any(unwritable);
     // `HttpState.add` takes the expectations one at a time: it throws when the clustered backend's `put` fails (an
     // over-long expectation), after that one's local mutation, so the ones after it are never added or logged, and
@@ -1992,7 +2002,7 @@ fn create_expectations(state: &State, request: &HttpRequest) -> Reply {
         log_exception(state, request, error);
         text(400, error)
     };
-    for (index, e) in expectations.into_iter().enumerate() {
+    for e in expectations {
         let existing = state.store.get(&e.id);
         if let Some(error) = existing.as_ref().and_then(|old| primary_action_error(old)) {
             return bad_action(accepted, error);
@@ -2015,13 +2025,19 @@ fn create_expectations(state: &State, request: &HttpRequest) -> Reply {
         // `httpRequestMatcher.update` returns false for an equal expectation: the stored one stays, unlogged, and is
         // what the answer shows (an update changing only `rateLimit`)
         if let Some(old) = existing.as_ref().filter(|old| old.upstream_equals(&e)) {
-            created[index] = old.canonical.clone();
-            upserted[index] = (old.input.clone(), old.current());
+            created.push(old.canonical.clone());
+            if let Some(advice) = &mut advice {
+                advice.add(&old.input, &old.current());
+            }
             accepted += 1;
             continue;
         }
         let verb = if existing.is_some() { "updated" } else { "creating" };
         log_upsert(state, verb, &e);
+        created.push(e.canonical.clone());
+        if let Some(advice) = &mut advice {
+            advice.add(&e.input, &e.canonical);
+        }
         if let Err(error) = state.store.try_upsert(vec![e]) {
             if accepted > 0 {
                 crate::persistence::changed(state, None);
@@ -2036,12 +2052,11 @@ fn create_expectations(state: &State, request: &HttpRequest) -> Reply {
     if unwritable {
         return unwritable_failure(state, request);
     }
-    // an MCP tool calls `httpState.add` directly, which the lint advice is not part of
-    let advice = if request.trusted { None } else { crate::lint::advise_on_upsert(&upserted) };
+    let advice = advice.and_then(crate::lint::UpsertAdvice::finish);
     if let Some((count, lines)) = &advice {
         crate::log::warn_event(state, crate::recorded::LogEntry::at(crate::recorded::Level::Warn, crate::lint::upsert_warning_format(*count)).args([lines.as_str()]));
     }
-    let mut reply = Reply::api_body(201, "application/json", json::pretty_expectations(&Value::Array(created.clone())));
+    let mut reply = Reply::api_body(201, "application/json", json::pretty_expectations_owned(Value::Array(created)));
     if let Some((count, _)) = advice {
         reply.headers.insert(0, (crate::lint::LINT_WARNINGS_HEADER.into(), count.to_string()));
     }
@@ -2414,9 +2429,14 @@ fn openapi_expectations(state: &State, request: &HttpRequest) -> Reply {
 }
 
 pub fn compile_expectation(state: &State, input: &serde_json::Map<String, Value>) -> Expectation {
+    compile_expectation_owned(state, input.clone())
+}
+
+/// [`compile_expectation`] of an input no longer needed, which the expectation keeps rather than a copy of it.
+pub fn compile_expectation_owned(state: &State, input: serde_json::Map<String, Value>) -> Expectation {
     let id = input.get("id").and_then(Value::as_str).map(str::to_string).unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
-    let canonical = canonical::expectation(input, &id);
-    let default_values = canonical::expectation_with_default_values(input, &id);
+    let canonical = canonical::expectation(&input, &id);
+    let default_values = canonical::expectation_with_default_values(&input, &id);
     // SECURITY: every compile from untrusted input carries the server's remote-`$ref` policy.
     let matcher = matcher::string::with_remote_refs_policy(state.json_schema_allow_remote_refs(), || {
         matcher::with_exact_case(state.config.match_exact_case(), || {
@@ -2430,14 +2450,15 @@ pub fn compile_expectation(state: &State, input: &serde_json::Map<String, Value>
         })
     });
     let priority = input.get("priority").and_then(Value::as_i64).unwrap_or(0);
-    Expectation::new(id, priority, canonical, default_values, Value::Object(input.clone()), matcher, match crate::side_actions::primary(input) {
+    let action = match crate::side_actions::primary(&input) {
         // `getPrimaryAction` throws: the data plane answers a request that matches it as a fault before reaching the
         // action (`dataplane::handle`), so this stand-in is never served.
         Err(_) => Action::Error { delay: None, drop_connection: false, reset_connection: false, response_bytes: None, stream_error: None },
         Ok(_) => crate::openapi_examples::with_static_realistic(state.config.bool_property("generateRealisticExampleValues", false), || {
-            Action::compile(&crate::side_actions::primary_input(input))
+            Action::compile(&crate::side_actions::primary_input(&input))
         }),
-    })
+    };
+    Expectation::new(id, priority, canonical, default_values, Value::Object(input), matcher, action)
 }
 
 /// A verification's answer; a rejected one is `HttpState.handle`'s `IllegalArgumentException`, logged with the request.

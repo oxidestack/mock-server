@@ -413,6 +413,11 @@ pub fn pretty_into<T: Serialize + ?Sized>(out: &mut String, value: &T) {
 /// [`pretty`] over a list of expectations (or an object holding one), with each expectation's `metadata` written as
 /// compact JSON on one line, as upstream's `MetadataJson` text is embedded.
 pub fn pretty_expectations(value: &serde_json::Value) -> String {
+    pretty_expectations_owned(value.clone())
+}
+
+/// [`pretty_expectations`] of a value no longer needed, marked in place rather than copied.
+pub fn pretty_expectations_owned(mut marked: serde_json::Value) -> String {
     use serde_json::Value;
     fn mark(v: &mut Value, raw: &mut Vec<String>) {
         match v {
@@ -429,7 +434,6 @@ pub fn pretty_expectations(value: &serde_json::Value) -> String {
             _ => {}
         }
     }
-    let mut marked = value.clone();
     let mut raw = Vec::new();
     mark(&mut marked, &mut raw);
     let mut out = pretty(&marked);

@@ -24,6 +24,17 @@ struct JsonCell {
     /// Known, without rendering it, to be a request `CredentialRedaction.forLog` leaves as it is (not a control-plane
     /// request), so attaching it to an entry need not read it.
     credential_free: bool,
+    /// The value's text and its block as a message argument, kept once rendered: for a value many entries quote
+    /// ([`Json::with_kept_text`]).
+    kept_text: Option<Box<KeptText>>,
+}
+
+/// The text of a value many entries quote: as it is ([`Json::write_text`]) and as a message's argument block at the
+/// top level ([`crate::matcher::argument_block_into`]), each rendered when first written.
+#[derive(Default)]
+struct KeptText {
+    text: std::sync::OnceLock<String>,
+    block: std::sync::OnceLock<String>,
 }
 
 /// What a [`Json`] is rendered from when first read.
@@ -50,13 +61,21 @@ impl Json {
     pub fn new(value: Value) -> Json {
         let cell = std::sync::OnceLock::new();
         let _ = cell.set(value);
-        Json(std::sync::Arc::new(JsonCell { value: cell, source: None, credential_free: false }))
+        Json(std::sync::Arc::new(JsonCell { value: cell, source: None, credential_free: false, kept_text: None }))
+    }
+
+    /// `value`, whose text ([`Json::write_text`]) is rendered once and kept: a value the entries of many requests
+    /// quote, such as a static response.
+    pub fn with_kept_text(value: Value) -> Json {
+        let cell = std::sync::OnceLock::new();
+        let _ = cell.set(value);
+        Json(std::sync::Arc::new(JsonCell { value: cell, source: None, credential_free: false, kept_text: Some(Box::default()) }))
     }
 
     /// [`crate::recorded::logged`] of `request`, rendered the first time it is read; `credential_free` when the request
     /// is known to carry nothing `CredentialRedaction.forLog` masks.
     pub fn logged_request(request: std::sync::Arc<HttpRequest>, credential_free: bool) -> Json {
-        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), source: Some(Source::Logged(request)), credential_free }))
+        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), source: Some(Source::Logged(request)), credential_free, kept_text: None }))
     }
 
     /// [`crate::recorded::model_form`] of `requests`, one alone or several (or none) as an array, rendered the first
@@ -64,16 +83,33 @@ impl Json {
     /// them: rendered when logged, each failed verification held a copy of the whole event log.
     pub fn model_forms(requests: std::sync::Arc<Vec<std::sync::Arc<HttpRequest>>>) -> Json {
         let source = Source::ModelForms(requests);
-        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), source: Some(source), credential_free: false }))
+        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), source: Some(source), credential_free: false, kept_text: None }))
     }
 
     /// [`crate::recorded::log_value`] of the value, appended to `out`: a request's logged form nothing has rendered is
     /// written straight from the request, and stays unrendered.
     pub fn write_text(&self, out: &mut String) {
+        if let Some(kept) = &self.0.kept_text {
+            return out.push_str(kept.text.get_or_init(|| crate::recorded::log_value(self)));
+        }
         match (self.0.value.get(), &self.0.source) {
             (None, Some(Source::Logged(request))) => crate::recorded::logged_text_into(out, request),
             _ => crate::recorded::log_value_into(out, self),
         }
+    }
+
+    /// The value's argument block at the top level of a message, appended to `out` when it is kept
+    /// ([`Json::with_kept_text`]); `false`, and nothing written, otherwise.
+    fn write_kept_block(&self, out: &mut String) -> bool {
+        let Some(kept) = &self.0.kept_text else { return false };
+        out.push_str(kept.block.get_or_init(|| {
+            let mut text = String::new();
+            self.write_text(&mut text);
+            let mut block = String::with_capacity(text.len() + text.len() / 8 + 4);
+            crate::matcher::argument_block_into(&mut block, 0, &text);
+            block
+        }));
+        true
     }
 
     /// [`ArgText::Received`]'s text of the value appended to `out`: requests nothing has rendered are written one at a
@@ -515,12 +551,17 @@ impl Pending {
             return out.push_str(text);
         }
         let texts = self.texts.get();
-        crate::matcher::format_log_message_into(out, 0, &self.format, self.arguments.len(), |i, write| match texts {
-            Some(texts) => write(&texts[i]),
+        crate::matcher::format_log_message_blocks_into(out, 0, &self.format, self.arguments.len(), |i, out| match texts {
+            Some(texts) => crate::matcher::argument_block_into(out, 0, &texts[i]),
             None => {
+                let shape = self.shapes.get(i).unwrap_or(&ArgText::Json);
+                // a value many entries quote (a stored response) is written as the block it always makes
+                if matches!(shape, ArgText::Json) && self.arguments[i].write_kept_block(out) {
+                    return;
+                }
                 scratch.clear();
-                self.shapes.get(i).unwrap_or(&ArgText::Json).plain_into(&self.arguments[i], scratch);
-                write(scratch);
+                shape.plain_into(&self.arguments[i], scratch);
+                crate::matcher::argument_block_into(out, 0, scratch);
             }
         });
     }

@@ -53,7 +53,7 @@ pub struct Exchange {
     /// Shared with the request's arrival entry when the log holds the same request for both.
     pub request: Arc<HttpRequest>,
     /// Canonical `httpResponse` as MockServer logs it (the action's response, or the 404); a served request's is shared
-    /// with the earlier exchanges that logged an equal one ([`interned`]).
+    /// with the earlier exchanges that logged an equal one ([`interned_shared`]).
     pub response: Arc<Value>,
     pub timestamp: DateTime<Local>,
     /// For forwarded exchanges: the expectation `retrieve?type=RECORDED_EXPECTATIONS` reports.
@@ -181,7 +181,7 @@ fn completed_entry(mut entry: LogEntry, x: &Exchange, portless: bool) -> LogEntr
         entry.correlation_id = Some(x.request.log_correlation_id.clone());
     }
     if entry.response.is_none() && !x.response.is_null() {
-        entry.response = Some(crate::log_entry::Json::new(logged_response(&x.response)));
+        entry.response = Some(logged_response_json(&x.response));
     }
     // the arguments equal to the entry's response (the response, a static response action) are that value
     if let Some(response) = entry.response.clone() {
@@ -1368,7 +1368,7 @@ impl RequestLog {
     pub fn record_served(
         &self,
         logged: &LoggedRequest,
-        response: Value,
+        response: impl Into<Arc<Value>>,
         expectation_id: Option<String>,
         kind: Kind,
         make: impl Fn(&Exchange, &LoggedRequest) -> LogEntry + Send + Sync + 'static,
@@ -1379,7 +1379,7 @@ impl RequestLog {
         if self.capacity.load(Relaxed) == 0 && !hooked && !printed {
             return;
         }
-        let mut x = Exchange::new(logged.request.clone(), interned(response), expectation_id);
+        let mut x = Exchange::new(logged.request.clone(), interned_shared(response.into()), expectation_id);
         if hooked || self.max_logged_body_bytes.load(Relaxed) > 0 || crate::credential_redaction::for_log(&x.request).is_some() {
             x.entry = ExchangeEntry::Built(Box::new(make(&x, logged)));
             return self.push_exchange(x);
@@ -3330,48 +3330,44 @@ pub fn input_request(request: &HttpRequest) -> Value {
     Value::Object(o)
 }
 
+/// A value [`interned_shared`] lately on this thread, with what is derived from it once rather than per request.
+struct Recent {
+    value: Arc<Value>,
+    /// Its weight as a response once weighed (0 before: [`response_weight`]).
+    weight: std::cell::Cell<u64>,
+    /// [`logged_response`] of it, its text rendered once ([`logged_response_json`]).
+    logged: std::cell::OnceCell<crate::log_entry::Json>,
+}
+
+impl Recent {
+    fn new(value: Arc<Value>) -> Recent {
+        Recent { value, weight: std::cell::Cell::new(0), logged: std::cell::OnceCell::new() }
+    }
+}
+
 thread_local! {
-    /// The values [`interned`] lately on this thread, each with its weight as a response once weighed (0 before:
-    /// [`response_weight`]).
-    static RECENT: std::cell::RefCell<VecDeque<(Arc<Value>, std::cell::Cell<u64>)>> = const { std::cell::RefCell::new(VecDeque::new()) };
+    /// The values [`interned_shared`] lately on this thread.
+    static RECENT: std::cell::RefCell<VecDeque<Recent>> = const { std::cell::RefCell::new(VecDeque::new()) };
 }
 
 /// How many values [`RECENT`] holds.
 const RECENT_VALUES: usize = 8;
 
 /// `value`, or an equal one logged lately on this thread: a static response's logged form and its action are the same
-/// from request to request, and each copy was ~1 KB of the event log per request.
-pub fn interned(value: Value) -> Arc<Value> {
-    let mut value = Some(value);
-    let shared = RECENT.try_with(|recent| {
-        let mut recent = recent.borrow_mut();
-        let given = value.as_ref().expect("not yet taken");
-        if let Some((found, _)) = recent.iter().find(|(v, _)| **v == *given) {
-            return found.clone();
-        }
-        if recent.len() == RECENT_VALUES {
-            recent.pop_front();
-        }
-        let shared = Arc::new(value.take().expect("not yet taken"));
-        recent.push_back((shared.clone(), Default::default()));
-        shared
-    });
-    // a thread on its way out shares nothing
-    shared.unwrap_or_else(|_| Arc::new(value.take().unwrap_or_default()))
-}
-
-/// [`interned`] of a value already shared (an expectation's own response): itself when it is among the recent ones.
+/// from request to request, and each copy was ~1 KB of the event log per request. An expectation's own response,
+/// shared rather than copied, is found by its pointer.
 pub fn interned_shared(value: Arc<Value>) -> Arc<Value> {
     RECENT
         .try_with(|recent| {
             let mut recent = recent.borrow_mut();
-            if let Some((found, _)) = recent.iter().find(|(v, _)| Arc::ptr_eq(v, &value) || **v == *value) {
-                return found.clone();
+            // by pointer first: an equal value would be compared whole
+            if let Some(found) = recent.iter().find(|r| Arc::ptr_eq(&r.value, &value)).or_else(|| recent.iter().find(|r| *r.value == *value)) {
+                return found.value.clone();
             }
             if recent.len() == RECENT_VALUES {
                 recent.pop_front();
             }
-            recent.push_back((value.clone(), Default::default()));
+            recent.push_back(Recent::new(value.clone()));
             value.clone()
         })
         .unwrap_or(value)
@@ -3383,16 +3379,31 @@ fn response_weight(response: &Arc<Value>) -> u64 {
     RECENT
         .try_with(|recent| {
             let recent = recent.borrow();
-            let (_, kept) = recent.iter().find(|(v, _)| Arc::ptr_eq(v, response))?;
+            let kept = recent.iter().find(|r| Arc::ptr_eq(&r.value, response))?;
             // a response weighs at least its overhead, so 0 is never a weight
-            if kept.get() == 0 {
-                kept.set(weight::response_json(response));
+            if kept.weight.get() == 0 {
+                kept.weight.set(weight::response_json(response));
             }
-            Some(kept.get())
+            Some(kept.weight.get())
         })
         .ok()
         .flatten()
         .unwrap_or_else(|| weight::response_json(response))
+}
+
+/// [`logged_response`] of `response` as an entry's argument or response: while `response` is among this thread's
+/// [`RECENT`] values, the one built for it before, whose text is rendered once. A static response's `returning
+/// response` line quotes it twice (as the response and as the action) for every request.
+pub fn logged_response_json(response: &Arc<Value>) -> crate::log_entry::Json {
+    RECENT
+        .try_with(|recent| {
+            let recent = recent.borrow();
+            let kept = recent.iter().find(|r| Arc::ptr_eq(&r.value, response))?;
+            Some(kept.logged.get_or_init(|| crate::log_entry::Json::with_kept_text(logged_response(response))).clone())
+        })
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| crate::log_entry::Json::new(logged_response(response)))
 }
 
 #[cfg(test)]

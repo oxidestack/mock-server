@@ -444,11 +444,19 @@ pub fn lint_stored(stored: &[Stored]) -> Value {
 }
 
 /// `ExpectationLinter.adviseOnUpsert`: the cheap per-expectation checks at warning severity or above for the
-/// expectations just created or updated (input and canonical form each). `None` when there is nothing to say;
-/// otherwise the issue count and the WARN's argument.
-pub fn advise_on_upsert(upserted: &[(Value, Value)]) -> Option<(usize, String)> {
-    let mut report = Report::default();
-    for (index, (input, canonical)) in upserted.iter().enumerate() {
+/// expectations just created or updated (input and canonical form each), taken one at a time in the order they were
+/// upserted, as each is stored, so a large array is not copied to be linted afterwards.
+#[derive(Default)]
+pub struct UpsertAdvice {
+    report: Report,
+    added: usize,
+}
+
+impl UpsertAdvice {
+    /// The next upserted expectation, in input and canonical form.
+    pub fn add(&mut self, input: &Value, canonical: &Value) {
+        let index = self.added;
+        self.added += 1;
         let subject = Subject {
             expectation: Some(lintable(input, canonical, 0)),
             order: index,
@@ -456,15 +464,19 @@ pub fn advise_on_upsert(upserted: &[(Value, Value)]) -> Option<(usize, String)> 
             reported_id: canonical.get("id").and_then(Value::as_str).map(str::to_string),
             summary: summary(input, canonical),
         };
-        lint_one(&mut report, &subject, false);
+        lint_one(&mut self.report, &subject, false);
     }
-    if report.issues.is_empty() {
-        return None;
+
+    /// The number of problems found and their lines, when there are any.
+    pub fn finish(self) -> Option<(usize, String)> {
+        if self.report.issues.is_empty() {
+            return None;
+        }
+        Some((self.report.issues.len(), warning_lines(&self.report.issues, "")))
     }
-    Some((report.issues.len(), warning_lines(&report.issues, "")))
 }
 
-/// The WARN's format for [`advise_on_upsert`] with `count` problems.
+/// The WARN's format for [`UpsertAdvice`] with `count` problems.
 pub fn upsert_warning_format(count: usize) -> String {
     format!("expectation lint found {count} problem(s) in the expectations just created or updated, which were stored unchanged; PUT /mockserver/lint checks every stored expectation, including for shadowing:{{}}")
 }

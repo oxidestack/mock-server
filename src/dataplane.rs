@@ -46,7 +46,9 @@ pub fn log_early_evaluations(state: &State, head: &HttpRequest, evaluated: &[cra
 // the served reply is the common arm, and boxing it would cost an allocation for nothing
 #[allow(clippy::large_enum_variant)]
 enum Arm {
-    Served(Reply, serde_json::Value),
+    /// The reply and the response as logged: shared with the expectation when it is the expectation's own response,
+    /// so a static response is not copied for each request that logs it.
+    Served(Reply, Arc<serde_json::Value>),
     Done(Outcome),
 }
 
@@ -376,7 +378,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
             log.served_action = key.map(|k| Arc::new(expectation.canonical.get(k).cloned().unwrap_or_default()));
             // that overload passes no chaos and no rate limit (already taken, so not counted as chaos), but still
             // applies `globalResponseDelayMillis` and logs its `timing` (oracle)
-            match chaos_and_delay(state, None, reply, logged, || None, || None).await {
+            match chaos_and_delay(state, None, reply, Arc::new(logged), || None, || None).await {
                 Ok(done) => done,
                 Err(cut) => return cut.outcome(state, &request),
             }
@@ -436,13 +438,13 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
                     let mut reply = Reply::status(501);
                     reply.reason = Some("Not Implemented".into());
                     reply.body = bytes::Bytes::from(body.clone());
-                    (reply, serde_json::json!({"statusCode": 501, "reasonPhrase": "Not Implemented", "body": body}))
+                    (reply, Arc::new(serde_json::json!({"statusCode": 501, "reasonPhrase": "Not Implemented", "body": body})))
                 }
                 Action::GrpcBidi(_) => {
                     let body = "gRPC bidi streaming requires the multiplex pipeline (grpcBidiStreamingEnabled=true)";
                     let mut reply = Reply::status(501);
                     reply.body = bytes::Bytes::from_static(body.as_bytes());
-                    (reply, serde_json::json!({"statusCode": 501, "body": body}))
+                    (reply, Arc::new(serde_json::json!({"statusCode": 501, "body": body})))
                 }
                 Action::GrpcStream(response) => {
                     let delay = response.get("delay").filter(|d| !d.is_null()).and_then(action::delay);
@@ -481,7 +483,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
                     log.served_action = Some(Arc::new(expectation.canonical.get("httpWebSocketResponse").cloned().unwrap_or_default()));
                     let mut reply = Reply::status(501);
                     reply.body = bytes::Bytes::from_static(UNSUPPORTED.as_bytes());
-                    (reply, serde_json::json!({"statusCode": 501, "body": UNSUPPORTED}))
+                    (reply, Arc::new(serde_json::json!({"statusCode": 501, "body": UNSUPPORTED})))
                 }
                 Action::WebSocket(response) => {
                     let delay = response.get("delay").filter(|d| !d.is_null()).and_then(action::delay);
@@ -509,7 +511,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
                 Action::Llm(configured) => served!(llm_action(&m, configured, &mut log).await),
                 Action::Unsupported(kind) => {
                     crate::log::warn(state, &format!("{kind} is not supported by mock-server yet; returning 404 for expectation {}", expectation.id));
-                    (Reply::not_found(), not_found_json())
+                    (Reply::not_found(), Arc::new(not_found_json()))
                 }
             }
         }
@@ -555,7 +557,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
             // `logLevel`; it names no expectation.
             let entry = crate::recorded::LogEntry::new(crate::recorded::Kind::ExpectationResponse, "returning stored OpenAI Responses API response for request:{}");
             stored_entry = Some(entry.args([crate::recorded::logged(&request)]));
-            (reply, logged)
+            (reply, Arc::new(logged))
         }
         None if state.static_files.is_some() && !is_preflight(&request) => match static_file(state, generation).await {
             StaticAnswer::Refused => {
@@ -566,7 +568,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
                 static_served = true;
                 let entry = crate::recorded::LogEntry::new(crate::recorded::Kind::ExpectationResponse, "returning static file response:{}for request:{}");
                 stored_entry = Some(entry.args([crate::recorded::Arg::from(crate::recorded::logged_response(&logged)), crate::recorded::Arg::from(crate::recorded::logged(&request))]));
-                (*reply, logged)
+                (*reply, Arc::new(logged))
             }
             StaticAnswer::NotServed => {
                 let (reply, after) = no_match(state, &request, closest_scan.take()).await;
@@ -575,7 +577,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
                     404 => not_found_json(),
                     status => serde_json::json!({"statusCode": status, "reasonPhrase": reason(status)}),
                 };
-                (reply, logged)
+                (reply, Arc::new(logged))
             }
         },
         None => {
@@ -589,7 +591,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
                 404 => not_found_json(),
                 status => serde_json::json!({"statusCode": status, "reasonPhrase": reason(status)}),
             };
-            (reply, logged)
+            (reply, Arc::new(logged))
         }
     };
     // `attemptResponseBreakpoint`: the response the client writes instead, if it changes it.
@@ -600,14 +602,14 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
         if let Some(crate::breakpoint::Decision::ModifyResponse(v)) = &decision {
             let respond = respond_logged(state, v);
             reply = materialise(state, &respond, &request).unwrap_or_else(|fallback| fallback.0);
-            logged_response = crate::canonical::response(v);
+            logged_response = Arc::new(crate::canonical::response(v));
         }
         if decision.is_some() {
-            attach_breakpoint_timing(&mut logged_response, paused.elapsed());
+            attach_breakpoint_timing(Arc::make_mut(&mut logged_response), paused.elapsed());
             // the mock path's continuation times the response the paused entry holds when it goes on unchanged
             // (`attachMockServedTiming(responseToWrite, …)`); the not-found path attaches no timing upstream
             if served_by.is_some() && matches!(decision, Some(crate::breakpoint::Decision::Continue)) {
-                let _ = continued.set(logged_response.clone());
+                let _ = continued.set(serde_json::Value::clone(&logged_response));
             }
         }
     }
@@ -617,7 +619,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
     if served_by.is_some() {
         let added = reply.add_writer_headers(&request, &state.config);
         if !added.is_empty() {
-            with_logged_headers(&mut logged_response, &added);
+            with_logged_headers(Arc::make_mut(&mut logged_response), &added);
         }
     }
     let final_informational = is_final_informational(request.protocol, reply.status);
@@ -640,7 +642,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
         crate::telemetry::request_span(state, served);
     }
     // the response as the event log holds it, for the validation WARN (`timing` included, as the response entry)
-    let validated = mock_validation.map(|operation| (operation, logged_response.clone(), request.clone()));
+    let validated = mock_validation.map(|operation| (operation, serde_json::Value::clone(&logged_response), request.clone()));
     use crate::recorded::{Arg, Kind, LogEntry};
     let logged_request = logged_request.unwrap_or_else(|| crate::recorded::LoggedRequest::of(&request));
     // A mock response's `returning response` entry, built when the log is read: from the request the received entry
@@ -658,7 +660,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
     };
     // INFO switched on since the not-found answer was left unbuilt
     if served_by.is_none() && reply.status == 404 && logged_response.is_null() && state.info_enabled() {
-        logged_response = not_found_json();
+        logged_response = Arc::new(not_found_json());
     }
     let ordered = || logged_request.arg();
     // `LogEntry.setArguments`: an `HttpResponse` argument (the response, a response action) prints its body bare.
@@ -683,7 +685,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
         Some(_) => {
             let message = message.map(|m| Box::new(m.response(crate::recorded::logged_response(&logged_response))));
             let mut untimed = logged_response;
-            untimed.as_object_mut().map(|o| o.remove("timing"));
+            Arc::make_mut(&mut untimed).as_object_mut().map(|o| o.remove("timing"));
             (message, untimed)
         }
         None => (message, logged_response),
@@ -693,7 +695,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
         // an entry with the request set (`setHttpRequest`: a difference's TRACE entry, the closest match diff) is
         // about it, so a log clear that matches the request removes it
         let about = after_not_found.iter().any(|e| e.requests.is_some()).then(|| request.clone());
-        state.log.record_no_match(request, logged_response, message.map(|m| *m));
+        state.log.record_no_match(request, Arc::unwrap_or_clone(logged_response), message.map(|m| *m));
         for entry in std::mem::take(&mut after_not_found) {
             crate::log::entry(state, &entry);
             match (&about, entry.requests.is_some()) {
@@ -709,8 +711,8 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
         let warned_request = informational_warning.as_ref().map(|_| request.clone());
         match (served, message) {
             (Some(make), _) => state.log.record_served(&logged_request, logged_response, served_by, Kind::ExpectationResponse, make),
-            (None, Some(message)) => state.log.record_with_message(request, logged_response, served_by, *message),
-            (None, None) => state.log.record(Arc::unwrap_or_clone(request), logged_response, served_by),
+            (None, Some(message)) => state.log.record_with_message(request, Arc::unwrap_or_clone(logged_response), served_by, *message),
+            (None, None) => state.log.record(Arc::unwrap_or_clone(request), Arc::unwrap_or_clone(logged_response), served_by),
         }
         if let (Some(entry), Some(request)) = (informational_warning, warned_request) {
             crate::log::warn_event_about(state, entry, &request);
@@ -746,11 +748,19 @@ fn with_empty_body(v: &serde_json::Value, empty_body: Option<&(serde_json::Value
 
 /// The `returning response` entry of an exchange a mock response `action` of its expectation served, its request in
 /// the logged form `logged`.
-fn served_entry(x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest, action: &serde_json::Value, empty_body: Option<&(serde_json::Value, bool)>) -> crate::recorded::LogEntry {
+fn served_entry(x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest, action: &Arc<serde_json::Value>, empty_body: Option<&(serde_json::Value, bool)>) -> crate::recorded::LogEntry {
     use crate::recorded::{Arg, Kind, LogEntry, logged_response};
     let id = x.expectation_id.as_deref().unwrap_or_default();
+    let (response, action) = match empty_body {
+        // the response and the action, mostly one value, quoted as their logged form built once
+        None => (crate::recorded::logged_response_json(&x.response), crate::recorded::logged_response_json(action)),
+        Some(_) => (
+            crate::log_entry::Json::new(logged_response(&with_empty_body(&x.response, empty_body, false))),
+            crate::log_entry::Json::new(logged_response(&with_empty_body(action, empty_body, true))),
+        ),
+    };
     LogEntry::new(Kind::ExpectationResponse, SERVED_FORMAT)
-        .args([Arg::from(logged_response(&with_empty_body(&x.response, empty_body, false))), logged.arg(), logged_response(&with_empty_body(action, empty_body, true)).into(), id.into()])
+        .args([Arg::from(response), logged.arg(), Arg::from(action), id.into()])
         .request_logged(&x.request, logged)
 }
 
@@ -789,27 +799,36 @@ fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a
                     let delay = || respond.delay.as_ref().map(|d| d.resolve(state, generation));
                     // the expectation's own response is logged as the action from the copy it keeps for that
                     let shared = recovery.is_none().then(|| expectation.served_response().cloned()).flatten();
-                    let unserved = match (&recovery, &shared) {
-                        (Some(failure), _) => crate::canonical::response(failure),
-                        (None, Some(shared)) => serde_json::Value::clone(shared),
-                        // a responder step's response when steps are configured
-                        (None, None) => crate::side_actions::responder_value(&expectation.canonical, "httpResponse").cloned().unwrap_or_default(),
+                    let logged: Arc<serde_json::Value> = match &shared {
+                        // the response as logged is the action itself, shared rather than copied for each request
+                        Some(shared) if synthesized.is_none() && respond.generated.is_none() => {
+                            log.served_action = Some(shared.clone());
+                            shared.clone()
+                        }
+                        _ => {
+                            let unserved = match (&recovery, &shared) {
+                                (Some(failure), _) => crate::canonical::response(failure),
+                                (None, Some(shared)) => serde_json::Value::clone(shared),
+                                // a responder step's response when steps are configured
+                                (None, None) => crate::side_actions::responder_value(&expectation.canonical, "httpResponse").cloned().unwrap_or_default(),
+                            };
+                            // `HttpResponseActionHandler` generates a `generateFromSchema` body into a clone: the
+                            // logged action is the expectation's own, without it; the logged response has it.
+                            log.served_action = Some(shared.unwrap_or_else(|| Arc::new(unserved.clone())));
+                            let action = respond.served(unserved);
+                            // a synthesized GraphQL body is logged with the response (a plain string), not the action
+                            Arc::new(match (&synthesized, action) {
+                                (Some((_, text)), serde_json::Value::Object(mut o)) => {
+                                    o.insert("body".into(), serde_json::Value::String(text.clone()));
+                                    serde_json::Value::Object(o)
+                                }
+                                (_, action) => action,
+                            })
+                        }
                     };
-                    // `HttpResponseActionHandler` generates a `generateFromSchema` body into a clone: the logged
-                    // action is the expectation's own, without it; the logged response has it.
-                    log.served_action = Some(shared.unwrap_or_else(|| Arc::new(unserved.clone())));
-                    let action = respond.served(unserved);
                     if recovery.is_none() && synthesized.is_none() && respond.generated.is_none() {
                         log.empty_body = expectation.empty_response_body().map(|b| (b.clone(), true));
                     }
-                    // a synthesized GraphQL body is logged with the response (a plain string), not the action
-                    let logged = match (&synthesized, action) {
-                        (Some((_, text)), serde_json::Value::Object(mut o)) => {
-                            o.insert("body".into(), serde_json::Value::String(text.clone()));
-                            serde_json::Value::Object(o)
-                        }
-                        (_, action) => action,
-                    };
                     match chaos_and_delay(state, injection, reply, logged, delay, || m.rate_limit()).await {
                         Ok(done) => done,
                         Err(cut) => return Arm::Done(cut.outcome(state, request)),
@@ -824,7 +843,7 @@ fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a
                         })));
                     }
                     log.after_warn = warn;
-                    (reply, logged)
+                    (reply, logged.into())
                 }
             }
         };
@@ -869,7 +888,7 @@ fn responses_action<'a>(m: &'a Matched<'_>, responses: &'a action::Responses, lo
                 }
             }
         };
-        Arm::Served(reply, logged)
+        Arm::Served(reply, logged.into())
     })
 }
 
@@ -1040,7 +1059,7 @@ fn forward_action<'a>(m: &'a Matched<'_>, forward: &'a crate::forward::Forward, 
                 }
             }
         };
-        Arm::Served(reply, logged)
+        Arm::Served(reply, logged.into())
     })
 }
 
@@ -1085,7 +1104,7 @@ fn template_action<'a>(m: &'a Matched<'_>, template: &'a templates::Template, de
                 }
             }
         };
-        Arm::Served(reply, logged)
+        Arm::Served(reply, logged.into())
     })
 }
 
@@ -1143,7 +1162,7 @@ fn callback_action<'a>(m: &'a Matched<'_>, client_id: &'a str, delay: Option<&'a
                 None => (Reply::not_found(), not_found_json()),
             }
         };
-        Arm::Served(reply, logged)
+        Arm::Served(reply, logged.into())
     })
 }
 
@@ -1183,7 +1202,7 @@ fn class_callback_action<'a>(m: &'a Matched<'_>, class: &'a str, delay: Option<&
                 },
             }
         };
-        Arm::Served(reply, logged)
+        Arm::Served(reply, logged.into())
     })
 }
 
@@ -1284,7 +1303,7 @@ fn llm_action<'a>(m: &'a Matched<'_>, configured: &'a crate::llm::Llm, log: &'a 
                 }
             }
         };
-        Arm::Served(reply, logged)
+        Arm::Served(reply, logged.into())
     })
 }
 
@@ -2048,14 +2067,14 @@ fn with_logged_headers(logged: &mut serde_json::Value, added: &[(String, String)
 /// response replaced by a quota or error response (then its own delay is not applied), or reshaped; then the
 /// response's delay, `globalResponseDelayMillis` and the chaos latency. With any of those, the logged response
 /// carries a `timing` block (`attachMockServedTiming`).
-async fn chaos_and_delay(
+async fn chaos_and_delay<L: LoggedResponse>(
     state: &State,
     injection: Option<&crate::chaos::http::Injection>,
     mut reply: Reply,
-    mut logged: serde_json::Value,
+    mut logged: L,
     delay: impl FnOnce() -> Option<std::time::Duration>,
     rate_limit: impl FnOnce() -> Option<Reply>,
-) -> Result<(Reply, serde_json::Value), Cut> {
+) -> Result<(Reply, L), Cut> {
     let mut latency = None;
     // `writeResponseActionResponse` resolves the delay of the response it writes: a replacement's (none), so a
     // configured delay template is not rendered (nor its fallback logged) when chaos drops or replaces the response
@@ -2067,7 +2086,7 @@ async fn chaos_and_delay(
     let limited = rate_limit();
     if let Some(limited) = limited {
         crate::chaos::http::injected(state, "rateLimit");
-        logged = rate_limit_logged(&limited);
+        logged = L::from(rate_limit_logged(&limited));
         reply = limited;
         replaced = true;
     }
@@ -2075,11 +2094,12 @@ async fn chaos_and_delay(
         match (!replaced).then(|| injection.replacement(state)).flatten() {
             Some(replacement) => {
                 reply = replacement.reply;
-                logged = replacement.logged;
+                logged = L::from(replacement.logged);
                 replaced = true;
             }
             None if replaced => {}
-            None => injection.reshape(state, &mut reply, &mut logged),
+            None if injection.reshapes() => injection.reshape(state, &mut reply, logged.value_mut()),
+            None => {}
         }
         latency = injection.latency(state);
     }
@@ -2103,11 +2123,28 @@ async fn chaos_and_delay(
             timing.insert("injectedDelayMillis".into(), (injected_delay.as_millis() as u64).into());
         }
         timing.insert("totalTimeInMillis".into(), (started.elapsed().as_millis() as u64).into());
-        if let Some(o) = logged.as_object_mut() {
+        if let Some(o) = logged.value_mut().as_object_mut() {
             o.insert("timing".into(), serde_json::Value::Object(timing));
         }
     }
     Ok((reply, logged))
+}
+
+/// A response as logged, owned or shared: a shared one is copied only when chaos or a delay changes it.
+trait LoggedResponse: From<serde_json::Value> {
+    fn value_mut(&mut self) -> &mut serde_json::Value;
+}
+
+impl LoggedResponse for serde_json::Value {
+    fn value_mut(&mut self) -> &mut serde_json::Value {
+        self
+    }
+}
+
+impl LoggedResponse for Arc<serde_json::Value> {
+    fn value_mut(&mut self) -> &mut serde_json::Value {
+        Arc::make_mut(self)
+    }
 }
 
 /// Why the write funnel answers without the mock's response.
@@ -3984,3 +4021,7 @@ fn llm_logged(status: u32, headers: &[(String, String)], body: String) -> serde_
 fn respond_logged(state: &State, response: &serde_json::Value) -> action::Respond {
     crate::openapi::logging_load_problems(state, || action::respond(response))
 }
+
+#[cfg(test)]
+#[path = "dataplane_tests.rs"]
+mod tests;

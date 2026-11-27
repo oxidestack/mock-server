@@ -483,20 +483,25 @@ impl Injection {
         latency
     }
 
+    /// Whether [`Injection::reshape`] changes anything: the match is in the count window and a body or dribble fault is
+    /// configured.
+    pub fn reshapes(&self) -> bool {
+        let p = &self.profile;
+        self.eligible()
+            && (p.graphql_errors == Some(true) || p.truncate_body_at_fraction.is_some() || p.malformed_body == Some(true) || p.slow_response_chunk_size.zip(p.slow_response_chunk_delay.as_ref()).is_some())
+    }
+
     /// `applyResponseChaos`: a GraphQL error envelope (which wins over body corruption), else a truncated and/or
     /// malformed body; a slow dribble composes with either. `logged` is the response as its log line records it.
     pub fn reshape(&self, state: &State, reply: &mut Reply, logged: &mut Value) {
         let p = &self.profile;
-        if !self.eligible() {
+        if !self.reshapes() {
             return;
         }
         let graphql = p.graphql_errors == Some(true);
         let malformed = p.malformed_body == Some(true);
         let corrupt = !graphql && (p.truncate_body_at_fraction.is_some() || malformed);
         let slow = p.slow_response_chunk_size.zip(p.slow_response_chunk_delay.as_ref());
-        if !corrupt && slow.is_none() && !graphql {
-            return;
-        }
         let logged_map = logged.as_object_mut();
         let mut out = logged_map.cloned().unwrap_or_default();
         if graphql {
