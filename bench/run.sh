@@ -14,7 +14,7 @@ here=$(cd "$(dirname "$0")" && pwd)
 
 IMAGE=${IMAGE:-mock-server:latest}               # ours
 CPUS=${CPUS:-2}                                  # each server's --cpus
-MEMORY=${MEMORY:-2g}                             # each server's --memory (a Testcontainers host never gives it all)
+MEMORY=${MEMORY:-1g}                             # each server's --memory (a Testcontainers host never gives it all)
 CONNECTIONS=${CONNECTIONS:-64}                   # oha -c
 WARMUP=${WARMUP:-20}                             # seconds of load before the window (the JVM's JIT needs 10-20 s)
 DURATION=${DURATION:-15}                         # seconds of the measured window

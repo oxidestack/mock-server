@@ -24,7 +24,7 @@ IMAGE=mock-server:latest WARMUP=3 DURATION=3 ROUNDS=1 LEVELS=INFO EXPECTATIONS=1
 | --- | --- | --- |
 | `IMAGE` | `mock-server:latest` | our image |
 | `CPUS` | `2` | each server's `--cpus` |
-| `MEMORY` | `2g` | each server's `--memory`: a Testcontainers host shares its memory with the tests, so neither server gets all of it; the JVM sizes its heap from this limit |
+| `MEMORY` | `1g` | each server's `--memory`: a Testcontainers host shares its memory with the tests, so neither server gets all of it; the JVM sizes its heap from this limit |
 | `CONNECTIONS` | `64` | `oha -c` |
 | `WARMUP` | `20` | seconds of the same load before the window; the JVM needs 10-20 s to reach its speed |
 | `DURATION` | `15` | seconds of the measured window |
