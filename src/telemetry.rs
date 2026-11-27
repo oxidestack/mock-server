@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use parking_lot::{Mutex, RwLock};
+use parking_lot::Mutex;
 use serde_json::Value;
 
 use crate::metrics::{Attributes, OtelValue};
@@ -84,13 +84,14 @@ enum Processor {
 /// The installed tracer: none (spans are not built), a capture, or the OTLP batch exporter.
 #[derive(Default)]
 pub struct Telemetry {
-    processor: RwLock<Option<Processor>>,
+    processor: crate::watched::WatchedRwLock<Option<Processor>>,
 }
 
 impl Telemetry {
     /// `GenAiSpans.isEnabled` / `RequestSpans.isEnabled`.
     pub fn enabled(&self) -> bool {
-        self.processor.read().is_some()
+        // asked by every request: read without the lock
+        !self.processor.is_empty()
     }
 
     /// `GenAiSpanExporter.startWithProcessor(SimpleSpanProcessor.create(InMemorySpanExporter))`.

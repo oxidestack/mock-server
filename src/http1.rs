@@ -194,7 +194,14 @@ where
             // one precedes with its `close_notify`
             let read = {
                 let closer = conn.idle.closer();
-                let closes = tokio::time::sleep_until(closing_at.unwrap_or_else(tokio::time::Instant::now));
+                // built only when polled, which it is only with a close pending: a timer made for every request
+                // cloned the runtime's handle each time
+                let closes = async {
+                    match closing_at {
+                        Some(at) => tokio::time::sleep_until(at).await,
+                        None => std::future::pending().await,
+                    }
+                };
                 tokio::select! {
                     read = read_head(&mut stream, &mut buf, &limits, &mut read_started) => Some(read),
                     _ = closer.requested(), if live => None,
@@ -582,10 +589,9 @@ where
             // `Http1PipeliningGate`: another request is already waiting behind this one
             let held_behind = head_buffered(&buf);
             pending_held = held_behind && !out_of_order;
-            let (head_flight, trace_flight, state_flight) = (head_only, trace.clone(), state.clone());
-            let _ = head_flight;
             if out_of_order {
                 // `http1PipeliningInOrder=false`: no gate; each request is handled as it arrives, and answered as it completes
+                let (trace_flight, state_flight) = (trace.clone(), state.clone());
                 let flight = Flight { head_only, tunnel, stream_intent, observed, exchange, decoded };
                 in_flight.push(Box::pin(async move { (handler::dispatch_detached(&state_flight, http_request, &trace_flight).await, flight) }));
                 continue 'conn;

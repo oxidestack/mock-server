@@ -96,13 +96,16 @@ impl Matcher {
 /// The server's breakpoint matchers, in registration order.
 #[derive(Default)]
 pub struct Breakpoints {
-    matchers: Mutex<Vec<Arc<Matcher>>>,
+    matchers: crate::watched::WatchedMutex<Vec<Arc<Matcher>>>,
 }
 
 impl Breakpoints {
     /// `findMatch` / `findResponseMatch`: the first matcher for `phase` matching the request (and response), if it
     /// pauses this time; an exhausted matcher leaves the registry.
     pub fn find(&self, request: &HttpRequest, phase: &str, response: Option<(u32, &str)>) -> Option<Arc<Matcher>> {
+        if self.matchers.is_empty() {
+            return None;
+        }
         let mut matchers = self.matchers.lock();
         if matchers.is_empty() {
             return None;
@@ -132,7 +135,7 @@ impl Breakpoints {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.matchers.lock().is_empty()
+        self.matchers.is_empty()
     }
 }
 

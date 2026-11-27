@@ -180,9 +180,11 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     let early = EARLY_MATCH.try_with(|m| m.borrow_mut().take()).ok().flatten();
     // The scan's regex timeouts are logged from the evaluated expectations' re-evaluation (`log_evaluated`), or
     // as they are when INFO is off.
+    // the evaluations are listed only for the INFO entries that log them
+    let traced = state.info_enabled();
     let ((found, evaluated), scan_timeouts) = match early {
         Some(found) => ((Some(found), Vec::new()), Vec::new()),
-        None => crate::matcher::regex_timeouts(regex_timeout_millis(state), || state.store.first_match_traced(&request, namespace.as_deref())),
+        None => crate::matcher::regex_timeouts(regex_timeout_millis(state), || state.store.first_match_traced_if(&request, namespace.as_deref(), traced)),
     };
     let (matched, match_count, rotation) = match found {
         Some(f) => (Some(f.expectation), f.match_count, f.rotation),
@@ -230,7 +232,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         if !looped {
             state.log.received_logged(shown, &request);
         }
-        if state.info_enabled() {
+        if traced {
             closest_scan = crate::blocking::off_worker_when_large(request.body.len(), || {
                 let subject = shown_is_request.then_some(&shown.request);
                 log_evaluations_logged(state, &request, shown, subject, unmatched.as_ref(), &evaluated, matched.is_none().then_some(namespace.as_deref()), true)
@@ -268,7 +270,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         return Outcome::respond(reply.finalize(&request, &state.config));
     }
     // `postProcess`: once the response is out, an expectation this request used up is removed (and logged).
-    let _post = PostProcess { state: state.clone(), expectation: matched.clone() };
+    let _post = PostProcess { state: &**state, expectation: matched.clone() };
     if let Some(expectation) = &matched {
         if expectation.has(crate::store::Rare::Capture) {
             crate::capture::process(state, expectation.input.get("capture"), &request, &expectation.matcher.path_match(&request));
@@ -359,8 +361,6 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         .as_ref()
         .filter(|e| matches!(e.action, Action::Respond(_) | Action::Responses(_) | Action::ResponseTemplate { .. } | Action::ResponseClassCallback { .. }))
         .and_then(|e| mock_response_operation(state, e));
-    // the expectation a final 1xx over HTTP/2 or HTTP/3 is warned about once (`FinalInformationalResponseWarning`)
-    let matched_expectation = matched.clone();
     let (mut reply, mut logged_response) = match matched {
         Some(expectation) if rate_limited.is_some() => {
             let reply = rate_limited.expect("checked");
@@ -626,9 +626,13 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         reply.chunk_size = None;
         reply.chunk_delay = None;
     }
-    let informational_warning = matched_expectation
+    // the expectation a final 1xx over HTTP/2 or HTTP/3 is warned about once (`FinalInformationalResponseWarning`): the
+    // matched one, which the post-processing guard holds
+    let informational_warning = _post
+        .expectation
+        .as_ref()
         .filter(|_| final_informational && log.served_action.is_some())
-        .filter(first_final_informational)
+        .filter(|e| first_final_informational(e))
         .map(|e| final_informational_warning(&request, &e.id, reply.status));
     let reply = reply.finalize(&request, &state.config);
     if let Some(id) = &served_by {
@@ -2324,12 +2328,14 @@ fn forward_relay_target(state: &State, action: &Action, request: &HttpRequest) -
 /// expectation the request used up. The removal is logged under a correlation id of its own
 /// (`removeHttpRequestMatcher(httpRequestMatcher, UUIDService.getUUID())`), not the request's, so the dashboard does
 /// not group it with the request's entries.
-pub(crate) struct PostProcess {
-    pub(crate) state: Arc<State>,
+/// The server is held (`Arc`) by a guard that outlives the request's handling, else borrowed: a clone per request
+/// wrote the server's reference count, which every request worker shares.
+pub(crate) struct PostProcess<S: std::ops::Deref<Target = State> = Arc<State>> {
+    pub(crate) state: S,
     pub(crate) expectation: Option<Arc<crate::store::Expectation>>,
 }
 
-impl Drop for PostProcess {
+impl<S: std::ops::Deref<Target = State>> Drop for PostProcess<S> {
     fn drop(&mut self) {
         if let Some(e) = self.expectation.take()
             && self.state.store.post_process(&e)

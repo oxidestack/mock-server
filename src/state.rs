@@ -29,7 +29,7 @@ pub struct State {
     /// then on, control-plane work upstream offloads onto the scheduler answers `503` instead (fe354ebd5).
     scheduler_shut_down: std::sync::atomic::AtomicBool,
     /// Requests being processed (`LifeCycle.requestsInFlight`).
-    in_flight: std::sync::atomic::AtomicUsize,
+    in_flight: InFlightCount,
     /// Accepted connections, closed when a stop has drained.
     pub connections: crate::server::OpenConnections,
     pub log_level: String,
@@ -135,6 +135,29 @@ pub struct State {
 }
 
 pub type Listener = Arc<dyn Fn(&[serde_json::Value]) + Send + Sync>;
+
+/// `LifeCycle.requestsInFlight`, counted per worker thread: one counter that every request incremented and
+/// decremented had each request worker take its cache line from the others twice per request. A request's token
+/// names the counter it was counted on, which it is taken off again whatever thread completes it.
+#[derive(Default)]
+struct InFlightCount([PaddedCount; IN_FLIGHT_SHARDS]);
+
+const IN_FLIGHT_SHARDS: usize = 16;
+
+#[derive(Default)]
+#[repr(align(128))]
+struct PaddedCount(std::sync::atomic::AtomicUsize);
+
+/// A request counted in flight: see [`State::request_started`].
+pub struct InFlightToken(usize);
+
+thread_local! {
+    /// This thread's [`InFlightCount`] counter, handed out in turn.
+    static IN_FLIGHT_SHARD: usize = {
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed) % IN_FLIGHT_SHARDS
+    };
+}
 
 impl State {
     /// The client certificate the forwarding client offers to `host` over TLS (`crate::tls::forward_identity`).
@@ -275,8 +298,15 @@ impl State {
                 crate::log::log_entry(&state, level, kind, text, compact, portless);
             }
         }));
+        // Asked a few times for every request. Upgrading the weak reference wrote the server's reference count,
+        // which every request worker shares, twice each time.
         let gate = Arc::downgrade(&state);
-        state.log.set_console_gate(Arc::new(move |level, kind| gate.upgrade().is_some_and(|state| crate::log::console_wanted(&state, level, kind))));
+        state.log.set_console_gate(Arc::new(move |level, kind| {
+            // SAFETY: the gate lives in this server's `log` and is called only through it, so while it runs the server
+            // is borrowed and not dropped; the weak reference keeps its allocation.
+            let state = unsafe { &*gate.as_ptr() };
+            crate::log::console_wanted(state, level, kind)
+        }));
         state.store.set_max_expectations(mcp_config_defaults.0.max(0) as usize);
         state.store.set_max_bytes(state.config.int_property("maxExpectationsSizeInBytes", 0).max(0) as u64);
         let warn = Arc::downgrade(&state);
@@ -380,18 +410,35 @@ impl State {
         self.scheduler_shut_down.load(std::sync::atomic::Ordering::SeqCst)
     }
 
-    /// `requestProcessingStarted`.
-    pub fn request_started(&self) {
-        self.in_flight.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    /// `requestProcessingStarted`: the request's token, which [`State::request_completed`] takes back.
+    pub fn request_started(&self) -> InFlightToken {
+        let shard = IN_FLIGHT_SHARD.with(|s| *s);
+        self.in_flight.0[shard].0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        InFlightToken(shard)
     }
 
     /// `requestProcessingComplete`: never below zero.
-    pub fn request_completed(&self) {
-        let _ = self.in_flight.try_update(std::sync::atomic::Ordering::SeqCst, std::sync::atomic::Ordering::SeqCst, |n| Some(n.saturating_sub(1)));
+    pub fn request_completed(&self, token: InFlightToken) {
+        let _ = self.in_flight.0[token.0].0.try_update(std::sync::atomic::Ordering::SeqCst, std::sync::atomic::Ordering::SeqCst, |n| Some(n.saturating_sub(1)));
+    }
+
+    /// [`State::request_started`] without a token, for an embedder's requests.
+    pub fn request_started_untracked(&self) {
+        self.in_flight.0[0].0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    /// [`State::request_completed`] of a request counted without a token: one is taken off any counter that holds one,
+    /// never below zero in all.
+    pub fn request_completed_untracked(&self) {
+        for count in &self.in_flight.0 {
+            if count.0.try_update(std::sync::atomic::Ordering::SeqCst, std::sync::atomic::Ordering::SeqCst, |n| n.checked_sub(1)).is_ok() {
+                return;
+            }
+        }
     }
 
     pub fn requests_in_flight(&self) -> usize {
-        self.in_flight.load(std::sync::atomic::Ordering::SeqCst)
+        self.in_flight.0.iter().map(|c| c.0.load(std::sync::atomic::Ordering::SeqCst)).sum()
     }
 
     pub fn is_running(&self) -> bool {

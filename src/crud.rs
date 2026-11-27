@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use parking_lot::{Mutex, RwLock};
+use parking_lot::Mutex;
 use serde_json::{Map, Value, json};
 
 use crate::reply::Reply;
@@ -15,7 +15,7 @@ const MAX_ITEMS: usize = 10_000;
 
 #[derive(Default)]
 pub struct Registry {
-    handlers: RwLock<Vec<(String, Arc<Store>)>>,
+    handlers: crate::watched::WatchedRwLock<Vec<(String, Arc<Store>)>>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -55,6 +55,10 @@ impl Registry {
     /// `CrudDispatcher.dispatch`: the CRUD response, or `None` when no resource handles the request.
     pub fn dispatch(&self, request: &HttpRequest) -> Option<Reply> {
         let path = request.path.strip_suffix('/').unwrap_or(&request.path);
+        // nothing registered: answered without the lock, which every data-plane request would take
+        if self.handlers.is_empty() {
+            return None;
+        }
         let handlers = {
             let handlers = self.handlers.read();
             // nothing registered, nothing copied: every data-plane request asks

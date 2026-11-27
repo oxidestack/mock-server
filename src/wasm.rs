@@ -67,20 +67,38 @@ impl Modules {
 
 tokio::task_local! {
     /// The server a request is being handled for, so the `WASM` body matcher can reach its modules.
-    static SERVER: Arc<State>;
+    static SERVER: ServerRef;
     /// The `WASM` body matcher's verdicts within one request: (module bytes, request envelope, matched).
     static VERDICTS: std::cell::RefCell<Vec<(Arc<Vec<u8>>, String, bool)>>;
 }
 
-/// Runs `work` with `state` as the server WASM matchers consult.
-pub fn scope<F: std::future::Future>(state: Arc<State>, work: F) -> impl std::future::Future<Output = F::Output> {
-    SERVER.scope(state, VERDICTS.scope(Default::default(), work))
+/// The server a scope runs for, borrowed (from its `Arc`) for as long as the scope: every request sets one, and a
+/// clone wrote the server's reference count, which every request worker shares, twice per request.
+#[derive(Clone, Copy)]
+struct ServerRef(*const State);
+
+// SAFETY: a `ServerRef` stands for a `&Arc<State>` (`State` is `Sync`), read only while the scope that borrows it runs.
+unsafe impl Send for ServerRef {}
+unsafe impl Sync for ServerRef {}
+
+/// Runs `work` with `state` as the server WASM matchers consult. The returned future captures the borrow
+/// (`use<'a, …>`), so it cannot outlive the server. Not an `async fn`, which would move `work` (a request's whole
+/// handling) into a future of its own.
+pub fn scope<'a, F: std::future::Future>(state: &'a Arc<State>, work: F) -> impl std::future::Future<Output = F::Output> + use<'a, F> {
+    SERVER.scope(ServerRef(Arc::as_ptr(state)), VERDICTS.scope(Default::default(), work))
 }
 
 /// The server the current request is handled for, outside a request `None` (also read by `XML_SCHEMA` compiles,
 /// for the server's [`crate::xsd::Reported`] namespaces).
 pub fn current_server() -> Option<Arc<State>> {
-    SERVER.try_with(Arc::clone).ok()
+    // SAFETY: set only by `scope`, from an `Arc` its future holds borrowed while the scope runs: a new strong reference
+    // to it is taken
+    SERVER
+        .try_with(|server| unsafe {
+            Arc::increment_strong_count(server.0);
+            Arc::from_raw(server.0)
+        })
+        .ok()
 }
 
 pub fn enabled(state: &State) -> bool {
@@ -432,6 +450,8 @@ fn call_shape(limits: Limits, bytes: &[u8], envelope: &Envelope, response: &Shap
 pub fn body_matches(module: &str, request: &HttpRequest) -> bool {
     SERVER
         .try_with(|state| {
+            // SAFETY: set only by `scope`, whose future holds the server borrowed while the scope runs
+            let state: &State = unsafe { &*state.0 };
             if !enabled(state) {
                 return false;
             }

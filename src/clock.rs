@@ -72,17 +72,33 @@ impl Clock {
 
 tokio::task_local! {
     /// The clock of the server handling the current request.
-    static CURRENT: Arc<Clock>;
+    static CURRENT: ClockRef;
 }
 
+/// The clock a scope runs with, borrowed for as long as the scope: every request sets one, and holding it by `Arc`
+/// wrote its reference count, which every request worker shares, twice per request.
+#[derive(Clone, Copy)]
+struct ClockRef(*const Clock);
+
+// SAFETY: a `ClockRef` stands for a `&Clock` (`Clock` is `Sync`), read only while the scope that borrows it runs.
+unsafe impl Send for ClockRef {}
+unsafe impl Sync for ClockRef {}
+
 /// Runs `f` with `clock` as the current server's clock.
-pub fn scope<F: std::future::Future>(clock: Arc<Clock>, f: F) -> impl std::future::Future<Output = F::Output> {
-    CURRENT.scope(clock, f)
+pub async fn scope<F: std::future::Future>(clock: Arc<Clock>, f: F) -> F::Output {
+    scope_borrowed(&clock, f).await
+}
+
+/// [`scope`] with a borrowed clock: the returned future captures the borrow (`use<'a, …>`), so it cannot outlive the
+/// clock. Not an `async fn`, which would move `f` (a request's whole handling) into a future of its own.
+pub fn scope_borrowed<'a, F: std::future::Future>(clock: &'a Clock, f: F) -> impl std::future::Future<Output = F::Output> + use<'a, F> {
+    CURRENT.scope(ClockRef(clock), f)
 }
 
 /// `TimeService.now()` of the current server.
 pub fn now_instant() -> Instant {
-    CURRENT.try_with(|clock| clock.now()).unwrap_or_else(|_| Instant::now())
+    // SAFETY: set only by `scope_borrowed`, whose future holds the clock borrowed while the scope runs
+    CURRENT.try_with(|clock| unsafe { &*clock.0 }.now()).unwrap_or_else(|_| Instant::now())
 }
 
 /// `TimeService.currentTimeMillis()` of the current server. An instant past the range of epoch millis (where

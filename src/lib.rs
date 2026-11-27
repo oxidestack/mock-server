@@ -136,6 +136,7 @@ mod udp_start;
 mod verify;
 mod verify_summary;
 mod wasm;
+mod watched;
 mod write_stall;
 mod ws_relay;
 mod xsd;

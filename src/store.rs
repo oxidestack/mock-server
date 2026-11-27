@@ -203,7 +203,10 @@ impl Expectation {
 
     /// Counts a served request; its 1-based number.
     fn record_match(&self) -> u32 {
-        let _ = self.first_match.compare_exchange(0, crate::clock::now_millis(), Ordering::AcqRel, Ordering::Acquire);
+        // set once: read first, so that later matches do not write the expectation's line with a locked compare
+        if self.first_match.load(Ordering::Acquire) == 0 {
+            let _ = self.first_match.compare_exchange(0, crate::clock::now_millis(), Ordering::AcqRel, Ordering::Acquire);
+        }
         self.matches.fetch_add(1, Ordering::AcqRel) + 1
     }
 
@@ -770,7 +773,7 @@ pub struct Store {
     last_modified: AtomicI64,
     /// Expectations a scan or a listing dropped as used up or expired (`scheduleLazyRemoval`), not yet logged as
     /// `removed expectation`.
-    lazy_removed: std::sync::Mutex<Vec<Arc<Expectation>>>,
+    lazy_removed: crate::watched::WatchedMutex<Vec<Arc<Expectation>>>,
     /// Ids whose clustered shared-`Times` counter was found exhausted or gone: removed by the next lazy drop
     /// (`scheduler.submit(() -> removeHttpRequestMatcher(...))`), their node-local count left as it was.
     exhausted_in_cluster: std::sync::Mutex<std::collections::HashSet<String>>,
@@ -1271,7 +1274,7 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
 
 /// The first live expectation matching `request`, with one of its uses consumed.
     pub fn first_match(&self, request: &HttpRequest, namespace: Option<&str>) -> Option<Arc<Expectation>> {
-        self.first_match_traced(request, namespace).0.map(|f| f.expectation)
+        self.first_match_traced_if(request, namespace, false).0.map(|f| f.expectation)
     }
 
     /// [`Store::first_match`], with every expectation evaluated on the way, in order: upstream logs each
@@ -1279,6 +1282,12 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
     /// The matched expectation comes with its match number (1-based). Expectations of another namespace than
     /// `namespace` (the request's) are skipped before matching, so they are neither evaluated nor logged.
     pub fn first_match_traced(&self, request: &HttpRequest, namespace: Option<&str>) -> (Option<Found>, Vec<Evaluated>) {
+        self.first_match_traced_if(request, namespace, true)
+    }
+
+    /// [`Store::first_match_traced`], the evaluations listed only when `trace` (nothing logs them below INFO, and
+    /// listing each held a reference to its expectation, shared with every other request worker).
+    pub fn first_match_traced_if(&self, request: &HttpRequest, namespace: Option<&str>, trace: bool) -> (Option<Found>, Vec<Evaluated>) {
         let now = self.clock.now_millis();
         let mut evaluated = Vec::new();
         // The scan runs over a snapshot, with no lock of this store held: a matcher may take seconds (a WASM module
@@ -1286,7 +1295,7 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
         // `wasm_slow_module_concurrency`); clustered, consuming a limited `Times` is a backend round trip, which a
         // remote node's listener may need this store to answer.
         let snapshot = self.view().shared();
-        let (found, prune) = self.scan(admissible(snapshot.candidates(&request.path), namespace), request, now, &mut evaluated);
+        let (found, prune) = self.scan(admissible(snapshot.candidates(&request.path), namespace), request, now, trace.then_some(&mut evaluated));
         if prune {
             self.drop_lazily(now);
         }
@@ -1295,7 +1304,7 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
 
     /// The scan of [`Store::first_match_traced`] over `candidates`, in match order: whether one matched, and whether
     /// a used-up or expired expectation was met that the caller should drop.
-    fn scan<'a>(&self, candidates: impl Iterator<Item = &'a Arc<Expectation>>, request: &HttpRequest, now: i64, evaluated: &mut Vec<Evaluated>) -> (Option<Found>, bool) {
+    fn scan<'a>(&self, candidates: impl Iterator<Item = &'a Arc<Expectation>>, request: &HttpRequest, now: i64, mut evaluated: Option<&mut Vec<Evaluated>>) -> (Option<Found>, bool) {
         let mut prune = false;
         let mut found = None;
         for e in candidates {
@@ -1303,21 +1312,25 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
             // is in flight (`postProcess` removes it then), this scan drops it (`scheduleLazyRemoval`).
             if !e.alive(now) {
                 prune |= !e.in_progress.load(Ordering::Acquire);
-                evaluated.push(Evaluated { expectation: e.clone(), remaining: Some(e.remaining_now()), matched: false, active: false, warning: None });
+                if let Some(evaluated) = evaluated.as_deref_mut() {
+                    evaluated.push(Evaluated { expectation: e.clone(), remaining: Some(e.remaining_now()), matched: false, active: false, warning: None });
+                }
                 continue;
             }
             // Logged as it was when matched, before this match is counted.
             let remaining = Some(e.remaining_now());
             let matched = e.matcher.matches(request, Mode::DataPlane);
             // Logged as matched by the request matcher, even when the conversation predicates then reject it.
-            evaluated.push(Evaluated { expectation: e.clone(), remaining, matched, active: true, warning: None });
+            if let Some(evaluated) = evaluated.as_deref_mut() {
+                evaluated.push(Evaluated { expectation: e.clone(), remaining, matched, active: true, warning: None });
+            }
             // `LlmConversationMatcher`: an `httpLlmResponse` with conversation predicates must accept the request's
             // conversation too; a rejection logs nothing of its own.
             let matched = matched && (!e.has(Rare::Llm) || crate::llm::conversation::matches(&e.input, request, Self::MAX_LLM_CONVERSATION_BODY, self.semantic.get()));
             // `ScenarioManager`: a scenario-gated expectation serves only in its state, then moves it on.
             let mut warning = None;
             let committed = matched && (!e.has(Rare::Scenario) || self.scenarios.gate(&e.input, request)) && e.by_percentage() && self.commit(e, request, &mut prune, Some(&mut warning));
-            if let Some(last) = evaluated.last_mut() {
+            if let Some(last) = evaluated.as_deref_mut().and_then(|e| e.last_mut()) {
                 last.warning = warning;
             }
             if committed {
@@ -1473,7 +1486,7 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
         };
         // As `first_match_traced`: over a snapshot, no lock of this store held while matching.
         let snapshot = self.view().shared();
-        let (found, _) = self.scan(admissible(snapshot.candidates(&request.path), namespace).filter(early), request, now, &mut evaluated);
+        let (found, _) = self.scan(admissible(snapshot.candidates(&request.path), namespace).filter(early), request, now, Some(&mut evaluated));
         (found, evaluated)
     }
 
@@ -1547,12 +1560,16 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
     fn drop_lazily(&self, now: i64) {
         let exhausted = std::mem::take(&mut *self.exhausted_in_cluster.lock().unwrap());
         let taken = self.take_where(|e| !e.retained(now) || exhausted.contains(&e.id));
-        self.lazy_removed.lock().unwrap().extend(taken);
+        self.lazy_removed.lock().extend(taken);
     }
 
     /// The expectations dropped lazily since the last call (only `id`'s when given), to be logged as removed.
     pub fn take_lazy_removed(&self, id: Option<&str>) -> Vec<Arc<Expectation>> {
-        let mut queue = self.lazy_removed.lock().unwrap();
+        // asked after every request's scan: nearly always nothing, answered without the lock
+        if self.lazy_removed.is_empty() {
+            return Vec::new();
+        }
+        let mut queue = self.lazy_removed.lock();
         match id {
             None => std::mem::take(&mut *queue),
             Some(id) => {

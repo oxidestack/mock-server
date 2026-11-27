@@ -151,7 +151,8 @@ pub fn load_spec_as(spec: &str, inline_json_schema: bool) -> Result<LoadedSpec, 
     }
     let loaded = parsed?;
     LOAD_LOG.with(|log| {
-        if let Some(log) = log.borrow_mut().as_mut() && log.cache.parsed(spec, inline_json_schema) {
+        // SAFETY: the cache outlives the log, which `logging_load_problems` removes before its borrow of it ends
+        if let Some(log) = log.borrow_mut().as_mut() && unsafe { &*log.cache }.parsed(spec, inline_json_schema) {
             pend_load_logs(&mut log.pending, &loaded, inline_json_schema);
         }
     });
@@ -225,7 +226,10 @@ impl ParseCache {
 }
 
 struct LoadLog {
-    cache: std::sync::Arc<ParseCache>,
+    /// The server's cache, borrowed for the call that installed the log ([`logging_load_problems`] takes the log out
+    /// before it returns): every request passes there, and an `Arc` clone wrote its reference count, which every
+    /// request worker shares.
+    cache: *const ParseCache,
     /// What the parses so far log, not logged yet.
     pending: Vec<Pending>,
 }
@@ -249,7 +253,7 @@ pub fn logging_load_problems<R>(state: &crate::state::State, f: impl FnOnce() ->
     let (outer, start) = LOAD_LOG.with(|log| {
         let mut log = log.borrow_mut();
         let outer = log.is_some();
-        let log = log.get_or_insert_with(|| LoadLog { cache: state.openapi_parses.clone(), pending: Vec::new() });
+        let log = log.get_or_insert_with(|| LoadLog { cache: std::sync::Arc::as_ptr(&state.openapi_parses), pending: Vec::new() });
         (outer, log.pending.len())
     });
     struct Restore(bool);

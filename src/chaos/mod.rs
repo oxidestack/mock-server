@@ -19,7 +19,6 @@ pub mod tcp;
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
-use parking_lot::Mutex;
 use serde_json::{Map, Value, json};
 
 use bind::BindError;
@@ -160,13 +159,13 @@ impl<P> Entry<P> {
 
 /// `TcpChaosRegistry` / `ServiceChaosRegistry`: profiles by normalised host, each with an optional TTL.
 pub struct HostRegistry<P> {
-    by_host: Mutex<HashMap<String, Entry<P>>>,
+    by_host: crate::watched::WatchedMutex<HashMap<String, Entry<P>>>,
     backing: Backing,
 }
 
 impl<P> Default for HostRegistry<P> {
     fn default() -> Self {
-        HostRegistry { by_host: Mutex::default(), backing: Backing::default() }
+        HostRegistry { by_host: Default::default(), backing: Backing::default() }
     }
 }
 
@@ -216,6 +215,10 @@ impl<P: HostProfile> HostRegistry<P> {
 
     /// The live profile for `host`; an expired one is dropped.
     pub fn get(&self, host: &str) -> Option<P> {
+        // asked for every request's `Host`: with no host registered, answered without normalising it or locking
+        if self.by_host.is_empty() {
+            return None;
+        }
         let key = normalize_host(host);
         let mut map = self.by_host.lock();
         let entry = map.get(&key)?;
@@ -262,6 +265,9 @@ impl<P: HostProfile> HostRegistry<P> {
     }
 
     pub fn is_empty(&self) -> bool {
+        if self.by_host.is_empty() {
+            return true;
+        }
         let now = now_millis();
         !self.by_host.lock().values().any(|e| !e.expired(now))
     }
@@ -276,6 +282,10 @@ impl<P: HostProfile> HostRegistry<P> {
 
     /// `activeCount`: live entries with at least one fault.
     pub fn active_count(&self) -> usize {
+        // asked for every response: with no host registered, answered without the lock
+        if self.by_host.is_empty() {
+            return 0;
+        }
         let now = now_millis();
         self.by_host.lock().values().filter(|e| !e.expired(now) && e.profile.has_any_fault()).count()
     }

@@ -353,11 +353,11 @@ impl Server {
     /// `requestProcessingStarted` / `requestProcessingComplete`, for an embedding application that processes
     /// requests of its own under the server's drain.
     pub fn request_processing_started(&self) {
-        self.state.request_started();
+        self.state.request_started_untracked();
     }
 
     pub fn request_processing_complete(&self) {
-        self.state.request_completed();
+        self.state.request_completed_untracked();
     }
 }
 

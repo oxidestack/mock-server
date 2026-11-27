@@ -1,6 +1,5 @@
 //! `PreemptionSimulator` and `/mockserver/preemption`: the cordon that turns new data-plane exchanges away.
 
-use parking_lot::Mutex;
 use serde_json::{Map, Value, json};
 
 use super::bind::{self, Bean, BindError};
@@ -57,7 +56,7 @@ struct PreemptionRequest {
 /// `PreemptionSimulator`.
 #[derive(Default)]
 pub struct Preemption {
-    cordon: Mutex<Option<Cordon>>,
+    cordon: crate::watched::WatchedMutex<Option<Cordon>>,
 }
 
 /// What the cordon does to a new data-plane exchange.
@@ -71,6 +70,10 @@ pub struct CordonDecision {
 impl Preemption {
     /// The active cordon; an expired TTL uncordons.
     fn active(&self) -> Option<Cordon> {
+        // asked by every data-plane request: none is answered without the lock
+        if self.cordon.is_empty() {
+            return None;
+        }
         let mut cordon = self.cordon.lock();
         if cordon.as_ref().is_some_and(|c| c.ttl_expiry > 0 && now_millis() >= c.ttl_expiry) {
             *cordon = None;

@@ -421,12 +421,12 @@ fn snappy_block(body: &[u8], max: usize) -> Result<Vec<u8>, String> {
 
 /// Counts a request as in flight while it is handled (`InFlightRequest`); `PUT /mockserver/stop` completes its own
 /// token first, so the drain it starts does not wait for itself.
-struct InFlight<'a>(&'a State, bool);
+struct InFlight<'a>(&'a State, Option<crate::state::InFlightToken>);
 
 impl Drop for InFlight<'_> {
     fn drop(&mut self) {
-        if self.1 {
-            self.0.request_completed();
+        if let Some(token) = self.1.take() {
+            self.0.request_completed(token);
         }
     }
 }
@@ -489,7 +489,7 @@ fn raw_status(bytes: &[u8]) -> Option<u32> {
 /// [`crate::boxed::Boxed`], so that neither the caller's frames nor its future carry them.
 pub async fn dispatch(state: &Arc<State>, request: HttpRequest, channel: &TraceChannel) -> Outcome {
     // `TimeService`: what the request reads as now is this server's clock.
-    crate::clock::scope(state.clock.clone(), crate::boxed::layer(dispatch_scoped(state, request, channel))).await
+    crate::clock::scope_borrowed(&state.clock, crate::boxed::layer(dispatch_scoped(state, request, channel))).await
 }
 
 /// [`dispatch`] of a request `EarlyMatchingHandler` answers from its head alone, `found` the expectation it matched.
@@ -607,10 +607,7 @@ fn handle(state: &Arc<State>, request: HttpRequest) -> impl std::future::Future<
 
 async fn handle_inline(state: &Arc<State>, request: HttpRequest) -> Outcome {
     let stop = request.method == "PUT" && matches!(request.path.as_str(), "/mockserver/stop" | "/stop");
-    if !stop {
-        state.request_started();
-    }
-    let _in_flight = InFlight(state, !stop);
+    let _in_flight = InFlight(state, (!stop).then(|| state.request_started()));
     let metrics = crate::metrics::enabled(&state.config);
     if metrics {
         state.config.metrics.increment(crate::metrics::Count::RequestsReceived);
@@ -657,7 +654,7 @@ async fn serve_inline(state: &Arc<State>, mut request: HttpRequest, metrics: boo
     if let Some(host) = &host && let Some(tls) = state.tls.as_ref() {
         tls.add_subject_alternative_name(host);
     }
-    let outcome = crate::wasm::scope(state.clone(), async {
+    let outcome = crate::wasm::scope(state, async {
         // A control-plane reply names its operation (`http_route`).
         let control = |mut reply: Reply| {
             reply.route = Some(if reply.status_path { "/mockserver/status" } else { control::operation_route(&request.path) });

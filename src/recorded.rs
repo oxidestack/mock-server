@@ -1178,7 +1178,20 @@ impl RequestLog {
         // under the lock, below.
         let weighed_for = self.max_bytes.load(std::sync::atomic::Ordering::Relaxed);
         let weight = if weighed_for > 0 { entry.weight() } else { 0 };
-        let _ = self.inbox.push(Staged { entry, weighed_for, weight });
+        let staged = Staged { entry, weighed_for, weight };
+        // The ring free: the entry goes straight in, after what was staged before it, without passing through the
+        // inbox (whose push and pop were most of a push's cost).
+        if let Some(mut entries) = self.entries.try_lock() {
+            let mut work = self.drain(&mut entries);
+            self.admit(&mut entries, staged, &mut work);
+            drop(entries);
+            self.finish(work);
+            if !self.inbox.is_empty() {
+                self.drain_if_free();
+            }
+            return;
+        }
+        let _ = self.inbox.push(staged);
         self.drain_if_free();
     }
 
@@ -1205,12 +1218,26 @@ impl RequestLog {
     /// Moves the staged entries into the ring, evicting as each one is admitted. What the caller does after releasing
     /// the lock (the destructors, the change signal, the recorded hook) comes back as [`Drained`].
     fn drain(&self, entries: &mut std::collections::VecDeque<Slot>) -> Drained {
-        use std::sync::atomic::Ordering::Relaxed;
         let mut work = Drained::default();
-        while let Ok(Staged { entry, weighed_for, weight: early_weight }) = self.inbox.pop() {
+        // nothing staged (the common case): no pop, whose fence every push paid
+        if self.inbox.is_empty() {
+            return work;
+        }
+        while let Ok(staged) = self.inbox.pop() {
+            self.admit(entries, staged, &mut work);
+        }
+        work
+    }
+
+    /// Admits one staged entry into the ring, evicting as it goes; what the caller does once the lock is released is
+    /// added to `work`.
+    fn admit(&self, entries: &mut std::collections::VecDeque<Slot>, staged: Staged, work: &mut Drained) {
+        use std::sync::atomic::Ordering::Relaxed;
+        let Staged { entry, weighed_for, weight: early_weight } = staged;
+        {
             // the capacity can have changed to 0 since the entry was staged (a `resize`)
             if self.capacity.load(Relaxed) == 0 {
-                continue;
+                return;
             }
             work.any = true;
             work.recorded |= matches!(&entry, Entry::Exchange(x) if x.recorded.is_some());
@@ -1252,7 +1279,6 @@ impl RequestLog {
             }
             entries.push_back(Slot { entry, weight });
         }
-        work
     }
 
     /// What a drain leaves for after the lock is released.

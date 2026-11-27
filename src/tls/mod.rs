@@ -143,6 +143,7 @@ impl Tls {
             Ok((resolver, server)) => {
                 let signature = current.signature.clone();
                 *current = Built { signature, resolver, server };
+                sans_changed();
             }
             Err(e) => eprintln!("ERROR TLS context not rebuilt: {e}"),
         }
@@ -939,11 +940,26 @@ pub fn write_authority_certificate(config: &Config) -> Result<String, String> {
     Ok(target.display().to_string())
 }
 
+/// Moved on, under the lock, by every change to a subject alternative name set or to the context that holds them, so
+/// that what a worker last found held ([`LAST_SAN`]) is not trusted past it. Process-wide, so that a context built where
+/// a dropped one was is not taken for it.
+static SAN_GENERATION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+fn sans_changed() {
+    SAN_GENERATION.fetch_add(1, std::sync::atomic::Ordering::AcqRel);
+}
+
+thread_local! {
+    /// The `Host` this worker last found held: the context's address, the generation it was found in, the name.
+    static LAST_SAN: std::cell::RefCell<(usize, u64, String)> = const { std::cell::RefCell::new((0, u64::MAX, String::new())) };
+}
+
 impl Tls {
     pub fn new(config: &Config) -> Result<Tls, String> {
         let notices = Arc::new(Mutex::new(Notices::default()));
         let (resolver, server) = Tls::assemble(config, None, &notices)?;
         let built = Built { signature: context_signature(config), resolver, server };
+        sans_changed();
         Ok(Tls { notices, config: config.clone(), current: parking_lot::RwLock::new(built), authority_loaded: Default::default(), context_logged: Mutex::new(None), handshake_failures: Default::default(), created_pending: Mutex::new(None), client_leaf: Mutex::new((None, None)) })
     }
 
@@ -1135,7 +1151,10 @@ impl Tls {
         let mut current = self.current.write();
         if current.signature != signature {
             match Tls::assemble(&self.config, Some(&current.resolver), &self.notices) {
-                Ok((resolver, server)) => *current = Built { signature, resolver, server },
+                Ok((resolver, server)) => {
+                    *current = Built { signature, resolver, server };
+                    sans_changed();
+                }
                 Err(e) => eprintln!("ERROR TLS context not rebuilt: {e}"),
             }
         }
@@ -1147,8 +1166,23 @@ impl Tls {
     /// `Host` header, `HttpRequestHandler.channelRead0`); the TLS SNI path calls the `Resolver`-internal copy of
     /// this same logic directly (`Resolver::add_subject_alternative_name`).
     pub fn add_subject_alternative_name(&self, host: &str) {
-        // under the read lock rather than through a clone of the resolver: every request comes here
-        self.current.read().resolver.add_subject_alternative_name(host);
+        // Every request comes here with its `Host`, nearly always the one its worker saw last: while no subject
+        // alternative name set changed since, that one is known held, and no lock shared with the other workers is
+        // taken.
+        let generation = SAN_GENERATION.load(std::sync::atomic::Ordering::Acquire);
+        let me = self as *const Tls as usize;
+        if LAST_SAN.with_borrow(|(tls, at, last)| *tls == me && *at == generation && last == host) {
+            return;
+        }
+        // under the read lock rather than through a clone of the resolver
+        if self.current.read().resolver.add_subject_alternative_name(host) {
+            LAST_SAN.with_borrow_mut(|last| {
+                last.0 = me;
+                last.1 = generation;
+                last.2.clear();
+                last.2.push_str(host);
+            });
+        }
     }
 
     /// Rebuilds the TLS context if the configuration changed it, so the subject alternative name sets restart from the
@@ -1169,6 +1203,7 @@ impl Tls {
         if ips {
             sans.ips = SanSet::seeded(san_list(&self.config, "sslSubjectAlternativeNameIps", "127.0.0.1,0.0.0.0"));
         }
+        sans_changed();
         drop(sans);
         *resolver.cache.lock() = None;
     }
@@ -1832,34 +1867,37 @@ impl Resolver {
     /// adds a bogus `2001` *domain* SAN, not an IPv6 SAN), then either bounded-adds it as an IP (no further
     /// validation, matching upstream) or normalises+validates it as a domain before bounded-adding it. Invalidates
     /// the leaf cache when anything actually changed, so a later handshake mints a leaf carrying the new name.
-    fn add_subject_alternative_name(&self, host: &str) {
+    /// Whether nothing changed (the name was held already, or is not one that is added).
+    fn add_subject_alternative_name(&self, host: &str) -> bool {
         let host = host.trim();
         if host.is_empty() {
-            return;
+            return true;
         }
         let Some(host_without_port) = host.split(':').next().filter(|s| !s.is_empty()) else {
-            return;
+            return true;
         };
         // Every exchange's `Host` comes here, and nearly always it is a name already held: that is answered under the
         // read lock, with the normalising done before any lock (the one write lock every request worker
         // queued behind).
         let ip = host_without_port.parse::<std::net::IpAddr>().is_ok();
         let value = if ip { Some(std::borrow::Cow::Borrowed(host_without_port)) } else { normalise_subject_alternative_name_domain(host_without_port) };
-        let Some(value) = value.filter(|v| !v.is_empty()) else { return };
+        let Some(value) = value.filter(|v| !v.is_empty()) else { return true };
         {
             let sans = self.sans.read();
             if (if ip { &sans.ips } else { &sans.domains }).members.contains(value.as_ref()) {
-                return;
+                return true;
             }
         }
         let max = self.config.int_property("maxSubjectAlternativeNames", MAX_SUBJECT_ALTERNATIVE_NAMES_DEFAULT);
         let mut sans = self.sans.write();
         let value = value.into_owned();
         let added = if ip { sans.ips.bounded_add(value, max) } else { sans.domains.bounded_add(value, max) };
+        sans_changed();
         drop(sans);
         if added {
             *self.cache.lock() = None;
         }
+        false
     }
 
     /// "now" for the renewal-threshold check only (never for issuance — `mint`'s `not_before`/`not_after` always
