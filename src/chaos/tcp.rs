@@ -138,7 +138,7 @@ impl HostProfile for TcpChaosProfile {
 
 /// `connectionLifecycleChaosEnabled` (default true): the master switch for response-path faults and the cordon.
 pub fn lifecycle_chaos_enabled(state: &State) -> bool {
-    state.config.bool_property("connectionLifecycleChaosEnabled", true)
+    state.config.hot_bool(crate::config::Hot::ConnectionLifecycleChaosEnabled, true)
 }
 
 /// `NettyResponseWriter.resolveLifecycleProfile`: the profile for the request's `Host`, when lifecycle chaos is

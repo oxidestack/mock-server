@@ -78,7 +78,7 @@ pub fn status_json(state: &State) -> String {
 /// `Http3Server.start`: binds `http3Port` (UDP) when it is positive. A start that fails refuses the server's start
 /// (`MockServer.startHttp3Server`, `Http3StartupException`), a port above 65535 included.
 pub fn start(state: &Arc<State>) -> Result<(), UdpStartFailure> {
-    let configured = state.config.int_property("http3Port", 0);
+    let configured = state.config.hot_int(crate::config::Hot::Http3Port, 0);
     if configured <= 0 {
         return Ok(());
     }
@@ -298,7 +298,7 @@ async fn serve_request(state: Arc<State>, quic: quinn::Connection, peer: Peer, h
     // A response to `HEAD` is its header section alone (upstream cb56f3115, after 8.0.0): no DATA, no trailers.
     let head_only = head.method().as_str().eq_ignore_ascii_case("HEAD");
     // `maxRequestBodySize`, as the aggregator caps the TCP paths.
-    let max = state.config.int_property("maxRequestBodySize", i64::from(i32::MAX)).max(0) as usize;
+    let max = state.config.hot_int(crate::config::Hot::MaxRequestBodySize, i64::from(i32::MAX)).max(0) as usize;
     if let Some((outcome, body)) = open_bidi(&state, &head, &peer) {
         serve_bidi(state, &quic, &peer, stream, outcome, body, max).await;
         return;
@@ -371,7 +371,7 @@ async fn serve_request(state: Arc<State>, quic: quinn::Connection, peer: Peer, h
     // `HttpState.setPort(request)` reads the request's socket address, which an HTTP/3 request lacks: the QUIC event
     // loop's thread-local port stays null, so what handling it logs carries no port.
     let mut observed = handler::observe(&state, &request);
-    let mut outcome = crate::recorded::portless(handler::dispatch(&state, request, &Default::default())).await;
+    let mut outcome = crate::recorded::portless(handler::dispatch(&state, Arc::new(request), &Default::default())).await;
     handler::answered(&mut observed, &outcome, "HTTP_3");
     while let Outcome::GoAway { then, .. } = outcome {
         outcome = *then;
@@ -776,7 +776,7 @@ async fn connect_udp(state: Arc<State>, quic: quinn::Connection, head: http::Req
     };
     let refused = crate::forward_target_policy::of(&state.config)
         .and_then(|policy| policy.check(&named, Some(address.ip())))
-        .or_else(|| state.config.bool_property("forwardProxyBlockPrivateNetworks", false).then(|| crate::ws_relay::blocked_address(address.ip(), &address.ip().to_string())).flatten());
+        .or_else(|| state.config.hot_bool(crate::config::Hot::ForwardProxyBlockPrivateNetworks, false).then(|| crate::ws_relay::blocked_address(address.ip(), &address.ip().to_string())).flatten());
     if let Some(reason) = refused {
         log_refusal(format!("SSRF block for {authority}: {reason}"));
         return udp_error(&mut stream, 403, "CONNECT-UDP target not permitted").await;

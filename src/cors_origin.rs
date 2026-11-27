@@ -182,7 +182,7 @@ pub fn is_control_plane_method_path(method: Option<&str>, path: &str, config: &c
     if is_control_plane_route(method, path) {
         return true;
     }
-    method.is_some_and(|m| java_trim(m).eq_ignore_ascii_case("GET")) && config.read_property("livenessHttpGetPath", |l| l.is_some_and(|l| !is_blank(l) && l == path))
+    method.is_some_and(|m| java_trim(m).eq_ignore_ascii_case("GET")) && config.read_hot(crate::config::Hot::LivenessHttpGetPath, |l| l.is_some_and(|l| !is_blank(l) && l == path))
 }
 
 /// `HttpState.isControlPlaneOriginRefused(request)`: a request the control plane serves whose browser `Origin` the

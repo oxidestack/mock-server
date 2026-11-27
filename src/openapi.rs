@@ -313,7 +313,7 @@ thread_local! {
 /// `forwardProxyAllowedHosts` and `forwardProxyDeniedHosts`, as upstream's `buildOpenAPI(…, configuration)` checks
 /// them: the spec URL, each remote `$ref` and each redirect ([`parse_spec_guarded`]). Taken when `f` starts.
 pub fn checking_spec_fetches<R>(config: &crate::config::Config, f: impl FnOnce() -> R) -> R {
-    let block = config.bool_property("forwardProxyBlockPrivateNetworks", false);
+    let block = config.hot_bool(crate::config::Hot::ForwardProxyBlockPrivateNetworks, false);
     let policy = crate::forward_target_policy::of(config);
     let checks = (block || policy.is_some()).then_some(FetchChecks { block, policy });
     struct Restore(Option<FetchChecks>);

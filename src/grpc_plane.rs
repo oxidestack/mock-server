@@ -538,7 +538,7 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
                 Some(outcome) => outcome,
                 None => return Ok(Outcome::respond(status_reply(&original, state, Code::DeadlineExceeded, Some(&format!("deadline exceeded after {}ms", nanos / 1_000_000))))),
             },
-            None => Box::pin(crate::handler::dispatch_http(state, request, channel)).await,
+            None => Box::pin(crate::handler::dispatch_http(state, Arc::new(request), channel)).await,
         };
         return Ok(match outcome {
             Outcome::Respond(reply) => Outcome::respond(passthrough_response(state, &original, *reply)),
@@ -567,14 +567,14 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
                 Some(outcome) => outcome,
                 None => return Ok(Outcome::respond(status_reply(&request, state, Code::DeadlineExceeded, Some(&format!("deadline exceeded after {}ms", nanos / 1_000_000))))),
             },
-            None => Box::pin(crate::handler::dispatch_http(state, converted, channel)).await,
+            None => Box::pin(crate::handler::dispatch_http(state, Arc::new(converted), channel)).await,
         };
         return Ok(match outcome {
             Outcome::Respond(reply) => Outcome::respond(convert_response(state, &request, *reply, &pool, &method.output_type)),
             other => other,
         });
     }
-    let served = Box::pin(crate::handler::dispatch_http(state, converted, channel));
+    let served = Box::pin(crate::handler::dispatch_http(state, Arc::new(converted), channel));
     let outcome = match deadline {
         // The deadline is polled first: `tokio::time::timeout` polls the response first, so a task polled late (a
         // loaded host) returned a delayed response that came due after the deadline. Netty runs the
@@ -615,7 +615,7 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
 async fn http3_deadline(state: &Arc<State>, request: HttpRequest, nanos: u64, channel: &TraceChannel) -> Option<Outcome> {
     let shown = request.clone();
     let (owned, trace) = (state.clone(), TraceChannel::new(channel.lock().clone()));
-    let served: std::pin::Pin<Box<dyn std::future::Future<Output = Outcome> + Send>> = Box::pin(async move { crate::handler::dispatch_http(&owned, request, &trace).await });
+    let served: std::pin::Pin<Box<dyn std::future::Future<Output = Outcome> + Send>> = Box::pin(async move { crate::handler::dispatch_http(&owned, Arc::new(request), &trace).await });
     let mut served = tokio::spawn(served);
     tokio::select! {
         biased;

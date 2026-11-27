@@ -50,7 +50,7 @@ impl Framer {
             },
             _ => return None,
         };
-        let max = config.int_property("maxRequestBodySize", 10_485_760).clamp(1, i64::from(i32::MAX)) as usize;
+        let max = config.hot_int(crate::config::Hot::MaxRequestBodySize, 10_485_760).clamp(1, i64::from(i32::MAX)) as usize;
         Some(Framer { protocol, max, held: BytesMut::new(), refused: false })
     }
 

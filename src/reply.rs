@@ -231,12 +231,12 @@ impl Reply {
         // policy, under `enableCORSForAllResponses`.
         if self.api {
             self.add_control_plane_cors_headers(request, config);
-        } else if config.bool_property("enableCORSForAllResponses", false) {
+        } else if config.hot_bool(crate::config::Hot::EnableCorsForAllResponses, false) {
             self.add_cors_headers(request, config);
         }
         // `DefaultResponseHeaders.addDefaultResponseHeaders`: the configured `defaultResponseHeaders`, each only when
         // absent, on mocked, proxied and control-plane responses alike.
-        let configured = self.default_response_headers.clone().or_else(|| config.property("defaultResponseHeaders"));
+        let configured = self.default_response_headers.clone().or_else(|| config.read_hot(crate::config::Hot::DefaultResponseHeaders, |v| v.map(str::to_string)));
         for (name, value) in default_response_headers(configured.as_deref()) {
             self.set_if_absent(name, value.to_string());
         }

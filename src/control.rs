@@ -138,7 +138,7 @@ fn openapi_spec(state: &State, request: &HttpRequest) -> Option<Reply> {
     if request.method != "GET" || request.path != "/mockserver/openapi.yaml" {
         return None;
     }
-    let liveness = state.config.property("livenessHttpGetPath").is_some_and(|p| !p.trim().is_empty() && p == request.path);
+    let liveness = state.config.read_hot(crate::config::Hot::LivenessHttpGetPath, |p| p.is_some_and(|p| !p.trim().is_empty() && p == request.path));
     if liveness {
         return None;
     }
@@ -166,7 +166,7 @@ fn open_metrics(state: &State, request: &HttpRequest) -> Option<Reply> {
     if !request.first_header("accept").is_some_and(|a| a.to_ascii_lowercase().contains("application/openmetrics-text")) {
         return None;
     }
-    if state.config.property("livenessHttpGetPath").is_some_and(|p| !p.trim().is_empty() && p == request.path) {
+    if state.config.read_hot(crate::config::Hot::LivenessHttpGetPath, |p| p.is_some_and(|p| !p.trim().is_empty() && p == request.path)) {
         return None;
     }
     if let Some(reply) = crate::auth::control_plane_refusal(state, request) {
@@ -246,7 +246,7 @@ fn route_unscoped(state: &Arc<State>, request: &HttpRequest) -> Option<Reply> {
     // after whatever `HttpState.handle` answers and the readiness probe, before the handler's own GETs (dashboard,
     // metrics, configuration, optimisation report, HTTP/3 status) and the data plane.
     // Over HTTP/3 the liveness path is not answered: `HttpRequestHandler` alone serves it.
-    let liveness = !http3 && request.method == "GET" && state.config.property("livenessHttpGetPath").is_some_and(|p| !p.trim().is_empty() && p == request.path);
+    let liveness = !http3 && request.method == "GET" && state.config.read_hot(crate::config::Hot::LivenessHttpGetPath, |p| p.is_some_and(|p| !p.trim().is_empty() && p == request.path));
     if request.method == "GET" && request.path.starts_with("/mockserver/dashboard") && !liveness {
         if let Some(reply) = crate::auth::control_plane_refusal(state, request) {
             return Some(reply);
@@ -702,7 +702,7 @@ fn data_plane_mtls_refusal(state: &State, update: &serde_json::Map<String, Value
     };
     let config = &state.config;
     let after = crate::tls::DataPlaneTrust::of(
-        required.map_or_else(|| config.bool_property("tlsMutualAuthenticationRequired", false), |t| t == "true"),
+        required.map_or_else(|| config.hot_bool(crate::config::Hot::TlsMutualAuthenticationRequired, false), |t| t == "true"),
         chain.or_else(|| config.property("tlsMutualAuthenticationCertificateChain")).as_deref(),
         dynamic.map_or_else(|| crate::tls::dynamic_authority(config), |t| t == "true"),
         authority.or_else(|| config.property("certificateAuthorityCertificate")).as_deref(),
@@ -2941,7 +2941,7 @@ fn mode(state: &State, request: &HttpRequest) -> Reply {
     let body = |mode: &str| Reply::api_body(200, "application/json", format!("{{\"mode\":\"{mode}\",\"proxyUnmatchedRequests\":{}}}", mode != "SIMULATE"));
     if request.method == "GET" {
         // the mode last set while it still agrees with the flag, which a `PUT /mockserver/configuration` also moves
-        let flag = state.config.bool_property("attemptToProxyIfNoMatchingExpectation", true);
+        let flag = state.config.hot_bool(crate::config::Hot::AttemptToProxyIfNoMatchingExpectation, true);
         let mode = state.mode.lock().filter(|m| (*m != "SIMULATE") == flag).unwrap_or(if flag { "SPY" } else { "SIMULATE" });
         return body(mode);
     }

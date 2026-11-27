@@ -19,6 +19,8 @@ pub struct State {
     pub forward_loop_id: String,
     /// `host:port` spellings that mean "this server" (§3.8, `PortUnificationHandler.java:544-583`).
     local_hosts: RwLock<HashSet<String>>,
+    /// This server's number among the `local_hosts` of the process (see [`LOCAL_HOSTS_IDS`]); `local_hosts` only grows.
+    local_hosts_id: u64,
     /// Host names and addresses of this machine, for `local_hosts` of ports bound later.
     local_names: Vec<String>,
     pub stopped: watch::Sender<bool>,
@@ -233,6 +235,7 @@ impl State {
             forwarded_by: format!("MockServer_{}", uuid::Uuid::new_v4()),
             forward_loop_id: crate::forward_loop::new_instance_id(),
             local_hosts: RwLock::new(local_hosts),
+            local_hosts_id: LOCAL_HOSTS_IDS.fetch_add(1, std::sync::atomic::Ordering::Relaxed),
             local_names: names,
             stopped: watch::channel(false).0,
             closing: watch::channel(false).0,
@@ -511,9 +514,22 @@ impl State {
     }
 
     pub fn is_local_host(&self, host: &str) -> bool {
+        // Every unmatched request asks with its `Host`, nearly always the one its worker last found local: the set only
+        // grows, so that one stays local, and no lock shared with the other workers is taken.
+        if LAST_LOCAL_HOST.with_borrow(|(id, last)| *id == self.local_hosts_id && last == host) {
+            return true;
+        }
         // a host already in lower case is looked up as it is
-        let host = if host.bytes().any(|b| b.is_ascii_uppercase()) { std::borrow::Cow::Owned(host.to_ascii_lowercase()) } else { std::borrow::Cow::Borrowed(host) };
-        self.local_hosts.read().unwrap().contains(host.as_ref())
+        let lower = if host.bytes().any(|b| b.is_ascii_uppercase()) { std::borrow::Cow::Owned(host.to_ascii_lowercase()) } else { std::borrow::Cow::Borrowed(host) };
+        let local = self.local_hosts.read().unwrap().contains(lower.as_ref());
+        if local {
+            LAST_LOCAL_HOST.with_borrow_mut(|(id, last)| {
+                *id = self.local_hosts_id;
+                last.clear();
+                last.push_str(host);
+            });
+        }
+        local
     }
 
     pub fn ports(&self) -> Vec<u16> {
@@ -536,6 +552,15 @@ impl State {
         self.ports.write().unwrap().extend_from_slice(ports);
         add_local_hosts(&mut self.local_hosts.write().unwrap(), &self.local_names, ports);
     }
+}
+
+/// Numbers each server's `local_hosts` (from 1), so that what a worker remembers of one ([`LAST_LOCAL_HOST`]) is never
+/// taken for another's, even one built where a dropped one was.
+static LOCAL_HOSTS_IDS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+
+thread_local! {
+    /// The `Host` this worker last found local, and the number of the `local_hosts` it is in.
+    static LAST_LOCAL_HOST: std::cell::RefCell<(u64, String)> = const { std::cell::RefCell::new((0, String::new())) };
 }
 
 fn add_local_hosts(local_hosts: &mut HashSet<String>, names: &[String], ports: &[u16]) {

@@ -471,7 +471,7 @@ impl Entry {
     fn weight(&self) -> u64 {
         let (messages, rest) = match self {
             Entry::Received(r, ..) => (weight::request(r), 0),
-            Entry::Exchange(x) => (weight::request(&x.request) + weight::response_json(&x.response), 0),
+            Entry::Exchange(x) => (weight::request(&x.request) + response_weight(&x.response), 0),
             Entry::Message(m) => {
                 if let MessageEntry::Deferred { weight: Some(weight), .. } = m.entry {
                     return weight;
@@ -3331,8 +3331,9 @@ pub fn input_request(request: &HttpRequest) -> Value {
 }
 
 thread_local! {
-    /// The values [`interned`] lately on this thread.
-    static RECENT: std::cell::RefCell<VecDeque<Arc<Value>>> = const { std::cell::RefCell::new(VecDeque::new()) };
+    /// The values [`interned`] lately on this thread, each with its weight as a response once weighed (0 before:
+    /// [`response_weight`]).
+    static RECENT: std::cell::RefCell<VecDeque<(Arc<Value>, std::cell::Cell<u64>)>> = const { std::cell::RefCell::new(VecDeque::new()) };
 }
 
 /// How many values [`RECENT`] holds.
@@ -3345,14 +3346,14 @@ pub fn interned(value: Value) -> Arc<Value> {
     let shared = RECENT.try_with(|recent| {
         let mut recent = recent.borrow_mut();
         let given = value.as_ref().expect("not yet taken");
-        if let Some(found) = recent.iter().find(|v| ***v == *given) {
+        if let Some((found, _)) = recent.iter().find(|(v, _)| **v == *given) {
             return found.clone();
         }
         if recent.len() == RECENT_VALUES {
             recent.pop_front();
         }
         let shared = Arc::new(value.take().expect("not yet taken"));
-        recent.push_back(shared.clone());
+        recent.push_back((shared.clone(), Default::default()));
         shared
     });
     // a thread on its way out shares nothing
@@ -3364,16 +3365,34 @@ pub fn interned_shared(value: Arc<Value>) -> Arc<Value> {
     RECENT
         .try_with(|recent| {
             let mut recent = recent.borrow_mut();
-            if let Some(found) = recent.iter().find(|v| Arc::ptr_eq(v, &value) || ***v == *value) {
+            if let Some((found, _)) = recent.iter().find(|(v, _)| Arc::ptr_eq(v, &value) || **v == *value) {
                 return found.clone();
             }
             if recent.len() == RECENT_VALUES {
                 recent.pop_front();
             }
-            recent.push_back(value.clone());
+            recent.push_back((value.clone(), Default::default()));
             value.clone()
         })
         .unwrap_or(value)
+}
+
+/// The weight of `response` as an entry's response, kept beside it while it is among this thread's [`RECENT`] values:
+/// an interned response is the same from request to request, and was weighed again for each.
+fn response_weight(response: &Arc<Value>) -> u64 {
+    RECENT
+        .try_with(|recent| {
+            let recent = recent.borrow();
+            let (_, kept) = recent.iter().find(|(v, _)| Arc::ptr_eq(v, response))?;
+            // a response weighs at least its overhead, so 0 is never a weight
+            if kept.get() == 0 {
+                kept.set(weight::response_json(response));
+            }
+            Some(kept.get())
+        })
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| weight::response_json(response))
 }
 
 #[cfg(test)]

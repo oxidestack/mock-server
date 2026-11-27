@@ -315,7 +315,7 @@ pub(crate) fn operation(request: &HttpRequest) -> &str {
 /// a request the control plane serves, which `processAction` answers before matching: a browser never sends
 /// credentials on a preflight.
 pub fn data_plane_rejection(config: &Config, request: &HttpRequest) -> Option<Option<String>> {
-    if !config.bool_property("dataPlaneAuthenticationRequired", false) {
+    if !config.hot_bool(crate::config::Hot::DataPlaneAuthenticationRequired, false) {
         return None;
     }
     if crate::cors_origin::is_cors_preflight(request) && crate::cors_origin::is_control_plane_request(request, config) {
@@ -328,14 +328,14 @@ pub fn data_plane_rejection(config: &Config, request: &HttpRequest) -> Option<Op
 /// runs (HTTP/1.1 `respondBeforeBody`, gRPC bidi streams), checked before the consuming match; without credentials
 /// the request falls through to the dispatch whose gate refuses it.
 pub fn has_data_plane_credentials_if_required(config: &Config, request: &HttpRequest) -> bool {
-    !config.bool_property("dataPlaneAuthenticationRequired", false) || data_plane_unauthenticated(config, request).is_none()
+    !config.hot_bool(crate::config::Hot::DataPlaneAuthenticationRequired, false) || data_plane_unauthenticated(config, request).is_none()
 }
 
 /// `DataPlaneAuthenticator.authenticate`: with `dataPlaneAuthenticationRequired`, one of the configured Basic, Bearer
 /// or API-key credentials (any one; none configured rejects everything). `None` lets the request through, otherwise
 /// the `WWW-Authenticate` challenge (if any) to send.
 pub fn data_plane_unauthenticated(config: &Config, request: &HttpRequest) -> Option<Option<String>> {
-    if !config.bool_property("dataPlaneAuthenticationRequired", false) {
+    if !config.hot_bool(crate::config::Hot::DataPlaneAuthenticationRequired, false) {
         return None;
     }
     let non_blank = |name: &str| config.property(name).filter(|v| !v.trim().is_empty());

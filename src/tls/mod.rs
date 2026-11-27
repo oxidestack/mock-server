@@ -323,7 +323,7 @@ fn context_signature(config: &Config) -> String {
     let value = |name: &str| config.property(name).unwrap_or_default();
     let mut signature = format!(
         "mtls={}|mtlsChain={}|protocols={}|insecureProtocols={}|http2={}|caCert={}|caKey={}|dynamicCA={}|dir={}|keyPath={}|certPath={}",
-        config.bool_property("tlsMutualAuthenticationRequired", false),
+        config.hot_bool(crate::config::Hot::TlsMutualAuthenticationRequired, false),
         value("tlsMutualAuthenticationCertificateChain"),
         config.property("tlsProtocols").unwrap_or_else(|| DEFAULT_TLS_PROTOCOLS.into()),
         config.bool_property("tlsAllowInsecureProtocols", false),
@@ -556,7 +556,7 @@ impl DataPlaneTrust {
     /// The outcome for a configuration as it stands.
     pub fn of_config(config: &Config) -> DataPlaneTrust {
         DataPlaneTrust::of(
-            config.bool_property("tlsMutualAuthenticationRequired", false),
+            config.hot_bool(crate::config::Hot::TlsMutualAuthenticationRequired, false),
             config.property("tlsMutualAuthenticationCertificateChain").as_deref(),
             dynamic_authority(config),
             config.property("certificateAuthorityCertificate").as_deref(),
@@ -2214,7 +2214,7 @@ fn java_io_reason(error: &std::io::Error) -> &'static str {
 impl ClientCertificates {
     fn new(config: &Config, authority: &CertificateDer<'static>) -> Result<ClientCertificates, String> {
         let provider = Arc::new(rustls::crypto::ring::default_provider());
-        let mandatory = config.bool_property("tlsMutualAuthenticationRequired", false);
+        let mandatory = config.hot_bool(crate::config::Hot::TlsMutualAuthenticationRequired, false);
         let chain_path = config.property("tlsMutualAuthenticationCertificateChain").filter(|p| !p.trim().is_empty());
         let trust = if mandatory || chain_path.is_some() {
             let mut anchors = match &chain_path {

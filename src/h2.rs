@@ -130,7 +130,7 @@ fn window_update(stream: u32, increment: u32) -> Vec<u8> {
 
 /// `maxRequestBodySize`, read when a connection or stream opens so a limit set at runtime applies to the next one.
 fn max_request_body(state: &State) -> i64 {
-    state.config.int_property("maxRequestBodySize", 10_485_760)
+    state.config.hot_int(crate::config::Hot::MaxRequestBodySize, 10_485_760)
 }
 
 /// `maxHeaderSize` (default 262144 since upstream's request-limit change, after 8.0.0), announced as
@@ -797,7 +797,7 @@ impl Reader {
                 None => incoming.fields.push((b"content-length".to_vec(), length)),
             }
         }
-        let max_body = usize::try_from(self.state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
+        let max_body = usize::try_from(self.state.config.hot_int(crate::config::Hot::MaxRequestBodySize, 10_485_760)).unwrap_or(usize::MAX);
         let request = match to_request(incoming, &self.conn, self.secure, Some(max_body)) {
             Ok(request) => request,
             Err(failure) if failure.too_large() => {
@@ -946,7 +946,7 @@ async fn respond(state: Arc<State>, tx: mpsc::UnboundedSender<Out>, backlog: &Ba
     // observed until its outcome is written (dropped unanswered with the task when the client resets the stream)
     let mut observed = handler::observe(&state, &request);
     let decoded = std::time::Instant::now();
-    let outcome = handler::dispatch(&state, request, &Default::default()).await;
+    let outcome = handler::dispatch(&state, Arc::new(request), &Default::default()).await;
     // a response is written on the connection's event loop, once a runtime LLM call no longer blocks it
     if let Some(event_loop) = crate::server::current_worker() {
         state.connections.loop_free(event_loop).await;
@@ -954,7 +954,7 @@ async fn respond(state: Arc<State>, tx: mpsc::UnboundedSender<Out>, backlog: &Ba
     handler::answered(&mut observed, &outcome, "HTTP_2");
     let outcome = match outcome {
         Outcome::Respond(reply) if relay && !head_only => {
-            let max = usize::try_from(state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
+            let max = usize::try_from(state.config.hot_int(crate::config::Hot::MaxRequestBodySize, 10_485_760)).unwrap_or(usize::MAX);
             match handler::loopback_decoded(*reply, max) {
                 Ok(reply) => Outcome::respond(reply),
                 Err(()) => {
@@ -966,7 +966,7 @@ async fn respond(state: Arc<State>, tx: mpsc::UnboundedSender<Out>, backlog: &Ba
         // `LoopbackHttp2ResponseStreamer`: a response of undeclared length is relayed frame by frame unless it is in a
         // coding the loopback decodes, which is held whole (nothing else bounds what it decodes to) and decoded
         Outcome::Stream { head, chunks, trailers, .. } if relay && !head_only && loopback_holds_whole(&head.headers) => {
-            let max = usize::try_from(state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
+            let max = usize::try_from(state.config.hot_int(crate::config::Hot::MaxRequestBodySize, 10_485_760)).unwrap_or(usize::MAX);
             match Box::pin(loopback_aggregated(*head, chunks, trailers, max)).await {
                 Some(reply) => Outcome::respond(reply),
                 None => {

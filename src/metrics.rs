@@ -888,7 +888,7 @@ impl Drop for ForwardConnection {
 }
 
 pub fn enabled(config: &crate::config::Config) -> bool {
-    config.bool_property("metricsEnabled", false)
+    config.hot_bool(crate::config::Hot::MetricsEnabled, false)
 }
 
 /// `isPerExpectationMetricsActive`: `metricsEnabled` and `perExpectationMetricsEnabled` (whose default is the legacy

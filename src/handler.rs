@@ -321,7 +321,7 @@ impl LoopbackDecoder {
     /// `transfer-encoding: chunked`, no `content-encoding`); `Ok(None)` for a coding it leaves alone.
     pub fn for_head(state: &State, headers: &mut Vec<(String, String)>) -> Result<Option<LoopbackDecoder>, ()> {
         let Some(decoder) = crate::client::decoding::Decoder::for_head(headers, false).map_err(|_| ())? else { return Ok(None) };
-        let max = usize::try_from(state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
+        let max = usize::try_from(state.config.hot_int(crate::config::Hot::MaxRequestBodySize, 10_485_760)).unwrap_or(usize::MAX);
         let content = usize::try_from(state.config.int_property("maxChunkSize", 8192)).unwrap_or(8192).max(1);
         Ok(Some(LoopbackDecoder { decoder, max, content }))
     }
@@ -487,21 +487,23 @@ fn raw_status(bytes: &[u8]) -> Option<u32> {
 /// is a chain of [`crate::boxed::layer`]s, awaited in place in an optimised build; its deep, rarely taken branches
 /// (MCP, gRPC, forwards and proxies, callbacks, templates, the contract-test and replay endpoints) are
 /// [`crate::boxed::Boxed`], so that neither the caller's frames nor its future carry them.
-pub async fn dispatch(state: &Arc<State>, request: HttpRequest, channel: &TraceChannel) -> Outcome {
+/// The request comes shared, as its log entries hold it: each layer it passed through moved the whole request (~450
+/// bytes) into its future, some twice.
+pub async fn dispatch(state: &Arc<State>, request: Arc<HttpRequest>, channel: &TraceChannel) -> Outcome {
     // `TimeService`: what the request reads as now is this server's clock.
     crate::clock::scope_borrowed(&state.clock, crate::boxed::layer(dispatch_scoped(state, request, channel))).await
 }
 
 /// [`dispatch`] of a request `EarlyMatchingHandler` answers from its head alone, `found` the expectation it matched.
 /// Boxed: a connection answers one at most, its first ([`crate::boxed`]).
-pub fn dispatch_early<'a>(state: &'a Arc<State>, request: HttpRequest, channel: &'a TraceChannel, found: crate::store::Found) -> crate::boxed::Boxed<'a, Outcome> {
+pub fn dispatch_early<'a>(state: &'a Arc<State>, request: Arc<HttpRequest>, channel: &'a TraceChannel, found: crate::store::Found) -> crate::boxed::Boxed<'a, Outcome> {
     Box::pin(crate::dataplane::with_early_match(found, dispatch(state, request, channel)))
 }
 
 /// [`dispatch`] on a task of its own, for `http1PipeliningInOrder=false`, which handles the requests pipelined on a
 /// connection concurrently: it runs on the connection's worker event loop and carries the connection's gRPC pipeline
 /// flag; dropping the returned future aborts the task, and a panic in it unwinds here, as it does inline.
-pub async fn dispatch_detached(state: &Arc<State>, request: HttpRequest, channel: &Arc<TraceChannel>) -> Outcome {
+pub async fn dispatch_detached(state: &Arc<State>, request: Arc<HttpRequest>, channel: &Arc<TraceChannel>) -> Outcome {
     struct AbortOnDrop(tokio::task::AbortHandle);
     impl Drop for AbortOnDrop {
         fn drop(&mut self) {
@@ -527,7 +529,7 @@ pub async fn dispatch_detached(state: &Arc<State>, request: HttpRequest, channel
     }
 }
 
-async fn dispatch_scoped(state: &Arc<State>, request: HttpRequest, channel: &TraceChannel) -> Outcome {
+async fn dispatch_scoped(state: &Arc<State>, request: Arc<HttpRequest>, channel: &TraceChannel) -> Outcome {
     // `McpStreamableHttpHandler` sits before `HttpRequestHandler`: not counted, not logged, not decorated.
     if crate::mcp::serves(state, &request.path) {
         return mcp(state, request).await;
@@ -542,7 +544,7 @@ async fn dispatch_scoped(state: &Arc<State>, request: HttpRequest, channel: &Tra
 
 /// An MCP request, handled on the MCP session manager's executor, off the worker event loop.
 /// Boxed: its future is large ([`crate::boxed`]).
-fn mcp(state: &Arc<State>, request: HttpRequest) -> crate::boxed::Boxed<'_, Outcome> {
+fn mcp(state: &Arc<State>, request: Arc<HttpRequest>) -> crate::boxed::Boxed<'_, Outcome> {
     Box::pin(async move {
         let mut reply = crate::server::on_worker(None, crate::recorded::portless(crate::mcp::handle(state, &request))).await;
         reply.route = Some("/mockserver/mcp");
@@ -552,17 +554,17 @@ fn mcp(state: &Arc<State>, request: HttpRequest) -> crate::boxed::Boxed<'_, Outc
 
 /// A request on a connection with the gRPC handlers, its HTTP handling inside them unless it is not gRPC.
 /// Boxed: its future is large ([`crate::boxed`]).
-fn grpc<'a>(state: &'a Arc<State>, request: HttpRequest, channel: &'a TraceChannel) -> crate::boxed::Boxed<'a, Outcome> {
+fn grpc<'a>(state: &'a Arc<State>, request: Arc<HttpRequest>, channel: &'a TraceChannel) -> crate::boxed::Boxed<'a, Outcome> {
     Box::pin(async move {
-        match crate::grpc_plane::dispatch(state, request, channel).await {
+        match crate::grpc_plane::dispatch(state, Arc::unwrap_or_clone(request), channel).await {
             Ok(outcome) => outcome,
-            Err(request) => dispatch_http(state, *request, channel).await,
+            Err(request) => dispatch_http(state, Arc::from(request), channel).await,
         }
     })
 }
 
 /// The HTTP handling of a request (gRPC ones arrive here converted).
-pub async fn dispatch_http(state: &Arc<State>, request: HttpRequest, channel: &TraceChannel) -> Outcome {
+pub async fn dispatch_http(state: &Arc<State>, request: Arc<HttpRequest>, channel: &TraceChannel) -> Outcome {
     if let Some(event_loop) = crate::server::current_worker() {
         state.connections.requested_http(event_loop);
     }
@@ -591,7 +593,7 @@ fn decorated(state: &State, outcome: &mut Outcome, channel: &TraceChannel, tcp: 
 /// `AltSvcHeaderHandler`: with `http3Port` configured (whether or not it is listening) and `http3AdvertiseAltSvc`,
 /// TCP responses advertise it, unless they already carry an `Alt-Svc`.
 fn alt_svc(state: &State, reply: &mut Reply) {
-    let port = state.config.int_property("http3Port", 0);
+    let port = state.config.hot_int(crate::config::Hot::Http3Port, 0);
     if port > 0 && state.config.bool_property("http3AdvertiseAltSvc", true) && reply.header("alt-svc").is_none() {
         let max_age = state.config.int_property("http3AltSvcMaxAge", 86400);
         // After `connection`, before what the encoder adds (`content-length`, `set-cookie`), as on the oracle.
@@ -601,11 +603,11 @@ fn alt_svc(state: &State, reply: &mut Reply) {
 }
 
 /// A layer of the request path ([`crate::boxed::layer`]).
-fn handle(state: &Arc<State>, request: HttpRequest) -> impl std::future::Future<Output = Outcome> + Send + '_ {
+fn handle(state: &Arc<State>, request: Arc<HttpRequest>) -> impl std::future::Future<Output = Outcome> + Send + '_ {
     crate::boxed::layer(handle_inline(state, request))
 }
 
-async fn handle_inline(state: &Arc<State>, request: HttpRequest) -> Outcome {
+async fn handle_inline(state: &Arc<State>, request: Arc<HttpRequest>) -> Outcome {
     let stop = request.method == "PUT" && matches!(request.path.as_str(), "/mockserver/stop" | "/stop");
     let _in_flight = InFlight(state, (!stop).then(|| state.request_started()));
     let metrics = crate::metrics::enabled(&state.config);
@@ -629,21 +631,22 @@ async fn handle_inline(state: &Arc<State>, request: HttpRequest) -> Outcome {
 }
 
 /// A layer of the request path ([`crate::boxed::layer`]).
-fn serve(state: &Arc<State>, request: HttpRequest, metrics: bool, started: std::time::Instant) -> impl std::future::Future<Output = Outcome> + Send + '_ {
+fn serve(state: &Arc<State>, request: Arc<HttpRequest>, metrics: bool, started: std::time::Instant) -> impl std::future::Future<Output = Outcome> + Send + '_ {
     crate::boxed::layer(serve_inline(state, request, metrics, started))
 }
 
-async fn serve_inline(state: &Arc<State>, mut request: HttpRequest, metrics: bool, started: std::time::Instant) -> Outcome {
+async fn serve_inline(state: &Arc<State>, mut request: Arc<HttpRequest>, metrics: bool, started: std::time::Instant) -> Outcome {
     // `HttpRequestHandler`: every request gets its log correlation id, which the entries about it carry.
     if request.log_correlation_id.is_empty() {
-        request.log_correlation_id = crate::request::new_correlation_id();
+        // nothing else holds it yet: set in place
+        Arc::make_mut(&mut request).log_correlation_id = crate::request::new_correlation_id();
     }
     // `HttpState.handle`, at TRACE: every request it is given, the control plane's too, before anything handles it
     // (an early match never reaches it).
     if state.log_level == "TRACE" && !crate::dataplane::serving_early_match() {
         let entry = crate::recorded::LogEntry::at(crate::recorded::Level::Trace, "received request:{}").args([crate::recorded::Arg::from(crate::recorded::logged(&request))]);
         crate::log::entry(state, &entry);
-        state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(request.clone())));
+        state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(HttpRequest::clone(&request))));
     }
     let host = request.first_header("host").map(str::to_string);
     // the method a duration by route is labelled with (a startup choice), copied only for it

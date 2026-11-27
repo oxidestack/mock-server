@@ -1218,8 +1218,9 @@ pub struct ProxyPass {
 /// `Configuration.proxyPassMappings()` as text: the list set on the instance (even an empty one), else `proxyPass`;
 /// `None` when blank. Asked of every unmatched request, twice: nothing is copied while neither is set.
 fn proxy_pass_text(state: &State) -> Option<String> {
-    let set = |name: &str| state.config.read_property(name, |v| v.is_some());
-    if !set("proxyPassMappings") && !set("proxyPass") {
+    use crate::config::Hot;
+    let set = |hot: Hot| state.config.read_hot(hot, |v| v.is_some());
+    if !set(Hot::ProxyPassMappings) && !set(Hot::ProxyPass) {
         return None;
     }
     state.config.property("proxyPassMappings").or_else(|| state.config.property("proxyPass")).filter(|v| !v.trim().is_empty())

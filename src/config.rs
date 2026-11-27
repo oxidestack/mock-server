@@ -49,9 +49,10 @@ pub struct Config {
     /// Values set over `PUT /mockserver/configuration`, which take precedence over every other source.
     /// Fx-hashed: once anything is set here, every property read of every request looks here first.
     runtime: std::sync::Arc<parking_lot::RwLock<rustc_hash::FxHashMap<String, String>>>,
-    /// Set once anything was put in `runtime` (it is never emptied): until then a read skips its lock, which every
-    /// request worker took several times per request.
-    runtime_set: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    /// How many times anything was put in `runtime` (which is never emptied), counted after each put: while it is
+    /// zero a read skips the lock, which every request worker took several times per request, and the [`Hot`]
+    /// properties' kept answers hold for the count they were read at.
+    runtime_generation: std::sync::Arc<std::sync::atomic::AtomicU64>,
     /// The startup tiers (system property, properties file, environment) of each recognised property, resolved once
     /// on first use: they do not change after startup, and resolving one formatted its key and
     /// environment name on every read. Emptied by [`Config::sources_changed`] whenever a tier changes.
@@ -229,7 +230,7 @@ impl Config {
 
     /// [`Config::property`] handed to `read` as it is held, not copied.
     pub fn read_property<R>(&self, name: &str, read: impl FnOnce(Option<&str>) -> R) -> R {
-        if self.runtime_set.load(std::sync::atomic::Ordering::Acquire) {
+        if self.runtime_generation.load(std::sync::atomic::Ordering::Acquire) != 0 {
             let runtime = self.runtime.read();
             if let Some(value) = runtime.get(name) {
                 return read(Some(value));
@@ -267,7 +268,7 @@ impl Config {
 
     /// A value `PUT /mockserver/configuration` (or an embedder) set, without locking while none was ever set.
     fn runtime_value(&self, name: &str) -> Option<String> {
-        if !self.runtime_set.load(std::sync::atomic::Ordering::Acquire) {
+        if self.runtime_generation.load(std::sync::atomic::Ordering::Acquire) == 0 {
             return None;
         }
         self.runtime.read().get(name).cloned()
@@ -281,6 +282,7 @@ impl Config {
                 full: names.clone().map(|name| (name, self.resolve_startup_property(name).map(|v| startup_read(name, v)))).collect(),
                 outside_file: names.map(|name| (name, self.resolve_startup_property_outside_file(name))).collect(),
                 others: Default::default(),
+                hot: std::array::from_fn(|_| std::sync::atomic::AtomicU64::new(HOT_UNKNOWN)),
             })
         })
     }
@@ -339,7 +341,7 @@ impl Config {
     /// Sets a property at runtime (`ConfigurationDTO.applyTo`).
     pub fn set_runtime(&self, name: &str, value: String) {
         self.runtime.write().insert(name.to_string(), value);
-        self.runtime_set.store(true, std::sync::atomic::Ordering::Release);
+        self.runtime_generation.fetch_add(1, std::sync::atomic::Ordering::Release);
     }
 
     /// `ConfigurationProperties.<name>(value)` from an embedder: takes effect like [`Config::set_runtime`], but the
@@ -347,7 +349,54 @@ impl Config {
     pub fn set_embedder_property(&self, name: &str, value: String) {
         self.runtime.write().insert(name.to_string(), value.clone());
         self.embedder_set.write().insert(name.to_string(), value);
-        self.runtime_set.store(true, std::sync::atomic::Ordering::Release);
+        self.runtime_generation.fetch_add(1, std::sync::atomic::Ordering::Release);
+    }
+
+    /// [`Config::read_property`] of a property every request reads, not looked up while it has no value: a lookup
+    /// hashed and compared the name, and a request made some twenty.
+    pub fn read_hot<R>(&self, hot: Hot, read: impl FnOnce(Option<&str>) -> R) -> R {
+        match self.hot_state(hot) {
+            HOT_ABSENT => read(None),
+            _ => self.read_property(hot.name(), read),
+        }
+    }
+
+    /// [`Config::bool_property`] of a property every request reads (see [`Config::read_hot`]).
+    pub fn hot_bool(&self, hot: Hot, default: bool) -> bool {
+        match self.hot_state(hot) {
+            HOT_ABSENT => default,
+            HOT_TRUE => true,
+            _ => false,
+        }
+    }
+
+    /// [`Config::int_property`] of a property every request reads (see [`Config::read_hot`]).
+    pub fn hot_int(&self, hot: Hot, default: i64) -> i64 {
+        match self.hot_state(hot) {
+            HOT_ABSENT => default,
+            _ => self.int_property(hot.name(), default),
+        }
+    }
+
+    /// Whether `hot` has no value, `true`, or another value: as read at the current runtime generation, else read now
+    /// and kept for it. A value set over the API afterwards counts the generation on, so what was kept is read again.
+    fn hot_state(&self, hot: Hot) -> u64 {
+        use std::sync::atomic::Ordering;
+        // Acquire: a read at this generation sees every runtime value counted into it
+        let generation = self.runtime_generation.load(Ordering::Acquire);
+        let slot = &self.startup_cache().hot[hot as usize];
+        let kept = slot.load(Ordering::Relaxed);
+        if kept & HOT_STATE != HOT_UNKNOWN && kept >> 2 == generation {
+            return kept & HOT_STATE;
+        }
+        let state = self.read_property(hot.name(), |v| match v {
+            None => HOT_ABSENT,
+            Some(v) if v.trim().eq_ignore_ascii_case("true") => HOT_TRUE,
+            Some(_) => HOT_OTHER,
+        });
+        // read at `generation` or a later one, kept for `generation`: a value set meanwhile has it read again
+        slot.store(generation << 2 | state, Ordering::Relaxed);
+        state
     }
 
     pub fn bool_property(&self, name: &str, default: bool) -> bool {
@@ -757,7 +806,77 @@ struct StartupCache {
     /// `full` for the names outside the recognised list (`proxyPass`, `proxyPassMappings`, …), each resolved when
     /// first read: the startup tiers do not change once the configuration is built.
     others: parking_lot::RwLock<rustc_hash::FxHashMap<String, Option<String>>>,
+    /// Each [`Hot`] property's state (`HOT_…`, the low two bits) and the runtime generation it was read at (the bits
+    /// above).
+    hot: [std::sync::atomic::AtomicU64; Hot::COUNT],
 }
+
+/// The properties every request reads, each kept in [`StartupCache::hot`] at its index.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Hot {
+    AttachMismatchDiagnosticToResponse,
+    AttemptToProxyIfNoMatchingExpectation,
+    ClosestMatchHintEnabled,
+    ConnectionLifecycleChaosEnabled,
+    DataPlaneAuthenticationRequired,
+    DefaultResponseHeaders,
+    DetailedMatchFailures,
+    DetailedVerificationFailures,
+    EnableCorsForAllResponses,
+    ForwardProxyBlockPrivateNetworks,
+    GlobalResponseDelayMillis,
+    Http3Port,
+    LivenessHttpGetPath,
+    MaxRequestBodySize,
+    MetricsEnabled,
+    OpenApiResponseValidation,
+    OtelGenerateTraceId,
+    OtelPropagateTraceContext,
+    ProxyPass,
+    ProxyPassMappings,
+    TlsMutualAuthenticationRequired,
+    TransparentProxyEnabled,
+}
+
+impl Hot {
+    const COUNT: usize = Hot::TransparentProxyEnabled as usize + 1;
+
+    /// The property's name.
+    pub const fn name(self) -> &'static str {
+        match self {
+            Hot::AttachMismatchDiagnosticToResponse => "attachMismatchDiagnosticToResponse",
+            Hot::AttemptToProxyIfNoMatchingExpectation => "attemptToProxyIfNoMatchingExpectation",
+            Hot::ClosestMatchHintEnabled => "closestMatchHintEnabled",
+            Hot::ConnectionLifecycleChaosEnabled => "connectionLifecycleChaosEnabled",
+            Hot::DataPlaneAuthenticationRequired => "dataPlaneAuthenticationRequired",
+            Hot::DefaultResponseHeaders => "defaultResponseHeaders",
+            Hot::DetailedMatchFailures => "detailedMatchFailures",
+            Hot::DetailedVerificationFailures => "detailedVerificationFailures",
+            Hot::EnableCorsForAllResponses => "enableCORSForAllResponses",
+            Hot::ForwardProxyBlockPrivateNetworks => "forwardProxyBlockPrivateNetworks",
+            Hot::GlobalResponseDelayMillis => "globalResponseDelayMillis",
+            Hot::Http3Port => "http3Port",
+            Hot::LivenessHttpGetPath => "livenessHttpGetPath",
+            Hot::MaxRequestBodySize => "maxRequestBodySize",
+            Hot::MetricsEnabled => "metricsEnabled",
+            Hot::OpenApiResponseValidation => "openAPIResponseValidation",
+            Hot::OtelGenerateTraceId => "otelGenerateTraceId",
+            Hot::OtelPropagateTraceContext => "otelPropagateTraceContext",
+            Hot::ProxyPass => "proxyPass",
+            Hot::ProxyPassMappings => "proxyPassMappings",
+            Hot::TlsMutualAuthenticationRequired => "tlsMutualAuthenticationRequired",
+            Hot::TransparentProxyEnabled => "transparentProxyEnabled",
+        }
+    }
+}
+
+/// A [`Hot`] property's state: not read at the generation kept beside it; without a value; `true`; another value.
+const HOT_UNKNOWN: u64 = 0;
+const HOT_ABSENT: u64 = 1;
+const HOT_TRUE: u64 = 2;
+const HOT_OTHER: u64 = 3;
+/// The bits of a kept [`Hot`] state.
+const HOT_STATE: u64 = 3;
 
 /// `mockserver.fooBarBaz` → `MOCKSERVER_FOO_BAR_BAZ`, except for the literal names in [`ENV_NAME_EXCEPTIONS`].
 pub fn env_name(name: &str) -> String {
@@ -1632,13 +1751,13 @@ impl Config {
     /// secure values, each given only while its property is left at the default (setting it to any value removes it).
     pub fn upcoming_default_change_warnings(&self) -> Vec<String> {
         let mut warnings = Vec::new();
-        if !self.is_explicitly_configured("forwardProxyBlockPrivateNetworks") && !self.bool_property("forwardProxyBlockPrivateNetworks", false) {
+        if !self.is_explicitly_configured("forwardProxyBlockPrivateNetworks") && !self.hot_bool(crate::config::Hot::ForwardProxyBlockPrivateNetworks, false) {
             warnings.push("forwardProxyBlockPrivateNetworks is not set, so forward and proxy actions can reach loopback, private-network and cloud-metadata addresses; a future major release will change its default to true, which blocks them. Set mockserver.forwardProxyBlockPrivateNetworks (or MOCKSERVER_FORWARD_PROXY_BLOCK_PRIVATE_NETWORKS) to true to adopt the new default now, or to false to keep reaching those addresses; either value removes this warning".to_string());
         }
         if !self.is_explicitly_configured("localBoundIP") && self.property("localBoundIP").unwrap_or_default().trim().is_empty() {
             warnings.push("localBoundIP is not set, so MockServer listens on every network interface and can be reached from other machines; a future major release will change its default to 127.0.0.1, which only this machine can reach. Set mockserver.localBoundIP (or MOCKSERVER_LOCAL_BOUND_IP) to 127.0.0.1 to adopt the new default now, or to 0.0.0.0 to keep listening on every interface, as a container or a shared test environment needs; either value removes this warning".to_string());
         }
-        if !self.is_explicitly_configured("attemptToProxyIfNoMatchingExpectation") && self.bool_property("attemptToProxyIfNoMatchingExpectation", true) {
+        if !self.is_explicitly_configured("attemptToProxyIfNoMatchingExpectation") && self.hot_bool(crate::config::Hot::AttemptToProxyIfNoMatchingExpectation, true) {
             warnings.push("attemptToProxyIfNoMatchingExpectation is not set, so a request that matches no expectation is forwarded to the host it names, which makes MockServer an open proxy for anyone who can reach it; a future major release will change its default to false, which returns 404 instead. Set mockserver.attemptToProxyIfNoMatchingExpectation (or MOCKSERVER_ATTEMPT_TO_PROXY_IF_NO_MATCHING_EXPECTATION) to false to adopt the new default now, or to true to keep proxying unmatched requests; either value removes this warning".to_string());
         }
         let limits: Vec<String> = [
@@ -3278,6 +3397,33 @@ mod tests {
         assert_eq!(shared.startup_property("metricsEnabled").as_deref(), Some("false"));
     }
 
+    /// A hot property answers as reading it does: unset or set at startup, then set at runtime after it was read, in
+    /// the configuration and a clone sharing its runtime values.
+    #[test]
+    fn hot_properties_answer_as_reading_them() {
+        use super::Hot;
+        let config = super::Config::for_tests().with_property("metricsEnabled", "TRUE ").with_property("maxRequestBodySize", "12");
+        assert!(config.hot_bool(Hot::MetricsEnabled, false));
+        assert_eq!(config.hot_int(Hot::MaxRequestBodySize, 7), 12);
+        assert_eq!(config.hot_int(Hot::Http3Port, 7), 7);
+        assert!(config.hot_bool(Hot::ClosestMatchHintEnabled, true));
+        assert!(!config.hot_bool(Hot::TransparentProxyEnabled, false));
+        assert!(!config.read_hot(Hot::ProxyPass, |v| v.is_some()));
+        let shared = config.clone();
+        config.set_runtime("closestMatchHintEnabled", "false".into());
+        config.set_runtime("transparentProxyEnabled", "true".into());
+        config.set_runtime("metricsEnabled", "no".into());
+        config.set_runtime("proxyPass", "[]".into());
+        config.set_runtime("http3Port", "9".into());
+        for config in [&config, &shared] {
+            assert!(!config.hot_bool(Hot::ClosestMatchHintEnabled, true));
+            assert!(config.hot_bool(Hot::TransparentProxyEnabled, false));
+            assert!(!config.hot_bool(Hot::MetricsEnabled, true));
+            assert_eq!(config.read_hot(Hot::ProxyPass, |v| v.map(str::to_string)).as_deref(), Some("[]"));
+            assert_eq!(config.hot_int(Hot::Http3Port, 7), 9);
+        }
+    }
+
     /// `Main`: `proxyRemotePort`/`proxyRemoteHost` resolve like `serverPort` — command line, then the
     /// `mockserver.*` system property, then `MOCKSERVER_PROXY_REMOTE_*`, then `PROXY_REMOTE_*` (the
     /// docker_compose_remote_host_and_port_by_environment_variable container case).
@@ -3433,7 +3579,7 @@ pub fn tls_posture_changes(config: &Config, update: &serde_json::Map<String, ser
             lowered.push(format!("forwardProxyTLSX509CertificatesTrustManagerType {current} -> ANY (upstream certificate validation disabled)"));
         }
     }
-    if supplied_false("tlsMutualAuthenticationRequired") && config.bool_property("tlsMutualAuthenticationRequired", false) {
+    if supplied_false("tlsMutualAuthenticationRequired") && config.hot_bool(crate::config::Hot::TlsMutualAuthenticationRequired, false) {
         lowered.push("tlsMutualAuthenticationRequired true -> false (client certificate no longer required)".to_string());
     }
     if supplied_false("forwardProxyTLSHostnameVerificationEnabled") && config.bool_property("forwardProxyTLSHostnameVerificationEnabled", true) {

@@ -48,12 +48,12 @@ pub async fn blocked(state: &State, host: &str) -> Option<String> {
 
 /// `InetAddressValidator.isActive`: a forward target check is on (`forwardProxyBlockPrivateNetworks`, or a host list).
 pub fn checks_active(state: &State) -> bool {
-    state.config.bool_property("forwardProxyBlockPrivateNetworks", false) || crate::forward_target_policy::of(&state.config).is_some()
+    state.config.hot_bool(crate::config::Hot::ForwardProxyBlockPrivateNetworks, false) || crate::forward_target_policy::of(&state.config).is_some()
 }
 
 /// [`blocked`] for a caller off the async runtime (the name lookup blocks).
 pub fn blocked_blocking(state: &State, host: &str) -> Option<String> {
-    let block = state.config.bool_property("forwardProxyBlockPrivateNetworks", false);
+    let block = state.config.hot_bool(crate::config::Hot::ForwardProxyBlockPrivateNetworks, false);
     blocked_by(block, crate::forward_target_policy::of(&state.config), host)
 }
 
@@ -76,7 +76,7 @@ pub fn blocked_by(block: bool, policy: Option<std::sync::Arc<crate::forward_targ
 /// The name [`blocked`] resolves (`stripBrackets`) and the checks that apply, or `None` when none does or `host` is
 /// blank.
 fn gated<'a>(state: &State, host: &'a str) -> Option<(&'a str, bool, Option<std::sync::Arc<crate::forward_target_policy::Policy>>)> {
-    let block = state.config.bool_property("forwardProxyBlockPrivateNetworks", false);
+    let block = state.config.hot_bool(crate::config::Hot::ForwardProxyBlockPrivateNetworks, false);
     let policy = crate::forward_target_policy::of(&state.config);
     if (!block && policy.is_none()) || host.trim().is_empty() {
         return None;
@@ -86,7 +86,7 @@ fn gated<'a>(state: &State, host: &'a str) -> Option<(&'a str, bool, Option<std:
 
 /// Whether [`blocked`] looks a target name up (`forwardProxyBlockPrivateNetworks`, or host lists with address entries).
 fn looks_up(state: &State) -> bool {
-    state.config.bool_property("forwardProxyBlockPrivateNetworks", false) || crate::forward_target_policy::of(&state.config).is_some_and(|p| p.matches_addresses())
+    state.config.hot_bool(crate::config::Hot::ForwardProxyBlockPrivateNetworks, false) || crate::forward_target_policy::of(&state.config).is_some_and(|p| p.matches_addresses())
 }
 
 /// `reject`: the host lists first, then the private-network block.

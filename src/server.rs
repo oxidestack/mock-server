@@ -651,7 +651,7 @@ fn bind_std_listener(addr: SocketAddr, config: &Config) -> std::io::Result<(std:
     };
     socket.set_reuse_address(true)?;
     let outcome = if config.bool_property("transparentProxyTproxy", false) {
-        if !config.bool_property("transparentProxyEnabled", false) {
+        if !config.hot_bool(crate::config::Hot::TransparentProxyEnabled, false) {
             TproxyBindOutcome::WarnedNotEnabled
         } else if crate::proxy_resolvers::bind_transparent(&socket)? {
             TproxyBindOutcome::Applied
@@ -1036,7 +1036,7 @@ async fn serve_connection(state: Arc<State>, mut conn: Connection, mut stream: T
         tokio::time::sleep(delay).await;
     }
     let mut buf = BytesMut::with_capacity(16 * 1024);
-    if state.config.bool_property("transparentProxyEnabled", false) {
+    if state.config.hot_bool(crate::config::Hot::TransparentProxyEnabled, false) {
         // `CompositeOriginalDestinationResolver`'s default chain, minus conntrack (out of scope): TPROXY, eBPF, SO_ORIGINAL_DST (`crate::proxy_resolvers::resolve`), then
         // `DnsIntentOriginalDestinationResolver` — the name a DNS answer gave the address the client connected to.
         // An explicit PROXY protocol header (read from the connection's first bytes) always wins, whichever of
@@ -1172,7 +1172,7 @@ async fn serve_connection(state: Arc<State>, mut conn: Connection, mut stream: T
         log_stage(&state, &conn, "adding binary decoder");
         let stream = conn.idle.wrap(WriteStallIo::new(&state, &conn.write_stall, conn.event_loop, stream));
         crate::binary::serve(state, conn, stream, buf, false).await;
-    } else if state.config.bool_property("tlsMutualAuthenticationRequired", false)
+    } else if state.config.hot_bool(crate::config::Hot::TlsMutualAuthenticationRequired, false)
         && state.config.bool_property("controlPlaneTLSMutualAuthenticationRequired", false)
     {
         log_stage(&state, &conn, "adding HTTP decoders");

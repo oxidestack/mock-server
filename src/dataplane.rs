@@ -119,13 +119,13 @@ impl Matched<'_> {
 }
 
 /// A data-plane request's handling, a layer of the request path ([`crate::boxed::layer`]).
-pub fn handle(state: &Arc<State>, request: HttpRequest) -> impl std::future::Future<Output = Outcome> + Send + '_ {
+pub fn handle(state: &Arc<State>, request: Arc<HttpRequest>) -> impl std::future::Future<Output = Outcome> + Send + '_ {
     crate::boxed::layer(handle_inline(state, request))
 }
 
-async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome {
+async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Outcome {
     if request.log_correlation_id.is_empty() {
-        request.log_correlation_id = crate::request::new_correlation_id();
+        Arc::make_mut(&mut request).log_correlation_id = crate::request::new_correlation_id();
     }
     let looped = request.first_header(FORWARDED_BY).is_some_and(|v| v == state.forwarded_by);
     if let Some(challenge) = crate::auth::data_plane_rejection(&state.config, &request) {
@@ -133,7 +133,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         return Outcome::respond(reply.finalize(&request, &state.config));
     }
     // `HttpRequestHandler`: with `tlsMutualAuthenticationRequired`, a plain-HTTP data-plane request is told to upgrade.
-    if !request.secure && state.config.bool_property("tlsMutualAuthenticationRequired", false) {
+    if !request.secure && state.config.hot_bool(crate::config::Hot::TlsMutualAuthenticationRequired, false) {
         let mut reply = Reply::status(426);
         reply.reason = Some("Upgrade Required".into());
         reply.headers.push(("Upgrade".into(), "TLS/1.2, HTTP/1.1".into()));
@@ -146,7 +146,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
             });
             let entry = crate::recorded::LogEntry::new(crate::recorded::Kind::Info, "no tls for data plane request:{}returning response:{}")
                 .args([crate::recorded::Arg::from(crate::recorded::logged(&request)), (&logged).into()]);
-            state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(request.clone())));
+            state.log.message_about(entry, crate::recorded::Subject::Request(request.clone()));
         }
         return Outcome::respond(reply.finalize(&request, &state.config));
     }
@@ -155,7 +155,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     if is_preflight(&request) && crate::cors_origin::is_control_plane_request(&request, &state.config) {
         let reply = Reply::api(200).finalize(&request, &state.config);
         if !looped {
-            state.log.received(request.clone());
+            state.log.received(HttpRequest::clone(&request));
         }
         if state.info_enabled() {
             state.log.message(crate::recorded::LogEntry::new(crate::recorded::Kind::Info, "returning CORS response for OPTIONS request").correlation(request.log_correlation_id.clone()));
@@ -167,7 +167,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         let reply = reply.finalize(&request, &state.config);
         // only `RECEIVED_REQUEST` is skipped for the server's own looped request (`processActionAfterFilter`)
         if !looped {
-            state.log.received(request.clone());
+            state.log.received(HttpRequest::clone(&request));
         }
         let response = crud_response_json(&reply);
         let message = crate::recorded::LogEntry::new(crate::recorded::Kind::ExpectationResponse, "returning CRUD response:{}for request:{}")
@@ -201,12 +201,12 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     // `withPathParameters`: the match sets the path parameters the expectation extracted on the request, which the
     // entries logged before it hold too (`unmatched` keeps the request as it was for those).
     let path_parameters = matched.as_ref().map(|e| e.matcher.path_match(&request).parameters).unwrap_or_default();
-    let unmatched = (!path_parameters.is_empty()).then(|| request.clone());
+    let unmatched = (!path_parameters.is_empty()).then(|| HttpRequest::clone(&request));
     if !path_parameters.is_empty() {
-        request.path_parameters = path_parameters;
+        // set in place: nothing shares the request yet
+        Arc::make_mut(&mut request).path_parameters = path_parameters;
     }
     // From here on the request no longer changes: it is shared with the log entries that hold it, not copied.
-    let request = Arc::new(request);
     // The request as its log lines show it, built once for its received, matching and response entries.
     let mut logged_request = None;
     // The closest-match scan the unmatched request's log entries made, which `returnNotFound`'s hint reuses when
@@ -675,12 +675,13 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     };
     // the completion's entry attaches the request (`push_exchange`) in the form already built
     // `MockServerLogger.logEvent` keeps an `EXPECTATION_RESPONSE` whatever the `logLevel`
-    let message = message.filter(|m| m.kind == Kind::ExpectationResponse || state.info_enabled()).map(|m| m.request_logged(&request, &logged_request));
+    // Boxed (an entry is ~600 bytes): each step below moved it whole, an absent one too.
+    let message = message.filter(|m| m.kind == Kind::ExpectationResponse || state.info_enabled()).map(|m| Box::new(m.request_logged(&request, &logged_request)));
     // `attachMockServedTiming`'s block is in the entry (its line and `httpResponse`), but `REQUEST_RESPONSES`
     // shows the response without it (oracle).
     let (message, logged_response) = match logged_response.get("timing") {
         Some(_) => {
-            let message = message.map(|m| m.response(crate::recorded::logged_response(&logged_response)));
+            let message = message.map(|m| Box::new(m.response(crate::recorded::logged_response(&logged_response))));
             let mut untimed = logged_response;
             untimed.as_object_mut().map(|o| o.remove("timing"));
             (message, untimed)
@@ -692,7 +693,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         // an entry with the request set (`setHttpRequest`: a difference's TRACE entry, the closest match diff) is
         // about it, so a log clear that matches the request removes it
         let about = after_not_found.iter().any(|e| e.requests.is_some()).then(|| request.clone());
-        state.log.record_no_match(request, logged_response, message);
+        state.log.record_no_match(request, logged_response, message.map(|m| *m));
         for entry in std::mem::take(&mut after_not_found) {
             crate::log::entry(state, &entry);
             match (&about, entry.requests.is_some()) {
@@ -708,7 +709,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         let warned_request = informational_warning.as_ref().map(|_| request.clone());
         match (served, message) {
             (Some(make), _) => state.log.record_served(&logged_request, logged_response, served_by, Kind::ExpectationResponse, make),
-            (None, Some(message)) => state.log.record_with_message(request, logged_response, served_by, message),
+            (None, Some(message)) => state.log.record_with_message(request, logged_response, served_by, *message),
             (None, None) => state.log.record(Arc::unwrap_or_clone(request), logged_response, served_by),
         }
         if let (Some(entry), Some(request)) = (informational_warning, warned_request) {
@@ -1586,7 +1587,7 @@ fn unmatched_forward(state: &Arc<State>, request: HttpRequest) -> crate::boxed::
 /// The spec and `operationId` of an OpenAPI expectation whose mock responses `openAPIResponseValidation` checks,
 /// with the expectation's id.
 fn mock_response_operation(state: &State, expectation: &crate::store::Expectation) -> Option<(String, String, String)> {
-    if !state.config.bool_property("openAPIResponseValidation", false) {
+    if !state.config.hot_bool(crate::config::Hot::OpenApiResponseValidation, false) {
         return None;
     }
     let text = |pointer: &str| expectation.canonical.pointer(pointer).and_then(serde_json::Value::as_str).filter(|t| !t.trim().is_empty()).map(str::to_string);
@@ -2269,7 +2270,7 @@ async fn drift_pass(state: &Arc<State>, request: &HttpRequest, upstream: &crate:
 
 /// `globalResponseDelayMillis`, when positive.
 fn global_delay(state: &State) -> Option<std::time::Duration> {
-    let millis = state.config.int_property("globalResponseDelayMillis", 0);
+    let millis = state.config.hot_int(crate::config::Hot::GlobalResponseDelayMillis, 0);
     (millis > 0).then(|| std::time::Duration::from_millis(millis as u64))
 }
 
@@ -2457,7 +2458,7 @@ fn log_evaluations_logged(
     // `detailedMatchFailures=false`: the context the scan passes records no differences, but hints are still written;
     // so does a match without a context (`failFast` generates them whenever it builds the because, e.g. the HTTP/3 bidi
     // peek recorded from the oracle).
-    let reasons = match (detailed, state.config.bool_property("detailedMatchFailures", true)) {
+    let reasons = match (detailed, state.config.hot_bool(crate::config::Hot::DetailedMatchFailures, true)) {
         (false, _) => crate::matcher::Reasons::Hints,
         (true, true) => crate::matcher::Reasons::Full,
         (true, false) => crate::matcher::Reasons::Hints,
@@ -2694,7 +2695,7 @@ fn log_evaluations_logged(
     // The namespace gate runs before matching, so another tenant's expectation is never the closest.
     // A used-up or expired expectation the scan met is never offered (upstream 65a116781): it fails with no
     // recorded difference, and would otherwise rank closest for every unmatched request.
-    let records = state.config.bool_property("detailedMatchFailures", true);
+    let records = state.config.hot_bool(crate::config::Hot::DetailedMatchFailures, true);
     let candidates = state.store.admissible(namespace);
     // Past the evaluation cap only the expectations checked compete.
     let checked: Option<std::collections::HashSet<*const crate::store::Expectation>> = (walk.not_checked > 0).then(|| {
@@ -3671,7 +3672,7 @@ fn unmatched_target(state: &State, request: &HttpRequest) -> Option<(Result<Host
     }
     // `transparentProxyEnabled` marks every connection `PROXYING` (`TransparentProxyHandler`): its Host-header forward
     // is a proxied request, not the exploratory proxy.
-    let exploratory = !state.config.bool_property("transparentProxyEnabled", false);
+    let exploratory = !state.config.hot_bool(crate::config::Hot::TransparentProxyEnabled, false);
     host_target(state, request).map(|target| (target, exploratory))
 }
 
@@ -3680,7 +3681,7 @@ fn host_target(state: &State, request: &HttpRequest) -> Option<Result<(String, u
     // `attemptToProxyIfNoMatchingExpectation`, which `PUT /mockserver/mode` sets too: one configuration, as upstream
     // 0e8566814 has it. The 8.0.0 oracle process kept forwarding in SIMULATE (scenario
     // `operating_mode_data_plane`, its `diverge` steps; docs/divergences.md).
-    let proxy = state.config.bool_property("attemptToProxyIfNoMatchingExpectation", true);
+    let proxy = state.config.hot_bool(crate::config::Hot::AttemptToProxyIfNoMatchingExpectation, true);
     if !proxy {
         return None;
     }
@@ -3750,10 +3751,10 @@ async fn no_match(state: &Arc<State>, request: &HttpRequest, scan: Option<Closes
     let mut reply = Reply::not_found();
     let mut after = Vec::new();
     // `returnNotFound`: one `findClosestMatchHint` scan serves the DEBUG diff log and the hint header.
-    let debug_diff = state.config.bool_property("detailedVerificationFailures", true) && crate::log::debug_enabled(state);
-    let hint_enabled = state.config.bool_property("closestMatchHintEnabled", true);
-    let diagnostic = state.config.bool_property("attachMismatchDiagnosticToResponse", false);
-    let detailed_match_failures = state.config.bool_property("detailedMatchFailures", true);
+    let debug_diff = state.config.hot_bool(crate::config::Hot::DetailedVerificationFailures, true) && crate::log::debug_enabled(state);
+    let hint_enabled = state.config.hot_bool(crate::config::Hot::ClosestMatchHintEnabled, true);
+    let diagnostic = state.config.hot_bool(crate::config::Hot::AttachMismatchDiagnosticToResponse, false);
+    let detailed_match_failures = state.config.hot_bool(crate::config::Hot::DetailedMatchFailures, true);
     if debug_diff || hint_enabled || diagnostic {
         // `findClosestMatchHint` checks at most the first `CLOSEST_MATCH_MAX_EVALUATIONS` expectations.
         let (candidates, truncated) = state.store.active_candidates().first(CLOSEST_MATCH_MAX_EVALUATIONS);
@@ -3855,18 +3856,27 @@ fn closest_match_hint(id: &str, differences: &[(&'static str, crate::matcher::Di
         return None;
     }
     let (field, first) = &differences[0];
+    use std::fmt::Write;
     let mut hint = format!("expectation {id}: {field} did not match ({})", first.hint_reason());
     if differences.len() > 1 {
-        hint.push_str(&format!("; +{} more field(s) differ", differences.len() - 1));
+        let _ = write!(hint, "; +{} more field(s) differ", differences.len() - 1);
     }
-    let mut hint = hint.split(['\r', '\n']).collect::<Vec<_>>().join(" ").trim().to_string();
+    // each line break a space, the ends trimmed
+    if hint.contains(['\r', '\n']) {
+        hint = hint.replace(['\r', '\n'], " ");
+    }
+    if hint.trim().len() != hint.len() {
+        hint = hint.trim().to_string();
+    }
     // A capped scan says so after the (shortened) hint, within the 256 characters.
     let note = truncated_at.map(|checked| format!("; only the first {checked} expectations were checked")).unwrap_or_default();
     let max = 256 - note.chars().count();
-    if hint.chars().count() > max {
+    // no more characters than bytes
+    if hint.len() > max && hint.chars().count() > max {
         hint = hint.chars().take(max - 3).collect::<String>() + "...";
     }
-    Some(hint + &note)
+    hint.push_str(&note);
+    Some(hint)
 }
 
 /// [`closest_match`] over every active expectation, whatever its namespace (`findClosestMatchHint`), with the

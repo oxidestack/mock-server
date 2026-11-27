@@ -1429,14 +1429,33 @@ impl Difference {
     /// As the reason inside `x-mockserver-closest-match-hint`.
     pub fn hint_reason(&self) -> String {
         // `attachClosestMatchHint`: the recorded difference with its line breaks (`[\r\n]+`) collapsed to a space.
-        static NEWLINES: std::sync::LazyLock<fancy_regex::Regex> =
-            std::sync::LazyLock::new(|| fancy_regex::Regex::new(r"[\r\n]+").expect("static regex"));
         match self {
             Difference::Other(m) => (*m).to_string(),
             Difference::None => String::new(),
-            _ => NEWLINES.replace_all(&self.log_text(), " ").into_owned(),
+            _ => collapse_line_breaks(self.log_text()),
         }
     }
+}
+
+/// `text` with each run of line breaks (`[\r\n]+`) replaced by one space.
+fn collapse_line_breaks(text: String) -> String {
+    if !text.contains(['\r', '\n']) {
+        return text;
+    }
+    let mut out = String::with_capacity(text.len());
+    let mut in_breaks = false;
+    for c in text.chars() {
+        if c == '\r' || c == '\n' {
+            if !in_breaks {
+                out.push(' ');
+            }
+            in_breaks = true;
+        } else {
+            out.push(c);
+            in_breaks = false;
+        }
+    }
+    out
 }
 
 /// `StringFormatter.formatLogMessage(indent, message, arguments)`: each `{}` becomes its argument on its own

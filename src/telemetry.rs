@@ -422,7 +422,7 @@ impl TraceContext {
 pub fn inbound(state: &State, request: &crate::request::HttpRequest, channel: &Mutex<Option<TraceContext>>) {
     *channel.lock() = match request.first_header("traceparent").filter(|t| !t.is_empty()) {
         Some(traceparent) => TraceContext::parse(traceparent, request.first_header("tracestate")).filter(TraceContext::is_valid),
-        None if state.config.bool_property("otelGenerateTraceId", false) => Some(TraceContext::generated()),
+        None if state.config.hot_bool(crate::config::Hot::OtelGenerateTraceId, false) => Some(TraceContext::generated()),
         None => None,
     };
 }
@@ -430,7 +430,7 @@ pub fn inbound(state: &State, request: &crate::request::HttpRequest, channel: &M
 /// `TraceContextHandler.write`: under `otelPropagateTraceContext`, the channel's context goes back on the response.
 /// The handler writes ahead of the codec, so the headers land before the `content-length` the codec computes.
 pub fn outbound(state: &State, reply: &mut crate::reply::Reply, channel: &Mutex<Option<TraceContext>>) {
-    if !state.config.bool_property("otelPropagateTraceContext", false) {
+    if !state.config.hot_bool(crate::config::Hot::OtelPropagateTraceContext, false) {
         return;
     }
     if let Some(context) = channel.lock().as_ref().filter(|c| c.is_valid()) {

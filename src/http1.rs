@@ -311,7 +311,7 @@ where
                 if let Some(found) = found {
                     let head_only = early.method.eq_ignore_ascii_case("HEAD");
                     let mut observed = handler::observe(&state, &early);
-                    let outcome = handler::dispatch_early(&state, early, &trace, found).await;
+                    let outcome = handler::dispatch_early(&state, Arc::new(early), &trace, found).await;
                     handler::answered(&mut observed, &outcome, "HTTP_1_1");
                     match outcome {
                         Outcome::Respond(mut reply) => {
@@ -363,7 +363,7 @@ where
                 }
             }
             // `HttpObjectAggregator(maxRequestBodySize)`, read per request so a limit set at runtime applies.
-            let max_body = usize::try_from(state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
+            let max_body = usize::try_from(state.config.hot_int(crate::config::Hot::MaxRequestBodySize, 10_485_760)).unwrap_or(usize::MAX);
             if let Some(length) = length.filter(|l| !chunked && *l > max_body) {
                 if expects_continue {
                     // `newContinueResponse`: the client is told not to send the body.
@@ -593,13 +593,13 @@ where
                 // `http1PipeliningInOrder=false`: no gate; each request is handled as it arrives, and answered as it completes
                 let (trace_flight, state_flight) = (trace.clone(), state.clone());
                 let flight = Flight { head_only, tunnel, stream_intent, observed, exchange, decoded };
-                in_flight.push(Box::pin(async move { (handler::dispatch_detached(&state_flight, http_request, &trace_flight).await, flight) }));
+                in_flight.push(Box::pin(async move { (handler::dispatch_detached(&state_flight, Arc::new(http_request), &trace_flight).await, flight) }));
                 continue 'conn;
             }
             // handled on the connection's task, its deep, rarely taken branches boxed where they are entered ([`crate::boxed`])
             let outcome = if held_behind {
                 tokio::select! {
-                    outcome = handler::dispatch(&state, http_request, &trace) => outcome,
+                    outcome = handler::dispatch(&state, Arc::new(http_request), &trace) => outcome,
                     _ = wedge_backstop(&state, conn.event_loop) => {
                         // the held requests wait behind a response that makes no progress: the connection is closed, and
                         // `Http1PipeliningGate.channelInactive` then hands what it holds on, as a decoder's `decodeLast`:
@@ -614,7 +614,7 @@ where
                 }
             } else {
                 // pinned where it is built: awaiting it by value moved the whole future (14 KiB) once per request
-                std::pin::pin!(handler::dispatch(&state, http_request, &trace)).await
+                std::pin::pin!(handler::dispatch(&state, Arc::new(http_request), &trace)).await
             };
             (outcome, Flight { head_only, tunnel, stream_intent, observed, exchange, decoded })
         };
@@ -658,7 +658,7 @@ where
             }
             Outcome::Respond(reply) => {
                 let reply = if tunnel {
-                    let max = usize::try_from(state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
+                    let max = usize::try_from(state.config.hot_int(crate::config::Hot::MaxRequestBodySize, 10_485_760)).unwrap_or(usize::MAX);
                     Box::new(handler::loopback_decoded(*reply, max).unwrap_or_else(|()| handler::loopback_failure()))
                 } else {
                     reply
@@ -1069,11 +1069,13 @@ async fn read_head<S: AsyncRead + Unpin>(stream: &mut S, buf: &mut BytesMut, lim
         buf.advance(skip);
         if !buf.is_empty() {
             // `HttpChunkLineLimiter`: whatever the decoder failed on is refused; the rest of what was read is dropped.
-            if let Some(refusal) = limit_fault(buf, limits) {
+            // A complete head of CRLF lines within the limits has no fault for either check to find.
+            let clean = clean_head(buf, limits);
+            if let Some(refusal) = (!clean).then(|| limit_fault(buf, limits)).flatten() {
                 buf.clear();
                 return Err(refusal);
             }
-            if let Some(head) = strict_line_fault(buf) {
+            if let Some(head) = (!clean).then(|| strict_line_fault(buf)).flatten() {
                 buf.clear();
                 return Err(Error::Refused(400, head.decode_error.unwrap_or_else(|| LINE_SEPARATOR.into())));
             }
@@ -1300,6 +1302,38 @@ fn strict_line_fault(buf: &[u8]) -> Option<Head> {
     }
 }
 
+/// Whether `buf` starts with a complete head (up to its blank line) whose first byte is no control character and
+/// whose lines all end with CRLF, the request line within `maxInitialLineLength` and the header lines together within
+/// `maxHeaderSize`: then neither [`limit_fault`] nor [`strict_line_fault`] finds a fault, told in one pass over it.
+fn clean_head(buf: &[u8], limits: &Limits) -> bool {
+    if buf.first().is_none_or(|b| *b < 0x20 || (0x7f..=0x9f).contains(b)) {
+        return false;
+    }
+    let (mut start, mut header_bytes, mut first) = (0, 0usize, true);
+    loop {
+        let Some(lf) = buf[start..].iter().position(|b| *b == b'\n') else { return false };
+        if lf == 0 || buf[start + lf - 1] != b'\r' {
+            return false;
+        }
+        let length = lf - 1;
+        if length == 0 {
+            return !first;
+        }
+        if first {
+            if length > limits.initial_line {
+                return false;
+            }
+        } else {
+            header_bytes += length;
+            if header_bytes > limits.headers {
+                return false;
+            }
+        }
+        first = false;
+        start += lf + 1;
+    }
+}
+
 /// Netty's invalid message for a request line it cannot read.
 fn netty_invalid(message: String) -> Head {
     Head {
@@ -1464,5 +1498,33 @@ async fn read_chunked<S: AsyncRead + Unpin>(stream: &mut S, buf: &mut BytesMut, 
         let chunk = read_exact(stream, buf, size).await?;
         body.extend_from_slice(&chunk);
         read_exact(stream, buf, 2).await?;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Limits, clean_head, limit_fault, strict_line_fault};
+
+    /// A head `clean_head` passes is one neither line check faults, and it passes an ordinary complete head.
+    #[test]
+    fn a_clean_head_has_no_line_fault() {
+        let limits = Limits { initial_line: 20, headers: 24 };
+        let heads: &[&[u8]] = &[
+            b"GET /e0 HTTP/1.1\r\nhost: a\r\naccept: */*\r\n\r\n",
+            b"GET / HTTP/1.1\r\n\r\n",
+            b"GET /e0 HTTP/1.1\r\nhost: a\r\n",
+            b"GET /e0 HTTP/1.1\r\nhost: a\nx: y\r\n\r\n",
+            b"GET /a-path-too-long-for-it HTTP/1.1\r\n\r\n",
+            b"GET /e0 HTTP/1.1\r\nhost: a\r\nx-long: 0123456789abcdef\r\n\r\n",
+            b"\x01GET / HTTP/1.1\r\n\r\n",
+            b"\r\n\r\n",
+        ];
+        for (i, head) in heads.iter().enumerate() {
+            assert_eq!(clean_head(head, &limits), i < 2, "{}", String::from_utf8_lossy(head));
+            if i < 2 {
+                assert!(limit_fault(head, &limits).is_none() && strict_line_fault(head).is_none());
+            }
+        }
+        assert!(limit_fault(heads[4], &limits).is_some() && limit_fault(heads[5], &limits).is_some());
     }
 }

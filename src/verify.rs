@@ -968,7 +968,7 @@ fn unprovable_after_eviction(state: &State, times: &Times, subject: &str) -> Opt
 
 /// `detailedVerificationFailures`: a failed verification carries the closest match diff and the summary block.
 fn detailed(state: &State) -> bool {
-    state.config.bool_property("detailedVerificationFailures", true)
+    state.config.hot_bool(crate::config::Hot::DetailedVerificationFailures, true)
 }
 
 /// A verification with a `timeout` waited for its requests (`verification.getTimeout() > 0`).
