@@ -277,10 +277,22 @@ impl BodyMatcher {
             Kind::Json { expected, strict, written, numeric } => {
                 let found = json_matched(request, &[]).unwrap_or_else(|| request.body_str().into_owned());
                 let expected_text = json_text(expected, written);
-                let Ok(actual) = serde_json::from_str::<Value>(&found) else {
-                    return Some(super::Difference::Text(json_exception(&expected_text, Some(&found))));
+                // The body as received, read (leniently, as `JsonStringMatcher` reads it) when it was matched; an XML or
+                // form body as the JSON `convertToJson` printed.
+                let parsed = json_body_once(request);
+                let read;
+                let actual = match (&parsed.value, parsed.as_received) {
+                    (Some(actual), true) => actual,
+                    (None, true) => return Some(super::Difference::Text(json_exception(&expected_text, Some(&found)))),
+                    (_, false) => match serde_json::from_str::<Value>(&found) {
+                        Ok(actual) => {
+                            read = actual;
+                            &read
+                        }
+                        Err(_) => return Some(super::Difference::Text(json_exception(&expected_text, Some(&found)))),
+                    },
                 };
-                let differences = with_numeric_tolerance(*numeric, || json_unit_differences(expected, &actual, *strict));
+                let differences = with_numeric_tolerance(*numeric, || json_unit_differences(expected, actual, *strict));
                 super::Difference::Text(if differences.is_empty() {
                     super::format_log_message(1, "json match failed expected:{}found:{}", &[&expected_text, &found])
                 } else {
@@ -451,17 +463,23 @@ impl BodyMatcher {
     }
 
     fn recorded_differences_as(&self, request: &HttpRequest, not: bool) -> Vec<String> {
-        if let Kind::Json { expected, written, .. } = &self.kind {
+        // A body as received is JSON when it was read as JSON when it was matched; an XML or form body is read here.
+        let unread = |request: &HttpRequest| {
+            let parsed = json_body_once(request);
+            if parsed.as_received { parsed.value.is_none() } else { serde_json::from_str::<Value>(&json_matched(request, &[]).unwrap_or_default()).is_err() }
+        };
+        if let Kind::Json { expected, written, .. } = &self.kind
+            && !not
+            && (request.body.is_empty() || unread(request))
+        {
             // The body `convertToJson` makes: an XML or form body as JSON, an XML one that does not parse as received.
             let found = json_matched(request, &[]).unwrap_or_else(|| request.body_str().into_owned());
-            if !not && (request.body.is_empty() || serde_json::from_str::<Value>(&found).is_err()) {
-                let found = (!request.body.is_empty()).then_some(&*found);
-                let expected = json_text(expected, written);
-                return vec![
-                    json_exception(&expected, found),
-                    super::format_log_message(1, "json match failed expected:{}found:{}", &[&expected, found.unwrap_or("null")]),
-                ];
-            }
+            let found = (!request.body.is_empty()).then_some(&*found);
+            let expected = json_text(expected, written);
+            return vec![
+                json_exception(&expected, found),
+                super::format_log_message(1, "json match failed expected:{}found:{}", &[&expected, found.unwrap_or("null")]),
+            ];
         }
         // `XPathMatcher`: a body the parser rejects records the error handler's fatal error, then the exception.
         if let (Kind::XPath(expr, _, namespaces), false) = (&self.kind, not) {
@@ -576,11 +594,13 @@ impl BodyMatcher {
     }
 
     fn matches_positive(&self, request: &HttpRequest, ci: bool) -> bool {
-        let body = request.body_str();
+        // Read as text only by the matchers that compare text: a JSON matcher reads the body parsed once
+        // ([`json_body_once`]), and decoding 4 KiB for each of 1,000 of them was a tenth of their cost.
+        let body = std::cell::LazyCell::new(|| request.body_str());
         match &self.kind {
             // `ExactStringMatcher.matches`: a blank expected string matches any body.
             Kind::String(expected) => {
-                expected.trim().is_empty() || *body == **expected || (ci && body.eq_ignore_ascii_case(expected))
+                expected.trim().is_empty() || **body == **expected || (ci && body.eq_ignore_ascii_case(expected))
             }
             Kind::SubString(expected) => {
                 body.contains(expected.as_str()) || (ci && body.to_lowercase().contains(&expected.to_lowercase()))
@@ -588,17 +608,20 @@ impl BodyMatcher {
             // `BodyMatcherBuilder`: a regex body is case-sensitive only under `matchExactCase` on the data plane
             // (`ci` is the control plane's flag); it is case-insensitive everywhere else.
             Kind::Regex(m) => m.matches(&body, ci || !self.exact_case),
-            Kind::Json { expected, strict, numeric, .. } => match json_body(request, &[]) {
-                Some(actual) => with_numeric_tolerance(*numeric, || json_matches(expected, &actual, *strict)),
+            Kind::Json { expected, strict, numeric, .. } => match &json_body_once(request).value {
+                Some(actual) => with_numeric_tolerance(*numeric, || json_matches(expected, actual, *strict)),
                 None => false,
             },
+            Kind::JsonSchema(validator, styles, schema) if styles.is_empty() => {
+                json_body_once(request).value.as_ref().is_some_and(|actual| crate::schema::value_matches(validator.as_deref(), schema, actual))
+            }
             Kind::JsonSchema(validator, styles, schema) => {
                 json_body(request, styles).is_some_and(|actual| crate::schema::value_matches(validator.as_deref(), schema, &actual))
             }
             // `JsonPathMatcher`: a body equal to a compiled path's text matches unevaluated.
-            Kind::JsonPath(path, text) if !matches!(path, JaywayPath::Uncompiled) && !request.body.is_empty() && **text == *body => true,
-            Kind::JsonPath(path, _) => json_body(request, &[]).is_some_and(|actual| path.matches(&actual)),
-            Kind::JsonPathDateTime(path, _, date_time) => json_body(request, &[]).is_some_and(|actual| json_path_date_time(path, &actual, date_time)),
+            Kind::JsonPath(path, text) if !matches!(path, JaywayPath::Uncompiled) && !request.body.is_empty() && **text == **body => true,
+            Kind::JsonPath(path, _) => json_body_once(request).value.as_ref().is_some_and(|actual| path.matches(actual)),
+            Kind::JsonPathDateTime(path, _, date_time) => json_body_once(request).value.as_ref().is_some_and(|actual| json_path_date_time(path, actual, date_time)),
             Kind::XPathDateTime(expr, namespaces, date_time) => {
                 !request.body.is_empty() && xpath_node_texts(expr, &body, namespaces).is_some_and(|texts| texts.iter().any(|t| date_time.matches(t, true)))
             }
@@ -609,7 +632,7 @@ impl BodyMatcher {
             },
             // `XPathMatcher`: no evaluator for a blank expression; a body equal to the expression matches unevaluated.
             Kind::XPath(expr, _, namespaces) if !xpath_compiles(expr, namespaces) => false,
-            Kind::XPath(expr, ..) if !request.body.is_empty() && *expr == body => true,
+            Kind::XPath(expr, ..) if !request.body.is_empty() && *expr == *body => true,
             Kind::XPath(expr, millis, namespaces) => xpath_evaluate(expr, &body, *millis, namespaces) == Some(true),
             Kind::XmlSchema(_, schema) => !body.trim().is_empty() && schema.as_ref().is_ok_and(|s| s.validate(&body).is_ok()),
             // `ParameterStringMatcher`: styled parameters split (`ExpandedParameterDecoder.splitParameters`) first.
@@ -1503,6 +1526,80 @@ fn json_body(request: &HttpRequest, styles: &[(String, String)]) -> Option<Value
         // quotes, comments …), the one that reports the parse failure when there is one.
         return crate::json::parse_lenient(request.body_str().as_bytes()).ok();
     }
+    Some(form_json(request, styles))
+}
+
+/// [`json_body`] without parameter styles, read once for all the matchers one request meets: a request is matched
+/// against every expectation in turn, and reading its body again for each JSON matcher among 1,000 cost 47 ms.
+/// `as_received`: the body is neither XML nor a form, so `value` is the body itself read as JSON.
+struct JsonBody {
+    value: Option<Value>,
+    as_received: bool,
+}
+
+/// The last body [`json_body_once`] read on this thread, with what it was read from: the request's
+/// `Content-Type`, its body kind and its body, which [`json_body`] depends on alone. Holding the body keeps its
+/// bytes where they are, so another body at the same address and of the same length is the same bytes.
+struct ReadBody {
+    content_type: Option<String>,
+    kind: request::BodyKind,
+    body: bytes::Bytes,
+    json: std::rc::Rc<JsonBody>,
+}
+
+thread_local! {
+    static READ_BODY: std::cell::RefCell<Option<ReadBody>> = const { std::cell::RefCell::new(None) };
+}
+
+#[cfg(test)]
+thread_local! {
+    /// How many bodies [`read_json_body`] has read on this thread.
+    static BODIES_READ: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// [`json_body`] of `request` without parameter styles, remembered per thread for the next matcher that reads the
+/// same body: the request's own body is recognised by its address (comparing 4 KiB of bytes for each of 1,000
+/// matchers cost a fifth of a request), an equal body elsewhere (the next request posting the same document) by its
+/// bytes. A body of [`crate::blocking::LARGE_BODY`] or more (matched off the workers) is read each time, so a
+/// thread holds at most one body below it, which the event log holds too while it keeps the request.
+fn json_body_once(request: &HttpRequest) -> std::rc::Rc<JsonBody> {
+    if request.body.len() >= crate::blocking::LARGE_BODY {
+        return std::rc::Rc::new(read_json_body(request));
+    }
+    let content_type = request.first_header("content-type");
+    let remembered = READ_BODY.with_borrow_mut(|read| {
+        let read = read.as_mut().filter(|r| r.kind == request.body_kind && r.content_type.as_deref() == content_type)?;
+        let held = read.body.as_ptr() == request.body.as_ptr() && read.body.len() == request.body.len();
+        if !held {
+            if read.body != request.body {
+                return None;
+            }
+            read.body = request.body.clone();
+        }
+        Some(read.json.clone())
+    });
+    if let Some(json) = remembered {
+        return json;
+    }
+    let json = std::rc::Rc::new(read_json_body(request));
+    READ_BODY.with_borrow_mut(|read| {
+        *read = Some(ReadBody { content_type: content_type.map(str::to_string), kind: request.body_kind, body: request.body.clone(), json: json.clone() });
+    });
+    json
+}
+
+/// [`json_body`] without parameter styles, telling whether it is the body as received.
+fn read_json_body(request: &HttpRequest) -> JsonBody {
+    #[cfg(test)]
+    BODIES_READ.with(|n| n.set(n.get() + 1));
+    let content_type = request.first_header("content-type").unwrap_or_default();
+    let xml = content_type.contains("application/xml") || content_type.contains("text/xml");
+    let form = content_type.contains("application/x-www-form-urlencoded");
+    JsonBody { value: json_body(request, &[]), as_received: !xml && !form }
+}
+
+/// [`json_body`] of a form body: an object of its parameters.
+fn form_json(request: &HttpRequest, styles: &[(String, String)]) -> Value {
     let mut object = serde_json::Map::new();
     for (name, values) in request::parse_query(&request.body_str()) {
         let values = match styles.iter().find(|(k, _)| *k == name).and_then(|(_, style)| super::multimap::style_delimiter(style, &name)) {
@@ -1516,7 +1613,7 @@ fn json_body(request: &HttpRequest, styles: &[(String, String)]) -> Option<Value
         };
         object.insert(name, value);
     }
-    Some(Value::Object(object))
+    Value::Object(object)
 }
 
 /// `JsonSchemaBodyDecoder.convertXmlToJson`: `xmlToMap` of the document's first child; `None` when the body does not
@@ -2340,6 +2437,55 @@ mod tests {
         assert!(m.matches(&req(r#"{"arr":[2,1,3],"a":1,"b":2}"#), false));
         assert!(!m.matches(&req(r#"{"a":2,"arr":[1,2]}"#), false));
         assert!(!m.matches(&req(r#"{"a":1.0,"arr":[1,2]}"#), false));
+    }
+
+    /// A request matched against 1,000 JSON body matchers, then described by them, has its body read once; the
+    /// next request's body, equal in bytes but not in content type, or differing in one byte, is read again.
+    #[test]
+    fn a_json_body_is_read_once_for_all_the_matchers_of_a_request() {
+        let order = |id: &str| format!(r#"{{"order":{{"id":"{id}","items":[{{"sku":"SKU-1","quantity":2}}]}},"note":"x"}}"#);
+        let matchers: Vec<_> = (0..1000)
+            .map(|i| BodyMatcher::compile(&json!({"type": "JSON", "json": {"order": {"id": format!("e{i}")}}, "matchType": "ONLY_MATCHING_FIELDS"})))
+            .collect();
+        let typed = |body: String, content_type: &str| {
+            let mut r = req(&body);
+            r.headers.push(("Content-Type".into(), vec![content_type.into()]));
+            r
+        };
+        let read = || super::BODIES_READ.with(std::cell::Cell::get);
+        let before = read();
+        let request = typed(order("e999"), "application/json");
+        let matched: Vec<usize> = (0..1000).filter(|&i| matchers[i].matches(&request, false)).collect();
+        assert_eq!(matched, [999]);
+        assert!(matchers[0].difference(&request).expect("a difference").hint_reason().contains("e0"));
+        assert!(matchers[0].recorded_differences(&request).iter().all(|d| !d.contains("exception while perform json match")));
+        assert_eq!(read() - before, 1);
+        // the next request posting the same document, in a buffer of its own: not read again
+        assert!(matchers[999].matches(&typed(order("e999"), "application/json"), false));
+        assert_eq!(read() - before, 1);
+        // a body differing in one byte, then the same bytes as a form: each read afresh
+        let other = typed(order("e998"), "application/json");
+        assert!(matchers[998].matches(&other, false) && !matchers[999].matches(&other, false));
+        assert_eq!(read() - before, 2);
+        assert!(!matchers[999].matches(&typed(order("e999"), "application/x-www-form-urlencoded"), false));
+        assert_eq!(read() - before, 3);
+        assert!(matchers[999].matches(&request, false));
+    }
+
+    /// A body only a lenient reader accepts is matched and described as read leniently, as `JsonStringMatcher` reads
+    /// it (oracle scenario `json_body_read_once_per_request`); one no reader accepts is described by the parse failure.
+    #[test]
+    fn a_lenient_json_body_is_described_as_read_leniently() {
+        let m = BodyMatcher::compile(&json!({"type": "JSON", "json": {"a": 1}}));
+        assert!(m.matches(&req("{'a': 1}"), false));
+        let lenient = req("{'a': 2}");
+        assert!(!m.matches(&lenient, false));
+        let reason = m.difference(&lenient).expect("a difference").hint_reason();
+        assert!(reason.starts_with("  json match failed") && reason.contains("wrong value at \"a\""), "{reason}");
+        assert_eq!(m.recorded_differences(&lenient).len(), 1);
+        let text = req("a = 1");
+        assert!(m.difference(&text).expect("a difference").hint_reason().contains("exception while perform json match failed"));
+        assert_eq!(m.recorded_differences(&text).len(), 2);
     }
 
     #[test]
