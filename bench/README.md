@@ -24,6 +24,7 @@ IMAGE=mock-server:latest WARMUP=3 DURATION=3 ROUNDS=1 LEVELS=INFO EXPECTATIONS=1
 | --- | --- | --- |
 | `IMAGE` | `mock-server:latest` | our image |
 | `CPUS` | `2` | each server's `--cpus` |
+| `MEMORY` | `2g` | each server's `--memory`: a Testcontainers host shares its memory with the tests, so neither server gets all of it; the JVM sizes its heap from this limit |
 | `CONNECTIONS` | `64` | `oha -c` |
 | `WARMUP` | `20` | seconds of the same load before the window; the JVM needs 10-20 s to reach its speed |
 | `DURATION` | `15` | seconds of the measured window |
@@ -47,8 +48,8 @@ IMAGE=mock-server:latest WARMUP=3 DURATION=3 ROUNDS=1 LEVELS=INFO EXPECTATIONS=1
 For every round, log level, number of expectations and request, each server (in that round's order) and each of its
 configurations:
 
-1. A fresh container of the server, alone on the user-defined bridge network `mock-server-bench` with `--cpus $CPUS`,
-   so memory and the event log start empty for every measurement.
+1. A fresh container of the server, alone on the user-defined bridge network `mock-server-bench` with `--cpus $CPUS`
+   and `--memory $MEMORY`, so memory and the event log start empty for every measurement.
 2. The expectations, `GET /e<n>` answered with `e<n>`, created in one `PUT /mockserver/expectation`.
 3. `WARMUP` seconds of the load, then a wait until the console stops growing (a server may still be printing the
    warm-up's requests).

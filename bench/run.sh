@@ -2,8 +2,8 @@
 # The same load against MockServer (the image oracle.env pins) and mock-server, written down as measured.
 # bench/README.md says what it measures and how; every parameter below is an environment variable.
 #
-# Every measurement starts a fresh container of one server, alone on a user-defined bridge network with `--cpus $CPUS`,
-# loads its expectations, warms it up for $WARMUP s, waits for its console to settle, and runs `oha` (in a container
+# Every measurement starts a fresh container of one server, alone on a user-defined bridge network with `--cpus $CPUS`
+# and `--memory $MEMORY`, loads its expectations, warms it up for $WARMUP s, waits for its console to settle, and runs `oha` (in a container
 # on the same network) for $DURATION s with $CONNECTIONS connections. Around that window it reads the container's
 # cgroup (cpu.stat, memory.peak), the server's VmHWM and its console log. $ROUNDS rounds, the servers' order
 # alternating between rounds. Everything read goes into $RUN_DIR; results.json there is assembled from it.
@@ -14,6 +14,7 @@ here=$(cd "$(dirname "$0")" && pwd)
 
 IMAGE=${IMAGE:-mock-server:latest}               # ours
 CPUS=${CPUS:-2}                                  # each server's --cpus
+MEMORY=${MEMORY:-2g}                             # each server's --memory (a Testcontainers host never gives it all)
 CONNECTIONS=${CONNECTIONS:-64}                   # oha -c
 WARMUP=${WARMUP:-20}                             # seconds of load before the window (the JVM's JIT needs 10-20 s)
 DURATION=${DURATION:-15}                         # seconds of the measured window
@@ -91,7 +92,7 @@ commit=$(git -C "$here" rev-parse HEAD 2>/dev/null || echo unknown)
 dirty=false
 git -C "$here" diff --quiet HEAD 2>/dev/null || dirty=true
 COMMIT=$commit DIRTY=$dirty CPU_MODEL=$cpu_model LOAD_START=$(probe 'cut -d" " -f1-3 /proc/loadavg') \
-  IMAGE=$IMAGE CPUS=$CPUS CONNECTIONS=$CONNECTIONS WARMUP=$WARMUP DURATION=$DURATION ROUNDS=$ROUNDS LEVELS=$LEVELS \
+  IMAGE=$IMAGE CPUS=$CPUS MEMORY=$MEMORY CONNECTIONS=$CONNECTIONS WARMUP=$WARMUP DURATION=$DURATION ROUNDS=$ROUNDS LEVELS=$LEVELS \
   EXPECTATIONS=$EXPECTATIONS REQUESTS=$REQUESTS SERVERS=$SERVERS OURS_CONFIGS=$OURS_CONFIGS \
   ORACLE_CONFIGS=$ORACLE_CONFIGS METRICS=$METRICS SETTLE_MAX=$SETTLE_MAX HOST_HEADER=$HOST_HEADER \
   MACHINE_KIND=$MACHINE_KIND NOTE=$NOTE ORACLE_VERSION=$ORACLE_VERSION \
@@ -117,7 +118,7 @@ meta = {
              "expectations": [int(n) for n in e["EXPECTATIONS"].split()], "requests": e["REQUESTS"].split(),
              "servers": e["SERVERS"].split(), "ours_configs": e["OURS_CONFIGS"].split(";"),
              "oracle_configs": e["ORACLE_CONFIGS"].split(";"), "metrics": e["METRICS"] == "true",
-             "settle_max_s": int(e["SETTLE_MAX"]), "host_header": e["HOST_HEADER"], "memory_limit": None},
+             "settle_max_s": int(e["SETTLE_MAX"]), "host_header": e["HOST_HEADER"], "memory_limit": e["MEMORY"]},
 }
 json.dump(meta, open(f"{run}/meta.json", "w"), indent=1)
 PY
@@ -155,7 +156,7 @@ measure() {  # round server config level n request [alloc]
   tag=$(slug "r$round-$server-$config-$level-$n-$request${alloc:+-alloc}")
   local raw="$RUN_DIR/raw/$tag"
 
-  docker run -d --name "$SUT" --network "$NET" --cpus "$CPUS" -e MOCKSERVER_LOG_LEVEL="$level" \
+  docker run -d --name "$SUT" --network "$NET" --cpus "$CPUS" --memory "$MEMORY" -e MOCKSERVER_LOG_LEVEL="$level" \
     -e MOCKSERVER_METRICS_ENABLED="$METRICS" ${envs[@]+"${envs[@]}"} "$image" >/dev/null
   id=$(docker inspect -f '{{.Id}}' "$SUT")
   cg=$(probe "find /cg -maxdepth 4 -type d -name '*$id*' | head -1")
@@ -247,7 +248,7 @@ PY
 }
 
 echo "# readings in $RUN_DIR"  # on the terminal only: run.log is published with the run
-say "# $IMAGE and $ORACLE_IMAGE; --cpus $CPUS, $CONNECTIONS connections, ${WARMUP}s warm-up, ${DURATION}s window, $ROUNDS rounds; Host: $HOST_HEADER"
+say "# $IMAGE and $ORACLE_IMAGE; --cpus $CPUS, --memory $MEMORY, $CONNECTIONS connections, ${WARMUP}s warm-up, ${DURATION}s window, $ROUNDS rounds; Host: $HOST_HEADER"
 say "| round | server | config | level | expectations | request | req/s | CPU µs/req | p50 / p99 / p99.9 ms | VmHWM MiB | console lines / received of requests | status codes |"
 say "|---|---|---|---|---|---|---|---|---|---|---|---|"
 read -r -a servers <<<"$SERVERS"
