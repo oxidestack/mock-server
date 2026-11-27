@@ -4,7 +4,7 @@ raw/<tag>.readings.json and raw/<tag>.oha.json. Nothing else goes in, so the fil
 
     python3 bench/results.py <run directory>
 
-A row is one case (server, configuration, log level, expectations, matched or unmatched): its figures are the median
+A row is one case (server, configuration, log level, expectations, request): its figures are the median
 over the rounds, and `rounds` keeps every round's own. The allocation pass (ALLOC_IMAGE), when there was one, adds its
 per-request allocator calls to the row of ours it measured.
 """
@@ -32,6 +32,14 @@ def per_request(a, b, key, requests):
     return (b[key] - a[key]) / requests
 
 
+def kib_mib(x):
+    return None if x is None else rounded(x / 1024, 1)
+
+
+def bytes_mib(x):
+    return None if x is None else rounded(x / 2**20, 1)
+
+
 def measurement(run, readings):
     oha = json.load(open(os.path.join(run, readings["oha"])))
     codes = oha.get("statusCodeDistribution") or {}
@@ -56,6 +64,11 @@ def measurement(run, readings):
         "p999_ms": rounded(p["p99.9"] * 1000, 3) if p.get("p99.9") is not None else None,
         "rss_mib": rounded(readings["vmhwm_kib"] / 1024, 1) if readings["vmhwm_kib"] is not None else None,
         "memory_peak_mib": rounded(readings["memory_peak_bytes"] / 2**20, 1) if readings["memory_peak_bytes"] is not None else None,
+        "rss_window_end_mib": kib_mib(readings.get("vmrss_window_end_kib")),
+        "memory_current_window_end_mib": bytes_mib(readings.get("memory_current_window_end_bytes")),
+        "retained_fill_requests": readings.get("retained_fill_requests"),
+        "warmup_status_codes": (readings.get("warmup") or {}).get("status_codes"),
+        "fills": readings.get("fills") or [],
         "console_lines": lines,
         "received_request_lines": console["received_request_lines"],
         "console_settled": console["settled_before"] and console["settled_after"],
@@ -72,6 +85,7 @@ def measurement(run, readings):
 
 
 MEDIANS = ["req_per_sec", "cpu_us_per_req", "p50_ms", "p99_ms", "p999_ms", "rss_mib", "memory_peak_mib",
+           "rss_window_end_mib", "memory_current_window_end_mib", "retained_fill_requests",
            "console_lines", "received_request_lines", "unlogged_requests", "requests"]
 
 
@@ -87,7 +101,8 @@ def assemble(run):
     for key, rounds in measured.items():
         server, config, level, n, request = key
         rounds.sort(key=lambda r: r["round"])
-        row = {"server": server, "config": config, "expectations": n, "request": request, "log_level": level}
+        row = {"server": server, "config": config, "expectations": n, "request": request, "log_level": level,
+               "cpus": meta["params"]["cpus"], "memory_limit": meta["params"].get("memory_limit")}
         for field in MEDIANS:
             m = median([r[field] for r in rounds])
             row[field] = None if m is None else round(m, 3)
@@ -109,6 +124,10 @@ def assemble(run):
         "latency": "oha's p50, p99 and p99.9 over the window",
         "rss_mib": "VmHWM, the server process's peak resident memory since its container started, read after the window",
         "memory_peak_mib": "the container cgroup's memory.peak, read after the window",
+        "rss_window_end_mib": "VmRSS, the server process's resident memory at the window's end: the steady state, with the event log as full as the load left it",
+        "memory_current_window_end_mib": "the container cgroup's memory.current at the window's end",
+        "retained_fill_requests": "verify and retrieve: the fill's requests the event log still held after the window",
+        "load": "verify and retrieve run a number of calls (control_warmup_calls, control_calls) after filling the event log with `fill` orders; the other rows run for warmup_s and duration_s",
         "console_lines": "lines the server wrote to its console during the window (Docker json-file log)",
         "unlogged_requests": "at INFO, requests completed in the window minus the window's `received request` console lines: MockServer drops event log entries when its ring buffer is full",
         "allocs_per_req": "allocator calls (alloc and alloc_zeroed) per request, from the alloc-count build of ours",

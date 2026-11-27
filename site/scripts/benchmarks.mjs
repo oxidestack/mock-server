@@ -59,11 +59,22 @@ const reqs = (n) => (n === null || n === undefined ? '—' : count(n))
 /** Memory in MiB, or a dash. */
 const mib = (x) => (x === null || x === undefined ? '—' : `${count(x)} MiB`)
 
-/** The rows' cases in a fixed order: log level, then expectations, then matched before unmatched. */
+/** bench/run.sh's requests, in the page's order, each with how a row names it. */
+export const REQUESTS = {
+  matched: 'matched',
+  unmatched: 'unmatched',
+  json: 'JSON body matched',
+  headers: 'headers and a JSON body',
+  verify: 'verify',
+  retrieve: 'retrieve',
+}
+const KINDS = Object.keys(REQUESTS)
+
+/** The rows' cases in a fixed order: log level, then expectations, then the request (REQUESTS' order). */
 function cases(rows) {
   const seen = new Map()
   for (const r of rows) seen.set(`${r.log_level}|${r.expectations}|${r.request}`, r)
-  const rank = (r) => [r.log_level === 'INFO' ? 0 : 1, r.expectations, r.request === 'matched' ? 0 : 1]
+  const rank = (r) => [r.log_level === 'INFO' ? 0 : 1, r.expectations, KINDS.indexOf(r.request)]
   return [...seen.values()].sort((a, b) => {
     const x = rank(a)
     const y = rank(b)
@@ -74,8 +85,7 @@ function cases(rows) {
 const sameCase = (a, b) => a.log_level === b.log_level && a.expectations === b.expectations && a.request === b.request
 
 /** One case in words: "1 expectation, matched". */
-const label = (r) =>
-  `${count(r.expectations)} ${r.expectations === 1 ? 'expectation' : 'expectations'}, ${r.request === 'matched' ? 'matched' : 'unmatched'}`
+const label = (r) => `${count(r.expectations)} ${r.expectations === 1 ? 'expectation' : 'expectations'}, ${REQUESTS[r.request]}`
 
 /** The columns: every (server, configuration) pair of the results, ours first, its default first. */
 function columns(rows) {
@@ -155,6 +165,9 @@ export function page(results) {
     '',
     'An expectation is `GET /e<n>` answered with `e<n>`; a matched request asks for the last one created, an unmatched',
     'one for a path none matches, which is answered 404 and, as in MockServer, logged with the closest expectation.',
+    'The other rows model an integration test: a JSON body matched among expectations told apart by one field, a',
+    'response with headers and a JSON body, and `verify` and `retrieve` calls against an event log filled with posted',
+    `orders, which count calls instead of seconds ([the rows](${GITHUB}/blob/${REF}/bench/README.md#the-rows)).`,
     'Each figure is the median over the rounds; where there were several, the lowest and highest follow in brackets.',
     '',
   )
@@ -169,6 +182,9 @@ export function page(results) {
     )
     table(L, 'Latency p50 / p99 / p99.9, ms:', here, atLevel, cols, (r) => `${dec(r.p50_ms, 2)} / ${dec(r.p99_ms, 2)} / ${dec(r.p999_ms, 2)}`)
     table(L, 'Peak memory (VmHWM) after the load:', here, atLevel, cols, (r) => mib(r.rss_mib))
+    if (atLevel.some((r) => r.rss_window_end_mib != null)) {
+      table(L, 'Resident memory (VmRSS) at the end of the window, the event log full:', here, atLevel, cols, (r) => mib(r.rss_window_end_mib))
+    }
     table(L, level === 'INFO' ? 'Console lines written during the window; requests no `received request` line logs:' : 'Console lines written during the window:', here, atLevel, cols, (r) =>
       r.unlogged_requests == null ? reqs(r.console_lines) : `${reqs(r.console_lines)}; ${reqs(r.unlogged_requests)} unlogged`,
     )
@@ -220,7 +236,7 @@ export function check(results) {
     for (const key of ['server', 'config', 'expectations', 'request', 'log_level']) {
       if (r[key] === undefined || r[key] === null) findings.push(`a row has no ${key}: ${JSON.stringify(r)}`)
     }
-    if (!['matched', 'unmatched'].includes(r.request)) findings.push(`a row's request is neither matched nor unmatched: ${r.request}`)
+    if (!KINDS.includes(r.request)) findings.push(`a row's request is not one of ${KINDS.join(', ')}: ${r.request}`)
   }
   if (findings.length) return findings
   for (const s of strays(page(results))) findings.push(`the Benchmarks page has a number not read from the results: …${s}…`)

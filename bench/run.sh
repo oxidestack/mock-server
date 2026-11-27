@@ -4,8 +4,9 @@
 #
 # Every measurement starts a fresh container of one server, alone on a user-defined bridge network with `--cpus $CPUS`
 # and `--memory $MEMORY`, loads its expectations, warms it up for $WARMUP s, waits for its console to settle, and runs `oha` (in a container
-# on the same network) for $DURATION s with $CONNECTIONS connections. Around that window it reads the container's
-# cgroup (cpu.stat, memory.peak), the server's VmHWM and its console log. $ROUNDS rounds, the servers' order
+# on the same network) for $DURATION s with $CONNECTIONS connections; the control-plane rows (verify, retrieve) fill the
+# event log first and count calls instead of seconds. Around that window it reads the container's cgroup (cpu.stat,
+# memory.peak, memory.current), the server's VmHWM and VmRSS and its console log. $ROUNDS rounds, the servers' order
 # alternating between rounds. Everything read goes into $RUN_DIR; results.json there is assembled from it.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
@@ -20,8 +21,22 @@ WARMUP=${WARMUP:-20}                             # seconds of load before the wi
 DURATION=${DURATION:-15}                         # seconds of the measured window
 ROUNDS=${ROUNDS:-3}
 LEVELS=${LEVELS:-INFO WARN}                      # MOCKSERVER_LOG_LEVEL, both servers
-EXPECTATIONS=${EXPECTATIONS:-1 1000}             # GET /e0 .. /e<n-1>, each answered with its name
-REQUESTS=${REQUESTS:-matched unmatched}          # matched: GET /e<n-1>; unmatched: GET /none, answered 404
+EXPECTATIONS=${EXPECTATIONS:-1 1000}             # expectations created before the load; the request matches the last
+# The requests, each a row (bench/README.md, "The rows"):
+#   matched:   GET /e<n-1> among GET /e0 .. /e<n-1>, each answered with its name
+#   unmatched: GET /none, answered 404
+#   json:      POST /orders with a ~4 KiB JSON order, among POST /orders expectations matching an order id with a JSON
+#              body matcher (ONLY_MATCHING_FIELDS); the order's id is the last expectation's
+#   headers:   GET /e<n-1>, each expectation answered with 8 headers and a ~2 KiB JSON body
+#   verify:    PUT /mockserver/verify, POST /orders/00000 at least 3 times, against a log filled with orders
+#   retrieve:  PUT /mockserver/retrieve?type=REQUESTS for POST /orders/00000 (3 requests), against the same log
+REQUESTS=${REQUESTS:-matched unmatched json headers verify retrieve}
+# verify and retrieve: before their warm-up and again before their window, $FILL orders (as json's) to random paths
+# /orders/<4 digits> fill the event log, then 3 to /orders/00000. Every call adds an entry to the log at INFO, so
+# these rows run a number of calls instead of a time, the same for both servers, that leaves most of the fill in place.
+FILL=${FILL:-10000}                              # orders a fill sends: more than a 1g server's log keeps
+CONTROL_WARMUP=${CONTROL_WARMUP:-5000}           # verify/retrieve calls of the warm-up
+CONTROL_CALLS=${CONTROL_CALLS:-5000}             # verify/retrieve calls of the window
 SERVERS=${SERVERS:-oracle ours}
 # Configurations, `;`-separated; each is `default` or space-separated NAME=VALUE environment variables.
 OURS_CONFIGS=${OURS_CONFIGS:-default;MOCKSERVER_MAX_LOG_ENTRIES=100000}
@@ -93,7 +108,8 @@ dirty=false
 git -C "$here" diff --quiet HEAD 2>/dev/null || dirty=true
 COMMIT=$commit DIRTY=$dirty CPU_MODEL=$cpu_model LOAD_START=$(probe 'cut -d" " -f1-3 /proc/loadavg') \
   IMAGE=$IMAGE CPUS=$CPUS MEMORY=$MEMORY CONNECTIONS=$CONNECTIONS WARMUP=$WARMUP DURATION=$DURATION ROUNDS=$ROUNDS LEVELS=$LEVELS \
-  EXPECTATIONS=$EXPECTATIONS REQUESTS=$REQUESTS SERVERS=$SERVERS OURS_CONFIGS=$OURS_CONFIGS \
+  EXPECTATIONS=$EXPECTATIONS REQUESTS=$REQUESTS FILL=$FILL CONTROL_WARMUP=$CONTROL_WARMUP CONTROL_CALLS=$CONTROL_CALLS \
+  SERVERS=$SERVERS OURS_CONFIGS=$OURS_CONFIGS \
   ORACLE_CONFIGS=$ORACLE_CONFIGS METRICS=$METRICS SETTLE_MAX=$SETTLE_MAX HOST_HEADER=$HOST_HEADER \
   MACHINE_KIND=$MACHINE_KIND NOTE=$NOTE ORACLE_VERSION=$ORACLE_VERSION \
   python3 - "$RUN_DIR" <<'PY'
@@ -116,6 +132,8 @@ meta = {
   "params": {"cpus": float(e["CPUS"]), "connections": int(e["CONNECTIONS"]), "warmup_s": int(e["WARMUP"]),
              "duration_s": int(e["DURATION"]), "rounds": int(e["ROUNDS"]), "levels": e["LEVELS"].split(),
              "expectations": [int(n) for n in e["EXPECTATIONS"].split()], "requests": e["REQUESTS"].split(),
+             "fill": int(e["FILL"]), "control_warmup_calls": int(e["CONTROL_WARMUP"]),
+             "control_calls": int(e["CONTROL_CALLS"]),
              "servers": e["SERVERS"].split(), "ours_configs": e["OURS_CONFIGS"].split(";"),
              "oracle_configs": e["ORACLE_CONFIGS"].split(";"), "metrics": e["METRICS"] == "true",
              "settle_max_s": int(e["SETTLE_MAX"]), "host_header": e["HOST_HEADER"], "memory_limit": e["MEMORY"]},
@@ -145,12 +163,77 @@ settle() {
   done
 }
 cpu_usec() { probe "sed -n 's/^usage_usec //p' $1/cpu.stat"; }
+# The largest VmHWM or VmRSS, in kB, of the cgroup's processes.
+vm_kib() { probe "for p in \$(cat $1/cgroup.procs); do sed -n 's/^$2:[[:space:]]*\([0-9]*\) kB/\1/p' /proc/\$p/status; done | sort -n | tail -1"; }
+
+# An order as a test posts one: ~4 KiB of compact JSON whose `order.id` is $1.
+order_body() {
+  local items="" i
+  for ((i = 0; i < 29; i++)); do
+    items+=$(printf '{"sku":"SKU-%05d","name":"Item number %d with a descriptive name","quantity":%d,"unitPrice":%d.99,"tags":["standard","warehouse-a"]},' \
+      "$i" "$i" $((i % 7 + 1)) $((i + 9)))
+  done
+  printf '{"order":{"id":"%s","customer":{"id":"c-1042","name":"Jane Example","email":"jane@example.com"},"items":[%s],"currency":"EUR","note":"deliver to the back door"}}' \
+    "$1" "${items%,}"
+}
+# A customer as a service answers one: ~2 KiB of JSON whose `customer.id` is $1.
+customer_body() {
+  local addresses="" i
+  for ((i = 0; i < 16; i++)); do
+    addresses+=$(printf '{"kind":"shipping","line1":"%d Example Street","city":"Springfield","postcode":"%05d","country":"DE","primary":%s},' \
+      $((i + 1)) $((10000 + i)) "$([ "$i" = 0 ] && echo true || echo false)")
+  done
+  printf '{"customer":{"id":"%s","name":"Jane Example","email":"jane@example.com","phone":"+49 30 1234567","tier":"gold","addresses":[%s],"createdAt":"2024-01-31T12:00:00Z"}}' \
+    "$1" "${addresses%,}"
+}
+# 8 headers, among them Content-Type, as a JSON object of header name to values.
+RESPONSE_HEADERS='{"Content-Type":["application/json"],"Cache-Control":["no-cache, no-store"],"ETag":["\"33a64df551425fcc\""],"X-Request-Id":["5d6f1b0e-6c1a-4f43-9b52-3c9e8b8f2a10"],"X-Correlation-Id":["b7c2e4a9-0d3f-4e8a-a1c5-7f6b2d9e3c41"],"X-RateLimit-Limit":["1000"],"X-RateLimit-Remaining":["999"],"Vary":["Accept-Encoding"]}'
+VERIFY_BODY='{"httpRequest":{"method":"POST","path":"/orders/00000"},"times":{"atLeast":3}}'
+RETRIEVE_BODY='{"method":"POST","path":"/orders/00000"}'
+
+expectations() {  # request n: the JSON array of the request's n expectations
+  local request=$1 n=$2 body="[" i
+  for ((i = 0; i < n; i++)); do
+    case $request in
+      json) body+="{\"httpRequest\":{\"method\":\"POST\",\"path\":\"/orders\",\"body\":{\"type\":\"JSON\",\"json\":{\"order\":{\"id\":\"e$i\"}},\"matchType\":\"ONLY_MATCHING_FIELDS\"}},\"httpResponse\":{\"statusCode\":201,\"body\":\"e$i\"}}," ;;
+      headers) body+="{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/e$i\"},\"httpResponse\":{\"statusCode\":200,\"headers\":$RESPONSE_HEADERS,\"body\":{\"type\":\"JSON\",\"json\":$(customer_body "e$i")}}}," ;;
+      *) body+="{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/e$i\"},\"httpResponse\":{\"body\":\"e$i\"}}," ;;
+    esac
+  done
+  # verify and retrieve: the orders that fill the log are answered 201 by one more expectation
+  case $request in verify | retrieve) body+='{"httpRequest":{"method":"POST","path":"/orders/[0-9]+"},"httpResponse":{"statusCode":201}},' ;; esac
+  printf '%s]' "${body%,}"
+}
+
+oha() {  # oha in a container on the network, its arguments passed on
+  docker run --rm --name mock-server-bench-oha --network "$NET" "$OHA_IMAGE" -c "$CONNECTIONS" --host "$HOST_HEADER" \
+    --no-tui "$@"
+}
+# Fills the event log: $FILL orders to random paths /orders/<4 digits>, then 3 to /orders/00000; their oha output to
+# $1.oha.json and $1-target.oha.json.
+fill() {
+  local order
+  order=$(order_body fill)
+  oha -n "$FILL" --output-format json -m POST -H 'Content-Type: application/json' -d "$order" \
+    --rand-regex-url "http://$SUT:1080/orders/[0-9]{4}" >"$1.oha.json"
+  docker run --rm --name mock-server-bench-oha --network "$NET" "$OHA_IMAGE" -n 3 -c 1 --host "$HOST_HEADER" --no-tui \
+    --output-format json -m POST -H 'Content-Type: application/json' -d "$order" "http://$SUT:1080/orders/00000" \
+    >"$1-target.oha.json"
+}
 
 measure() {  # round server config level n request [alloc]
   local round=$1 server=$2 config=$3 level=$4 n=$5 request=$6 alloc=${7:-}
-  local image path id cg body i envs=()
+  local image path id cg envs=() load=() warmup window control=false
   if [ "$server" = oracle ]; then image=$ORACLE_IMAGE; else image=${alloc:+$ALLOC_IMAGE}; image=${image:-$IMAGE}; fi
-  if [ "$request" = matched ]; then path=/e$((n - 1)); else path=/none; fi
+  case $request in
+    matched | headers) path=/e$((n - 1)) ;;
+    unmatched) path=/none ;;
+    json) path=/orders; load=(-m POST -H 'Content-Type: application/json' -d "$(order_body "e$((n - 1))")") ;;
+    verify) path=/mockserver/verify; load=(-m PUT -d "$VERIFY_BODY"); control=true ;;
+    retrieve) path='/mockserver/retrieve?type=REQUESTS'; load=(-m PUT -d "$RETRIEVE_BODY"); control=true ;;
+    *) echo "unknown request $request" >&2; exit 1 ;;
+  esac
+  if $control; then warmup=(-n "$CONTROL_WARMUP"); window=(-n "$CONTROL_CALLS"); else warmup=(-z "${WARMUP}s"); window=(-z "${DURATION}s"); fi
   [ "$config" = default ] || for kv in $config; do envs+=(-e "$kv"); done
   local tag
   tag=$(slug "r$round-$server-$config-$level-$n-$request${alloc:+-alloc}")
@@ -165,12 +248,12 @@ measure() {  # round server config level n request [alloc]
     probe "curl -sf -o /dev/null -X PUT http://$SUT:1080/mockserver/status" && break
     sleep 0.2
   done
-  body="["
-  for ((i = 0; i < n; i++)); do body+="{\"httpRequest\":{\"method\":\"GET\",\"path\":\"/e$i\"},\"httpResponse\":{\"body\":\"e$i\"}},"; done
-  printf '%s]' "${body%,}" | docker exec -i "$PROBE" curl -sf -o /dev/null -X PUT --data-binary @- "http://$SUT:1080/mockserver/expectation"
+  expectations "$request" "$n" |
+    docker exec -i "$PROBE" curl -sf -o /dev/null -X PUT --data-binary @- "http://$SUT:1080/mockserver/expectation"
 
-  docker run --rm --name mock-server-bench-oha --network "$NET" "$OHA_IMAGE" -z "${WARMUP}s" -c "$CONNECTIONS" \
-    --host "$HOST_HEADER" --no-tui --output-format quiet "http://$SUT:1080$path" >/dev/null
+  if $control; then fill "$raw.fill1"; fi
+  oha "${warmup[@]}" ${load[@]+"${load[@]}"} --output-format json "http://$SUT:1080$path" >"$raw.warmup.oha.json"
+  if $control; then fill "$raw.fill2"; fi
   local before settled_before
   read -r before settled_before < <(settle "$id")
   local alloc_before=""
@@ -183,10 +266,13 @@ measure() {  # round server config level n request [alloc]
   load_before=$(probe 'cut -d" " -f1-3 /proc/loadavg')
   cpu0=$(cpu_usec "$cg")
   t0=$(date +%s)
-  docker run --rm --name mock-server-bench-oha --network "$NET" "$OHA_IMAGE" -z "${DURATION}s" -c "$CONNECTIONS" \
-    --host "$HOST_HEADER" --no-tui --output-format json "http://$SUT:1080$path" >"$raw.oha.json"
+  oha "${window[@]}" ${load[@]+"${load[@]}"} --output-format json "http://$SUT:1080$path" >"$raw.oha.json"
   t1=$(date +%s)
   cpu1=$(cpu_usec "$cg")
+  # the steady state: resident memory at the window's end, the event log as full as the load left it
+  local vmrss current
+  vmrss=$(vm_kib "$cg" VmRSS)
+  current=$(probe "cat $cg/memory.current 2>/dev/null || true")
   local after settled_after cpu2
   read -r after settled_after < <(settle "$id")
   cpu2=$(cpu_usec "$cg")
@@ -203,17 +289,29 @@ measure() {  # round server config level n request [alloc]
   counts+=" $(probe "grep -c 'ring buffer full' $(log_file "$id") || true")"
   counts+=" $(probe "grep -c 'in-flight byte budget reached' $(log_file "$id") || true")"
   local vmhwm peak
-  vmhwm=$(probe "for p in \$(cat $cg/cgroup.procs); do sed -n 's/^VmHWM:[[:space:]]*\([0-9]*\) kB/\1/p' /proc/\$p/status; done | sort -n | tail -1")
+  vmhwm=$(vm_kib "$cg" VmHWM)
   peak=$(probe "cat $cg/memory.peak 2>/dev/null || true")
+  # verify and retrieve: the fill's orders the event log still holds after the window
+  local retained=""
+  if $control; then
+    retained=$(probe "curl -s -X PUT -d '{\"method\":\"POST\",\"path\":\"/orders/[0-9]+\"}' 'http://$SUT:1080/mockserver/retrieve?type=REQUESTS' | grep -o '\"path\"' | wc -l" | tr -d ' ')
+  fi
   docker rm -f -v "$SUT" >/dev/null
 
   ROUND=$round SERVER_KEY=$server SERVER_NAME=$(server_name "$server") CONFIG=$config LEVEL=$level N=$n REQUEST=$request \
     URL_PATH=$path ALLOC=$alloc SUT_IMAGE=$image CONTAINER_ID=$id OHA=raw/$tag.oha.json T0=$t0 T1=$t1 \
     LOAD_BEFORE=$load_before CPU0=$cpu0 CPU1=$cpu1 CPU2=$cpu2 BEFORE=$before AFTER=$after \
     SETTLED_BEFORE=$settled_before SETTLED_AFTER=$settled_after COUNTS=$counts VMHWM=$vmhwm PEAK=$peak \
-    ALLOC_BEFORE=$alloc_before ALLOC_AFTER=$alloc_after python3 - "$raw.readings.json" <<'PY'
+    VMRSS=$vmrss CURRENT=$current RETAINED=$retained CONTROL=$control CPUS=$CPUS MEMORY=$MEMORY \
+    ALLOC_BEFORE=$alloc_before ALLOC_AFTER=$alloc_after python3 - "$raw.readings.json" "$RUN_DIR" <<'PY'
 import json, os, sys
 e = os.environ
+run, raw = sys.argv[2], sys.argv[1][: -len(".readings.json")]
+def codes(path):  # the status codes of an oha output, if it exists
+    return json.load(open(path)).get("statusCodeDistribution") if os.path.exists(path) else None
+def rel(path):
+    return os.path.relpath(path, run) if os.path.exists(path) else None
+control = e["CONTROL"] == "true"
 received, ring_full, budget = (int(x) for x in e["COUNTS"].split())
 def alloc(line):  # a json-file log line holding `alloc-count allocs=<n> ...`
     return {k: int(v) for k, v in (kv.split("=") for kv in json.loads(line)["log"].split()[1:])} if line else None
@@ -221,6 +319,12 @@ json.dump({
   "round": int(e["ROUND"]), "server": e["SERVER_NAME"], "server_key": e["SERVER_KEY"], "config": e["CONFIG"],
   "log_level": e["LEVEL"], "expectations": int(e["N"]), "request": e["REQUEST"], "path": e["URL_PATH"],
   "alloc_count": bool(e["ALLOC"]), "image": e["SUT_IMAGE"], "container_id": e["CONTAINER_ID"], "oha": e["OHA"],
+  "cpus": float(e["CPUS"]), "memory_limit": e["MEMORY"],
+  # the warm-up and window: a number of calls for verify and retrieve, a time for the others
+  "load": "calls" if control else "seconds",
+  "warmup": {"oha": rel(raw + ".warmup.oha.json"), "status_codes": codes(raw + ".warmup.oha.json")},
+  "fills": [{"oha": rel(f"{raw}.{f}.oha.json"), "status_codes": codes(f"{raw}.{f}.oha.json"),
+             "target_status_codes": codes(f"{raw}.{f}-target.oha.json")} for f in ("fill1", "fill2")] if control else [],
   "window": {"start_epoch_s": int(e["T0"]), "end_epoch_s": int(e["T1"])},
   "load_average_before": [float(x) for x in e["LOAD_BEFORE"].split()],
   "cpu_usage_usec": {"before": int(e["CPU0"]), "window_end": int(e["CPU1"]), "settled": int(e["CPU2"])},
@@ -229,6 +333,9 @@ json.dump({
               "received_request_lines": received, "ring_full_warnings": ring_full, "in_flight_budget_warnings": budget},
   "vmhwm_kib": int(e["VMHWM"]) if e["VMHWM"] else None,
   "memory_peak_bytes": int(e["PEAK"]) if e["PEAK"] else None,
+  "vmrss_window_end_kib": int(e["VMRSS"]) if e["VMRSS"] else None,
+  "memory_current_window_end_bytes": int(e["CURRENT"]) if e["CURRENT"] else None,
+  "retained_fill_requests": int(e["RETAINED"]) if e["RETAINED"] else None,
   "alloc_before": alloc(e["ALLOC_BEFORE"]), "alloc_after": alloc(e["ALLOC_AFTER"]),
 }, open(sys.argv[1], "w"), indent=1)
 PY
@@ -242,14 +349,15 @@ p = o["latencyPercentiles"]
 print(f"| {r['round']} | {r['server']} | {r['config']} | {r['log_level']} | {r['expectations']} | {r['request']}"
       f"{' (alloc-count)' if r['alloc_count'] else ''} | {o['summary']['requestsPerSec']:.0f} | {cpu / max(done, 1):.1f}"
       f" | {p['p50'] * 1000:.2f} / {p['p99'] * 1000:.2f} / {p['p99.9'] * 1000:.2f} | {(r['vmhwm_kib'] or 0) / 1024:.0f}"
+      f" / {(r['vmrss_window_end_kib'] or 0) / 1024:.0f}"
       f" | {r['console']['lines_after'] - r['console']['lines_before']} / {r['console']['received_request_lines']} of {done}"
       f" | {dict(o.get('statusCodeDistribution', {}))} |")
 PY
 }
 
 echo "# readings in $RUN_DIR"  # on the terminal only: run.log is published with the run
-say "# $IMAGE and $ORACLE_IMAGE; --cpus $CPUS, --memory $MEMORY, $CONNECTIONS connections, ${WARMUP}s warm-up, ${DURATION}s window, $ROUNDS rounds; Host: $HOST_HEADER"
-say "| round | server | config | level | expectations | request | req/s | CPU µs/req | p50 / p99 / p99.9 ms | VmHWM MiB | console lines / received of requests | status codes |"
+say "# $IMAGE and $ORACLE_IMAGE; --cpus $CPUS, --memory $MEMORY, $CONNECTIONS connections, ${WARMUP}s warm-up, ${DURATION}s window (verify, retrieve: $CONTROL_WARMUP and $CONTROL_CALLS calls after $FILL orders), $ROUNDS rounds; Host: $HOST_HEADER"
+say "| round | server | config | level | expectations | request | req/s | CPU µs/req | p50 / p99 / p99.9 ms | VmHWM / VmRSS at the end MiB | console lines / received of requests | status codes |"
 say "|---|---|---|---|---|---|---|---|---|---|---|---|"
 read -r -a servers <<<"$SERVERS"
 for ((round = 1; round <= ROUNDS; round++)); do

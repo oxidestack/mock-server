@@ -93,3 +93,17 @@ test('a row without its case is a finding, not a page', () => {
   delete results.rows[0].request
   assert.match(check(results).join('\n'), /a row has no request/)
 })
+
+test('the integration-test rows are named, ordered after the empty GETs and show the steady memory', () => {
+  const results = tiny()
+  results.rows.push(
+    { ...results.rows[0], request: 'verify', rss_mib: 30, rss_window_end_mib: 25, rounds: [round(1, {})] },
+    { ...results.rows[0], request: 'json', rss_mib: 20, rss_window_end_mib: 18, rounds: [round(1, {})] },
+  )
+  assert.deepEqual(check(results), [])
+  const text = plain(page(results))
+  assert.match(text, /\| 1 expectation, JSON body matched \| 20 MiB \| — \|[\s\S]*\| 1 expectation, verify \| 30 MiB \| — \|/)
+  assert.match(text, /at the end of the window[\s\S]*\| 1 expectation, verify \| 25 MiB \| — \|/)
+  results.rows[2].request = 'soap'
+  assert.match(check(results).join('\n'), /request is not one of/)
+})
