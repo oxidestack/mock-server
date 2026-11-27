@@ -56,7 +56,8 @@ pub struct Reply {
     /// `connectionOptions.chunkSize`: the body goes out chunked, in pieces of this many bytes.
     pub chunk_size: Option<usize>,
     /// `connectionOptions.chunkDelay`: with `chunk_size`, each piece is written this long after the previous one.
-    pub chunk_delay: Option<crate::action::Delay>,
+    /// Boxed: a `Delay` is most of a reply's size, and a reply is moved through every layer of the request path.
+    pub chunk_delay: Option<Box<crate::action::Delay>>,
     /// Set by [`Reply::finalize`]: close the connection after writing.
     pub close: bool,
     /// The body's content type, written after `connection` unless a `Content-Type` header is set

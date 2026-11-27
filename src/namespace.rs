@@ -9,16 +9,17 @@ use crate::state::State;
 
 const DEFAULT_HEADER: &str = "X-MockServer-Namespace";
 
-/// `Configuration.matchNamespaceHeader`, `None` when set blank.
-fn header_name(state: &State) -> Option<String> {
-    let name = state.config.property("matchNamespaceHeader").unwrap_or_else(|| DEFAULT_HEADER.to_string());
-    (!name.trim().is_empty()).then_some(name)
-}
-
-/// `RequestMatchers.extractRequestNamespace`: the namespace a data-plane request belongs to.
+/// `RequestMatchers.extractRequestNamespace`: the namespace a data-plane request belongs to, by the
+/// `Configuration.matchNamespaceHeader` header (none when that is set blank).
 pub fn of_request(state: &State, request: &HttpRequest) -> Option<String> {
-    let name = header_name(state)?;
-    request.first_header(&name).filter(|v| !v.trim().is_empty()).map(str::to_string)
+    // the header's name read where the configuration holds it: every data-plane request asks
+    state.config.read_property("matchNamespaceHeader", |name| {
+        let name = name.unwrap_or(DEFAULT_HEADER);
+        if name.trim().is_empty() {
+            return None;
+        }
+        request.first_header(name).filter(|v| !v.trim().is_empty()).map(str::to_string)
+    })
 }
 
 /// `HttpState.resolveNamespaceFilter`: a control-plane request's `?namespace=`, else its namespace header.

@@ -46,8 +46,9 @@ impl Connection {
 }
 
 pub enum Outcome {
-    /// Already finalized for the request.
-    Respond(Reply),
+    /// Already finalized for the request. Boxed, as a stream's head: an outcome is returned through every layer of
+    /// the request path, and a reply inline made each of those returns a copy of half a kilobyte.
+    Respond(Box<Reply>),
     /// Bytes written verbatim (`httpError.responseBytes`), then the connection is closed if `close`.
     Raw { bytes: bytes::Bytes, close: bool },
     DropConnection,
@@ -68,7 +69,7 @@ pub enum Outcome {
     /// the end; an HTTP/1.1 connection is closed after when `close`, or when `cut` is set by the time the body ends
     /// (a RESPONSE_STREAM breakpoint's CLOSE, `breakpoint::hold_chunks`).
     Stream {
-        head: Reply,
+        head: Box<Reply>,
         chunks: tokio::sync::mpsc::Receiver<bytes::Bytes>,
         close: bool,
         trailers: Option<tokio::sync::oneshot::Receiver<Vec<(String, String)>>>,
@@ -85,6 +86,13 @@ pub enum Outcome {
     /// Send an HTTP/2 GOAWAY first (`Http2GoAwayEmitter`; nothing on HTTP/1.1), advertising `last_stream_id` or,
     /// when `None`, the connection's last stream, then carry on with `then`.
     GoAway { last_stream_id: Option<u32>, error_code: u32, then: Box<Outcome> },
+}
+
+impl Outcome {
+    /// [`Outcome::Respond`] with `reply`.
+    pub fn respond(reply: Reply) -> Outcome {
+        Outcome::Respond(Box::new(reply))
+    }
 }
 
 /// A request head as `EarlyMatchingHandler` sees it (no body yet), behind `HttpContentDecompressor`: a coding it
@@ -538,7 +546,7 @@ fn mcp(state: &Arc<State>, request: HttpRequest) -> crate::boxed::Boxed<'_, Outc
     Box::pin(async move {
         let mut reply = crate::server::on_worker(None, crate::recorded::portless(crate::mcp::handle(state, &request))).await;
         reply.route = Some("/mockserver/mcp");
-        Outcome::Respond(reply)
+        Outcome::respond(reply)
     })
 }
 
@@ -614,7 +622,7 @@ async fn handle_inline(state: &Arc<State>, request: HttpRequest) -> Outcome {
         None => (None, None),
     };
     let then = match reject {
-        Some(reply) => Outcome::Respond(reply),
+        Some(reply) => Outcome::respond(reply),
         None => serve(state, request, metrics, started).await,
     };
     match go_away {
@@ -631,7 +639,7 @@ fn serve(state: &Arc<State>, request: HttpRequest, metrics: bool, started: std::
 async fn serve_inline(state: &Arc<State>, mut request: HttpRequest, metrics: bool, started: std::time::Instant) -> Outcome {
     // `HttpRequestHandler`: every request gets its log correlation id, which the entries about it carry.
     if request.log_correlation_id.is_empty() {
-        request.log_correlation_id = uuid::Uuid::new_v4().to_string();
+        request.log_correlation_id = crate::request::new_correlation_id();
     }
     // `HttpState.handle`, at TRACE: every request it is given, the control plane's too, before anything handles it
     // (an early match never reaches it).
@@ -653,7 +661,7 @@ async fn serve_inline(state: &Arc<State>, mut request: HttpRequest, metrics: boo
         // A control-plane reply names its operation (`http_route`).
         let control = |mut reply: Reply| {
             reply.route = Some(if reply.status_path { "/mockserver/status" } else { control::operation_route(&request.path) });
-            Outcome::Respond(reply.finalize(&request, &state.config))
+            Outcome::respond(reply.finalize(&request, &state.config))
         };
         // `HttpState.handle`: a request the control plane serves with a browser `Origin` it does not allow is refused
         // before any handler or expectation runs (9.1.0, upstream #220).

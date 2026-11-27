@@ -43,6 +43,8 @@ pub fn log_early_evaluations(state: &State, head: &HttpRequest, evaluated: &[cra
 /// What an action's arm, entered through a function of its own so that its poll frame is not part of
 /// [`handle_inline`]'s, hands back: the response `handle_inline` goes on with (the response breakpoint,
 /// the writer headers, the response entry), or an outcome it returns as it is.
+// the served reply is the common arm, and boxing it would cost an allocation for nothing
+#[allow(clippy::large_enum_variant)]
 enum Arm {
     Served(Reply, serde_json::Value),
     Done(Outcome),
@@ -87,7 +89,7 @@ pub(crate) fn unauthorized_response(state: &State, request: &HttpRequest, challe
 #[derive(Default)]
 struct ArmLog {
     /// The action a plain response was served for (`returning response … for action`), or `None` for no match.
-    served_action: Option<serde_json::Value>,
+    served_action: Option<Arc<serde_json::Value>>,
     /// The empty body (`""`, or `null` for a blank JSON one) the log prints for a response whose echo leaves it out,
     /// and whether the action shows it too (a plain response; not a template).
     empty_body: Option<(serde_json::Value, bool)>,
@@ -112,7 +114,7 @@ struct Matched<'a> {
 impl Matched<'_> {
     /// The declarative `rateLimit` (`rateLimitResponseOrNull`, which counts the request).
     fn rate_limit(&self) -> Option<Reply> {
-        crate::rate_limit::rejection(self.state, &self.expectation.input, &self.expectation.id)
+        self.expectation.has(crate::store::Rare::RateLimit).then(|| crate::rate_limit::rejection(self.state, &self.expectation.input, &self.expectation.id)).flatten()
     }
 }
 
@@ -123,12 +125,12 @@ pub fn handle(state: &Arc<State>, request: HttpRequest) -> impl std::future::Fut
 
 async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome {
     if request.log_correlation_id.is_empty() {
-        request.log_correlation_id = uuid::Uuid::new_v4().to_string();
+        request.log_correlation_id = crate::request::new_correlation_id();
     }
     let looped = request.first_header(FORWARDED_BY).is_some_and(|v| v == state.forwarded_by);
     if let Some(challenge) = crate::auth::data_plane_rejection(&state.config, &request) {
         let reply = unauthorized_response(state, &request, challenge);
-        return Outcome::Respond(reply.finalize(&request, &state.config));
+        return Outcome::respond(reply.finalize(&request, &state.config));
     }
     // `HttpRequestHandler`: with `tlsMutualAuthenticationRequired`, a plain-HTTP data-plane request is told to upgrade.
     if !request.secure && state.config.bool_property("tlsMutualAuthenticationRequired", false) {
@@ -146,7 +148,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
                 .args([crate::recorded::Arg::from(crate::recorded::logged(&request)), (&logged).into()]);
             state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(request.clone())));
         }
-        return Outcome::Respond(reply.finalize(&request, &state.config));
+        return Outcome::respond(reply.finalize(&request, &state.config));
     }
     // `processAction`: a preflight for a request the control plane serves is answered under the control-plane origin
     // policy before CRUD and expectation matching (9.1.0, `isControlPlaneRoutePreflight`).
@@ -158,7 +160,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         if state.info_enabled() {
             state.log.message(crate::recorded::LogEntry::new(crate::recorded::Kind::Info, "returning CORS response for OPTIONS request").correlation(request.log_correlation_id.clone()));
         }
-        return Outcome::Respond(reply);
+        return Outcome::respond(reply);
     }
     // `processAction`: a registered CRUD resource answers before any expectation is tried.
     if let Some(reply) = state.crud.dispatch(&request) {
@@ -172,7 +174,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
             .args([crate::recorded::Arg::from(crate::recorded::logged_response(&response)), crate::recorded::logged(&request).into()]);
         // an `EXPECTATION_RESPONSE` its caller logs without asking a level (`HttpActionHandler.processAction`)
         state.log.record_with_message(request, response, None, message);
-        return Outcome::Respond(reply);
+        return Outcome::respond(reply);
     }
     let namespace = crate::namespace::of_request(state, &request);
     let early = EARLY_MATCH.try_with(|m| m.borrow_mut().take()).ok().flatten();
@@ -263,22 +265,26 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     // exactly one primary: a data-plane fault, before steps, captures, before-actions and `postProcess`.
     if let Some(error) = matched.as_ref().and_then(|e| crate::control::primary_action_error(e)) {
         let reply = crate::control::data_plane_failure(state, &request, &crate::recorded::Failure::illegal(error));
-        return Outcome::Respond(reply.finalize(&request, &state.config));
+        return Outcome::respond(reply.finalize(&request, &state.config));
     }
     // `postProcess`: once the response is out, an expectation this request used up is removed (and logged).
     let _post = PostProcess { state: state.clone(), expectation: matched.clone() };
     if let Some(expectation) = &matched {
-        crate::capture::process(state, expectation.input.get("capture"), &request, &expectation.matcher.path_match(&request));
-        state.bus().fire_for_http_request(&expectation.input, &request);
+        if expectation.has(crate::store::Rare::Capture) {
+            crate::capture::process(state, expectation.input.get("capture"), &request, &expectation.matcher.path_match(&request));
+        }
+        if expectation.has(crate::store::Rare::CrossProtocol) {
+            state.bus().fire_for_http_request(&expectation.input, &request);
+        }
     }
     // `beforeActions` / pre-responder `steps` first; the after-actions fire when `_after` drops, whichever way the
     // response went out.
-    let _after = match matched.as_ref().filter(|e| crate::side_actions::any(&e.input)) {
+    let _after = match matched.as_ref().filter(|e| e.has(crate::store::Rare::SideActions)) {
         Some(e) => {
             let trigger = crate::side_actions::Trigger { state: state.clone(), request: HttpRequest::clone(&request), path: e.matcher.path_match(&request) };
             if let Err(body) = crate::side_actions::before(&trigger, &e.input).await {
                 crate::side_actions::after(&trigger, &e.input, false);
-                return Outcome::Respond(crate::side_actions::bad_gateway(body).finalize(&request, &state.config));
+                return Outcome::respond(crate::side_actions::bad_gateway(body).finalize(&request, &state.config));
             }
             crate::side_actions::secondary(&trigger, &e.input);
             Some(crate::side_actions::After { trigger, expectation: e.input.clone() })
@@ -297,7 +303,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     // for mock responses (`writeResponseActionResponse`, after the response is generated and the connection not
     // dropped) and forwards (`writeForwardActionResponse`, after the upstream answered); the streaming protocols take
     // it here, before anything is served. Object callbacks and errors have none.
-    let rate_limit = |e: &crate::store::Expectation| crate::rate_limit::rejection(state, &e.input, &e.id);
+    let rate_limit = |e: &crate::store::Expectation| e.has(crate::store::Rare::RateLimit).then(|| crate::rate_limit::rejection(state, &e.input, &e.id)).flatten();
     let funnelled = |action: &Action| {
         matches!(
             action,
@@ -321,7 +327,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
             Some(crate::breakpoint::Decision::Abort(v)) => {
                 let respond = respond_logged(state, &v);
                 let reply = materialise(state, &respond, &request).unwrap_or_else(|fallback| fallback.0);
-                return Outcome::Respond(reply.finalize(&request, &state.config));
+                return Outcome::respond(reply.finalize(&request, &state.config));
             }
             Some(crate::breakpoint::Decision::ModifyRequest(v)) => {
                 let mut changed = crate::forward::request_from_json(&v);
@@ -367,7 +373,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
                 Action::GrpcStream(_) => Some("grpcStreamResponse"),
                 _ => None,
             };
-            log.served_action = key.map(|k| expectation.canonical.get(k).cloned().unwrap_or_default());
+            log.served_action = key.map(|k| Arc::new(expectation.canonical.get(k).cloned().unwrap_or_default()));
             // that overload passes no chaos and no rate limit (already taken, so not counted as chaos), but still
             // applies `globalResponseDelayMillis` and logs its `timing` (oracle)
             match chaos_and_delay(state, None, reply, logged, || None, || None).await {
@@ -426,7 +432,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
                         state.log.message_about(entry, crate::recorded::Subject::Request(request.clone()));
                     }
                     let key = if *kind == "DNS_RESPONSE" { "dnsResponse" } else { "binaryResponse" };
-                    log.served_action = Some(expectation.canonical.get(key).cloned().unwrap_or_default());
+                    log.served_action = Some(Arc::new(expectation.canonical.get(key).cloned().unwrap_or_default()));
                     let mut reply = Reply::status(501);
                     reply.reason = Some("Not Implemented".into());
                     reply.body = bytes::Bytes::from(body.clone());
@@ -472,7 +478,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
                         state.log.message_about(entry, crate::recorded::Subject::Request(request.clone()));
                     }
                     // `writeResponseActionResponse(…, action, …)`: logged as returned for the WebSocket action
-                    log.served_action = Some(expectation.canonical.get("httpWebSocketResponse").cloned().unwrap_or_default());
+                    log.served_action = Some(Arc::new(expectation.canonical.get("httpWebSocketResponse").cloned().unwrap_or_default()));
                     let mut reply = Reply::status(501);
                     reply.body = bytes::Bytes::from_static(UNSUPPORTED.as_bytes());
                     (reply, serde_json::json!({"statusCode": 501, "body": UNSUPPORTED}))
@@ -518,7 +524,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         None if !is_preflight(&request) && crate::forward::proxy_pass_refusal(state, &request).is_some() => {
             let (target, message) = crate::forward::proxy_pass_refusal(state, &request).expect("proxy_pass_refusal");
             let reply = crate::control::proxy_pass_refused(state, &request, &target, &message);
-            return Outcome::Respond(reply.finalize(&request, &state.config));
+            return Outcome::respond(reply.finalize(&request, &state.config));
         }
         // `handleProxyPass`: a request under a proxy-pass prefix goes to its target.
         None if !is_preflight(&request) && crate::forward::proxy_pass_mapping(state, &request).is_some() => return proxy_pass(state, Arc::unwrap_or_clone(request)).await,
@@ -533,7 +539,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
                 state.log.message(entry);
             }
             reply.headers.push((FORWARDED_BY.into(), state.forwarded_by.clone()));
-            return Outcome::Respond(reply.finalize(&request, &state.config));
+            return Outcome::respond(reply.finalize(&request, &state.config));
         }
         // `handleUnmatchedProxyForward`: in a tunnel or port-forwarding mode whatever no expectation matches goes to
         // the remote socket; otherwise a request for a non-local `Host` is proxied there (exploratory proxy).
@@ -554,7 +560,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
         None if state.static_files.is_some() && !is_preflight(&request) => match static_file(state, generation).await {
             StaticAnswer::Refused => {
                 let reply = crate::overload::file_reads_refused(crate::overload::Reason::StaticFiles);
-                return Outcome::Respond(reply.finalize(&request, &state.config));
+                return Outcome::respond(reply.finalize(&request, &state.config));
             }
             StaticAnswer::Served(reply, logged) => {
                 static_served = true;
@@ -638,7 +644,7 @@ async fn handle_inline(state: &Arc<State>, mut request: HttpRequest) -> Outcome 
     // does not).
     let served = match (&served_by, log.served_action.take()) {
         (Some(_), Some(action)) if logged_is_request && logged_response.get("timing").is_none() => {
-            let (empty_body, action) = (log.empty_body.clone(), crate::recorded::interned(action));
+            let (empty_body, action) = (log.empty_body.clone(), crate::recorded::interned_shared(action));
             Some(move |x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest| served_entry(x, logged, &action, empty_body.as_ref()))
         }
         (_, action) => {
@@ -751,8 +757,9 @@ fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a
         let (reply, logged) = {
             // `selectRecoveryResponse`: a `recoverAfter` clause serves its failure response first.
             let recovery = expectation
-                .canonical
-                .get("httpResponse")
+                .has(crate::store::Rare::RecoverAfter)
+                .then(|| expectation.canonical.get("httpResponse"))
+                .flatten()
                 .and_then(|configured| crate::chaos::http::recovery_response(state, configured, &expectation.id, request, match_count));
             let recovered = recovery.as_ref().map(action::respond);
             let respond = recovered.as_ref().unwrap_or(respond);
@@ -766,7 +773,7 @@ fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a
             }
             let materialised = match materialise_file_body(state, respond, generation).await {
                 Some(materialised) => materialised,
-                None => return Arm::Done(Outcome::Respond(crate::overload::file_reads_refused(crate::overload::Reason::FileBodies).finalize(request, &state.config))),
+                None => return Arm::Done(Outcome::respond(crate::overload::file_reads_refused(crate::overload::Reason::FileBodies).finalize(request, &state.config))),
             };
             match materialised {
                 Ok(mut reply) => {
@@ -775,14 +782,17 @@ fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a
                         crate::wasm::shape(state, module, request, &mut reply);
                     }
                     let delay = || respond.delay.as_ref().map(|d| d.resolve(state, generation));
-                    let unserved = match &recovery {
-                        Some(failure) => crate::canonical::response(failure),
+                    // the expectation's own response is logged as the action from the copy it keeps for that
+                    let shared = recovery.is_none().then(|| expectation.served_response().cloned()).flatten();
+                    let unserved = match (&recovery, &shared) {
+                        (Some(failure), _) => crate::canonical::response(failure),
+                        (None, Some(shared)) => serde_json::Value::clone(shared),
                         // a responder step's response when steps are configured
-                        None => expectation.canonical.get("httpResponse").or_else(|| crate::side_actions::responder_value(&expectation.canonical, "httpResponse")).cloned().unwrap_or_default(),
+                        (None, None) => crate::side_actions::responder_value(&expectation.canonical, "httpResponse").cloned().unwrap_or_default(),
                     };
                     // `HttpResponseActionHandler` generates a `generateFromSchema` body into a clone: the logged
                     // action is the expectation's own, without it; the logged response has it.
-                    log.served_action = Some(unserved.clone());
+                    log.served_action = Some(shared.unwrap_or_else(|| Arc::new(unserved.clone())));
                     let action = respond.served(unserved);
                     if recovery.is_none() && synthesized.is_none() && respond.generated.is_none() {
                         log.empty_body = expectation.empty_response_body().map(|b| (b.clone(), true));
@@ -803,10 +813,10 @@ fn respond_action<'a>(m: &'a Matched<'_>, respond: &'a action::Respond, log: &'a
                 Err(fallback) => {
                     let (reply, logged, warn) = *fallback;
                     if reply.status == 500 || warn.is_some() {
-                        log.served_action = Some(file_error_action(match &recovery {
+                        log.served_action = Some(Arc::new(file_error_action(match &recovery {
                             Some(failure) => crate::canonical::response(failure),
                             None => expectation.canonical.get("httpResponse").cloned().unwrap_or_default(),
-                        }));
+                        })));
                     }
                     log.after_warn = warn;
                     (reply, logged)
@@ -831,13 +841,13 @@ fn responses_action<'a>(m: &'a Matched<'_>, responses: &'a action::Responses, lo
             }
             let materialised = match materialise_file_body(state, respond, generation).await {
                 Some(materialised) => materialised,
-                None => return Arm::Done(Outcome::Respond(crate::overload::file_reads_refused(crate::overload::Reason::FileBodies).finalize(request, &state.config))),
+                None => return Arm::Done(Outcome::respond(crate::overload::file_reads_refused(crate::overload::Reason::FileBodies).finalize(request, &state.config))),
             };
             match materialised {
                 Ok(reply) => {
                     let delay = || respond.delay.as_ref().map(|d| d.resolve(state, generation));
                     // the logged action without a generated body, the response with it (as for a single response)
-                    log.served_action = Some(action.clone());
+                    log.served_action = Some(Arc::new(action.clone()));
                     let action = respond.served(action.clone());
                     match chaos_and_delay(state, injection, reply, action, delay, || m.rate_limit()).await {
                         Ok(done) => done,
@@ -847,7 +857,7 @@ fn responses_action<'a>(m: &'a Matched<'_>, responses: &'a action::Responses, lo
                 Err(fallback) => {
                     let (reply, logged, warn) = *fallback;
                     if reply.status == 500 || warn.is_some() {
-                        log.served_action = Some(file_error_action(action.clone()));
+                        log.served_action = Some(Arc::new(file_error_action(action.clone())));
                     }
                     log.after_warn = warn;
                     (reply, logged)
@@ -880,7 +890,7 @@ fn forward_action<'a>(m: &'a Matched<'_>, forward: &'a crate::forward::Forward, 
             };
             // `blockIfLlmCostBudgetExceeded`: answered with the 429, nothing forwarded or logged.
             if let Some(reply) = crate::llm::budget::check_forward(state, forward, request) {
-                return Arm::Done(Outcome::Respond(reply.finalize(request, &state.config)));
+                return Arm::Done(Outcome::respond(reply.finalize(request, &state.config)));
             }
             let path = expectation.matcher.path_match(generation);
             let started = std::time::Instant::now();
@@ -960,7 +970,7 @@ fn forward_action<'a>(m: &'a Matched<'_>, forward: &'a crate::forward::Forward, 
                         let entry = crate::recorded::LogEntry::new(crate::recorded::Kind::Warn, text).level(crate::recorded::Level::Info);
                         state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(forwarded.logged_request)));
                     }
-                    return Arm::Done(Outcome::Respond(reply));
+                    return Arm::Done(Outcome::respond(reply));
                 }
                 Ok(mut forwarded) => {
                     // `materialiseFileBodyResponse` on the overridden response, before drift and chaos
@@ -1010,16 +1020,16 @@ fn forward_action<'a>(m: &'a Matched<'_>, forward: &'a crate::forward::Forward, 
                             drift_pass(state, &drifted, &upstream).await;
                         }
                     }
-                    return Arm::Done(Outcome::Respond(reply));
+                    return Arm::Done(Outcome::respond(reply));
                 }
                 // A forward's `responseTemplate` renders in the forward's future: its failure is the future's
                 // (`handleExceptionDuringForwardingRequest`), not `handleAnyException`'s.
                 Err(failed) if failed.role == templates::Role::ForwardResponse => {
-                    return Arm::Done(Outcome::Respond(forward_response_template_failed(state, request, &failed, &expectation.id).finalize(request, &state.config)));
+                    return Arm::Done(Outcome::respond(forward_response_template_failed(state, request, &failed, &expectation.id).finalize(request, &state.config)));
                 }
                 Err(mut failed) => {
                     // The answer is logged as the forward template's response (`handleAnyException`), then the exception.
-                    log.served_action = expectation.canonical.as_object().and_then(|o| o.iter().find(|(k, _)| k.starts_with("http") && *k != "httpRequest")).map(|(_, v)| v.clone());
+                    log.served_action = expectation.canonical.as_object().and_then(|o| o.iter().find(|(k, _)| k.starts_with("http") && *k != "httpRequest")).map(|(_, v)| Arc::new(v.clone()));
                     log.after_warn = failed.take_after(templates::failure_as_server_error(state));
                     template_failure_answer(state, &failed)
                 }
@@ -1044,7 +1054,7 @@ fn template_action<'a>(m: &'a Matched<'_>, template: &'a templates::Template, de
             let thread = queued.start(&state.overload).await;
             let path = expectation.matcher.path_match(generation);
             // `returning response … for action`: the template, whether or not it produced a valid response
-            log.served_action = Some(expectation.canonical.get("httpResponseTemplate").cloned().unwrap_or_default());
+            log.served_action = Some(Arc::new(expectation.canonical.get("httpResponseTemplate").cloned().unwrap_or_default()));
             let rendered = crate::blocking::off_worker(|| templates::execute(state, &state.velocity_engines.response, template, generation, &path, None, templates::Role::Response));
             drop(thread);
             match rendered {
@@ -1115,7 +1125,7 @@ fn callback_action<'a>(m: &'a Matched<'_>, client_id: &'a str, delay: Option<&'a
                         Err(Unmaterialised::Fallback(fallback)) => {
                             let (reply, logged, _) = *fallback;
                             // `handleAnyException`'s `writeResponseActionResponse` logs the 500 against the callback action
-                            log.served_action = Some(expectation.canonical.get("httpResponseObjectCallback").cloned().unwrap_or_default());
+                            log.served_action = Some(Arc::new(expectation.canonical.get("httpResponseObjectCallback").cloned().unwrap_or_default()));
                             (reply, logged)
                         }
                     }
@@ -1141,7 +1151,7 @@ fn class_callback_action<'a>(m: &'a Matched<'_>, class: &'a str, delay: Option<&
             if let Some(delay) = delay && let Err(cut) = dispatch_delay(state, delay.resolve(state, request)).await {
                 return Arm::Done(cut.outcome(state, request));
             }
-            log.served_action = Some(expectation.canonical.get("httpResponseClassCallback").cloned().unwrap_or_default());
+            log.served_action = Some(Arc::new(expectation.canonical.get("httpResponseClassCallback").cloned().unwrap_or_default()));
             let parameters = expectation.matcher.path_match(generation).parameters;
             let model = crate::recorded::ordered_with_path_parameters(generation, &parameters);
             match crate::class_callback::respond(state, class, generation, model).await {
@@ -1210,7 +1220,7 @@ fn llm_action<'a>(m: &'a Matched<'_>, configured: &'a crate::llm::Llm, log: &'a 
                     let sse = action::Sse { status: 200, headers, events, delay: None, template: None, close_connection: None, format };
                     return Arm::Done(sse_stream(state, &sse, request).await);
                 }
-                log.served_action = Some(action);
+                log.served_action = Some(Arc::new(action));
                 match llm_written(state, llm_reply(error.status, error.headers.clone(), error.body.clone()), llm_logged(error.status, &error.headers, error.body)).await {
                     Ok(done) => done,
                     Err(cut) => return Arm::Done(cut.outcome(state, request)),
@@ -1255,7 +1265,7 @@ fn llm_action<'a>(m: &'a Matched<'_>, configured: &'a crate::llm::Llm, log: &'a 
                     Ok(None) => {
                         let (status, headers, body) = llm.respond(request, crate::llm::vectors::Limits::from_config(&state.config));
                         if status == 200 {
-                            log.served_action = Some(action);
+                            log.served_action = Some(Arc::new(action));
                             if llm.provider.as_deref() == Some("OPENAI_RESPONSES") {
                                 let chained = crate::llm::conversation::decode("OPENAI_RESPONSES", request);
                                 crate::llm::responses::record_if_stored(&state.config, &request.body_str(), chained, &llm.completion, &body);
@@ -1279,16 +1289,16 @@ fn proxy_pass(state: &Arc<State>, request: HttpRequest) -> crate::boxed::Boxed<'
     Box::pin(async move {
         let mapping = crate::forward::proxy_pass_mapping(state, &request).expect("proxy_pass_mapping");
         if let Some(reply) = crate::llm::budget::check_proxy_pass(state, &mapping, &request) {
-            return Outcome::Respond(reply.finalize(&request, &state.config));
+            return Outcome::respond(reply.finalize(&request, &state.config));
         }
         // a mapping whose target leads back here matches again on every hop, as a forward does: the 508 is written
         // as it is, with no forwarded-request entry
         if let Some(body) = crate::forward_loop::refuse(state, &request, crate::forward_loop::Route::ProxyPass) {
             let reply = Reply { status: crate::forward_loop::LOOP_DETECTED, reason: Some("Loop Detected".into()), body: body.into(), ..Reply::default() };
-            return Outcome::Respond(reply.finalize(&request, &state.config));
+            return Outcome::respond(reply.finalize(&request, &state.config));
         }
         if let Some(reply) = proxy_refused(state, &request, mapping.host()).await {
-            return Outcome::Respond(reply);
+            return Outcome::respond(reply);
         }
         let started = std::time::Instant::now();
         let mut forwarded = mapping.forward(state, &request).await;
@@ -1363,11 +1373,11 @@ fn proxy_pass(state: &Arc<State>, request: HttpRequest) -> crate::boxed::Boxed<'
                 true => state.log.record_with_message(request, forwarded.logged_response, None, message),
                 false => state.log.record(request, forwarded.logged_response, None),
             }
-            return Outcome::Respond(reply);
+            return Outcome::respond(reply);
         }
         let reply = std::mem::take(&mut forwarded.reply).finalize(&request, &state.config);
         record(state, forwarded);
-        Outcome::Respond(reply)
+        Outcome::respond(reply)
     })
 }
 
@@ -1413,7 +1423,7 @@ fn unmatched_forward(state: &Arc<State>, request: HttpRequest) -> crate::boxed::
                     .args([crate::recorded::Arg::from(&logged), crate::recorded::logged(&request).into()]);
                 state.log.message_about(entry, crate::recorded::Subject::Request(Arc::new(request.clone())));
             }
-            return Outcome::Respond(reply);
+            return Outcome::respond(reply);
         }
         // Validation proxy (`validateProxyOpenAPISpec`): the request is checked against the spec first.
         let validation_spec = state.config.property("validateProxyOpenAPISpec").filter(|s| !s.is_empty());
@@ -1429,15 +1439,15 @@ fn unmatched_forward(state: &Arc<State>, request: HttpRequest) -> crate::boxed::
                 if enforce {
                     let mut reply = Reply::status(400);
                     reply.body = bytes::Bytes::from(format!("OpenAPI request validation failed: {}", errors.join("; ")));
-                    return Outcome::Respond(reply.finalize(&request, &state.config));
+                    return Outcome::respond(reply.finalize(&request, &state.config));
                 }
             }
         }
         if let Some(reply) = crate::llm::budget::check(state, None, &request) {
-            return Outcome::Respond(reply.finalize(&request, &state.config));
+            return Outcome::respond(reply.finalize(&request, &state.config));
         }
         if invalid_target.is_none() && let Some(reply) = proxy_refused(state, &request, &host).await {
-            return Outcome::Respond(reply);
+            return Outcome::respond(reply);
         }
         let started = std::time::Instant::now();
         let (mut forwarded, echoed) = match &invalid_target {
@@ -1565,7 +1575,7 @@ fn unmatched_forward(state: &Arc<State>, request: HttpRequest) -> crate::boxed::
                 .args([crate::recorded::Arg::from(&timed), ordered(), curl.into()]);
             state.log.record_forwarded(forwarded.logged_request, forwarded.logged_response, forwarded.recorded, None, Some(message));
         }
-        Outcome::Respond(reply)
+        Outcome::respond(reply)
     })
 }
 
@@ -1916,7 +1926,7 @@ fn relayed(
         on_end.await;
         drop(tx);
     });
-    Outcome::Stream { head, chunks: out, close, trailers: None, cut, chunk_count: None, upstream_end: Some(upstream_end) }
+    Outcome::Stream { head: Box::new(head), chunks: out, close, trailers: None, cut, chunk_count: None, upstream_end: Some(upstream_end) }
 }
 
 /// `writeChunkedResponseWithDelay`: with `chunkSize` and `chunkDelay`, the head goes out first, then each chunk after
@@ -1953,7 +1963,7 @@ fn final_informational_warning(request: &HttpRequest, id: &str, status: u32) -> 
 }
 
 fn dribbled(mut reply: Reply) -> Outcome {
-    let (Some(size), Some(delay), false) = (reply.chunk_size, reply.chunk_delay.clone(), reply.omit_body) else { return Outcome::Respond(reply) };
+    let (Some(size), Some(delay), false) = (reply.chunk_size, reply.chunk_delay.clone(), reply.omit_body) else { return Outcome::respond(reply) };
     let body = std::mem::take(&mut reply.body);
     let close = reply.close;
     let mut pieces: Vec<Bytes> = body.chunks(size.max(1)).map(Bytes::copy_from_slice).collect();
@@ -1976,7 +1986,7 @@ fn dribbled(mut reply: Reply) -> Outcome {
             }
         }
     });
-    Outcome::Stream { head: reply, chunks, close, trailers: Some(trailers), cut: None, chunk_count: Some(chunk_count), upstream_end: None }
+    Outcome::Stream { head: Box::new(reply), chunks, close, trailers: Some(trailers), cut: None, chunk_count: Some(chunk_count), upstream_end: None }
 }
 
 /// `attachMockServedTiming` after a RESPONSE-phase hold (any decision, a timeout too): the logged response's `timing`
@@ -2107,7 +2117,7 @@ impl Cut {
     fn outcome(self, state: &State, request: &HttpRequest) -> Outcome {
         match self {
             Cut::Drop => Outcome::DropConnection,
-            Cut::Refused => Outcome::Respond(crate::overload::refused().finalize(request, &state.config)),
+            Cut::Refused => Outcome::respond(crate::overload::refused().finalize(request, &state.config)),
         }
     }
 }
@@ -2928,7 +2938,7 @@ pub(crate) fn difference_entry(message: String, request: &HttpRequest) -> crate:
 /// `regexMatchingTimeoutMillis` as the server started (8.0.0's matchers read `ConfigurationProperties`, so a value
 /// set over `PUT /mockserver/configuration` changes nothing).
 fn regex_timeout_millis(state: &State) -> i64 {
-    state.config.startup_property("regexMatchingTimeoutMillis").and_then(|v| v.trim().parse().ok()).unwrap_or(5000)
+    state.config.int_startup_property("regexMatchingTimeoutMillis", 5000)
 }
 
 /// `RegexStringMatcher.runRegexWithTimeout`'s WARN for each regex evaluation that outlived its budget; a
@@ -3271,7 +3281,7 @@ async fn sse_stream(state: &Arc<State>, sse: &action::Sse, request: &HttpRequest
     if let Some(dispatched) = first_dispatched {
         let _ = dispatched.await;
     }
-    Outcome::Stream { head, chunks: rx, close, trailers: None, cut: None, chunk_count: None, upstream_end: None }
+    Outcome::Stream { head: Box::new(head), chunks: rx, close, trailers: None, cut: None, chunk_count: None, upstream_end: None }
 }
 
 /// `validateProxyResponse`: the upstream response checked against the operation the request selects; under
@@ -3863,7 +3873,23 @@ fn closest_match_traced(
     detailed_match_failures: bool,
 ) -> (Option<Closest>, Vec<crate::matcher::MatchNote>) {
     let notes = if debug { candidates.iter().flat_map(|e| e.matcher.match_notes(request, true, trace)).collect() } else { Vec::new() };
-    (closest_match(candidates.iter_with_path_misses(&request.path), request, |e| detailed_match_failures || !e.matcher.is_openapi()), notes)
+    let records = |e: &crate::store::Expectation| detailed_match_failures || !e.matcher.is_openapi();
+    // `closest_match` over the candidates, skipping in one scan of the path index the run of them a closest one with
+    // at most one difference makes it pass over
+    let misses = candidates.path_misses(&request.path);
+    let mut closest: Option<Closest> = None;
+    let mut i = 0;
+    while i < candidates.len() {
+        if closest.as_ref().is_some_and(|(_, best)| best.len() <= 1) {
+            i = misses.next_kept(i);
+            if i >= candidates.len() {
+                break;
+            }
+        }
+        consider(&mut closest, candidates.get(i), misses.misses(i), request, &records);
+        i += 1;
+    }
+    (closest, notes)
 }
 
 /// The unmatched expectation with the fewest differing fields: strictly-fewer wins, in match order.
@@ -3878,24 +3904,29 @@ fn closest_match<'a>(
 ) -> Option<Closest> {
     let mut closest: Option<Closest> = None;
     for (e, path_misses) in candidates {
-        // At least one difference, which cannot beat a closest one with at most one: skipped without evaluating it.
-        if path_misses && closest.as_ref().is_some_and(|(_, best)| best.len() <= 1) {
-            continue;
-        }
-        if e.matcher.matches(request, crate::matcher::Mode::DataPlane) {
-            continue;
-        }
-        let records = records(e);
-        // One difference cannot beat a closest one with at most one: counted without building it.
-        if records && closest.as_ref().is_some_and(|(_, best)| best.len() <= 1) && e.matcher.fails_at_method_or_path(request) {
-            continue;
-        }
-        let d = if records { e.matcher.differences(request) } else { Vec::new() };
-        if closest.as_ref().is_none_or(|(_, best)| d.len() < best.len()) {
-            closest = Some((e.clone(), d));
-        }
+        consider(&mut closest, e, path_misses, request, &records);
     }
     closest
+}
+
+/// One candidate of [`closest_match`].
+fn consider(closest: &mut Option<Closest>, e: &Arc<crate::store::Expectation>, path_misses: bool, request: &HttpRequest, records: &impl Fn(&crate::store::Expectation) -> bool) {
+    // At least one difference, which cannot beat a closest one with at most one: skipped without evaluating it.
+    if path_misses && closest.as_ref().is_some_and(|(_, best)| best.len() <= 1) {
+        return;
+    }
+    if e.matcher.matches(request, crate::matcher::Mode::DataPlane) {
+        return;
+    }
+    let records = records(e);
+    // One difference cannot beat a closest one with at most one: counted without building it.
+    if records && closest.as_ref().is_some_and(|(_, best)| best.len() <= 1) && e.matcher.fails_at_method_or_path(request) {
+        return;
+    }
+    let d = if records { e.matcher.differences(request) } else { Vec::new() };
+    if closest.as_ref().is_none_or(|(_, best)| d.len() < best.len()) {
+        *closest = Some((e.clone(), d));
+    }
 }
 
 /// An `httpLlmResponse` answer on the wire.

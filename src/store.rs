@@ -56,6 +56,33 @@ pub struct Expectation {
     early: bool,
     /// [`crate::canonical::empty_response_body`] of the `httpResponse` as given, worked out when first served.
     empty_response_body: std::sync::OnceLock<Option<Value>>,
+    /// The canonical `httpResponse`, shared with the log entries of the requests it serves; made when first served.
+    served_response: std::sync::OnceLock<Option<Arc<Value>>>,
+    /// Which of the rarely given fields ([`Rare`]) it has, worked out when first asked: each is looked up in its JSON
+    /// by a SipHash of the key, and a request asked for a dozen of them.
+    rare: std::sync::OnceLock<u16>,
+}
+
+/// The rarely given fields of an expectation a served request asks about ([`Expectation::has`]).
+#[derive(Clone, Copy)]
+#[repr(u16)]
+pub enum Rare {
+    /// `scenarioName`
+    Scenario = 1,
+    /// a non-empty `crossProtocolScenarios`
+    CrossProtocol = 2,
+    /// what [`crate::side_actions::any`] runs
+    SideActions = 4,
+    /// `rateLimit`
+    RateLimit = 8,
+    /// `percentage`
+    Percentage = 16,
+    /// `httpLlmResponse`
+    Llm = 32,
+    /// `capture`
+    Capture = 64,
+    /// `httpResponse.recoverAfter`
+    RecoverAfter = 128,
 }
 
 impl Expectation {
@@ -106,7 +133,36 @@ impl Expectation {
             rotation: Default::default(),
             in_progress: Default::default(),
             empty_response_body: Default::default(),
+            served_response: Default::default(),
+            rare: Default::default(),
         }
+    }
+
+    /// Whether it has the field `rare` stands for; `false` rules out what the field would do.
+    pub fn has(&self, rare: Rare) -> bool {
+        let fields = *self.rare.get_or_init(|| {
+            let input = &self.input;
+            let present = |key: &str| input.get(key).is_some_and(|v| !v.is_null());
+            [
+                (present("scenarioName"), Rare::Scenario),
+                (input.get("crossProtocolScenarios").and_then(Value::as_array).is_some_and(|a| !a.is_empty()), Rare::CrossProtocol),
+                (crate::side_actions::any(input), Rare::SideActions),
+                (present("rateLimit"), Rare::RateLimit),
+                (present("percentage"), Rare::Percentage),
+                (present("httpLlmResponse"), Rare::Llm),
+                (present("capture"), Rare::Capture),
+                (self.canonical.get("httpResponse").and_then(|r| r.get("recoverAfter")).is_some(), Rare::RecoverAfter),
+            ]
+            .iter()
+            .filter(|(has, _)| *has)
+            .fold(0, |fields, (_, rare)| fields | *rare as u16)
+        });
+        fields & rare as u16 != 0
+    }
+
+    /// The canonical `httpResponse` as the entries of the requests it serves hold it: one copy for all of them.
+    pub fn served_response(&self) -> Option<&Arc<Value>> {
+        self.served_response.get_or_init(|| self.canonical.get("httpResponse").map(|r| Arc::new(r.clone()))).as_ref()
     }
 
     /// The body a `returning response` entry prints for its `httpResponse` (as given) whose echo leaves an empty body
@@ -117,6 +173,9 @@ impl Expectation {
 
     /// `matchesByPercentage`: `percentage` of matches are served (all when absent or 100, none at 0).
     fn by_percentage(&self) -> bool {
+        if !self.has(Rare::Percentage) {
+            return true;
+        }
         match self.input.get("percentage").and_then(Value::as_i64) {
             None | Some(100) => true,
             Some(0) => false,
@@ -374,6 +433,14 @@ impl Candidates {
         })
     }
 
+    /// [`Candidates::iter_with_path_misses`] by position, able to skip what fails at its literal path in one scan.
+    pub fn path_misses(&self, path: &str) -> PathMisses<'_> {
+        let usable = !path.is_empty() && self.index.classes.len() == self.list.len() && self.index.unclassed.len() <= self.list.len();
+        let bucket = if usable { self.index.bucket_of(path) } else { &[] };
+        let own = if !usable { NO_CLASS } else { bucket.first().map_or(NO_CLASS - 1, |&first| first as u32) };
+        PathMisses { candidates: self, classes: if usable { self.index.classes.as_slice() } else { &[] }, own, bucket, unclassed: &self.index.unclassed }
+    }
+
     /// The first `n` of these, and whether any were left out.
     pub fn first(&self, n: usize) -> (Candidates, bool) {
         let positions = match &self.positions {
@@ -403,6 +470,46 @@ impl Candidates {
 /// [`PathIndex::classes`] of an expectation its literal path does not decide.
 const NO_CLASS: u32 = u32::MAX;
 
+/// Which of some [`Candidates`] fail at their literal path for one request path ([`Candidates::path_misses`]).
+pub struct PathMisses<'a> {
+    candidates: &'a Candidates,
+    /// Empty when the index decides nothing.
+    classes: &'a [u32],
+    own: u32,
+    /// The positions of the request path's own expectations, and those of no class ([`PathIndex::unclassed`]).
+    bucket: &'a [usize],
+    unclassed: &'a [u32],
+}
+
+impl PathMisses<'_> {
+    fn kept(&self, class: u32) -> bool {
+        class == NO_CLASS || class == self.own
+    }
+
+    /// Whether the `i`th candidate fails at its literal path.
+    pub fn misses(&self, i: usize) -> bool {
+        self.classes.get(self.candidates.position(i)).is_some_and(|&class| !self.kept(class))
+    }
+
+    /// The first candidate from the `from`th on that does not fail at its literal path, or the count of them: a scan
+    /// of the index alone, for an unmatched request among many expectations of other paths.
+    pub fn next_kept(&self, from: usize) -> usize {
+        let len = self.candidates.len();
+        if self.classes.is_empty() || from >= len {
+            return from;
+        }
+        match &self.candidates.positions {
+            // every position: the next of no class or of the path's own, found in those lists rather than by a walk
+            None => {
+                let unclassed = self.unclassed.get(self.unclassed.partition_point(|&at| (at as usize) < from)).map_or(len, |&at| at as usize);
+                let own = self.bucket[self.bucket.partition_point(|&at| at < from)..].iter().copied().find(|&at| self.classes[at] == self.own).unwrap_or(len);
+                unclassed.min(own).min(len)
+            }
+            Some(positions) => positions[from..].iter().position(|&at| self.kept(self.classes[at as usize])).map_or(len, |n| from + n),
+        }
+    }
+}
+
 /// The positions in a store's list by lower-cased literal path, and those of the expectations without one.
 #[derive(Default)]
 struct PathIndex {
@@ -415,6 +522,13 @@ struct PathIndex {
     /// (`i64::MAX`: never); else [`MORTAL`]. Telling which are alive without reading each expectation was most of a
     /// 1,000-expectation closest-match scan.
     deadlines: Vec<i64>,
+    /// The positions whose class is [`NO_CLASS`], in order: with a request path's own bucket in `by_path`, the only
+    /// ones a scan past the expectations its path rules out has to visit.
+    unclassed: Vec<u32>,
+    /// Whether any of `deadlines` is [`MORTAL`], and the earliest of the others: while none is mortal and that one
+    /// is ahead, every expectation is alive without looking at each.
+    any_mortal: bool,
+    earliest_deadline: i64,
 }
 
 /// [`PathIndex::deadlines`] of an expectation whose uses are counted or that has a namespace: read from it.
@@ -423,9 +537,14 @@ const MORTAL: i64 = i64::MIN;
 impl PathIndex {
     /// The class of a request of `path`: that of the expectations with `path` as their literal path, else none of theirs.
     fn class_of(&self, path: &str) -> u32 {
+        self.bucket_of(path).first().map_or(NO_CLASS - 1, |&first| first as u32)
+    }
+
+    /// The positions of the expectations with `path` as their literal path, in order.
+    fn bucket_of(&self, path: &str) -> &[usize] {
         // the keys are lower-cased; a path that already is one is looked up as it is
         let key = if path.bytes().any(|b| b.is_ascii_uppercase()) { std::borrow::Cow::Owned(path.to_ascii_lowercase()) } else { std::borrow::Cow::Borrowed(path) };
-        self.by_path.get(key.as_ref()).and_then(|v| v.first()).map_or(NO_CLASS - 1, |&first| first as u32)
+        self.by_path.get(key.as_ref()).map_or(&[], Vec::as_slice)
     }
 }
 
@@ -489,6 +608,10 @@ impl Inner {
     /// and the namespace gate, read from the index for the global unlimited ones.
     fn live_candidates(&self, namespace: Option<Option<&str>>, now: i64) -> Candidates {
         let deadlines = Some(self.index.deadlines.as_slice()).filter(|d| d.len() == self.list.len()).unwrap_or(&[]);
+        // every one alive, told by the index alone
+        if !deadlines.is_empty() && !self.index.any_mortal && self.index.earliest_deadline > now {
+            return Candidates { list: self.list.clone(), index: self.index.clone(), positions: None };
+        }
         let keep = |i: usize| match deadlines.get(i) {
             Some(&deadline) if deadline != MORTAL => deadline > now,
             _ => {
@@ -508,11 +631,22 @@ impl Inner {
     fn reindex(&mut self) {
         self.list_mut().sort_by(|a, b| b.priority.cmp(&a.priority).then(a.created.cmp(&b.created)).then_with(|| a.id.cmp(&b.id)));
         self.early = self.list.iter().filter(|e| e.early).count();
-        let mut index = PathIndex { classes: Vec::with_capacity(self.list.len()), deadlines: Vec::with_capacity(self.list.len()), ..PathIndex::default() };
+        let mut index = PathIndex {
+            classes: Vec::with_capacity(self.list.len()),
+            deadlines: Vec::with_capacity(self.list.len()),
+            earliest_deadline: i64::MAX,
+            ..PathIndex::default()
+        };
         for (i, e) in self.list.iter().enumerate() {
             // an unlimited count is never lowered (`lower_remaining`, `consume`)
             let unlimited = e.remaining.load(Ordering::Acquire) < 0 && e.namespace.is_none();
-            index.deadlines.push(if unlimited { e.end_date.unwrap_or(i64::MAX) } else { MORTAL });
+            let deadline = if unlimited { e.end_date.unwrap_or(i64::MAX) } else { MORTAL };
+            index.deadlines.push(deadline);
+            if deadline == MORTAL {
+                index.any_mortal = true;
+            } else {
+                index.earliest_deadline = index.earliest_deadline.min(deadline);
+            }
             match &e.index_key {
                 Some(key) => {
                     let bucket = index.by_path.entry(key.clone()).or_default();
@@ -523,6 +657,9 @@ impl Inner {
                     index.unindexed.push(i);
                     index.classes.push(NO_CLASS);
                 }
+            }
+            if index.classes.last() == Some(&NO_CLASS) {
+                index.unclassed.push(i as u32);
             }
         }
         self.index = Arc::new(index);
@@ -1176,10 +1313,10 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
             evaluated.push(Evaluated { expectation: e.clone(), remaining, matched, active: true, warning: None });
             // `LlmConversationMatcher`: an `httpLlmResponse` with conversation predicates must accept the request's
             // conversation too; a rejection logs nothing of its own.
-            let matched = matched && crate::llm::conversation::matches(&e.input, request, Self::MAX_LLM_CONVERSATION_BODY, self.semantic.get());
+            let matched = matched && (!e.has(Rare::Llm) || crate::llm::conversation::matches(&e.input, request, Self::MAX_LLM_CONVERSATION_BODY, self.semantic.get()));
             // `ScenarioManager`: a scenario-gated expectation serves only in its state, then moves it on.
             let mut warning = None;
-            let committed = matched && self.scenarios.gate(&e.input, request) && e.by_percentage() && self.commit(e, request, &mut prune, Some(&mut warning));
+            let committed = matched && (!e.has(Rare::Scenario) || self.scenarios.gate(&e.input, request)) && e.by_percentage() && self.commit(e, request, &mut prune, Some(&mut warning));
             if let Some(last) = evaluated.last_mut() {
                 last.warning = warning;
             }
@@ -1205,7 +1342,7 @@ pub(crate) const MAX_LLM_CONVERSATION_BODY: usize = 1_048_576;
             return false;
         }
         self.paused(Pause::Consumed);
-        if !self.scenarios.transition(&e.input, request) {
+        if e.has(Rare::Scenario) && !self.scenarios.transition(&e.input, request) {
             e.in_progress.store(false, Ordering::Release);
             return false;
         }

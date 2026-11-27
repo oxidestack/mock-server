@@ -1147,8 +1147,8 @@ impl Tls {
     /// `Host` header, `HttpRequestHandler.channelRead0`); the TLS SNI path calls the `Resolver`-internal copy of
     /// this same logic directly (`Resolver::add_subject_alternative_name`).
     pub fn add_subject_alternative_name(&self, host: &str) {
-        let resolver = self.current.read().resolver.clone();
-        resolver.add_subject_alternative_name(host);
+        // under the read lock rather than through a clone of the resolver: every request comes here
+        self.current.read().resolver.add_subject_alternative_name(host);
     }
 
     /// Rebuilds the TLS context if the configuration changed it, so the subject alternative name sets restart from the
@@ -1485,7 +1485,8 @@ const MAX_SUBJECT_ALTERNATIVE_NAMES_DEFAULT: i64 = 100;
 /// / `...Ips` plus the FIFO `dynamicSanDomainOrder` / `...IpOrder` that drives eviction).
 #[derive(Default, Clone)]
 struct SanSet {
-    members: std::collections::HashSet<String>,
+    /// Fx-hashed: every request's `Host` is looked up here, and the set is bounded (`maxSubjectAlternativeNames`).
+    members: rustc_hash::FxHashSet<String>,
     /// Insertion order of *dynamically added* members only — seeded (configured/default) members are never
     /// pushed here, so `bounded_add`'s eviction never removes one of them (`Configuration.boundedAdd`).
     dynamic_order: std::collections::VecDeque<String>,

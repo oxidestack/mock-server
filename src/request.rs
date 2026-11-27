@@ -140,6 +140,12 @@ pub fn append(map: &mut MultiMap, name: &str, value: String) {
     }
 }
 
+/// A new `logCorrelationId`: a random UUID, written straight into its string rather than through `Display`.
+pub fn new_correlation_id() -> String {
+    let mut text = [0u8; uuid::fmt::Hyphenated::LENGTH];
+    uuid::Uuid::new_v4().hyphenated().encode_lower(&mut text).to_string()
+}
+
 /// A header value as Netty reads it: one char per byte (`AsciiString.b2c`).
 pub fn header_text(bytes: &[u8]) -> String {
     bytes.iter().map(|b| *b as char).collect()

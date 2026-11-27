@@ -740,7 +740,7 @@ pub fn respond(v: &Value) -> Respond {
         reply.keep_alive_override = flag("keepAliveOverride");
         reply.close_socket = flag("closeSocket");
         reply.close_delay = options.get("closeSocketDelay").and_then(delay).map(|d| d.fixed);
-        reply.chunk_delay = options.get("chunkDelay").and_then(delay);
+        reply.chunk_delay = options.get("chunkDelay").and_then(delay).map(Box::new);
         reply.chunk_size = options.get("chunkSize").and_then(Value::as_u64).filter(|n| *n > 0).map(|n| n as usize);
     }
     let file = o

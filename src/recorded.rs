@@ -579,7 +579,23 @@ mod weight {
     }
 
     fn body_bytes(message: &Value) -> u64 {
-        message.get("body").map_or(0, |b| response_body_bytes(b).len() as u64)
+        message.get("body").map_or(0, |b| response_body_len(b) as u64)
+    }
+
+    /// `response_body_bytes(body).len()`, a text body's counted without copying it.
+    fn response_body_len(body: &Value) -> usize {
+        let text = match body {
+            Value::Null => return 0,
+            Value::String(s) => s,
+            Value::Object(o) => match o.get("type").and_then(Value::as_str) {
+                Some("STRING") => o.get("string").and_then(Value::as_str).unwrap_or_default(),
+                Some("XML") => o.get("xml").and_then(Value::as_str).unwrap_or_default(),
+                Some("JSON") if o.get("json").is_none_or(Value::is_string) => o.get("json").and_then(Value::as_str).unwrap_or_default(),
+                _ => return response_body_bytes(body).len(),
+            },
+            _ => return response_body_bytes(body).len(),
+        };
+        text.len()
     }
 
     /// A received request, as the entry retains it.
@@ -1217,9 +1233,8 @@ impl RequestLog {
                     work.recorded |= matches!(dropped.entry, Entry::Exchange(ref x) if x.recorded.is_some());
                     self.evicted.fetch_add(1, Relaxed);
                     self.evicted_since_start.fetch_add(1, Relaxed);
-                    // what the push evicts is freed after the lock is released, and off the request path
-                    // ([`evicted::discard`]): freeing an entry under the lock serialised every request worker behind
-                    // one destructor once the log was full
+                    // what the push evicts is freed after the lock is released: freeing an entry under the lock
+                    // serialised every request worker behind one destructor once the log was full
                     match work.dropped_entry {
                         None => work.dropped_entry = Some(dropped.entry),
                         Some(_) => work.dropped_entries.push(dropped.entry),
@@ -1243,7 +1258,10 @@ impl RequestLog {
     /// What a drain leaves for after the lock is released.
     fn finish(&self, work: Drained) {
         let Drained { any, recorded, dropped_entry, dropped_entries } = work;
-        evicted::discard(dropped_entry.into_iter().chain(dropped_entries));
+        // freed here, on the evicting thread: a thread of their own freed them at the same CPU cost plus mimalloc's
+        // cross-thread frees, and a container's CPU quota counts both
+        drop(dropped_entry);
+        drop(dropped_entries);
         if any {
             self.changes.touch();
         }
@@ -1287,7 +1305,8 @@ impl RequestLog {
         let id = request.log_correlation_id.is_empty().then(|| crate::breakpoint::correlation(&request));
         let shown_request = shown;
         let text = keep_line.then(|| line.clone());
-        let shown = (shown.headers != request.headers).then(|| line.clone());
+        // the request itself, as the data plane logs one nothing rewrote, has its own headers without comparing them
+        let shown = (!std::ptr::eq(shown, &*request) && shown.headers != request.headers).then(|| line.clone());
         if self.console_wanted(Level::Info, Kind::ReceivedRequest) {
             let redacted = self.redaction_fields().map(|fields| crate::log_entry::Json::new(redact_value(shown.as_deref().unwrap_or(&logged(&request)), &fields, true)));
             let shown_line = redacted.as_ref().unwrap_or(line);
@@ -3285,14 +3304,17 @@ pub fn input_request(request: &HttpRequest) -> Value {
     Value::Object(o)
 }
 
+thread_local! {
+    /// The values [`interned`] lately on this thread.
+    static RECENT: std::cell::RefCell<VecDeque<Arc<Value>>> = const { std::cell::RefCell::new(VecDeque::new()) };
+}
+
+/// How many values [`RECENT`] holds.
+const RECENT_VALUES: usize = 8;
+
 /// `value`, or an equal one logged lately on this thread: a static response's logged form and its action are the same
 /// from request to request, and each copy was ~1 KB of the event log per request.
 pub fn interned(value: Value) -> Arc<Value> {
-    use std::cell::RefCell;
-    thread_local! {
-        static RECENT: RefCell<VecDeque<Arc<Value>>> = const { RefCell::new(VecDeque::new()) };
-    }
-    const RECENT_VALUES: usize = 8;
     let mut value = Some(value);
     let shared = RECENT.try_with(|recent| {
         let mut recent = recent.borrow_mut();
@@ -3311,51 +3333,21 @@ pub fn interned(value: Value) -> Arc<Value> {
     shared.unwrap_or_else(|_| Arc::new(value.take().unwrap_or_default()))
 }
 
-/// Freeing what the log evicts off the request path: each thread gathers what its pushes evicted and hands every
-/// [`evicted::BATCH`] of them to one thread that frees them, so a full log costs a request one move, not the
-/// destructors of a request, a response and their entries.
-mod evicted {
-    use super::Entry;
-    use std::cell::RefCell;
-    use std::sync::OnceLock;
-    use std::sync::mpsc::Sender;
-
-    pub const BATCH: usize = 256;
-
-    thread_local! {
-        static GATHERED: RefCell<Vec<Entry>> = const { RefCell::new(Vec::new()) };
-    }
-
-    /// The freeing thread's inbox; `None` when it could not be started (then each batch is freed where it filled).
-    fn freer() -> Option<&'static Sender<Vec<Entry>>> {
-        static FREER: OnceLock<Option<Sender<Vec<Entry>>>> = OnceLock::new();
-        FREER
-            .get_or_init(|| {
-                let (tx, rx) = std::sync::mpsc::channel::<Vec<Entry>>();
-                std::thread::Builder::new().name("event-log-free".into()).spawn(move || rx.into_iter().for_each(drop)).ok().map(|_| tx)
-            })
-            .as_ref()
-    }
-
-    pub fn discard(entries: impl Iterator<Item = Entry>) {
-        let mut entries = entries.peekable();
-        if entries.peek().is_none() {
-            return;
-        }
-        let full = GATHERED.try_with(|gathered| {
-            let mut gathered = gathered.borrow_mut();
-            if gathered.capacity() == 0 {
-                gathered.reserve_exact(BATCH);
+/// [`interned`] of a value already shared (an expectation's own response): itself when it is among the recent ones.
+pub fn interned_shared(value: Arc<Value>) -> Arc<Value> {
+    RECENT
+        .try_with(|recent| {
+            let mut recent = recent.borrow_mut();
+            if let Some(found) = recent.iter().find(|v| Arc::ptr_eq(v, &value) || ***v == *value) {
+                return found.clone();
             }
-            gathered.extend(entries);
-            (gathered.len() >= BATCH).then(|| std::mem::replace(&mut *gathered, Vec::with_capacity(BATCH)))
-        });
-        // a thread on its way out frees what it evicts itself
-        let Ok(Some(full)) = full else { return };
-        if let Some(freer) = freer() {
-            let _ = freer.send(full);
-        }
-    }
+            if recent.len() == RECENT_VALUES {
+                recent.pop_front();
+            }
+            recent.push_back(value.clone());
+            value.clone()
+        })
+        .unwrap_or(value)
 }
 
 #[cfg(test)]

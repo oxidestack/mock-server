@@ -47,7 +47,8 @@ pub struct Config {
     /// Only `from_args` sets it.
     pub port_forward: Option<(String, u16)>,
     /// Values set over `PUT /mockserver/configuration`, which take precedence over every other source.
-    runtime: std::sync::Arc<parking_lot::RwLock<HashMap<String, String>>>,
+    /// Fx-hashed: once anything is set here, every property read of every request looks here first.
+    runtime: std::sync::Arc<parking_lot::RwLock<rustc_hash::FxHashMap<String, String>>>,
     /// Set once anything was put in `runtime` (it is never emptied): until then a read skips its lock, which every
     /// request worker took several times per request.
     runtime_set: std::sync::Arc<std::sync::atomic::AtomicBool>,
@@ -357,6 +358,16 @@ impl Config {
         self.read_property(name, |v| v.and_then(|v| v.trim().parse().ok()).unwrap_or(default))
     }
 
+    /// [`Config::int_property`] as the server started with it, ignoring runtime changes.
+    pub fn int_startup_property(&self, name: &str, default: i64) -> i64 {
+        self.read_startup_property(name, |v| v.and_then(|v| v.trim().parse().ok()).unwrap_or(default))
+    }
+
+    /// Whether [`Config::property`] gives `name` a value that is not blank; nothing is copied.
+    pub fn has_property(&self, name: &str) -> bool {
+        self.read_property(name, |v| v.is_some_and(|v| !v.trim().is_empty()))
+    }
+
     /// [`Config::bool_property`] as the server started with it, ignoring runtime changes.
     pub fn bool_startup_property(&self, name: &str, default: bool) -> bool {
         self.read_startup_property(name, |v| v.map(|v| v.trim().eq_ignore_ascii_case("true")).unwrap_or(default))
@@ -375,6 +386,10 @@ impl Config {
     /// remote; the 8.0.0 oracle honours it (scenario `proxy_remote_host_runtime`). A startup port forward
     /// ([`Config::port_forward`], upstream's `REMOTE_SOCKET` channel attribute) comes first.
     pub fn proxy_remote(&self) -> Option<(String, u16)> {
+        // asked of every unmatched request: nothing is copied while no host is set
+        if !self.has_property("proxyRemoteHost") {
+            return None;
+        }
         let host = self.property("proxyRemoteHost").filter(|h| !h.trim().is_empty())?;
         let port = self.property("proxyRemotePort")?.trim().parse::<u16>().ok()?;
         Some((host, port))

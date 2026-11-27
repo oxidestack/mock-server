@@ -289,7 +289,7 @@ where
                     early.headers.retain(|(k, _)| !k.eq_ignore_ascii_case("content-length"));
                 }
                 early.socket_address = host_socket_address(&early, conn.local.port(), secure);
-                early.log_correlation_id = uuid::Uuid::new_v4().to_string();
+                early.log_correlation_id = crate::request::new_correlation_id();
                 // `firstMatchingEarlyExpectation`: a request the control plane serves never is (`isControlPlaneRequest`).
                 // `EarlyMatchingHandler` checks data-plane credentials first, since the match uses up `Times` and moves
                 // scenarios: without them the request falls through to the gate's 401 (upstream 6dcc66b58).
@@ -440,21 +440,30 @@ where
                 }
             };
 
+            // every field given: a default request's empty certificate chain is an allocation of its own
             let mut http_request = HttpRequest {
                 method: head.method,
                 path,
+                path_parameters: MultiMap::new(),
                 query: query.as_deref().map(request::parse_target_query).unwrap_or_default(),
-                raw_query: query.clone(),
+                raw_query: query,
                 headers,
+                cookies: Vec::new(),
                 body,
+                original_body: None,
+                body_kind: request::BodyKind::default(),
+                empty_body_given: false,
                 keep_alive,
+                keep_alive_null: false,
                 secure,
                 protocol: "HTTP_1_1",
                 local_address: local_address.clone(),
                 remote_address: remote_address.clone(),
                 client_certificates: conn.client_certificates.clone(),
                 remote_target: conn.proxy_target.clone(),
-                ..HttpRequest::default()
+                socket_address: None,
+                log_correlation_id: String::new(),
+                trusted: false,
             };
             // Netty's direct-memory limit (`io.netty.maxDirectMemory`): the aggregator's buffers outgrow it, the
             // pool's ERROR is logged, the request is reported cut short and the connection closes without an answer.
@@ -582,10 +591,9 @@ where
                 continue 'conn;
             }
             // handled on the connection's task, its deep, rarely taken branches boxed where they are entered ([`crate::boxed`])
-            let answered = handler::dispatch(&state, http_request, &trace);
             let outcome = if held_behind {
                 tokio::select! {
-                    outcome = answered => outcome,
+                    outcome = handler::dispatch(&state, http_request, &trace) => outcome,
                     _ = wedge_backstop(&state, conn.event_loop) => {
                         // the held requests wait behind a response that makes no progress: the connection is closed, and
                         // `Http1PipeliningGate.channelInactive` then hands what it holds on, as a decoder's `decodeLast`:
@@ -599,7 +607,8 @@ where
                     }
                 }
             } else {
-                answered.await
+                // pinned where it is built: awaiting it by value moved the whole future (14 KiB) once per request
+                std::pin::pin!(handler::dispatch(&state, http_request, &trace)).await
             };
             (outcome, Flight { head_only, tunnel, stream_intent, observed, exchange, decoded })
         };
@@ -644,7 +653,7 @@ where
             Outcome::Respond(reply) => {
                 let reply = if tunnel {
                     let max = usize::try_from(state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
-                    handler::loopback_decoded(reply, max).unwrap_or_else(|()| handler::loopback_failure())
+                    Box::new(handler::loopback_decoded(*reply, max).unwrap_or_else(|()| handler::loopback_failure()))
                 } else {
                     reply
                 };
@@ -815,10 +824,10 @@ fn loopback_streamed(state: &State, outcome: Outcome, intent: bool) -> Result<Ou
             match handler::LoopbackDecoder::for_head(state, &mut head.headers) {
                 Ok(Some(decoder)) => {
                     let body = std::mem::take(&mut head.body);
-                    Err(Box::new((head, decoder, body, None)))
+                    Err(Box::new((*head, decoder, body, None)))
                 }
                 Ok(None) => Ok(Outcome::Respond(head)),
-                Err(()) => Ok(Outcome::Respond(handler::loopback_failure())),
+                Err(()) => Ok(Outcome::respond(handler::loopback_failure())),
             }
         }
         Outcome::Stream { head, chunks, close, trailers, cut, upstream_end, chunk_count } if handler::loopback_streams(state, &head.headers, intent) => {
@@ -826,7 +835,7 @@ fn loopback_streamed(state: &State, outcome: Outcome, intent: bool) -> Result<Ou
             match handler::LoopbackDecoder::for_head(state, &mut edited.headers) {
                 Ok(Some(decoder)) => {
                     edited.close |= close;
-                    Err(Box::new((edited, decoder, Bytes::new(), Some(chunks))))
+                    Err(Box::new((*edited, decoder, Bytes::new(), Some(chunks))))
                 }
                 _ => Ok(Outcome::Stream { head, chunks, close, trailers, cut, upstream_end, chunk_count }),
             }
@@ -1099,18 +1108,19 @@ async fn read_head<S: AsyncRead + Unpin>(stream: &mut S, buf: &mut BytesMut, lim
 #[inline(never)]
 fn parse_head(buf: &[u8]) -> Result<Option<(Head, usize)>, ()> {
     const ON_STACK: usize = 128;
-    let mut stack = [httparse::EMPTY_HEADER; ON_STACK];
-    let mut heap: Vec<httparse::Header<'_>>;
+    // left uninitialised: httparse writes the headers it parses, and filling 4 KiB of empty ones cost every request
+    let mut stack = [const { std::mem::MaybeUninit::<httparse::Header<'_>>::uninit() }; ON_STACK];
+    let mut heap: Vec<std::mem::MaybeUninit<httparse::Header<'_>>>;
     let mut capacity = ON_STACK;
     loop {
-        let headers: &mut [httparse::Header<'_>] = if capacity == ON_STACK {
+        let headers: &mut [std::mem::MaybeUninit<httparse::Header<'_>>] = if capacity == ON_STACK {
             &mut stack
         } else {
-            heap = vec![httparse::EMPTY_HEADER; capacity];
+            heap = std::iter::repeat_with(std::mem::MaybeUninit::uninit).take(capacity).collect();
             &mut heap
         };
-        let mut req = httparse::Request::new(headers);
-        match req.parse(buf) {
+        let mut req = httparse::Request::new(&mut []);
+        match req.parse_with_uninit_headers(buf, headers) {
             Ok(httparse::Status::Complete(len)) => {
                 // with room for the `content-length` the aggregator adds
                 let mut map = MultiMap::with_capacity(req.headers.len() + 1);

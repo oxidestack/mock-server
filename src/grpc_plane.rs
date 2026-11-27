@@ -431,7 +431,7 @@ pub async fn dispatch(state: &Arc<State>, mut request: HttpRequest, channel: &Tr
     translated.headers.push(("x-grpc-web-content-type".into(), vec![web.clone()]));
     let request = translated.clone();
     Ok(match Box::pin(dispatch_grpc(state, translated, channel, None)).await {
-        Ok(Outcome::Respond(reply)) => Outcome::Respond(grpc_web_response(state, &request, reply, &web)),
+        Ok(Outcome::Respond(reply)) => Outcome::respond(grpc_web_response(state, &request, *reply, &web)),
         Ok(other) => other,
         Err(_) => return Err(Box::new(request)),
     })
@@ -488,13 +488,13 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
     // HTTP/3 serves neither health nor reflection: with descriptors they are unknown methods.
     let http3 = request.protocol == "HTTP_3";
     if request.path == HEALTH_CHECK_PATH && !http3 {
-        return Ok(Outcome::Respond(health_check(state, &request)));
+        return Ok(Outcome::respond(health_check(state, &request)));
     }
     // `refusedWithoutDataPlaneCredentials`: health stays open; reflection, chaos and the decode errors answer from
     // the loaded schemas or mock state ahead of the data-plane gate, so a request without credentials is refused
     // here (upstream 456a9dee3). HTTP/3 gates its decode errors itself ([`http3_decode_error`]).
     if !http3 && let Some(challenge) = crate::auth::data_plane_unauthenticated(&state.config, &request) {
-        return Ok(Outcome::Respond(unauthenticated_reply(state, &request, challenge)));
+        return Ok(Outcome::respond(unauthenticated_reply(state, &request, challenge)));
     }
     if (request.path == REFLECTION_V1_PATH || request.path == REFLECTION_V1ALPHA_PATH) && state.grpc.has_services() && !http3 {
         let mut reply = Reply::status(200);
@@ -502,7 +502,7 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
         reply.headers.push(("grpc-accept-encoding".into(), ACCEPT_ENCODING.into()));
         reply.body = Bytes::from(encode_frame(&reflect(state, &request.body)));
         reply.trailers.push(("grpc-status".into(), "0".into()));
-        return Ok(Outcome::Respond(direct(reply).finalize(&request, &state.config)));
+        return Ok(Outcome::respond(direct(reply).finalize(&request, &state.config)));
     }
     let (service, method_name) = parse_path(&request.path);
     // gRPC chaos: a fault answered before the call is matched. `Http3MockServerHandler` has no such branch.
@@ -523,7 +523,7 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
                 }
                 None => trailers_only(reply, request.protocol),
             };
-            return Ok(Outcome::Respond(direct(reply).finalize(&request, &state.config)));
+            return Ok(Outcome::respond(direct(reply).finalize(&request, &state.config)));
         }
     }
     // Without descriptors the (translated) request goes on as plain HTTP. HTTP/3 still writes the answer as gRPC
@@ -536,26 +536,26 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
         let outcome = match timeout_nanos(request.first_header("grpc-timeout")) {
             Some(nanos) => match http3_deadline(state, request, nanos, channel).await {
                 Some(outcome) => outcome,
-                None => return Ok(Outcome::Respond(status_reply(&original, state, Code::DeadlineExceeded, Some(&format!("deadline exceeded after {}ms", nanos / 1_000_000))))),
+                None => return Ok(Outcome::respond(status_reply(&original, state, Code::DeadlineExceeded, Some(&format!("deadline exceeded after {}ms", nanos / 1_000_000))))),
             },
             None => Box::pin(crate::handler::dispatch_http(state, request, channel)).await,
         };
         return Ok(match outcome {
-            Outcome::Respond(reply) => Outcome::Respond(passthrough_response(state, &original, reply)),
+            Outcome::Respond(reply) => Outcome::respond(passthrough_response(state, &original, *reply)),
             other => other,
         });
     }
     let Some(method) = state.grpc.method(&service, &method_name) else {
         let message = format!("unknown gRPC method: {service}/{method_name}");
         request_error(state, &request, &message);
-        return Ok(Outcome::Respond(http3_decode_error(state, &request, Code::Unimplemented, &message)));
+        return Ok(Outcome::respond(http3_decode_error(state, &request, Code::Unimplemented, &message)));
     };
     let pool = state.grpc.pool();
     let converted = match convert_request(state, &request, &pool, &service, &method_name, &method.input_type) {
         Ok(converted) => converted,
         Err(e) => {
             request_error(state, &request, &e.message);
-            return Ok(Outcome::Respond(http3_decode_error(state, &request, e.code, &e.message)));
+            return Ok(Outcome::respond(http3_decode_error(state, &request, e.code, &e.message)));
         }
     };
     let deadline = timeout_nanos(request.first_header("grpc-timeout"));
@@ -565,12 +565,12 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
         let outcome = match deadline {
             Some(nanos) => match http3_deadline(state, converted, nanos, channel).await {
                 Some(outcome) => outcome,
-                None => return Ok(Outcome::Respond(status_reply(&request, state, Code::DeadlineExceeded, Some(&format!("deadline exceeded after {}ms", nanos / 1_000_000))))),
+                None => return Ok(Outcome::respond(status_reply(&request, state, Code::DeadlineExceeded, Some(&format!("deadline exceeded after {}ms", nanos / 1_000_000))))),
             },
             None => Box::pin(crate::handler::dispatch_http(state, converted, channel)).await,
         };
         return Ok(match outcome {
-            Outcome::Respond(reply) => Outcome::Respond(convert_response(state, &request, reply, &pool, &method.output_type)),
+            Outcome::Respond(reply) => Outcome::respond(convert_response(state, &request, *reply, &pool, &method.output_type)),
             other => other,
         });
     }
@@ -588,7 +588,7 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
             None => {
                 let message = format!("deadline exceeded after {}ms", nanos / 1_000_000);
                 let reply = status_reply(&request, state, Code::DeadlineExceeded, Some(&message));
-                return Ok(Outcome::Respond(match pending_web {
+                return Ok(Outcome::respond(match pending_web {
                     Some(web) => grpc_web_response(state, &request, reply, web),
                     None => reply,
                 }));
@@ -598,8 +598,8 @@ async fn dispatch_grpc(state: &Arc<State>, request: HttpRequest, channel: &Trace
     };
     Ok(match outcome {
         Outcome::Respond(reply) => {
-            let reply = convert_response(state, &request, reply, &pool, &method.output_type);
-            Outcome::Respond(match pending_web {
+            let reply = convert_response(state, &request, *reply, &pool, &method.output_type);
+            Outcome::respond(match pending_web {
                 Some(web) => grpc_web_response(state, &request, reply, web),
                 None => reply,
             })
@@ -998,7 +998,7 @@ pub fn stream(state: &Arc<State>, request: &HttpRequest, response: &serde_json::
         }
         let _ = trailers_tx.send(trailers);
     });
-    Outcome::Stream { head, chunks, close, trailers: Some(trailers), cut: None, chunk_count: None, upstream_end: None }
+    Outcome::Stream { head: Box::new(head), chunks, close, trailers: Some(trailers), cut: None, chunk_count: None, upstream_end: None }
 }
 
 // ---------------------------------------------------------------- health
@@ -1477,7 +1477,7 @@ pub fn open_bidi(state: &Arc<State>, head: &HttpRequest, body: BidiBody, transpo
         }
         let _ = trailers_tx.send(out);
     });
-    Ok(Outcome::Stream { head: head_reply, chunks, close, trailers: Some(trailers), cut: None, chunk_count: None, upstream_end: None })
+    Ok(Outcome::Stream { head: Box::new(head_reply), chunks, close, trailers: Some(trailers), cut: None, chunk_count: None, upstream_end: None })
 }
 
 /// `GrpcBidiReflectionHandler`: each `ServerReflectionRequest` is answered as soon as its frame is complete (a
@@ -1511,7 +1511,7 @@ fn bidi_reflection(state: &Arc<State>, mut body: BidiBody) -> Outcome {
         }
         let _ = trailers_tx.send(vec![("grpc-status".to_string(), "0".to_string())]);
     });
-    Outcome::Stream { head, chunks, close: false, trailers: Some(trailers), cut: None, chunk_count: None, upstream_end: None }
+    Outcome::Stream { head: Box::new(head), chunks, close: false, trailers: Some(trailers), cut: None, chunk_count: None, upstream_end: None }
 }
 
 type Failure = (Code, Option<String>);

@@ -55,8 +55,15 @@ impl Registry {
     /// `CrudDispatcher.dispatch`: the CRUD response, or `None` when no resource handles the request.
     pub fn dispatch(&self, request: &HttpRequest) -> Option<Reply> {
         let path = request.path.strip_suffix('/').unwrap_or(&request.path);
+        let handlers = {
+            let handlers = self.handlers.read();
+            // nothing registered, nothing copied: every data-plane request asks
+            if handlers.is_empty() {
+                return None;
+            }
+            handlers.clone()
+        };
         let method = request.method.to_ascii_uppercase();
-        let handlers = self.handlers.read().clone();
         for (base, store) in &handlers {
             if path == base {
                 return match method.as_str() {

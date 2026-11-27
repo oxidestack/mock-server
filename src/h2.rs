@@ -955,8 +955,8 @@ async fn respond(state: Arc<State>, tx: mpsc::UnboundedSender<Out>, backlog: &Ba
     let outcome = match outcome {
         Outcome::Respond(reply) if relay && !head_only => {
             let max = usize::try_from(state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
-            match handler::loopback_decoded(reply, max) {
-                Ok(reply) => Outcome::Respond(reply),
+            match handler::loopback_decoded(*reply, max) {
+                Ok(reply) => Outcome::respond(reply),
                 Err(()) => {
                     let _ = tx.send(Out::Reset { stream, code: INTERNAL_ERROR });
                     return;
@@ -967,8 +967,8 @@ async fn respond(state: Arc<State>, tx: mpsc::UnboundedSender<Out>, backlog: &Ba
         // coding the loopback decodes, which is held whole (nothing else bounds what it decodes to) and decoded
         Outcome::Stream { head, chunks, trailers, .. } if relay && !head_only && loopback_holds_whole(&head.headers) => {
             let max = usize::try_from(state.config.int_property("maxRequestBodySize", 10_485_760)).unwrap_or(usize::MAX);
-            match Box::pin(loopback_aggregated(head, chunks, trailers, max)).await {
-                Some(reply) => Outcome::Respond(reply),
+            match Box::pin(loopback_aggregated(*head, chunks, trailers, max)).await {
+                Some(reply) => Outcome::respond(reply),
                 None => {
                     let _ = tx.send(Out::Reset { stream, code: INTERNAL_ERROR });
                     return;

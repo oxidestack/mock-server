@@ -532,7 +532,7 @@ impl Injection {
         }
         if let Some((size, delay)) = slow {
             reply.chunk_size = Some(size as usize);
-            reply.chunk_delay = crate::action::delay(delay);
+            reply.chunk_delay = crate::action::delay(delay).map(Box::new);
             drop_content_length(reply, &mut out);
             let options = out.entry("connectionOptions").or_insert_with(|| json!({}));
             if let Some(o) = options.as_object_mut() {

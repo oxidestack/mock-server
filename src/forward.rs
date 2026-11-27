@@ -1215,10 +1215,20 @@ pub struct ProxyPass {
     preserve_host: bool,
 }
 
+/// `Configuration.proxyPassMappings()` as text: the list set on the instance (even an empty one), else `proxyPass`;
+/// `None` when blank. Asked of every unmatched request, twice: nothing is copied while neither is set.
+fn proxy_pass_text(state: &State) -> Option<String> {
+    let set = |name: &str| state.config.read_property(name, |v| v.is_some());
+    if !set("proxyPassMappings") && !set("proxyPass") {
+        return None;
+    }
+    state.config.property("proxyPassMappings").or_else(|| state.config.property("proxyPass")).filter(|v| !v.trim().is_empty())
+}
+
 /// The first mapping whose prefix the request path starts with.
 pub fn proxy_pass_mapping(state: &State, request: &HttpRequest) -> Option<ProxyPass> {
     // `Configuration.proxyPassMappings()`: the list set on the instance (even an empty one), else `proxyPass`
-    let mappings = state.config.property("proxyPassMappings").or_else(|| state.config.property("proxyPass")).filter(|v| !v.trim().is_empty())?;
+    let mappings = proxy_pass_text(state)?;
     let mappings: Value = serde_json::from_str(&mappings).ok()?;
     mappings.as_array()?.iter().find_map(|m| {
         let prefix = m.get("pathPrefix")?.as_str()?;
@@ -1249,7 +1259,7 @@ pub fn proxy_pass_mapping(state: &State, request: &HttpRequest) -> Option<ProxyP
 /// The target and the `URISyntaxException` message of the first mapping the request path falls under, when
 /// `URI.create` refuses its `targetUri`: `handleProxyPass` throws there, before anything is forwarded.
 pub fn proxy_pass_refusal(state: &State, request: &HttpRequest) -> Option<(String, String)> {
-    let mappings = state.config.property("proxyPassMappings").or_else(|| state.config.property("proxyPass")).filter(|v| !v.trim().is_empty())?;
+    let mappings = proxy_pass_text(state)?;
     let mappings: Value = serde_json::from_str(&mappings).ok()?;
     let first = mappings.as_array()?.iter().find(|m| m.get("pathPrefix").and_then(Value::as_str).is_some_and(|prefix| request.path.starts_with(prefix)))?;
     let target = first.get("targetUri")?.as_str()?;

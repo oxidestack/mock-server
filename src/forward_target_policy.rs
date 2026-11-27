@@ -21,6 +21,10 @@ pub struct Policy {
 /// `InetAddressValidator.hostPolicy`: the policy of the server's lists, or `None` when both are blank. Parsed once
 /// per distinct pair of lists (`reuseOrParse`).
 pub fn of(config: &crate::config::Config) -> Option<Arc<Policy>> {
+    // asked of every unmatched request: nothing is copied while neither list is set
+    if config.read_property("forwardProxyAllowedHosts", |v| v.is_none_or(str::is_empty)) && config.read_property("forwardProxyDeniedHosts", |v| v.is_none_or(str::is_empty)) {
+        return None;
+    }
     let allowed = config.property("forwardProxyAllowedHosts").unwrap_or_default();
     let denied = config.property("forwardProxyDeniedHosts").unwrap_or_default();
     if allowed.is_empty() && denied.is_empty() {

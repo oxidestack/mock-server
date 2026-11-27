@@ -728,7 +728,17 @@ async fn accept_loop(state: Arc<State>, listener: TcpListener, accepted: crate::
 /// tunnel, a binary relay); it is released when the connection's task ends, or later when TCP chaos lets go of a
 /// socket it held past that task.
 #[derive(Default, Clone)]
-pub struct OpenConnections(Arc<parking_lot::Mutex<Registry>>);
+pub struct OpenConnections(Arc<parking_lot::Mutex<Registry>>, Arc<Unlocked>);
+
+/// What every request asks of [`OpenConnections`], read without its lock: two requests per exchange queued every
+/// worker on it.
+#[derive(Default)]
+struct Unlocked {
+    /// Whether any event loop has been blocked ([`OpenConnections::block_loop`]); until then none is waited for.
+    any_blocked: std::sync::atomic::AtomicBool,
+    /// [`Registry::requested_http`], kept here.
+    requested_http: std::sync::atomic::AtomicU64,
+}
 
 #[derive(Default)]
 struct Registry {
@@ -738,8 +748,6 @@ struct Registry {
     registrations: u64,
     /// The event loops ([`OpenConnections::event_loop`]) that have handled an HTTP request, one bit each.
     served_http: u64,
-    /// The event loops that have handled an HTTP request itself ([`OpenConnections::requested_http`]), one bit each.
-    requested_http: u64,
     /// The event loops whose thread a runtime LLM call blocks, each until when ([`OpenConnections::block_loop`]).
     blocked: std::collections::HashMap<usize, tokio::time::Instant>,
     /// Set by [`OpenConnections::close_all`]: a connection accepted as the listeners closed is shut down at once.
@@ -913,12 +921,16 @@ impl OpenConnections {
         let mut registry = self.0.lock();
         let blocked = registry.blocked.entry(event_loop).or_insert(until);
         *blocked = (*blocked).max(until);
+        self.1.any_blocked.store(true, std::sync::atomic::Ordering::Release);
     }
 
     /// Waits while `event_loop`'s thread is blocked ([`OpenConnections::block_loop`]): a request arriving on another
     /// connection of that loop is read only once the stall ends (scenario `llm_worker_stall_concurrent`). Whether it
     /// waited.
     pub(crate) async fn loop_free(&self, event_loop: usize) -> bool {
+        if !self.1.any_blocked.load(std::sync::atomic::Ordering::Acquire) {
+            return false;
+        }
         let mut waited = false;
         loop {
             let until = {
@@ -963,13 +975,17 @@ impl OpenConnections {
 
     /// An HTTP request reaches `HttpState` on `event_loop`'s thread, which sets its thread-local port there.
     pub(crate) fn requested_http(&self, event_loop: usize) {
-        self.0.lock().requested_http |= 1 << event_loop;
+        let bit = 1 << event_loop;
+        // set once per event loop: read first, so the cache line is not written by every request
+        if self.1.requested_http.load(std::sync::atomic::Ordering::Relaxed) & bit == 0 {
+            self.1.requested_http.fetch_or(bit, std::sync::atomic::Ordering::Relaxed);
+        }
     }
 
     /// Whether a request reached `HttpState` on `event_loop`'s thread: a gRPC request `GrpcToHttpRequestHandler`
     /// refuses never does, so what it logs there carries no port until another request has.
     pub(crate) fn has_requested_http(&self, event_loop: usize) -> bool {
-        self.0.lock().requested_http & 1 << event_loop != 0
+        self.1.requested_http.load(std::sync::atomic::Ordering::Relaxed) & 1 << event_loop != 0
     }
 
     /// Whether `event_loop`'s thread has handled an HTTP request: until then, what it logs carries no port (a binary
