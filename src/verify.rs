@@ -149,19 +149,12 @@ fn entry(kind: recorded::Kind, format: impl Into<String>, correlation: &str, sub
     entry
 }
 
-/// Received requests as a verification failure's log argument: one alone, several (or none) as a list.
-fn requests_argument(all: &[std::sync::Arc<HttpRequest>]) -> recorded::Arg {
-    let json = match all {
-        [one] => recorded::model_form(one),
-        many => Value::Array(many.iter().map(|r| recorded::model_form(r)).collect()),
-    };
-    recorded::Arg::with_text(json, logged_requests(all))
-}
-
-/// [`requests_argument`] over every recorded request, a DNS or binary definition as it is.
+/// Every recorded request as a verification failure's log argument: one alone, several (or none) as a list. HTTP
+/// requests are kept, not rendered: the entry is retained, and their rendered forms were a copy of the event log per
+/// failed verification. A DNS or binary definition is quoted as it is.
 fn received_argument(all: &[recorded::Received]) -> recorded::Arg {
     if all.iter().all(|r| r.http().is_some()) {
-        return requests_argument(&http_only(all));
+        return recorded::Arg::received(quoted(http_only(all)));
     }
     let one = |r: &recorded::Received| match r {
         recorded::Received::Http(r) => recorded::model_form(r),
@@ -176,6 +169,21 @@ fn received_argument(all: &[recorded::Received]) -> recorded::Arg {
         many => java_list(many.iter().map(|r| json::pretty(&one(r)))),
     };
     recorded::Arg::with_text(json, text)
+}
+
+/// The requests the last failed verification quoted, while an entry still holds them.
+static QUOTED: std::sync::Mutex<std::sync::Weak<Vec<std::sync::Arc<HttpRequest>>>> = std::sync::Mutex::new(std::sync::Weak::new());
+
+/// `all` to quote in a failure's entry, shared with the entry of the last failed verification that quoted the same
+/// requests: failing again while no request arrives, as a test polling for one does, retains no further list.
+fn quoted(all: Vec<std::sync::Arc<HttpRequest>>) -> std::sync::Arc<Vec<std::sync::Arc<HttpRequest>>> {
+    let mut last = QUOTED.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    if let Some(same) = last.upgrade().filter(|l| l.len() == all.len() && l.iter().zip(&all).all(|(a, b)| std::sync::Arc::ptr_eq(a, b))) {
+        return same;
+    }
+    let fresh = std::sync::Arc::new(all);
+    *last = std::sync::Arc::downgrade(&fresh);
+    fresh
 }
 
 /// The HTTP requests among recorded ones.
@@ -222,14 +230,6 @@ fn verification_json(v: &Value, replacements: &[(&str, Value)]) -> Value {
         o.insert((*k).to_string(), value.clone());
     }
     alphabetical(&Value::Object(o))
-}
-
-/// Received requests as a verification failure's log line lists them: one alone, several as a list.
-fn logged_requests(all: &[std::sync::Arc<HttpRequest>]) -> String {
-    match all {
-        [one] => json::pretty(&recorded::model_form(one)),
-        many => java_list(many.iter().map(|r| json::pretty(&recorded::model_form(r)))),
-    }
 }
 
 fn parse(state: &State, body: &[u8], what: &str, validate: fn(&Value) -> Result<(), String>) -> Result<Value, Outcome> {

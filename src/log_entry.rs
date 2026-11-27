@@ -19,32 +19,82 @@ pub struct Json(std::sync::Arc<JsonCell>);
 
 struct JsonCell {
     value: std::sync::OnceLock<Value>,
-    /// The request whose logged form ([`crate::recorded::logged`]) the value is, rendered from it when first read.
-    request: Option<std::sync::Arc<HttpRequest>>,
+    /// What the value is rendered from when first read.
+    source: Option<Source>,
     /// Known, without rendering it, to be a request `CredentialRedaction.forLog` leaves as it is (not a control-plane
     /// request), so attaching it to an entry need not read it.
     credential_free: bool,
+}
+
+/// What a [`Json`] is rendered from when first read.
+enum Source {
+    /// The request whose logged form ([`crate::recorded::logged`]) the value is.
+    Logged(std::sync::Arc<HttpRequest>),
+    /// Requests in their model form ([`crate::recorded::model_form`]): one alone, several (or none) as an array.
+    ModelForms(std::sync::Arc<Vec<std::sync::Arc<HttpRequest>>>),
+}
+
+impl Source {
+    fn render(&self) -> Value {
+        match self {
+            Source::Logged(request) => crate::recorded::logged(request),
+            Source::ModelForms(requests) => match requests.as_slice() {
+                [one] => crate::recorded::model_form(one),
+                many => Value::Array(many.iter().map(|r| crate::recorded::model_form(r)).collect()),
+            },
+        }
+    }
 }
 
 impl Json {
     pub fn new(value: Value) -> Json {
         let cell = std::sync::OnceLock::new();
         let _ = cell.set(value);
-        Json(std::sync::Arc::new(JsonCell { value: cell, request: None, credential_free: false }))
+        Json(std::sync::Arc::new(JsonCell { value: cell, source: None, credential_free: false }))
     }
 
     /// [`crate::recorded::logged`] of `request`, rendered the first time it is read; `credential_free` when the request
     /// is known to carry nothing `CredentialRedaction.forLog` masks.
     pub fn logged_request(request: std::sync::Arc<HttpRequest>, credential_free: bool) -> Json {
-        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), request: Some(request), credential_free }))
+        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), source: Some(Source::Logged(request)), credential_free }))
+    }
+
+    /// [`crate::recorded::model_form`] of `requests`, one alone or several (or none) as an array, rendered the first
+    /// time it is read. A failed verification quotes every recorded request so, as upstream's entry keeps the list of
+    /// them: rendered when logged, each failed verification held a copy of the whole event log.
+    pub fn model_forms(requests: std::sync::Arc<Vec<std::sync::Arc<HttpRequest>>>) -> Json {
+        let source = Source::ModelForms(requests);
+        Json(std::sync::Arc::new(JsonCell { value: std::sync::OnceLock::new(), source: Some(source), credential_free: false }))
     }
 
     /// [`crate::recorded::log_value`] of the value, appended to `out`: a request's logged form nothing has rendered is
     /// written straight from the request, and stays unrendered.
     pub fn write_text(&self, out: &mut String) {
-        match (self.0.value.get(), &self.0.request) {
-            (None, Some(request)) => crate::recorded::logged_text_into(out, request),
+        match (self.0.value.get(), &self.0.source) {
+            (None, Some(Source::Logged(request))) => crate::recorded::logged_text_into(out, request),
             _ => crate::recorded::log_value_into(out, self),
+        }
+    }
+
+    /// [`ArgText::Received`]'s text of the value appended to `out`: requests nothing has rendered are written one at a
+    /// time, and stay unrendered.
+    fn write_received_text(&self, out: &mut String) {
+        let (None, Some(Source::ModelForms(requests))) = (self.0.value.get(), &self.0.source) else {
+            return ArgText::Received.plain_value_into(self, out);
+        };
+        let pretty = |out: &mut String, r: &HttpRequest| crate::json::pretty_into(out, &crate::recorded::model_form(r));
+        match requests.as_slice() {
+            [one] => pretty(out, one),
+            many => {
+                out.push('[');
+                for (i, r) in many.iter().enumerate() {
+                    if i > 0 {
+                        out.push_str(", ");
+                    }
+                    pretty(out, r);
+                }
+                out.push(']');
+            }
         }
     }
 
@@ -77,7 +127,7 @@ impl Clone for Json {
 impl std::ops::Deref for Json {
     type Target = Value;
     fn deref(&self) -> &Value {
-        self.0.value.get_or_init(|| self.0.request.as_deref().map_or(Value::Null, crate::recorded::logged))
+        self.0.value.get_or_init(|| self.0.source.as_ref().map_or(Value::Null, Source::render))
     }
 }
 
@@ -220,18 +270,27 @@ pub enum ArgText {
     /// as a binary request's hex dump. Under `redactSecretsInLog` the argument is the placeholder and this text is
     /// scrubbed from the rest of the entry.
     Sensitive(String),
+    /// Received requests ([`Json::model_forms`]): one alone as [`ArgText::Json`] prints it, several (an array) as a
+    /// `java.util.List` of them. Scrubbed, not re-rendered, under `redactSecretsInLog`, like [`ArgText::Custom`].
+    Received,
 }
 
 impl ArgText {
-    /// The argument's text from its (possibly redacted) JSON.
-    fn render(&self, json: &Value, redaction: &crate::log_redaction::Redaction) -> String {
+    /// The argument's text from its (possibly redacted) JSON; `original` is the JSON before redaction.
+    fn render(&self, json: &Value, original: &Value, redaction: &crate::log_redaction::Redaction) -> String {
         match self {
             ArgText::Json => crate::recorded::log_value(json),
             ArgText::Custom(text) => redaction.scrub(text),
+            ArgText::Received => redaction.scrub(&self.plain(original)),
             ArgText::List(items) => {
                 let empty = Vec::new();
                 let elements = json.as_array().unwrap_or(&empty);
-                let texts: Vec<String> = items.iter().enumerate().map(|(i, item)| item.render(elements.get(i).unwrap_or(&Value::Null), redaction)).collect();
+                let originals = original.as_array().unwrap_or(&empty);
+                let texts: Vec<String> = items
+                    .iter()
+                    .enumerate()
+                    .map(|(i, item)| item.render(elements.get(i).unwrap_or(&Value::Null), originals.get(i).unwrap_or(&Value::Null), redaction))
+                    .collect();
                 format!("[{}]", texts.join(", "))
             }
             ArgText::Sensitive(_) => crate::recorded::LOG_REDACTED.to_string(),
@@ -243,6 +302,11 @@ impl ArgText {
         match self {
             ArgText::Json => crate::recorded::log_value(json),
             ArgText::Custom(text) | ArgText::Sensitive(text) => text.clone(),
+            ArgText::Received => {
+                let mut out = String::new();
+                self.plain_value_into(json, &mut out);
+                out
+            }
             ArgText::List(items) => {
                 let empty = Vec::new();
                 let elements = json.as_array().unwrap_or(&empty);
@@ -256,6 +320,7 @@ impl ArgText {
     fn plain_into(&self, json: &Json, out: &mut String) {
         match self {
             ArgText::Json => json.write_text(out),
+            ArgText::Received => json.write_received_text(out),
             other => other.plain_value_into(json, out),
         }
     }
@@ -265,6 +330,19 @@ impl ArgText {
         match self {
             ArgText::Json => crate::recorded::log_value_into(out, json),
             ArgText::Custom(text) | ArgText::Sensitive(text) => out.push_str(text),
+            ArgText::Received => match json {
+                Value::Array(requests) => {
+                    out.push('[');
+                    for (i, r) in requests.iter().enumerate() {
+                        if i > 0 {
+                            out.push_str(", ");
+                        }
+                        crate::recorded::log_value_into(out, r);
+                    }
+                    out.push(']');
+                }
+                one => crate::recorded::log_value_into(out, one),
+            },
             ArgText::List(items) => {
                 let elements = json.as_array().map_or(&[][..], Vec::as_slice);
                 out.push('[');
@@ -284,6 +362,11 @@ impl Arg {
     /// An argument whose `toString` is not its JSON.
     pub fn with_text(json: Value, text: impl Into<String>) -> Arg {
         Arg { json: Json::new(json), shape: ArgText::Custom(text.into()), object: None }
+    }
+
+    /// Received requests as a verification failure quotes them ([`ArgText::Received`]), rendered only when read.
+    pub fn received(requests: std::sync::Arc<Vec<std::sync::Arc<HttpRequest>>>) -> Arg {
+        Arg { json: Json::model_forms(requests), shape: ArgText::Received, object: None }
     }
 
     /// A `java.util.List` argument: its text is `AbstractCollection.toString` (`[a, b]` of each element's text), its
@@ -777,7 +860,7 @@ impl LogEntry {
                 .enumerate()
                 .map(|(i, a)| if sensitive(i) { Value::String(crate::recorded::LOG_REDACTED.to_string()) } else { redaction.argument(a) })
                 .collect();
-            let texts: Vec<String> = redacted.iter().enumerate().map(|(i, v)| shapes.get(i).unwrap_or(&ArgText::Json).render(v, &redaction)).collect();
+            let texts: Vec<String> = redacted.iter().zip(args).enumerate().map(|(i, (v, a))| shapes.get(i).unwrap_or(&ArgText::Json).render(v, a, &redaction)).collect();
             if self.text_custom {
                 out.text = MessageText::Own(redaction.scrub(self.message_text()));
             } else {
@@ -792,6 +875,13 @@ impl LogEntry {
             }
             out.object_arguments = self.object_arguments.iter().map(|(i, v)| (*i, redaction.scrub(v))).collect();
             out.arguments = Some(redacted.into_iter().map(Json::new).collect());
+            // the redacted copy's received requests keep the text they had, as a text of its own: their JSON is redacted
+            if shapes.iter().any(|s| matches!(s, ArgText::Received)) {
+                out.arg_shapes = Some(shapes.iter().zip(args).map(|(s, a)| match s {
+                    ArgText::Received => ArgText::Custom(s.plain(a)),
+                    other => other.clone(),
+                }).collect());
+            }
         } else {
             out.text = MessageText::Own(redaction.scrub(self.message_text()));
         }
@@ -1145,7 +1235,7 @@ impl LogEntry {
                         None => {
                             let shape = shapes.get(i).unwrap_or(&ArgText::Json);
                             match &self.redaction {
-                                Some(redaction) => shape.render(a, redaction),
+                                Some(redaction) => shape.render(a, a, redaction),
                                 None => shape.plain(a),
                             }
                         }
