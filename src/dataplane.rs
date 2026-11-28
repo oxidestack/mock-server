@@ -574,10 +574,10 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
                 let (reply, after) = no_match(state, &request, closest_scan.take()).await;
                 after_not_found = after;
                 let logged = match reply.status {
-                    404 => not_found_json(),
-                    status => serde_json::json!({"statusCode": status, "reasonPhrase": reason(status)}),
+                    404 => not_found_shared(),
+                    status => Arc::new(serde_json::json!({"statusCode": status, "reasonPhrase": reason(status)})),
                 };
-                (reply, Arc::new(logged))
+                (reply, logged)
             }
         },
         None => {
@@ -587,11 +587,11 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
             after_not_found = after;
             let logged = match reply.status {
                 // only its INFO entry and a response breakpoint read it
-                404 if !state.info_enabled() && !response_holds => serde_json::Value::Null,
-                404 => not_found_json(),
-                status => serde_json::json!({"statusCode": status, "reasonPhrase": reason(status)}),
+                404 if !state.info_enabled() && !response_holds => Arc::new(serde_json::Value::Null),
+                404 => not_found_shared(),
+                status => Arc::new(serde_json::json!({"statusCode": status, "reasonPhrase": reason(status)})),
             };
-            (reply, Arc::new(logged))
+            (reply, logged)
         }
     };
     // `attemptResponseBreakpoint`: the response the client writes instead, if it changes it.
@@ -652,7 +652,9 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
         (Some(_), Some(action)) if logged_is_request && logged_response.get("timing").is_none() => {
             // the empty body boxed: the builder is kept with the exchange in the log, and an absent one took 88 bytes
             let (empty_body, action) = (log.empty_body.clone().map(Box::new), crate::recorded::interned_shared(action));
-            Some(move |x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest| served_entry(x, logged, &action, empty_body.as_deref()))
+            // the console line is written from the entry's parts when they are the response and action as they are
+            let line_action = empty_body.is_none().then(|| action.clone());
+            Some((move |x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest| served_entry(x, logged, &action, empty_body.as_deref()), line_action))
         }
         (_, action) => {
             log.served_action = action;
@@ -661,12 +663,16 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
     };
     // INFO switched on since the not-found answer was left unbuilt
     if served_by.is_none() && reply.status == 404 && logged_response.is_null() && state.info_enabled() {
-        logged_response = Arc::new(not_found_json());
+        logged_response = not_found_shared();
     }
     let ordered = || logged_request.arg();
     // `LogEntry.setArguments`: an `HttpResponse` argument (the response, a response action) prints its body bare.
     let with_empty = |v: &serde_json::Value, is_action: bool| with_empty_body(v, log.empty_body.as_ref(), is_action);
-    let response = || Arg::from(crate::recorded::logged_response(&with_empty(&logged_response, false)));
+    let response = || match log.empty_body {
+        // its logged form built once while the thread holds the value (the not-found answer, a stored response)
+        None => Arg::from(crate::recorded::logged_response_json(&logged_response)),
+        Some(_) => Arg::from(crate::recorded::logged_response(&with_empty(&logged_response, false))),
+    };
     let message = match (&served_by, &log.served_action) {
         (Some(id), Some(action)) => Some(
             LogEntry::new(Kind::ExpectationResponse, SERVED_FORMAT).args([response(), ordered(), crate::recorded::logged_response(&with_empty(action, true)).into(), id.into()]),
@@ -696,7 +702,7 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
         // an entry with the request set (`setHttpRequest`: a difference's TRACE entry, the closest match diff) is
         // about it, so a log clear that matches the request removes it
         let about = after_not_found.iter().any(|e| e.requests.is_some()).then(|| request.clone());
-        state.log.record_no_match(request, Arc::unwrap_or_clone(logged_response), message.map(|m| *m));
+        state.log.record_no_match(request, logged_response, message.map(|m| *m));
         for entry in std::mem::take(&mut after_not_found) {
             crate::log::entry(state, &entry);
             match (&about, entry.requests.is_some()) {
@@ -711,7 +717,11 @@ async fn handle_inline(state: &Arc<State>, mut request: Arc<HttpRequest>) -> Out
             .then(|| LogEntry::new(Kind::Info, "returning CORS response for OPTIONS request").correlation(request.log_correlation_id.clone()));
         let warned_request = informational_warning.as_ref().map(|_| request.clone());
         match (served, message) {
-            (Some(make), _) => state.log.record_served(&logged_request, logged_response, served_by, Kind::ExpectationResponse, make),
+            (Some((make, line_action)), _) => {
+                let line = line_action.as_ref().map(|action| move |x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest, out: &mut String, scratch: &mut String| served_line(x, logged, action, out, scratch));
+                let line = line.as_ref().map(|line| line as crate::recorded::ServedLine<'_>);
+                state.log.record_served(&logged_request, logged_response, served_by, Kind::ExpectationResponse, make, line)
+            }
             (None, Some(message)) => state.log.record_with_message(request, Arc::unwrap_or_clone(logged_response), served_by, *message),
             (None, None) => state.log.record(Arc::unwrap_or_clone(request), Arc::unwrap_or_clone(logged_response), served_by),
         }
@@ -763,6 +773,19 @@ fn served_entry(x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedR
     LogEntry::new(Kind::ExpectationResponse, SERVED_FORMAT)
         .args([Arg::from(response), logged.arg(), Arg::from(action), id.into()])
         .request_logged(&x.request, logged)
+}
+
+/// [`served_entry`]'s console message (the response and action as they are, no empty body logged in their place),
+/// written from its parts.
+fn served_line(x: &crate::recorded::Exchange, logged: &crate::recorded::LoggedRequest, action: &Arc<serde_json::Value>, out: &mut String, scratch: &mut String) {
+    let id = x.expectation_id.as_deref().unwrap_or_default();
+    let (response, action) = (crate::recorded::logged_response_json(&x.response), crate::recorded::logged_response_json(action));
+    crate::matcher::format_log_message_blocks_into(out, 0, SERVED_FORMAT, 4, |i, out| match i {
+        0 => response.write_block(out, scratch),
+        1 => logged.json.write_block(out, scratch),
+        2 => action.write_block(out, scratch),
+        _ => crate::matcher::argument_block_into(out, 0, id),
+    });
 }
 
 /// `Action::Respond`: a mock response, maybe a `recoverAfter` failure or a synthesized GraphQL body; a layer of the
@@ -2526,8 +2549,6 @@ fn log_evaluations_logged(
     let mut budget = NotMatchedLogBudget::of(state);
     // The request's weight against the event log's byte budget, which each of its deferred entries adds.
     let request_weight = std::cell::OnceCell::new();
-    // The request's block in a message, which each of its printed entries quotes.
-    let shown_block = std::cell::OnceCell::new();
     // `fullScanClosestMatchAndLazyRemoval`: when the candidate index narrowed the scan and nothing matched, the
     // expectations outside it are evaluated (and logged) after it, in match order, at most
     // `CLOSEST_MATCH_MAX_EVALUATIONS` of them; the rest are counted as not checked.
@@ -2661,9 +2682,9 @@ fn log_evaluations_logged(
             if e.matched {
                 const FORMAT: &str = "request:{}matched expectation:{}";
                 let weight = || crate::recorded::message_weight(weight_of_request(), logged_form.weight(), "");
-                let text = |out: &mut String, _: &mut String| {
+                let text = |out: &mut String, scratch: &mut String| {
                     crate::matcher::format_log_message_blocks_into(out, 0, FORMAT, 2, |i, out| match i {
-                        0 => out.push_str(request_block(&shown_block, shown)),
+                        0 => shown.json.write_block(out, scratch),
                         _ => out.push_str(logged_form.block()),
                     })
                 };
@@ -2682,9 +2703,9 @@ fn log_evaluations_logged(
                 let format = not_matched_format(&e.expectation.id, &because);
                 let weight = || crate::recorded::message_weight(weight_of_request(), logged_form.weight(), &because);
                 let arguments = if e.active && because.is_empty() { 2 } else { 3 };
-                let text = |out: &mut String, _: &mut String| {
+                let text = |out: &mut String, scratch: &mut String| {
                     crate::matcher::format_log_message_blocks_into(out, 0, &format, arguments, |i, out| match i {
-                        0 => out.push_str(request_block(&shown_block, shown)),
+                        0 => shown.json.write_block(out, scratch),
                         1 => out.push_str(logged_form.block()),
                         _ => crate::matcher::argument_block_into(out, 0, &because),
                     })
@@ -2762,10 +2783,10 @@ fn log_evaluations_logged(
             let logged_form = logged_expectation(&crate::store::Evaluated { expectation: closest.clone(), remaining: None, matched: false, active: true, warning: None });
             let format = format!("closest expectation:{{}}matched {count}/10 fields for request:{{}}{}", walk.note(&budget));
             let weight = || crate::recorded::message_weight(*request_weight.get_or_init(|| crate::recorded::request_weight(subject)), logged_form.weight(), "");
-            let text = |out: &mut String, _: &mut String| {
+            let text = |out: &mut String, scratch: &mut String| {
                 crate::matcher::format_log_message_blocks_into(out, 0, &format, 2, |i, out| match i {
                     0 => out.push_str(logged_form.block()),
-                    _ => out.push_str(request_block(&shown_block, shown)),
+                    _ => shown.json.write_block(out, scratch),
                 })
             };
             let (shown, expectation, live, format) = (shown.clone(), logged_form.json.clone(), closest.clone(), format.clone());
@@ -2803,11 +2824,6 @@ fn not_matched_format(id: &str, because: &str) -> String {
         format.push_str(":{}because:{}");
     }
     format
-}
-
-/// The request's text as an argument of a log message shows it, rendered the first time one of its entries prints it.
-fn request_block<'a>(block: &'a std::cell::OnceCell<String>, shown: &crate::recorded::LoggedRequest) -> &'a str {
-    block.get_or_init(|| argument_block(|text| shown.json.write_text(text)))
 }
 
 /// The text `write` writes, as an argument of a log message shows it ([`crate::matcher::argument_block_into`]); the
@@ -3653,6 +3669,15 @@ fn template_failure_answer(state: &State, failed: &templates::Failed) -> (Reply,
 
 fn not_found_json() -> serde_json::Value {
     serde_json::json!({"statusCode": 404, "reasonPhrase": "Not Found"})
+}
+
+/// [`not_found_json`] as every unmatched request on this thread logs it: one value, interned
+/// ([`crate::recorded::interned_shared`]), so its logged form and weight are worked out once, not per request.
+fn not_found_shared() -> Arc<serde_json::Value> {
+    thread_local! {
+        static NOT_FOUND: Arc<serde_json::Value> = Arc::new(not_found_json());
+    }
+    crate::recorded::interned_shared(NOT_FOUND.with(Arc::clone))
 }
 
 fn reason(status: u32) -> String {

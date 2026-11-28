@@ -37,6 +37,22 @@ struct KeptText {
     block: std::sync::OnceLock<String>,
 }
 
+/// The last request block a thread wrote ([`Json::write_kept_block`]): the value it is of, the block, and the text it
+/// was made from (kept for its buffer).
+struct LastBlock {
+    of: std::sync::Weak<JsonCell>,
+    block: String,
+    text: String,
+}
+
+/// The most a [`LastBlock`] buffer keeps between lines.
+const LAST_BLOCK_KEPT: usize = 256 << 10;
+
+thread_local! {
+    static LAST_REQUEST_BLOCK: std::cell::RefCell<LastBlock> =
+        const { std::cell::RefCell::new(LastBlock { of: std::sync::Weak::new(), block: String::new(), text: String::new() }) };
+}
+
 /// What a [`Json`] is rendered from when first read.
 enum Source {
     /// The request whose logged form ([`crate::recorded::logged`]) the value is.
@@ -98,18 +114,57 @@ impl Json {
         }
     }
 
+    /// The value's argument block at the top level of a message ([`crate::matcher::argument_block_into`] of
+    /// [`Json::write_text`]), appended to `out`; `scratch` is lent to the rendering.
+    pub fn write_block(&self, out: &mut String, scratch: &mut String) {
+        if self.write_kept_block(out) {
+            return;
+        }
+        scratch.clear();
+        self.write_text(scratch);
+        crate::matcher::argument_block_into(out, 0, scratch);
+    }
+
     /// The value's argument block at the top level of a message, appended to `out` when it is kept
-    /// ([`Json::with_kept_text`]); `false`, and nothing written, otherwise.
+    /// ([`Json::with_kept_text`]) or is a request's logged form, which every console line about the request quotes
+    /// (`received request`, `matched expectation`, `returning response`, …): that block is rendered once and kept by
+    /// the thread for the lines that follow, not by the entry. `false`, and nothing written, otherwise.
     fn write_kept_block(&self, out: &mut String) -> bool {
-        let Some(kept) = &self.0.kept_text else { return false };
-        out.push_str(kept.block.get_or_init(|| {
-            let mut text = String::new();
-            self.write_text(&mut text);
-            let mut block = String::with_capacity(text.len() + text.len() / 8 + 4);
-            crate::matcher::argument_block_into(&mut block, 0, &text);
-            block
-        }));
-        true
+        if let Some(kept) = &self.0.kept_text {
+            out.push_str(kept.block.get_or_init(|| {
+                let mut text = String::new();
+                self.write_text(&mut text);
+                let mut block = String::with_capacity(text.len() + text.len() / 8 + 4);
+                crate::matcher::argument_block_into(&mut block, 0, &text);
+                block
+            }));
+            return true;
+        }
+        if !matches!(self.0.source, Some(Source::Logged(_))) {
+            return false;
+        }
+        LAST_REQUEST_BLOCK.with(|last| {
+            let Ok(mut last) = last.try_borrow_mut() else { return false };
+            let LastBlock { of, block, text } = &mut *last;
+            // the weak reference keeps the cell's allocation, so an equal address is always this value
+            if !std::ptr::eq(of.as_ptr(), std::sync::Arc::as_ptr(&self.0)) {
+                *of = std::sync::Arc::downgrade(&self.0);
+                text.clear();
+                block.clear();
+                self.write_text(text);
+                crate::matcher::argument_block_into(block, 0, text);
+                if text.capacity() > LAST_BLOCK_KEPT {
+                    *text = String::new();
+                }
+            }
+            out.push_str(block);
+            if block.capacity() > LAST_BLOCK_KEPT {
+                // a large request's block is not kept beyond its own line
+                *of = std::sync::Weak::new();
+                *block = String::new();
+            }
+            true
+        })
     }
 
     /// [`ArgText::Received`]'s text of the value appended to `out`: requests nothing has rendered are written one at a

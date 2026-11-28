@@ -450,6 +450,23 @@ pub fn big_decimal_tree(v: &Value) -> Value {
     }
 }
 
+/// [`big_decimal_tree`] of a tree no longer needed as it is: its floats rewritten where they are, nothing else copied.
+pub fn big_decimal_in_place(v: &mut Value) {
+    match v {
+        // a number's text is its `as_str` (arbitrary precision); an integer has neither a point nor an exponent
+        Value::Number(n) if n.as_str().contains(['.', 'e', 'E']) && !(n.is_i64() || n.is_u64()) => {
+            if let Some(text) = java_compat::big_decimal_to_string(n.as_str())
+                && text != n.as_str()
+            {
+                *v = number(&text);
+            }
+        }
+        Value::Array(items) => items.iter_mut().for_each(big_decimal_in_place),
+        Value::Object(o) => o.values_mut().for_each(big_decimal_in_place),
+        _ => {}
+    }
+}
+
 /// `String.valueOf` of a scalar read into a Java `Object`.
 fn java_string_value(v: &Value) -> String {
     match v {
@@ -671,4 +688,18 @@ pub fn response_body(v: &Value) -> Option<ResponseBody> {
 /// Object field lookup that treats JSON `null` as absent, like Jackson populating a DTO.
 pub fn get<'a>(o: &'a Map<String, Value>, key: &str) -> Option<&'a Value> {
     o.get(key).filter(|v| !v.is_null())
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn big_decimal_in_place_is_big_decimal_tree() {
+        let text = r#"{"a":1.50,"b":[1e2,2.0E-3,7,-0.0,{"c":12345678901234567890.25,"d":"1.5"}],"e":-3,"f":1E+21,"g":0.1e1}"#;
+        let parsed = crate::json::parse_lenient(text.as_bytes()).unwrap();
+        let mut in_place = parsed.clone();
+        super::big_decimal_in_place(&mut in_place);
+        let tree = super::big_decimal_tree(&parsed);
+        assert_eq!(crate::json::compact(&in_place), crate::json::compact(&tree));
+        assert_eq!(in_place, tree);
+    }
 }

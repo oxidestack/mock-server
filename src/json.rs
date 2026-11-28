@@ -410,6 +410,287 @@ pub fn pretty_into<T: Serialize + ?Sized>(out: &mut String, value: &T) {
     value.serialize(&mut ser).expect("serialising JSON into memory cannot fail");
 }
 
+/// [`pretty_into`] of a JSON body's tree as the log prints it (read by [`parse_lenient`], its floats as `BigDecimal`s:
+/// [`crate::model::big_decimal_in_place`]), at formatter depth `depth`, written straight from `text` without building
+/// the tree. Only a body that is one object or array of strict JSON with nothing after it is written so; `false`, and
+/// `out` as it was, for any other (a scalar, a duplicate key, a key with an escape, an object of many keys, a deep
+/// nesting, anything only the lenient reader takes), which the caller renders from the tree.
+pub fn pretty_text_into(out: &mut String, text: &str, depth: usize) -> bool {
+    let start = out.len();
+    let mut writer = PrettyText { s: text.as_bytes(), text, i: 0, keys: Vec::new() };
+    writer.skip();
+    let written = matches!(writer.peek(), Some(b'{' | b'[')) && writer.value(out, depth, 0).is_some() && {
+        writer.skip();
+        writer.i == writer.s.len()
+    };
+    if !written {
+        out.truncate(start);
+    }
+    written
+}
+
+/// [`pretty_text_into`]'s reader: `s` is `text`'s bytes, `keys` the keys of the objects open, innermost last.
+struct PrettyText<'a> {
+    s: &'a [u8],
+    text: &'a str,
+    i: usize,
+    keys: Vec<&'a str>,
+}
+
+impl<'a> PrettyText<'a> {
+    /// The nesting `serde_json` reads (its recursion limit is 128), kept well below it.
+    const MAX_DEPTH: usize = 100;
+    /// The most keys an object may have to be written here: duplicates are looked for by comparing every pair.
+    const MAX_KEYS: usize = 32;
+
+    fn peek(&self) -> Option<u8> {
+        self.s.get(self.i).copied()
+    }
+
+    /// JSON whitespace (`serde_json` takes no other).
+    fn skip(&mut self) {
+        while let Some(b' ' | b'\n' | b'\t' | b'\r') = self.peek() {
+            self.i += 1;
+        }
+    }
+
+    fn newline_indent(out: &mut String, depth: usize) {
+        const SPACES: &str = "                                                                ";
+        out.push('\n');
+        let mut left = depth * 2;
+        while left > 0 {
+            let n = left.min(SPACES.len());
+            out.push_str(&SPACES[..n]);
+            left -= n;
+        }
+    }
+
+    /// One value at the cursor (whitespace skipped), written as [`JacksonFormatter`] writes it at `depth`, inside
+    /// `level` arrays and objects of the text.
+    fn value(&mut self, out: &mut String, depth: usize, level: usize) -> Option<()> {
+        if level >= Self::MAX_DEPTH {
+            return None;
+        }
+        match self.peek()? {
+            b'{' => {
+                self.i += 1;
+                self.skip();
+                if self.peek()? == b'}' {
+                    self.i += 1;
+                    out.push_str("{ }");
+                    return Some(());
+                }
+                let depth = depth + 1;
+                out.push('{');
+                let keys_from = self.keys.len();
+                loop {
+                    if self.keys.len() > keys_from {
+                        out.push(',');
+                    }
+                    Self::newline_indent(out, depth);
+                    // a key: its text as it is (one with an escape is not written here), never one seen before in
+                    // this object (the tree keeps a repeated key at its first place with its last value)
+                    let key = self.raw_string()?;
+                    if self.keys.len() - keys_from >= Self::MAX_KEYS || self.keys[keys_from..].contains(&key) {
+                        return None;
+                    }
+                    self.keys.push(key);
+                    out.push('"');
+                    escape_into(out, key);
+                    out.push('"');
+                    self.skip();
+                    if self.peek()? != b':' {
+                        return None;
+                    }
+                    self.i += 1;
+                    self.skip();
+                    out.push_str(" : ");
+                    self.value(out, depth, level + 1)?;
+                    self.skip();
+                    match self.peek()? {
+                        b',' => {
+                            self.i += 1;
+                            self.skip();
+                        }
+                        b'}' => {
+                            self.i += 1;
+                            break;
+                        }
+                        _ => return None,
+                    }
+                }
+                self.keys.truncate(keys_from);
+                Self::newline_indent(out, depth - 1);
+                out.push('}');
+            }
+            b'[' => {
+                self.i += 1;
+                self.skip();
+                if self.peek()? == b']' {
+                    self.i += 1;
+                    out.push_str("[ ]");
+                    return Some(());
+                }
+                // an array opens no indentation level of its own
+                out.push('[');
+                let mut first = true;
+                loop {
+                    out.push_str(if first { " " } else { ", " });
+                    first = false;
+                    self.value(out, depth, level + 1)?;
+                    self.skip();
+                    match self.peek()? {
+                        b',' => {
+                            self.i += 1;
+                            self.skip();
+                        }
+                        b']' => {
+                            self.i += 1;
+                            break;
+                        }
+                        _ => return None,
+                    }
+                }
+                out.push_str(" ]");
+            }
+            b'"' => {
+                let start = self.i;
+                let raw = self.raw_string_or_escaped()?;
+                out.push('"');
+                match raw {
+                    Some(raw) => escape_into(out, raw),
+                    // the escapes decoded as `serde_json` decodes them (a lone surrogate is refused) and written again
+                    None => escape_into(out, &serde_json::from_str::<String>(&self.text[start..self.i]).ok()?),
+                }
+                out.push('"');
+            }
+            b't' => self.literal(out, "true")?,
+            b'f' => self.literal(out, "false")?,
+            b'n' => self.literal(out, "null")?,
+            b'-' | b'0'..=b'9' => self.number(out)?,
+            _ => return None,
+        }
+        Some(())
+    }
+
+    fn literal(&mut self, out: &mut String, word: &str) -> Option<()> {
+        if !self.s[self.i..].starts_with(word.as_bytes()) {
+            return None;
+        }
+        self.i += word.len();
+        out.push_str(word);
+        Some(())
+    }
+
+    /// A string at the cursor without escapes, its contents; `None` for one with an escape or a control character.
+    fn raw_string(&mut self) -> Option<&'a str> {
+        self.raw_string_or_escaped()?
+    }
+
+    /// A string at the cursor read past: `Some(Some(contents))` without escapes, `Some(None)` with one; `None` for
+    /// a control character (`serde_json` refuses it) or no closing quote.
+    fn raw_string_or_escaped(&mut self) -> Option<Option<&'a str>> {
+        if self.peek()? != b'"' {
+            return None;
+        }
+        let from = self.i + 1;
+        let mut at = from;
+        let mut escaped = false;
+        loop {
+            match *self.s.get(at)? {
+                b'"' => break,
+                b'\\' => {
+                    escaped = true;
+                    at += 2;
+                }
+                0x00..=0x1f => return None,
+                _ => at += 1,
+            }
+        }
+        self.i = at + 1;
+        Some((!escaped).then(|| &self.text[from..at]))
+    }
+
+    /// A number at the cursor, as `serde_json`'s arbitrary-precision reader keeps it (the exponent's letter lower-case,
+    /// `-0` read as the integer 0) and [`crate::model::big_decimal_in_place`] prints a fraction or exponent.
+    fn number(&mut self, out: &mut String) -> Option<()> {
+        let from = self.i;
+        let digits = |s: &[u8], mut at: usize| {
+            let start = at;
+            while let Some(b'0'..=b'9') = s.get(at) {
+                at += 1;
+            }
+            (at > start).then_some(at)
+        };
+        let mut at = from;
+        if self.s[at] == b'-' {
+            at += 1;
+        }
+        let int_from = at;
+        at = digits(self.s, at)?;
+        // one leading zero at most
+        if self.s[int_from] == b'0' && at - int_from > 1 {
+            return None;
+        }
+        let mut fraction = false;
+        if self.s.get(at) == Some(&b'.') {
+            at = digits(self.s, at + 1)?;
+            fraction = true;
+        }
+        let mut exponent = false;
+        if let Some(b'e' | b'E') = self.s.get(at) {
+            at += 1;
+            if let Some(b'+' | b'-') = self.s.get(at) {
+                at += 1;
+            }
+            at = digits(self.s, at)?;
+            exponent = true;
+        }
+        self.i = at;
+        let lexeme = &self.text[from..at];
+        if !fraction && !exponent {
+            out.push_str(if lexeme == "-0" { "0" } else { lexeme });
+            return Some(());
+        }
+        let read = lexeme.replace('E', "e");
+        match java_compat::big_decimal_to_string(&read) {
+            Some(text) => out.push_str(&text),
+            None => out.push_str(&read),
+        }
+        Some(())
+    }
+}
+
+/// A string's contents escaped as `serde_json` escapes them with [`JacksonFormatter`]'s escapes.
+fn escape_into(out: &mut String, text: &str) {
+    const HEX: &[u8; 16] = b"0123456789ABCDEF";
+    let bytes = text.as_bytes();
+    let mut from = 0;
+    for (at, &b) in bytes.iter().enumerate() {
+        let short = match b {
+            b'"' => "\\\"",
+            b'\\' => "\\\\",
+            0x08 => "\\b",
+            0x0c => "\\f",
+            b'\n' => "\\n",
+            b'\r' => "\\r",
+            b'\t' => "\\t",
+            0x00..=0x1f => "",
+            _ => continue,
+        };
+        out.push_str(&text[from..at]);
+        if short.is_empty() {
+            out.push_str("\\u00");
+            out.push(char::from(HEX[usize::from(b >> 4)]));
+            out.push(char::from(HEX[usize::from(b & 0xf)]));
+        } else {
+            out.push_str(short);
+        }
+        from = at + 1;
+    }
+    out.push_str(&text[from..]);
+}
+
 /// [`pretty`] over a list of expectations (or an object holding one), with each expectation's `metadata` written as
 /// compact JSON on one line, as upstream's `MetadataJson` text is embedded.
 pub fn pretty_expectations(value: &serde_json::Value) -> String {
@@ -493,6 +774,54 @@ mod tests {
         assert_eq!(v.to_string(), r#"{"a":"x\ny","b":[1,null,7,2.50],"c":"q"}"#);
         assert!(parse_lenient(b"hello /m32").is_err());
         assert!(parse_lenient(b"").is_err());
+    }
+
+    /// [`super::pretty_text_into`] writes what the tree [`parse_lenient`] reads prints, or nothing.
+    #[test]
+    fn pretty_text_is_the_tree_printed() {
+        let tree_text = |text: &str| {
+            let mut tree = parse_lenient(text.as_bytes()).unwrap();
+            crate::model::big_decimal_in_place(&mut tree);
+            // as a field of an object: depth 1 (put in as it is: `json!` would convert its numbers again)
+            let mut object = serde_json::Map::new();
+            object.insert("body".into(), tree);
+            let mut out = String::new();
+            super::pretty_into(&mut out, &serde_json::Value::Object(object));
+            out
+        };
+        let direct = |text: &str| {
+            let mut out = String::from("{\n  \"body\" : ");
+            super::pretty_text_into(&mut out, text, 1).then(|| out + "\n}")
+        };
+        let written = [
+            r#"{"a":1}"#,
+            "{}",
+            "[]",
+            " \t\r\n{ } ",
+            "[ [ ], { }, [ [ 1 ] ], { \"a\" : [ ] } ]",
+            r#"{"a":{"b":{"c":[1,{"d":null}]}},"e":[true,false,null],"f":""}"#,
+            r#"{"n":[0,-0,12,-12,1.50,1e2,1E+2,2.0E-3,-0.0,12345678901234567890,-98765432109876543210,1.0e400,0.1e1]}"#,
+            r#"{"s":"a\"b\\c\/d\b\f\n\r\t\u0001\u001fé😀 é 😀 \u007f","k é":"x"}"#,
+            "{\"u\":\"\\u00e9\\ud83d\\ude00\\u2028\"}",
+            r#"[{"order":{"id":"e0","items":[{"sku":"SKU-00000","quantity":1,"unitPrice":9.99,"tags":["standard","warehouse-a"]}]}}]"#,
+        ];
+        for text in written {
+            assert_eq!(direct(text).as_deref(), Some(tree_text(text).as_str()), "{text}");
+        }
+        let left_to_the_tree = [
+            "1", "\"s\"", "null", "", "  ", r#"{"a":1,"a":2}"#, "{\"a\\tb\":1}", r#"{"a":1} x"#, "{'a':1}", r#"{"a":01}"#,
+            r#"{"a":1,}"#, r#"{"a":"\ud800"}"#, "{\"a\":\"\u{1}\"}", "[1 2]", r#"{"a":.5}"#, r#"{"a":1.}"#, r#"{"a":tru}"#,
+            "/*c*/{}", "\u{feff}{}",
+        ];
+        for text in left_to_the_tree {
+            assert_eq!(direct(text), None, "{text}");
+        }
+        let deep = "[".repeat(150) + &"]".repeat(150);
+        assert_eq!(direct(&deep), None);
+        let many: String = format!("{{{}}}", (0..40).map(|i| format!("\"k{i}\":{i}")).collect::<Vec<_>>().join(","));
+        assert_eq!(direct(&many), None);
+        let fewer: String = format!("{{{}}}", (0..32).map(|i| format!("\"k{i}\":{i}")).collect::<Vec<_>>().join(","));
+        assert_eq!(direct(&fewer).as_deref(), Some(tree_text(&fewer).as_str()));
     }
 
     #[test]

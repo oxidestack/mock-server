@@ -1373,7 +1373,8 @@ impl RequestLog {
     /// A served request's completion whose entry `make` builds from the exchange (its request, its response). The
     /// entry is built when the log is first read unless something needs it kept as built (a disk-capture hook sees it,
     /// `maxLoggedBodyBytes` cuts what it quotes, a control-plane request is masked); one the console prints is built
-    /// for it and let go. `kind` is its type. Nothing is built for a log that keeps nothing.
+    /// for it and let go, unless `line` writes its console message from the parts it is built from (checked against
+    /// the built entry's in debug builds). `kind` is its type. Nothing is built for a log that keeps nothing.
     pub fn record_served(
         &self,
         logged: &LoggedRequest,
@@ -1381,6 +1382,7 @@ impl RequestLog {
         expectation_id: Option<String>,
         kind: Kind,
         make: impl Fn(&Exchange, &LoggedRequest) -> LogEntry + Send + Sync + 'static,
+        line: Option<ServedLine<'_>>,
     ) {
         use std::sync::atomic::Ordering::{Acquire, Relaxed};
         let hooked = self.exchange_hook_set.load(Acquire);
@@ -1395,9 +1397,23 @@ impl RequestLog {
         }
         let portless = in_portless_scope();
         if printed {
-            // the console's copy is built now, from the logged form the request's other lines rendered, and let go:
-            // the log keeps what builds it again
-            self.console_entry(&completed_entry(make(&x, logged), &x, portless));
+            match line.filter(|_| self.redaction_fields().is_none()) {
+                // the line written from the entry's parts, the entry not built
+                Some(line) => {
+                    #[cfg(debug_assertions)]
+                    {
+                        let (mut given, mut built, mut scratch) = (String::new(), String::new(), String::new());
+                        line(&x, logged, &mut given, &mut scratch);
+                        completed_entry(make(&x, logged), &x, portless).write_message(&mut built, &mut scratch);
+                        assert_eq!(given, built, "a served entry's console message");
+                    }
+                    let compact = || completed_entry(make(&x, logged), &x, portless).compact_text();
+                    self.console(Level::Info, kind, &|out, scratch| line(&x, logged, out, scratch), &compact, portless);
+                }
+                // the console's copy is built now, from the logged form the request's other lines rendered, and let
+                // go: the log keeps what builds it again
+                None => self.console_entry(&completed_entry(make(&x, logged), &x, portless)),
+            }
         }
         let kind = if kind == Kind::Info { x.completion_kind() } else { kind };
         let make = move |x: &Exchange| make(x, &LoggedRequest::shared(x.request.clone()));
@@ -1432,7 +1448,7 @@ impl RequestLog {
     }
 
     /// A `NO_MATCH_RESPONSE`: the request no expectation matched, its 404 and (with INFO) its log line.
-    pub fn record_no_match(&self, request: impl Into<Arc<HttpRequest>>, response: Value, message: Option<LogEntry>) {
+    pub fn record_no_match(&self, request: impl Into<Arc<HttpRequest>>, response: impl Into<Arc<Value>>, message: Option<LogEntry>) {
         // Below INFO the `NO_MATCH_RESPONSE` entry is not logged (`MockServerLogger`), and the exchange lives in that
         // entry: `REQUEST_RESPONSES`, `explainUnmatched` and the verifications read none of it (oracle).
         if message.is_none() {
@@ -2385,6 +2401,10 @@ fn share_expectation(entry: &mut LogEntry) {
 /// How many expectations [`share_expectation`] remembers on each thread.
 const SHARED_EXPECTATIONS: usize = 256;
 
+/// A served request's console message written from its exchange and logged request ([`RequestLog::record_served`]),
+/// onto `out` with `scratch` lent.
+pub type ServedLine<'a> = &'a dyn Fn(&Exchange, &LoggedRequest, &mut String, &mut String);
+
 /// A request as log lines show it, built once for all of its entries: [`logged`] and its text in a
 /// message ([`log_value`]).
 #[derive(Clone)]
@@ -2426,14 +2446,10 @@ fn received_text_of(logged: &Value) -> String {
     crate::matcher::format_log_message(0, "received request:{}", &[&log_value(logged)])
 }
 
-/// [`received_text_of`] appended to `out`, the request rendered into `scratch` on the way (from the request itself
-/// while nothing has rendered its JSON).
+/// [`received_text_of`] appended to `out` ([`crate::log_entry::Json::write_block`]: a request's block is rendered once
+/// for all the lines that quote it).
 fn received_text_into(out: &mut String, scratch: &mut String, logged: &crate::log_entry::Json) {
-    crate::matcher::format_log_message_into(out, 0, "received request:{}", 1, |_, write| {
-        scratch.clear();
-        logged.write_text(scratch);
-        write(scratch);
-    });
+    crate::matcher::format_log_message_blocks_into(out, 0, "received request:{}", 1, |_, out| logged.write_block(out, scratch));
 }
 
 /// A received request as its `RECEIVED_REQUEST` log entry prints it: the ordered form, a JSON body as its bare
@@ -2554,11 +2570,31 @@ impl serde::Serialize for LoggedView<'_> {
         if !request.remote_address.is_empty() {
             o.serialize_entry("remoteAddress", &*request.remote_address)?;
         }
-        if let Some(body) = request_body_json(request, BodyForm::Ordered) {
+        if let Some(text) = logged_json_body_text(request) {
+            // the text as it is: a number's text is what `serde_json` writes without a change
+            o.serialize_entry("body", &serde_json::Number::from_string_unchecked(text))?;
+        } else if let Some(body) = request_body_json(request, BodyForm::Ordered) {
             o.serialize_entry("body", &bare(body))?;
         }
         o.end()
     }
+}
+
+/// The body of [`LoggedView`] (a field of the request object, so at depth 1) as text, written straight from a JSON
+/// body in UTF-8 ([`crate::json::pretty_text_into`]): the text [`body_json`]'s tree prints, without the tree. `None`
+/// for any other body, or one that text is not written for.
+fn logged_json_body_text(request: &HttpRequest) -> Option<String> {
+    if request.body.is_empty() || request.body_kind == BodyKind::Binary {
+        return None;
+    }
+    let content_type = crate::media_type::normalise(request.body_content_type()?);
+    let media = crate::media_type::MediaType::parse(Some(&content_type));
+    if !media.is_json() || !media.charset_or_default().is_some_and(|c| c.eq_ignore_ascii_case("utf-8")) {
+        return None;
+    }
+    let text = std::str::from_utf8(&request.body).ok()?;
+    let mut out = String::with_capacity(text.len() + text.len() / 2);
+    crate::json::pretty_text_into(&mut out, text, 1).then_some(out)
 }
 
 /// A name [`literal`] does not write as itself: blank (written `""`), or starting with a marker (the object form).
@@ -3077,10 +3113,11 @@ fn json_body(body: &[u8], ct: &str, media: &crate::media_type::MediaType, form: 
     let parsed = if blank { None } else { crate::json::parse_lenient(text.as_bytes()).ok() };
     // `rawBytes` is only kept, on the request-retrieval path, when the bytes are not simply the compact rendering of
     // the JSON (`OBJECT_MAPPER.writeValueAsBytes(jsonNode)`).
-    let compact = parsed.as_ref().is_some_and(|v| crate::json::compact(v).as_bytes() == body);
+    // Only the flat form asks (the log's ordered form, rendered for each console line, never does).
+    let compact = form == BodyForm::Flat && parsed.as_ref().is_some_and(|v| crate::json::compact(v).as_bytes() == body);
     let json = match parsed {
-        Some(v) => {
-            let v = crate::model::big_decimal_tree(&v);
+        Some(mut v) => {
+            crate::model::big_decimal_in_place(&mut v);
             if v.is_array() || v.is_object() || crate::json::compact(&v) == text { v } else { crate::model::number(&text) }
         }
         None if blank => Value::Null,

@@ -575,6 +575,8 @@ struct Pending {
     /// Lines queued here since the thread first printed, and of those, the lines the writer has taken.
     queued: u64,
     taken: u64,
+    /// How long the last line formatted onto this queue was.
+    last_line: usize,
 }
 
 /// What the writer took from one queue: the text and its lines, and the queue's count of lines taken then.
@@ -665,11 +667,14 @@ impl Console {
                 };
                 let mut pending = queue.pending.lock();
                 let start = pending.text.len();
-                if start >= CONSOLE_QUEUE {
+                // a queue that would not take a line as long as the last one this thread queued drops it unformatted:
+                // formatting a line only to cut it again cost as much as writing it
+                if start >= CONSOLE_QUEUE || (start > 0 && start + pending.last_line > CONSOLE_QUEUE) {
                     drop(pending);
                     return self.count_dropped();
                 }
                 write(&mut pending.text, scratch);
+                pending.last_line = pending.text.len() - start;
                 if start > 0 && pending.text.len() > CONSOLE_QUEUE {
                     pending.text.truncate(start);
                     drop(pending);

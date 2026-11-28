@@ -792,9 +792,14 @@ impl RequestMatcher {
         out.push(("body", self.body.as_ref().filter(|b| !b.matches(request, false)).map(|b| b.difference(request).unwrap_or(Difference::None))));
         stop!();
         for &field in MAP_FIELDS {
-            let (matcher, actual, kind) = self.map_field(field, request).expect("a map field");
             let skipped = field == "pathParameters" && (!self.has_path() || self.control_plane_parts_differ(request));
-            let failed = !skipped && !matcher.is_empty() && !matcher.matches(&actual, true);
+            // an empty matcher matches whatever the request holds: its map is not built
+            if skipped || self.map_matcher(field).is_some_and(MultiMapMatcher::is_empty) {
+                out.push((field, None));
+                continue;
+            }
+            let (matcher, actual, kind) = self.map_field(field, request).expect("a map field");
+            let failed = !matcher.matches(&actual, true);
             out.push((field, failed.then(|| matcher.field_difference(&actual, kind))));
             stop!();
         }
@@ -992,10 +997,25 @@ impl RequestMatcher {
         if let (None, "body", Some(body)) = (failed, field, self.body.as_ref()) {
             return body.negated_inner_differences(request);
         }
+        // an empty map matcher records nothing ([`MultiMapMatcher::recorded`]): its map is not built
+        if self.map_matcher(field).is_some_and(MultiMapMatcher::is_empty) {
+            return Vec::new();
+        }
         match self.map_field(field, request) {
             Some((matcher, actual, kind)) => matcher.recorded(&actual, failed.is_none(), kind),
             None => failed.map(Difference::log_text).filter(|t| !t.is_empty()).into_iter().collect(),
         }
+    }
+
+    /// A map field's matcher (`MAP_FIELDS`).
+    fn map_matcher(&self, field: &str) -> Option<&MultiMapMatcher> {
+        Some(match field {
+            "headers" => &self.headers,
+            "cookies" => &self.cookies,
+            "pathParameters" => &self.path_parameters,
+            "queryParameters" => &self.query,
+            _ => return None,
+        })
     }
 
     /// A map field's matcher, the actual map it is matched against and how its failure prints (`MAP_FIELDS`).

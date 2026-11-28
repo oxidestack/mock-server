@@ -462,7 +462,7 @@ fn a_served_request_is_logged_without_building_its_entry_and_reads_back_as_an_ea
         lazy.record_served(&logged, response.clone(), Some("e-1".into()), Kind::ExpectationResponse, move |x, logged| {
             builds.fetch_add(1, Ordering::Relaxed);
             served_entry(x, logged, &action_for_lazy)
-        });
+        }, None);
 
         let plain = served(path, &id);
         let logged = crate::recorded::LoggedRequest::of(&plain);
@@ -488,7 +488,7 @@ fn a_log_that_keeps_nothing_builds_no_served_entry() {
     let request = Arc::new(served("/a", "00000000-0000-0000-0000-000000000000"));
     let logged = crate::recorded::LoggedRequest::shared(request.clone());
     log.received_logged(&logged, &request);
-    log.record_served(&logged, json!({"statusCode": 200}), Some("e-1".into()), Kind::ExpectationResponse, |_, _| panic!("built for a log that keeps nothing"));
+    log.record_served(&logged, json!({"statusCode": 200}), Some("e-1".into()), Kind::ExpectationResponse, |_, _| panic!("built for a log that keeps nothing"), None);
     assert_eq!((log.size(), log.evicted()), (0, 0));
 }
 
