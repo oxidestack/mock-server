@@ -1,5 +1,5 @@
-# cargo-deny: the CNCF third-party licence policy over the Cargo graph. The `licenses` CI job on both
-# forges runs `cargo deny --locked check licenses`; third_party/ (data outside Cargo) is checked by
+# cargo-deny: the CNCF third-party licence policy over the Cargo graph, and the RustSec advisories against it. The
+# `licenses` CI job runs `cargo deny --locked check licenses` and `cargo deny --locked check advisories`; third_party/ (data outside Cargo) is checked by
 # tools/check-third-party.sh against third_party/MANIFEST, which reads its allowlist from this file.
 #
 # Policy: cncf/foundation policies-guidance/allowed-third-party-license-policy.md (read 2026-10-28). Code is
@@ -54,11 +54,11 @@ include-dev = true
 # which neither that exception nor the allowlist names. CNCF status: none for CDLA-Permissive-2.0.
 [[licenses.exceptions]]
 # Dev-dependency: a unit test in src/asyncapi/tls.rs asserts the default trust is the JDK cacerts, not these roots.
-crate = "webpki-roots@1.0.9"
+crate = "webpki-roots@1.0.10"
 allow = ["CDLA-Permissive-2.0"]
 [[licenses.exceptions]]
 # reqwest -> rustls-platform-verifier (the platform verifier's fallback roots).
-crate = "webpki-root-certs@1.0.9"
+crate = "webpki-root-certs@1.0.10"
 allow = ["CDLA-Permissive-2.0"]
 
 # Unlicense: rumqttc's `websocket` feature (MQTT over WebSockets). CNCF status: none (the only Unlicense entry in
@@ -116,7 +116,7 @@ allow = ["Unicode-3.0"]
 crate = "yoke@0.8.3"
 allow = ["Unicode-3.0"]
 [[licenses.exceptions]]
-crate = "yoke-derive@0.8.3"
+crate = "yoke-derive@0.8.4"
 allow = ["Unicode-3.0"]
 [[licenses.exceptions]]
 crate = "zerofrom@0.1.8"
@@ -137,3 +137,37 @@ allow = ["Unicode-3.0"]
 [licenses.private]
 # Workspace crates are checked like any other; each declares its licence (the root package included).
 ignore = false
+
+# RustSec advisories: a finding with a semver-compatible fix is fixed in Cargo.lock (`cargo update -p <crate> --precise
+# <version>`), never ignored. An entry here is a finding with no such fix, and its reason says why it may stand:
+# the affected code is unreachable from ours (with the call sites that show it), or the crate is unmaintained with no
+# known vulnerability. Delete an entry as soon as its crate leaves the graph or a fix lands: cargo-deny reports an
+# ignore that matches nothing.
+[advisories]
+ignore = [
+    # rustls-webpki 0.102.8, only through rumqttc 0.25.1 (the latest; its main still pins 0.102, rumqtt #1067, #1046,
+    # PR #1037). rumqttc takes nothing from it but the `webpki::Error` type (rumqttc src/tls.rs:42): MQTT over TLS gets
+    # a finished rustls config (src/asyncapi/mqtt.rs:616, `TlsConfiguration::Rustls`) whose verifier is rustls 0.23 on
+    # rustls-webpki 0.103 (src/asyncapi/tls.rs:433, :597), and no CRL is passed anywhere.
+    { id = "RUSTSEC-2026-0049", reason = "rustls-webpki 0.102.8 via rumqttc only: no certificate is verified by it (our verifier is rustls 0.23 on webpki 0.103) and no CRL is used" },
+    { id = "RUSTSEC-2026-0098", reason = "rustls-webpki 0.102.8 via rumqttc only: no certificate is verified by it (our verifier is rustls 0.23 on webpki 0.103)" },
+    { id = "RUSTSEC-2026-0099", reason = "rustls-webpki 0.102.8 via rumqttc only: no certificate is verified by it (our verifier is rustls 0.23 on webpki 0.103)" },
+    { id = "RUSTSEC-2026-0104", reason = "rustls-webpki 0.102.8 via rumqttc only: no CRL is parsed by it, or anywhere" },
+    { id = "RUSTSEC-2026-0382", reason = "rustls-webpki 0.102.8 via rumqttc only: no certificate is verified by it (our verifier is rustls 0.23 on webpki 0.103)" },
+    # rsa 0.9.10 (Marvin: timing of the crate's private-key operations). No 0.9 fix; 0.10 is a breaking release. We
+    # never decrypt or sign with it: it generates keys of unusual sizes (src/keys.rs:21, src/templates/jwt.rs:20),
+    # reads and writes PKCS#1/PKCS#8 (src/tls/mod.rs:822-874) and lends its BigUint to the JDK-compatible signer
+    # (src/keys.rs JdkRsaKey); signatures are made by ring and aws-lc-rs.
+    { id = "RUSTSEC-2023-0071", reason = "rsa 0.9: no fixed 0.9 release; its private-key operations (decrypt, sign) are never called, only key generation, PKCS#1/PKCS#8 encoding and BigUint" },
+    # crypto-bigint 0.5.5 under elliptic-curve 0.13 (p256, p384, p521). The fix is crypto-bigint 0.7.6, which only the
+    # breaking p256/p384/p521 0.14 line uses. The keys these curves hold are a mock identity provider's signing keys
+    # (src/keys.rs EcKey: generated per run or given by the test), and k8s-webhook's P-521 share is a one-connection
+    # ephemeral key whose secret only encrypts a handshake_failure alert (k8s-webhook/src/tls13.rs agree_p521).
+    { id = "RUSTSEC-2026-0387", reason = "crypto-bigint 0.5 via p256/p384/p521 0.13: the fix needs the breaking 0.14 line; the keys are a mock IdP's test keys and one-handshake ephemeral ECDH shares" },
+    # Unmaintained, no known vulnerability.
+    { id = "RUSTSEC-2026-0543", reason = "chrono unmaintained, no vulnerability; used by mock-server, java-compat-rs and rskafka (dev), where moving to `time` or `jiff` is its own change" },
+    { id = "RUSTSEC-2026-0555", reason = "chrono-tz unmaintained, no vulnerability; java-compat-rs's zone data" },
+    { id = "RUSTSEC-2026-0441", reason = "pin-utils unmaintained, no vulnerability; only `pin_mut!` inside the AWS SDK (aws-smithy-types, aws-smithy-runtime, aws-smithy-http)" },
+    { id = "RUSTSEC-2025-0134", reason = "rustls-pemfile unmaintained, no vulnerability; rumqttc calls it only for TlsConfiguration::Simple, and we pass TlsConfiguration::Rustls (src/asyncapi/mqtt.rs:616)" },
+    { id = "RUSTSEC-2024-0449", reason = "unsafe-libyaml unmaintained, no vulnerability; serde_yaml's parser, used once (src/templates/mod.rs yaml_to_json), where a parser swap would change what the template function accepts" },
+]

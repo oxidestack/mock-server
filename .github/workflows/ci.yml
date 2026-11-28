@@ -303,8 +303,9 @@ jobs:
 
   licenses:
     # The CNCF third-party licence policy (`make licenses`): third_party/ byte for byte as third_party/MANIFEST
-    # records it, every crate of the Cargo graph against deny.toml, then the dashboard's npm packages and
-    # java-launcher's Maven dependencies against the same allowlist (tools/check-noncargo-licenses.py).
+    # records it, every crate of the Cargo graph against deny.toml (its licences, then its RustSec advisories), then
+    # the dashboard's npm packages and java-launcher's Maven dependencies against the same allowlist
+    # (tools/check-noncargo-licenses.py).
     if: ${{ github.event_name == 'workflow_dispatch' || !github.event.repository.private }}
     runs-on: ubuntu-24.04
     permissions:
@@ -327,6 +328,9 @@ jobs:
       # The cache restores the binary without cargo's install record, which `cargo install` would refuse to overwrite.
       - run: cargo deny --version 2>/dev/null | grep -qx 'cargo-deny 0.20.2' || cargo install cargo-deny --version 0.20.2 --locked --force
       - run: cargo deny --locked check licenses
+      # RustSec: every advisory on a crate of Cargo.lock fails the job unless deny.toml's `[advisories] ignore` gives
+      # its reason; the advisory database is fetched fresh on each run, so a new advisory fails main without a commit.
+      - run: cargo deny --locked check advisories
       - run: python3 tools/check-noncargo-licenses.py npm
       - run: apt-get update -qq && apt-get install -y -qq --no-install-recommends openjdk-17-jdk-headless maven >/dev/null
       # Maven's local repository named on both sides: in a job container mvn takes root's home, while $HOME (which the

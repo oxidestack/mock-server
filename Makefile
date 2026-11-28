@@ -48,12 +48,14 @@ hooks: ## install the pre-push hook: make public-check and make commits-check be
 	install -m 755 tools/public/pre-push '$(HOOKS_DIR)/pre-push'
 
 # The CNCF licence gate, as the `licenses` CI job runs it : third_party/ unmodified and licensed as
-# third_party/MANIFEST records, then the Cargo graph against deny.toml (`cargo install cargo-deny --locked`), then the dashboard's npm packages and
-# java-launcher's Maven dependencies (tools/check-noncargo-licenses.py).
+# third_party/MANIFEST records, then the Cargo graph against deny.toml (`cargo install cargo-deny --locked`): its licences
+# and its RustSec advisories, then the dashboard's npm packages and java-launcher's Maven dependencies
+# (tools/check-noncargo-licenses.py).
 .PHONY: licenses
 licenses:
 	sh tools/check-third-party.sh
 	cargo deny --locked check licenses
+	cargo deny --locked check advisories
 	python3 tools/check-noncargo-licenses.py npm
 	mvn -B -q -f java-launcher/pom.xml dependency:list -DincludeScope=runtime -DoutputFile=$(CURDIR)/target/java-launcher-deps.txt
 	python3 tools/check-noncargo-licenses.py maven --list target/java-launcher-deps.txt
