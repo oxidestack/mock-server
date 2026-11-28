@@ -846,13 +846,7 @@ fn read_definite(tokens: &[PathToken], document: &Value) -> Result<Option<Value>
     let mut current = document;
     for (n, token) in tokens.iter().enumerate() {
         let leaf = n == tokens.len() - 1;
-        let not_an_object = |property: String, current: &Value| {
-            format!(
-                "Expected to find an object with property {property} in path {} but found '{}'. This is not a json object according to the JsonProvider: 'shaded_package.com.jayway.jsonpath.spi.json.JsonSmartJsonProvider'.",
-                render_path(&tokens[..n]),
-                json_smart_class(current)
-            )
-        };
+        let not_an_object = |property: String, current: &Value| not_an_object(&property, &render_path(&tokens[..n]), current);
         match token {
             PathToken::Property(name) => {
                 let Value::Object(o) = current else { return Err(not_an_object(format!("['{name}']"), current)) };
@@ -1013,8 +1007,227 @@ fn json_path_failure(path: &str, found: Option<&str>) -> String {
     let document = crate::json::parse_lenient(found.as_bytes()).unwrap_or_else(|_| Value::String(found.trim().to_string()));
     match JaywayPath::compile(path).evaluate(&document) {
         Err(because) => because,
-        Ok(_) => NOT_TRUTHY.to_string(),
+        Ok(_) => upstream_definite_failure(path, &document).unwrap_or_else(|| NOT_TRUTHY.to_string()),
     }
+}
+
+/// A step of a Jayway path as its `PathToken`s print it.
+enum JaywayStep {
+    /// `['a']`, or `['a','b']` (indefinite unless it closes the path).
+    Property(Vec<String>),
+    /// `[0]`, or `[0,1]` (indefinite).
+    Index(Vec<i64>),
+    /// `[1:]`, `[:2]`, `[-1:]`.
+    Slice(Option<i64>, Option<i64>),
+    Wildcard,
+    Filter,
+    Scan,
+    /// A function, and whether it is given arguments (printed `(...)`).
+    Function(String, bool),
+}
+
+/// The steps of a Jayway path (`$` first), `None` for syntax this reading does not know.
+fn jayway_steps(path: &str) -> Option<Vec<JaywayStep>> {
+    let chars: Vec<char> = path.chars().collect();
+    if chars.first() != Some(&'$') {
+        return None;
+    }
+    let name_char = |c: char| c.is_alphanumeric() || matches!(c, '_' | '-' | '$');
+    let mut steps = Vec::new();
+    let mut i = 1;
+    while i < chars.len() {
+        match chars[i] {
+            '.' => {
+                if chars.get(i + 1) == Some(&'.') {
+                    steps.push(JaywayStep::Scan);
+                    i += 2;
+                    if chars.get(i) == Some(&'[') {
+                        continue;
+                    }
+                } else {
+                    i += 1;
+                }
+                if chars.get(i) == Some(&'*') {
+                    steps.push(JaywayStep::Wildcard);
+                    i += 1;
+                    continue;
+                }
+                let start = i;
+                while i < chars.len() && name_char(chars[i]) {
+                    i += 1;
+                }
+                if i == start {
+                    return None;
+                }
+                let name: String = chars[start..i].iter().collect();
+                if chars.get(i) == Some(&'(') {
+                    let close = i + chars[i..].iter().position(|c| *c == ')')?;
+                    steps.push(JaywayStep::Function(name, chars[i + 1..close].iter().any(|c| !c.is_whitespace())));
+                    i = close + 1;
+                } else {
+                    steps.push(JaywayStep::Property(vec![name]));
+                }
+            }
+            '[' if chars.get(i + 1) == Some(&'?') => {
+                // The filter runs to its matching `]`, outside string literals.
+                let (mut depth, mut quote, mut j) = (0, None::<char>, i);
+                while j < chars.len() {
+                    let c = chars[j];
+                    match quote {
+                        Some(_) if c == '\\' => j += 1,
+                        Some(q) if c == q => quote = None,
+                        Some(_) => {}
+                        None if c == '\'' || c == '"' => quote = Some(c),
+                        None if c == '[' => depth += 1,
+                        None if c == ']' => {
+                            depth -= 1;
+                            if depth == 0 {
+                                break;
+                            }
+                        }
+                        None => {}
+                    }
+                    j += 1;
+                }
+                if j >= chars.len() {
+                    return None;
+                }
+                steps.push(JaywayStep::Filter);
+                i = j + 1;
+            }
+            '[' => {
+                let close = i + chars[i..].iter().position(|c| *c == ']')?;
+                let inner: String = chars[i + 1..close].iter().collect();
+                let inner = inner.trim();
+                let int = |s: &str| -> Option<Option<i64>> {
+                    let s = s.trim();
+                    if s.is_empty() { Some(None) } else { s.parse().ok().map(Some) }
+                };
+                if inner == "*" {
+                    steps.push(JaywayStep::Wildcard);
+                } else if inner.starts_with(['\'', '"']) {
+                    let names = inner
+                        .split(',')
+                        .map(|part| {
+                            let part = part.trim();
+                            let quoted = part.len() >= 2 && ((part.starts_with('\'') && part.ends_with('\'')) || (part.starts_with('"') && part.ends_with('"')));
+                            (quoted && !part[1..part.len() - 1].contains(['\'', '"'])).then(|| part[1..part.len() - 1].to_string())
+                        })
+                        .collect::<Option<Vec<_>>>()?;
+                    steps.push(JaywayStep::Property(names));
+                } else if let Some((from, to)) = inner.split_once(':') {
+                    steps.push(JaywayStep::Slice(int(from)?, int(to)?));
+                } else {
+                    steps.push(JaywayStep::Index(inner.split(',').map(|n| int(n)?).collect::<Option<Vec<_>>>()?));
+                }
+                i = close + 1;
+            }
+            _ => return None,
+        }
+    }
+    Some(steps)
+}
+
+/// Steps as Jayway prints a token and those after it: `[?]..['b'][*].length()`.
+fn render_steps(steps: &[JaywayStep]) -> String {
+    use std::fmt::Write;
+    let mut out = String::new();
+    for step in steps {
+        let _ = match step {
+            JaywayStep::Property(names) => write!(out, "['{}']", names.join("','")),
+            JaywayStep::Index(indexes) => {
+                out.push('[');
+                for (n, i) in indexes.iter().enumerate() {
+                    let _ = write!(out, "{}{i}", if n == 0 { "" } else { "," });
+                }
+                out.push(']');
+                Ok(())
+            }
+            JaywayStep::Slice(from, to) => {
+                out.push('[');
+                if let Some(from) = from {
+                    let _ = write!(out, "{from}");
+                }
+                out.push(':');
+                if let Some(to) = to {
+                    let _ = write!(out, "{to}");
+                }
+                out.push(']');
+                Ok(())
+            }
+            JaywayStep::Wildcard => write!(out, "[*]"),
+            JaywayStep::Filter => write!(out, "[?]"),
+            JaywayStep::Scan => write!(out, ".."),
+            JaywayStep::Function(name, false) => write!(out, ".{name}()"),
+            JaywayStep::Function(name, true) => write!(out, ".{name}(...)"),
+        };
+    }
+    out
+}
+
+/// What Jayway throws reading an indefinite path that `JaywayPath::evaluate` read as not truthy: a token whose
+/// upstream steps are all definite throws when the value it reaches is of the wrong kind (`PropertyPathToken`: not
+/// an object, or a missing property before the leaf; `ArrayPathToken.checkArrayModel`: null or not an array;
+/// `PredicatePathToken`: neither an object nor an array). `None` when nothing throws, which is from the first
+/// indefinite step on.
+fn upstream_definite_failure(path: &str, document: &Value) -> Option<String> {
+    let trimmed = path.trim();
+    let path = match trimmed.strip_prefix('@') {
+        Some(rest) => format!("${rest}"),
+        None if !trimmed.starts_with('$') => format!("$.{trimmed}"),
+        None => trimmed.to_string(),
+    };
+    let steps = jayway_steps(&path)?;
+    let mut current = document;
+    let mut at = String::from("$");
+    for (n, step) in steps.iter().enumerate() {
+        match step {
+            JaywayStep::Property(names) => {
+                let Value::Object(o) = current else {
+                    return Some(not_an_object(&render_steps(&steps[n..=n]), &at, current));
+                };
+                let [name] = names.as_slice() else { return None };
+                match o.get(name) {
+                    Some(v) => current = v,
+                    None => return (n + 1 < steps.len()).then(|| format!("Missing property in path {at}['{name}']")),
+                }
+                at.push_str(&render_steps(&steps[n..=n]));
+            }
+            JaywayStep::Index(_) | JaywayStep::Slice(..) => {
+                let items = match current {
+                    Value::Array(items) => items,
+                    Value::Null => return Some(format!("The path {at} is null")),
+                    other => {
+                        return Some(format!(
+                            "Filter: {} can only be applied to arrays. Current context is: {}",
+                            render_steps(&steps[n..]),
+                            java_to_string(other)
+                        ));
+                    }
+                };
+                let JaywayStep::Index(indexes) = step else { return None };
+                let [index] = indexes.as_slice() else { return None };
+                let effective = if *index < 0 { items.len() as i64 + index } else { *index };
+                current = usize::try_from(effective).ok().and_then(|i| items.get(i))?;
+                at.push_str(&render_steps(&steps[n..=n]));
+            }
+            JaywayStep::Filter => {
+                return (!current.is_object() && !current.is_array()).then(|| {
+                    format!("Filter: {} can not be applied to primitives. Current context is: {}", render_steps(&steps[n..]), java_to_string(current))
+                });
+            }
+            JaywayStep::Wildcard | JaywayStep::Scan | JaywayStep::Function(..) => return None,
+        }
+    }
+    None
+}
+
+/// `PropertyPathToken`'s `PathNotFoundException` for a value that is not an object.
+fn not_an_object(property: &str, path: &str, found: &Value) -> String {
+    format!(
+        "Expected to find an object with property {property} in path {path} but found '{}'. This is not a json object according to the JsonProvider: 'shaded_package.com.jayway.jsonpath.spi.json.JsonSmartJsonProvider'.",
+        json_smart_class(found)
+    )
 }
 
 /// The class json-smart reads a JSON value as.
@@ -2714,6 +2927,58 @@ mod tests {
             let field = if kind == "XML" { "xml" } else { "jsonPath" };
             let got = reason(json!({"type": kind, field: matcher}), &req(body));
             assert!(got.ends_with(&format!("failed because:     {because} ")), "{matcher} on {body}: {got}");
+        }
+    }
+
+    /// An indefinite path whose steps up to a filter, slice, index list or property list are definite fails there as
+    /// Jayway's `PathNotFoundException`/`InvalidPathException` does, each text the oracle's; past an indefinite
+    /// step (a wildcard, a scan, a filter) nothing throws (oracle scenario `json_path_upstream_definite_steps`).
+    #[test]
+    fn indefinite_path_reasons_follow_jayway_up_to_the_first_indefinite_step() {
+        const NOT_AN_OBJECT: &str = "This is not a json object according to the JsonProvider: 'shaded_package.com.jayway.jsonpath.spi.json.JsonSmartJsonProvider'.";
+        let cases = [
+            ("$.order[?(@.id == 'e9')]", "text/plain", "order e3", format!("Expected to find an object with property ['order'] in path $ but found 'java.lang.String'. {NOT_AN_OBJECT}")),
+            ("$.order[?(@.id == 'e9')]", "application/x-www-form-urlencoded", "order=e3", "Filter: [?] can not be applied to primitives. Current context is: e3".to_string()),
+            ("$.order[?(@.id == 'e9')]", "application/x-www-form-urlencoded", "order=a%20b", "Filter: [?] can not be applied to primitives. Current context is: a b".to_string()),
+            ("$.order[?(@.id == 'e9')]", "application/x-www-form-urlencoded", "order=e3&order=e4", "json path did not evaluate to truthy".to_string()),
+            ("$.order[?(@.id == 'e9')]", "application/x-www-form-urlencoded", "a=1", "Missing property in path $['order']".to_string()),
+            ("$.order.items[?(@.sku)]", "application/x-www-form-urlencoded", "order=e3", format!("Expected to find an object with property ['items'] in path $['order'] but found 'java.lang.String'. {NOT_AN_OBJECT}")),
+            ("$.order[?(@.id)].items", "application/x-www-form-urlencoded", "order=e3", "Filter: [?]['items'] can not be applied to primitives. Current context is: e3".to_string()),
+            ("$.order[1:2]", "application/x-www-form-urlencoded", "order=e3", "Filter: [1:2] can only be applied to arrays. Current context is: e3".to_string()),
+            ("$.order[*].id", "application/x-www-form-urlencoded", "order=e3", "json path did not evaluate to truthy".to_string()),
+            ("$..order[?(@.id == 'e9')]", "application/x-www-form-urlencoded", "order=e3", "json path did not evaluate to truthy".to_string()),
+            ("$.a.b[?(@.c)]", "application/json", r#"{"a":{"b":5}}"#, "Filter: [?] can not be applied to primitives. Current context is: 5".to_string()),
+            ("$.a.b[?(@.c)]", "application/json", r#"{"a":[1,2]}"#, format!("Expected to find an object with property ['b'] in path $['a'] but found 'shaded_package.net.minidev.json.JSONArray'. {NOT_AN_OBJECT}")),
+            ("$.a.b[?(@.c)]", "application/json", r#"{"a":null}"#, format!("Expected to find an object with property ['b'] in path $['a'] but found 'null'. {NOT_AN_OBJECT}")),
+            ("$.a.b[?(@.c)]", "application/json", r#"{"a":{}}"#, "Missing property in path $['a']['b']".to_string()),
+            ("$.a[?(@.c)]", "application/json", r#"{"a":null}"#, "Filter: [?] can not be applied to primitives. Current context is: null".to_string()),
+            ("$.a[?(@.c)]", "application/json", r#"{"a":1e3}"#, "Filter: [?] can not be applied to primitives. Current context is: 1000.0".to_string()),
+            ("$.a[?(@.c)]", "application/json", r#"{"a":[1,2]}"#, "json path did not evaluate to truthy".to_string()),
+            ("$[?(@.c)]", "text/plain", "hello", "Filter: [?] can not be applied to primitives. Current context is: hello".to_string()),
+            ("$.a[?(@.c)]", "application/json", "[1,2]", format!("Expected to find an object with property ['a'] in path $ but found 'shaded_package.net.minidev.json.JSONArray'. {NOT_AN_OBJECT}")),
+            ("$.a[0][?(@.c)]", "application/json", r#"{"a":"x"}"#, "Filter: [0][?] can only be applied to arrays. Current context is: x".to_string()),
+            ("$.a[0][?(@.c)]", "application/json", r#"{"a":[5]}"#, "Filter: [?] can not be applied to primitives. Current context is: 5".to_string()),
+            ("$.a[0][?(@.c)]", "application/json", r#"{"a":null}"#, "The path $['a'] is null".to_string()),
+            ("$.a[5][?(@.c)]", "application/json", r#"{"a":[]}"#, "json path did not evaluate to truthy".to_string()),
+            ("$.a[?(@.c)]..b[*].d.length()", "application/json", r#"{"a":"x"}"#, "Filter: [?]..['b'][*]['d'].length() can not be applied to primitives. Current context is: x".to_string()),
+            ("$.a[?(@.c)][:2]['p','q'][0,1]", "application/json", r#"{"a":"x"}"#, "Filter: [?][:2]['p','q'][0,1] can not be applied to primitives. Current context is: x".to_string()),
+            ("$.a[?(@.c)].*", "application/json", r#"{"a":"x"}"#, "Filter: [?][*] can not be applied to primitives. Current context is: x".to_string()),
+            ("$.a[?(@.c)][?(@.d)]", "application/json", r#"{"a":"x"}"#, "Filter: [?][?] can not be applied to primitives. Current context is: x".to_string()),
+            ("$.a[-1:]", "application/json", r#"{"a":"x"}"#, "Filter: [-1:] can only be applied to arrays. Current context is: x".to_string()),
+            ("$.a[:2]", "application/json", r#"{"a":null}"#, "The path $['a'] is null".to_string()),
+            ("$.a[0,1]", "application/json", r#"{"a":"x"}"#, "Filter: [0,1] can only be applied to arrays. Current context is: x".to_string()),
+            ("$.a['p','q'][?(@.c)]", "application/json", r#"{"a":[1]}"#, format!("Expected to find an object with property ['p','q'] in path $['a'] but found 'shaded_package.net.minidev.json.JSONArray'. {NOT_AN_OBJECT}")),
+            ("$['a','b'][?(@.c)]", "application/json", r#"{"a":"x","b":"y"}"#, "json path did not evaluate to truthy".to_string()),
+            ("$.a[*][?(@.c)]", "application/json", r#"{"a":["x"]}"#, "json path did not evaluate to truthy".to_string()),
+            ("$.a.b[*]", "application/json", r#"{"a":{}}"#, "Missing property in path $['a']['b']".to_string()),
+            ("$.a[?(@.c == $.x)]", "application/json", r#"{"a":"x"}"#, "Filter: [?] can not be applied to primitives. Current context is: x".to_string()),
+            ("$.a[?(@.c)].b.d", "application/json", r#"{"a":{"c":1,"b":"x"}}"#, "json path did not evaluate to truthy".to_string()),
+        ];
+        for (path, content_type, body, because) in cases {
+            let mut request = req(body);
+            request.headers.push(("Content-Type".to_string(), vec![content_type.to_string()]));
+            let got = reason(json!({"type": "JSON_PATH", "jsonPath": path}), &request);
+            assert!(got.ends_with(&format!("failed because:     {because} ")), "{path} on {body}: {got}");
         }
     }
 
