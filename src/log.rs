@@ -258,7 +258,91 @@ pub fn command_error(message: &str) {
 /// `MockServerLogger.portInformation` writes nothing for it.
 /// Whether [`emit`] would print an entry of `level` and `kind`: asked first by a caller that has a line to build.
 pub fn console_wanted(state: &State, level: Level, kind: Kind) -> bool {
+    let (at, bit) = (level_index(level), 1u32 << kind as u32);
+    with_settings(state, |s| {
+        if s.known[at] & bit == 0 {
+            s.known[at] |= bit;
+            if console_wanted_now(state, level, kind) {
+                s.wanted[at] |= bit;
+            }
+        }
+        s.wanted[at] & bit != 0
+    })
+    .unwrap_or_else(|| console_wanted_now(state, level, kind))
+}
+
+/// [`console_wanted`] read from the configuration.
+fn console_wanted_now(state: &State, level: Level, kind: Kind) -> bool {
     console_enabled(&state.config, &state.log_level, level, kind) && !logging_disabled(&state.config) && !system_out_disabled(&state.config)
+}
+
+/// [`compact_enabled`] of `state`'s configuration, read once per runtime generation on each thread.
+fn compact(state: &State) -> bool {
+    with_settings(state, |s| {
+        if s.flags & COMPACT_KNOWN == 0 {
+            s.flags |= COMPACT_KNOWN | if compact_enabled(&state.config) { COMPACT } else { 0 };
+        }
+        s.flags & COMPACT != 0
+    })
+    .unwrap_or_else(|| compact_enabled(&state.config))
+}
+
+/// Whether `redactSecretsInLog` is on for `state`, read once per runtime generation on each thread.
+pub fn redacting(state: &State) -> bool {
+    with_settings(state, |s| {
+        if s.flags & REDACT_KNOWN == 0 {
+            s.flags |= REDACT_KNOWN | if state.config.redact_secrets_in_log() { REDACT } else { 0 };
+        }
+        s.flags & REDACT != 0
+    })
+    .unwrap_or_else(|| state.config.redact_secrets_in_log())
+}
+
+/// What the console settings of one server decided, as its configuration was at one runtime generation: each line
+/// asked them by name of the configuration several times (`logLevelOverrides`, `disableLogging`, `disableSystemOut`,
+/// `compactLogFormat`, `redactSecretsInLog`), a hash lookup each. Kept per thread, so no worker writes what another
+/// reads; a value set over the API counts the generation on, and the next line reads them again.
+#[derive(Clone, Copy)]
+struct Settings {
+    /// [`State::id`] of the server, and the runtime generation of its configuration the settings were read at.
+    server: u64,
+    generation: u64,
+    /// Per level, a bit per [`Kind`]: whether [`console_wanted`] was read for it, and what it said.
+    known: [u32; 5],
+    wanted: [u32; 5],
+    /// `COMPACT…` and `REDACT…` bits.
+    flags: u8,
+}
+
+const COMPACT_KNOWN: u8 = 1;
+const COMPACT: u8 = 2;
+const REDACT_KNOWN: u8 = 4;
+const REDACT: u8 = 8;
+
+// a bit per kind in a `u32`
+const _: () = assert!((Kind::TemplateGenerationFailed as u32) < 32);
+
+thread_local! {
+    static SETTINGS: std::cell::RefCell<Settings> =
+        const { std::cell::RefCell::new(Settings { server: 0, generation: 0, known: [0; 5], wanted: [0; 5], flags: 0 }) };
+}
+
+/// `read` of the calling thread's [`Settings`] of `state`, reset when they were another server's or another generation's;
+/// `None` while they are borrowed (a setting read from inside another's read) or the thread is ending.
+fn with_settings<R>(state: &State, read: impl FnOnce(&mut Settings) -> R) -> Option<R> {
+    // read before the settings are: a value set meanwhile counts on past it, so the next look reads them again
+    let generation = state.config.runtime_generation();
+    let server = state.id();
+    SETTINGS
+        .try_with(|settings| {
+            let mut settings = settings.try_borrow_mut().ok()?;
+            if settings.server != server || settings.generation != generation {
+                *settings = Settings { server, generation, known: [0; 5], wanted: [0; 5], flags: 0 };
+            }
+            Some(read(&mut settings))
+        })
+        .ok()
+        .flatten()
 }
 
 fn emit(state: &State, level: Level, kind: Kind, message: &str, portless: bool) {
@@ -461,9 +545,9 @@ pub fn error_as(state: &State, kind: Kind, message: &str) {
 /// One entry the event log recorded, written to the console at its level: the log calls this for the
 /// types the oracle prints on receipt, completion, verification, retrieval and clearing. Under `compactLogFormat` the
 /// line is `compact` (`LogEntry.getCompactMessage`) instead of the message `text` writes.
-pub fn log_entry(state: &State, level: Level, kind: Kind, text: Text, compact: &dyn Fn() -> String, portless: bool) {
-    if compact_enabled(&state.config) {
-        emit(state, level, kind, &compact(), portless);
+pub fn log_entry(state: &State, level: Level, kind: Kind, text: Text, compact_text: &dyn Fn() -> String, portless: bool) {
+    if compact(state) {
+        emit(state, level, kind, &compact_text(), portless);
     } else {
         emit_with(state, level, kind, text, portless);
     }
@@ -537,8 +621,9 @@ const WRITER_IDLE_POLLS: u32 = 100;
 /// fit its queue is dropped, never waited for.
 ///
 /// While lines keep coming the writer polls the queues and sleeps between looks rather than parking: a parked writer
-/// makes every line signal it, and the signals serialised the request workers. It parks only once the queues stayed
-/// empty for [`WRITER_IDLE_POLLS`] looks, so an idle server does not wake it.
+/// makes every line signal it, and the signals serialised the request workers. Only a queue half full wakes it from
+/// that sleep: one request's burst of lines (fifty did-not-match lines of a large body) filled a queue within it. It
+/// parks only once the queues stayed empty for [`WRITER_IDLE_POLLS`] looks, so an idle server does not wake it.
 pub(crate) struct Console {
     /// Which lines `RUST_LOG` lets through, by [`Target`] and [`LEVELS`] index.
     enabled: [[bool; 5]; 7],
@@ -550,6 +635,9 @@ pub(crate) struct Console {
     queues: parking_lot::Mutex<Vec<std::sync::Arc<Queue>>>,
     /// The writer is parked on `wake`, or about to park: a thread that queues a line wakes it.
     parked: std::sync::atomic::AtomicBool,
+    /// The writer is sleeping between two looks at the queues (on `wake`, for [`WRITER_POLL`]), or about to: a thread
+    /// whose queue is half full wakes it, so a burst of lines is written rather than dropped while it sleeps.
+    napping: std::sync::atomic::AtomicBool,
     wake_lock: parking_lot::Mutex<()>,
     wake: parking_lot::Condvar,
     /// Signalled after each write ([`flush_console`] waits on it).
@@ -631,6 +719,7 @@ impl Console {
             next: Default::default(),
             queues: Default::default(),
             parked: Default::default(),
+            napping: Default::default(),
             wake_lock: Default::default(),
             wake: Default::default(),
             wrote_lock: Default::default(),
@@ -691,11 +780,12 @@ impl Console {
                         self.numbered(&mut pending);
                     }
                 }
+                let half_full = pending.text.len() >= CONSOLE_QUEUE / 2;
                 drop(pending);
                 if scratch.capacity() > SCRATCH_KEPT {
                     *scratch = String::new();
                 }
-                self.wake_writer();
+                self.wake_writer(half_full);
             }
             Err(_) => NESTED.with(|nested| match nested.try_borrow_mut() {
                 Ok(mut nested) => {
@@ -732,9 +822,16 @@ impl Console {
 
     /// Wakes the writer if it parked. A line queued while the writer decides to park is seen by one of them: each side
     /// fences between its own store (the line, `parked`) and its look at the other's.
-    fn wake_writer(&self) {
+    /// A queue `half_full` wakes it from its sleep between looks too, seen the same way.
+    fn wake_writer(&self, half_full: bool) {
         use std::sync::atomic::Ordering::{Relaxed, SeqCst};
         std::sync::atomic::fence(SeqCst);
+        if half_full && self.napping.load(Relaxed) {
+            let _lock = self.wake_lock.lock();
+            if self.napping.swap(false, Relaxed) {
+                self.wake.notify_one();
+            }
+        }
         if self.parked.load(Relaxed) {
             let _lock = self.wake_lock.lock();
             if self.parked.swap(false, Relaxed) {
@@ -756,7 +853,14 @@ impl Console {
             }
             if idle < WRITER_IDLE_POLLS {
                 idle += 1;
-                std::thread::sleep(WRITER_POLL);
+                let mut lock = self.wake_lock.lock();
+                self.napping.store(true, Relaxed);
+                std::sync::atomic::fence(SeqCst);
+                let half_full = || self.queues.lock().iter().any(|queue| queue.pending.lock().text.len() >= CONSOLE_QUEUE / 2);
+                if !half_full() {
+                    self.wake.wait_for(&mut lock, WRITER_POLL);
+                }
+                self.napping.store(false, Relaxed);
                 continue;
             }
             let mut lock = self.wake_lock.lock();

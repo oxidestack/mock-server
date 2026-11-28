@@ -28,6 +28,27 @@ fn is_control_plane(method: Option<&str>, path: &str, preflight_method: Option<&
     preflight_method.is_some() && crate::cors_origin::is_control_plane_path_candidate(path) && crate::cors_origin::is_control_plane_route(preflight_method, path)
 }
 
+/// Whether [`for_log`] masks `request`. Each entry about a request asks it again (received, matched, returning): the
+/// thread remembers the last request found not to be a control-plane one, held weakly, so an equal address is always
+/// that request.
+pub fn masked_for_log(request: &std::sync::Arc<HttpRequest>) -> bool {
+    use std::cell::RefCell;
+    use std::sync::{Arc, Weak};
+    thread_local! {
+        static DATA_PLANE: RefCell<Weak<HttpRequest>> = const { RefCell::new(Weak::new()) };
+    }
+    let known = DATA_PLANE.try_with(|last| last.try_borrow().is_ok_and(|last| std::ptr::eq(last.as_ptr(), Arc::as_ptr(request)))).unwrap_or(false);
+    if known {
+        return false;
+    }
+    let preflight = crate::cors_origin::is_cors_preflight(request).then(|| request.first_header("access-control-request-method")).flatten();
+    if is_control_plane(Some(&request.method), &request.path, preflight) {
+        return without_credentials(request).is_some();
+    }
+    let _ = DATA_PLANE.try_with(|last| last.try_borrow_mut().map(|mut last| *last = Arc::downgrade(request)));
+    false
+}
+
 /// `CredentialRedaction.forLog` for a received request: the copy a log entry may hold when it is a control-plane
 /// request carrying credentials, else `None` (the request is logged as it is).
 pub fn for_log(request: &HttpRequest) -> Option<HttpRequest> {

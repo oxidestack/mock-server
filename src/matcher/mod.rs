@@ -1120,9 +1120,24 @@ impl RequestMatcher {
         if self.openapi.is_some() || self.unsupported || self.conditional.is_some() {
             return APPLICABLE - self.differences(request).len().min(APPLICABLE);
         }
-        // Every field with a recorded difference counts, one that matched after failed comparisons included.
-        let failed = self.all_differences(request).iter().filter(|(field, _)| APPLICABLE_FIELDS.contains(field)).count();
+        // Every field with a recorded difference counts, one that matched after failed comparisons included: the fields
+        // `all_differences` lists, told without writing their texts where that is known without them.
+        let failed = self
+            .field_results(request)
+            .into_iter()
+            .filter(|(field, difference)| APPLICABLE_FIELDS.contains(field) && self.records_any(field, request, difference.as_ref()))
+            .count();
         APPLICABLE - failed
+    }
+
+    /// Whether [`RequestMatcher::recorded_texts`] is not empty.
+    fn records_any(&self, field: &str, request: &HttpRequest, failed: Option<&Difference>) -> bool {
+        match field {
+            "path" => self.path_differences(request).iter().any(Difference::has_log_text),
+            "body" | "pathParameters" => !self.recorded_texts(field, request, failed).is_empty(),
+            _ if self.map_matcher(field).is_some() => !self.recorded_texts(field, request, failed).is_empty(),
+            _ => failed.is_some_and(Difference::has_log_text),
+        }
     }
 
     /// The `matcher{}would match{}if matcher was used for control plane` DEBUG entries a data-plane match of
@@ -1433,6 +1448,16 @@ impl Difference {
         }
     }
 
+    /// Whether [`Difference::log_text`] is not empty, told without writing it.
+    pub fn has_log_text(&self) -> bool {
+        match self {
+            // the message's parts are written after an indent, so the text is never empty
+            Difference::String { .. } | Difference::ExactString { .. } | Difference::Other(_) => true,
+            Difference::Text(t) => !t.is_empty(),
+            Difference::None => false,
+        }
+    }
+
     /// As a field's differences in a mismatch log entry's `because` (`MatchDifference.addDifference`).
     pub fn log_text(&self) -> String {
         match self {
@@ -1528,7 +1553,7 @@ pub fn argument_block_into(out: &mut String, indent: usize, argument: &str) {
     // (`C2 85`), U+2028 (`E2 80 A8`) or U+2029 (`E2 80 A9`); every other byte is copied as it is.
     let bytes = argument.as_bytes();
     let (mut start, mut at) = (0, 0);
-    while let Some(found) = bytes[at..].iter().position(|b| matches!(b, b'\n' | b'\r' | 0xC2 | 0xE2)) {
+    while let Some(found) = next_terminator_lead(&bytes[at..]) {
         let i = at + found;
         let length = match (bytes[i], bytes.get(i + 1), bytes.get(i + 2)) {
             (b'\n', ..) => 1,
@@ -1547,6 +1572,20 @@ pub fn argument_block_into(out: &mut String, indent: usize, argument: &str) {
     }
     out.push_str(&argument[start..]);
     out.push('\n');
+}
+
+/// The first byte of `bytes` that may start a line terminator for [`argument_block_into`]: `\n`, `\r`, or a lead byte of
+/// U+0085, U+2028 or U+2029. Looked for 16 bytes at a time with no early exit inside a block, which the compiler turns
+/// into vector compares: a block is mostly lines of some tens of bytes.
+fn next_terminator_lead(bytes: &[u8]) -> Option<usize> {
+    let lead = |b: u8| (b == b'\n') | (b == b'\r') | (b == 0xC2) | (b == 0xE2);
+    let (blocks, rest) = bytes.as_chunks::<16>();
+    for (i, block) in blocks.iter().enumerate() {
+        if block.iter().fold(false, |found, &b| found | lead(b)) {
+            return block.iter().position(|&b| lead(b)).map(|at| i * 16 + at);
+        }
+    }
+    rest.iter().position(|&b| lead(b)).map(|at| blocks.len() * 16 + at)
 }
 
 impl PathMatcher {
@@ -1697,6 +1736,34 @@ mod tests {
         let mut literal = get("/abd");
         literal.headers = vec![("x-key".into(), vec!["abcdef".into()])].into();
         assert!(pairs(&literal, false).is_empty());
+    }
+
+    /// The closest match's field count counts the fields `all_differences` lists, without writing their texts.
+    #[test]
+    fn matched_field_count_counts_the_fields_all_differences_lists() {
+        let matchers = [
+            json!({"method": "GET", "path": "/e0"}),
+            json!({"method": "POST", "path": "/e0", "keepAlive": false, "secure": true}),
+            json!({"path": "/a/{id}", "pathParameters": {"id": ["[0-9]+"]}, "headers": {"x-key": ["abc", "def"]}}),
+            json!({"path": "/e0", "queryStringParameters": {"q": ["1"]}, "cookies": {"c": "v"}, "body": {"type": "JSON", "json": {"a": 1}}}),
+            json!({"path": "!/e0", "headers": {"!x-key": ["abc"]}}),
+            json!({"protocol": "HTTP_2", "method": {"schema": {"type": "string", "pattern": "^P"}}}),
+        ];
+        let mut requests = vec![get("/e0"), get("/none"), get("/a/x"), get("/a/12")];
+        let mut with = get("/e0");
+        with.headers = vec![("x-key".into(), vec!["def".into()]), ("cookie".into(), vec!["c=w".into()])].into();
+        with.cookies = vec![("c".into(), "w".into())];
+        with.query = vec![("q".into(), vec!["2".into()])];
+        with.body = bytes::Bytes::from_static(br#"{"a": 2}"#);
+        requests.push(with);
+        const APPLICABLE: [&str; 10] = ["method", "path", "pathParameters", "queryParameters", "cookies", "headers", "body", "secure", "protocol", "keep-alive"];
+        for (i, m) in matchers.iter().enumerate() {
+            let m = RequestMatcher::compile(m);
+            for (j, r) in requests.iter().enumerate() {
+                let listed = m.all_differences(r).iter().filter(|(field, _)| APPLICABLE.contains(field)).count();
+                assert_eq!(m.matched_field_count(r), 10 - listed, "matcher {i}, request {j}");
+            }
+        }
     }
 
     /// At TRACE each recorded difference is noted as its own entry's message (indent 0), after its

@@ -151,8 +151,13 @@ impl Json {
                 *of = std::sync::Arc::downgrade(&self.0);
                 text.clear();
                 block.clear();
-                self.write_text(text);
-                crate::matcher::argument_block_into(block, 0, text);
+                match (self.0.value.get(), &self.0.source) {
+                    (None, Some(Source::Logged(request))) => crate::recorded::logged_block_into(block, request),
+                    _ => {
+                        self.write_text(text);
+                        crate::matcher::argument_block_into(block, 0, text);
+                    }
+                }
                 if text.capacity() > LAST_BLOCK_KEPT {
                     *text = String::new();
                 }

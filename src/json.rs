@@ -402,11 +402,17 @@ pub fn pretty<T: Serialize + ?Sized>(value: &T) -> String {
 
 /// [`pretty`] of a JSON value (or of anything that serialises as one without failing), appended to `out`.
 pub fn pretty_into<T: Serialize + ?Sized>(out: &mut String, value: &T) {
+    pretty_into_at(out, value, 0);
+}
+
+/// [`pretty_into`] with the formatter starting `depth` levels deep: every line after the first indented `depth` levels
+/// (two spaces each) more, as a log message's argument block indents its argument's lines.
+pub fn pretty_into_at<T: Serialize + ?Sized>(out: &mut String, value: &T, depth: usize) {
     // SAFETY: serde_json writes whole UTF-8 sequences only (keys and strings come from `str`, everything else is
     // ASCII, and a string is cut only at an escape, which is ASCII), and what is written here cannot fail to serialise
     // (a `Value`, or a view of one with string keys), so `out` holds valid UTF-8 whenever this returns or unwinds
     let bytes = unsafe { out.as_mut_vec() };
-    let mut ser = serde_json::Serializer::with_formatter(bytes, JacksonFormatter::default());
+    let mut ser = serde_json::Serializer::with_formatter(bytes, JacksonFormatter { depth, ..JacksonFormatter::default() });
     value.serialize(&mut ser).expect("serialising JSON into memory cannot fail");
 }
 

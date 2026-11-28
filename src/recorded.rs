@@ -1328,7 +1328,9 @@ impl RequestLog {
     /// logged form) renders the line from `request` when read.
     fn received_shared(&self, request: Arc<HttpRequest>, shown: &HttpRequest, line: &crate::log_entry::Json, keep_line: bool) {
         // `CredentialRedaction.forLog`: a control-plane request's entry holds it without its credentials
-        if let Some(masked) = crate::credential_redaction::for_log(&request) {
+        if crate::credential_redaction::masked_for_log(&request)
+            && let Some(masked) = crate::credential_redaction::for_log(&request)
+        {
             let shown = crate::credential_redaction::for_log(shown).unwrap_or_else(|| shown.clone());
             let shown_json = LoggedRequest::of(&shown).json;
             return self.received_shared(Arc::new(masked), &shown, &shown_json, true);
@@ -1391,7 +1393,7 @@ impl RequestLog {
             return;
         }
         let mut x = Exchange::new(logged.request.clone(), interned_shared(response.into()), expectation_id);
-        if hooked || self.max_logged_body_bytes.load(Relaxed) > 0 || crate::credential_redaction::for_log(&x.request).is_some() {
+        if hooked || self.max_logged_body_bytes.load(Relaxed) > 0 || crate::credential_redaction::masked_for_log(&x.request) {
             x.entry = ExchangeEntry::Built(Box::new(make(&x, logged)));
             return self.push_exchange(x);
         }
@@ -1425,7 +1427,9 @@ impl RequestLog {
     /// `FORWARDED_REQUEST`) and attachments unless its call site set them.
     fn push_exchange(&self, mut x: Exchange) {
         // `CredentialRedaction.forLog`: a control-plane request's entry holds it without its credentials
-        if let Some(masked) = crate::credential_redaction::for_log(&x.request) {
+        if crate::credential_redaction::masked_for_log(&x.request)
+            && let Some(masked) = crate::credential_redaction::for_log(&x.request)
+        {
             x.request = Arc::new(masked);
             if let Some((shown, _)) = x.shown_request.as_deref().and_then(crate::credential_redaction::json_for_log) {
                 x.shown_request = Some(Box::new(shown));
@@ -1509,7 +1513,7 @@ impl RequestLog {
         let mut swaps = Vec::new();
         // `CredentialRedaction.forLog`: the request the entry is about, as it holds it
         let subject = match subject {
-            Subject::Request(r) => Subject::Request(crate::credential_redaction::for_log(&r).map(Arc::new).unwrap_or(r)),
+            Subject::Request(r) if crate::credential_redaction::masked_for_log(&r) => Subject::Request(crate::credential_redaction::for_log(&r).map(Arc::new).unwrap_or(r)),
             other => other,
         };
         let subject = match subject {
@@ -1572,7 +1576,7 @@ impl RequestLog {
             return;
         }
         let budget = self.max_bytes.load(Relaxed) > 0;
-        if capacity == 0 || self.max_logged_body_bytes.load(Relaxed) > 0 || (budget && weight.is_none()) || crate::credential_redaction::for_log(&request).is_some() {
+        if capacity == 0 || self.max_logged_body_bytes.load(Relaxed) > 0 || (budget && weight.is_none()) || crate::credential_redaction::masked_for_log(&request) {
             return self.message_about(make(), Subject::Request(request));
         }
         let portless = in_portless_scope();
@@ -2520,11 +2524,31 @@ fn bare(body: Value) -> Value {
 /// request prints, without building the request's JSON. Only a body, path parameters, and headers, query parameters or
 /// cookies with a name that is blank or starts with a marker are built as [`logged`] builds them.
 pub fn logged_text_into(out: &mut String, request: &HttpRequest) {
-    crate::json::pretty_into(out, &LoggedView(request));
+    crate::json::pretty_into(out, &LoggedView(request, 0));
 }
 
-/// [`logged`] as `serde` writes it, field by field from the request.
-struct LoggedView<'a>(&'a HttpRequest);
+/// [`crate::matcher::argument_block_into`] of [`logged_text_into`], written in one pass: the JSON is written one level
+/// deeper, which indents each of its lines as the block does, unless a string in it holds a line terminator the block
+/// indents after too (U+0085, U+2028, U+2029: their lead bytes are looked for), when it is written as the text first.
+pub fn logged_block_into(out: &mut String, request: &HttpRequest) {
+    let start = out.len();
+    out.push_str("\n\n  ");
+    let from = out.len();
+    crate::json::pretty_into_at(out, &LoggedView(request, 1), 1);
+    // JSON escapes every other terminator (`\n`, `\r`): the line breaks written are the formatter's own
+    let lead = |b: u8| (b == 0xC2) | (b == 0xE2);
+    let (blocks, rest) = out.as_bytes()[from..].as_chunks::<16>();
+    if blocks.iter().any(|block| block.iter().fold(false, |found, &b| found | lead(b))) || rest.iter().any(|&b| lead(b)) {
+        out.truncate(start);
+        let mut text = String::new();
+        logged_text_into(&mut text, request);
+        return crate::matcher::argument_block_into(out, 0, &text);
+    }
+    out.push('\n');
+}
+
+/// [`logged`] as `serde` writes it, field by field from the request, by a formatter that starts at the depth given.
+struct LoggedView<'a>(&'a HttpRequest, usize);
 
 impl serde::Serialize for LoggedView<'_> {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
@@ -2570,7 +2594,7 @@ impl serde::Serialize for LoggedView<'_> {
         if !request.remote_address.is_empty() {
             o.serialize_entry("remoteAddress", &*request.remote_address)?;
         }
-        if let Some(text) = logged_json_body_text(request) {
+        if let Some(text) = logged_json_body_text(request, 1 + self.1) {
             // the text as it is: a number's text is what `serde_json` writes without a change
             o.serialize_entry("body", &serde_json::Number::from_string_unchecked(text))?;
         } else if let Some(body) = request_body_json(request, BodyForm::Ordered) {
@@ -2580,10 +2604,10 @@ impl serde::Serialize for LoggedView<'_> {
     }
 }
 
-/// The body of [`LoggedView`] (a field of the request object, so at depth 1) as text, written straight from a JSON
+/// The body of [`LoggedView`] (a field of the request object, so at the formatter's `depth`) as text, written straight from a JSON
 /// body in UTF-8 ([`crate::json::pretty_text_into`]): the text [`body_json`]'s tree prints, without the tree. `None`
 /// for any other body, or one that text is not written for.
-fn logged_json_body_text(request: &HttpRequest) -> Option<String> {
+fn logged_json_body_text(request: &HttpRequest, depth: usize) -> Option<String> {
     if request.body.is_empty() || request.body_kind == BodyKind::Binary {
         return None;
     }
@@ -2594,7 +2618,7 @@ fn logged_json_body_text(request: &HttpRequest) -> Option<String> {
     }
     let text = std::str::from_utf8(&request.body).ok()?;
     let mut out = String::with_capacity(text.len() + text.len() / 2);
-    crate::json::pretty_text_into(&mut out, text, 1).then_some(out)
+    crate::json::pretty_text_into(&mut out, text, depth).then_some(out)
 }
 
 /// A name [`literal`] does not write as itself: blank (written `""`), or starting with a marker (the object form).

@@ -13,6 +13,8 @@ pub struct State {
     pub config: Config,
     /// Every bound port, in binding order: the configured ones, then those added by `PUT /mockserver/bind`.
     ports: RwLock<Vec<u16>>,
+    /// The first of `ports` (0 while there is none), which every console line carries: read without the lock.
+    first_port: std::sync::atomic::AtomicU16,
     /// Value of the `x-forwarded-by` loop marker this instance adds to requests it proxies (§3.8).
     pub forwarded_by: String,
     /// This instance's id in `x-mockserver-forwarded-by` (the forward loop guard, [`crate::forward_loop`]).
@@ -231,6 +233,7 @@ impl State {
             log,
             log_level: config.log_level(),
             config,
+            first_port: std::sync::atomic::AtomicU16::new(ports.first().copied().unwrap_or_default()),
             ports: RwLock::new(ports),
             forwarded_by: format!("MockServer_{}", uuid::Uuid::new_v4()),
             forward_loop_id: crate::forward_loop::new_instance_id(),
@@ -293,13 +296,19 @@ impl State {
         });
         crate::log::configure_java_logger(&state);
         crate::static_files::log_opened(&state, &static_files_directory, &static_files);
+        // The hooks below are asked for every line and entry of every request: upgrading a weak reference wrote the
+        // server's reference count, which every request worker shares, twice each time.
+        // SAFETY (each of them): the hook lives in this server's `log` and is called only through it, so while it runs
+        // the server is borrowed and not dropped; the weak reference keeps its allocation.
         let redaction = Arc::downgrade(&state);
-        state.log.set_redaction_hook(Arc::new(move || redaction.upgrade().and_then(|state| crate::recorded::redact_fields(&state.config))));
+        state.log.set_redaction_hook(Arc::new(move || {
+            let state = unsafe { &*redaction.as_ptr() };
+            crate::log::redacting(state).then(|| state.config.fixture_body_redact_fields())
+        }));
         let console = Arc::downgrade(&state);
         state.log.set_console_hook(Arc::new(move |level, kind, text, compact, portless| {
-            if let Some(state) = console.upgrade() {
-                crate::log::log_entry(&state, level, kind, text, compact, portless);
-            }
+            let state = unsafe { &*console.as_ptr() };
+            crate::log::log_entry(state, level, kind, text, compact, portless);
         }));
         // Asked a few times for every request. Upgrading the weak reference wrote the server's reference count,
         // which every request worker shares, twice each time.
@@ -538,7 +547,12 @@ impl State {
 
     /// The first configured port, which MockServer's console log lines carry.
     pub fn first_port(&self) -> u16 {
-        self.ports.read().unwrap().first().copied().unwrap_or_default()
+        self.first_port.load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    /// This server's number, which no other server of the process has (see [`LOCAL_HOSTS_IDS`]).
+    pub fn id(&self) -> u64 {
+        self.local_hosts_id
     }
 
     /// Requests addressed to `port` count as local, without it being a bound TCP port (the HTTP/3 listener's
@@ -549,7 +563,10 @@ impl State {
 
     /// Records ports bound after startup; requests addressed to them count as local too.
     pub fn add_ports(&self, ports: &[u16]) {
-        self.ports.write().unwrap().extend_from_slice(ports);
+        let mut bound = self.ports.write().unwrap();
+        bound.extend_from_slice(ports);
+        self.first_port.store(bound.first().copied().unwrap_or_default(), std::sync::atomic::Ordering::Relaxed);
+        drop(bound);
         add_local_hosts(&mut self.local_hosts.write().unwrap(), &self.local_names, ports);
     }
 }

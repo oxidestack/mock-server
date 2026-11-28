@@ -3840,11 +3840,11 @@ async fn no_match(state: &Arc<State>, request: &HttpRequest, scan: Option<Closes
         // `findClosestMatchHint` records in detailed contexts, except an OpenAPI matcher's own per-operation ones.
         // Under the server's own regex budget (outside a scope it was the 5000 ms default, which kept a
         // request with a catastrophic header regex past any client's timeout); the scan above already reported any
-        // timeout these re-evaluations meet.
+        // timeout these re-evaluations meet. Only the DEBUG diff and the diagnostic read them: the hint is the scan's.
         let (differences, _) = crate::matcher::regex_timeouts(regex_timeout_millis(state), || {
             closest
                 .as_ref()
-                .filter(|(closest, _)| detailed_match_failures || !closest.matcher.is_openapi())
+                .filter(|(closest, _)| (debug_diff || diagnostic) && (detailed_match_failures || !closest.matcher.is_openapi()))
                 .map(|(closest, _)| closest.matcher.fail_fast_differences(request))
                 .unwrap_or_default()
         });
@@ -3920,7 +3920,10 @@ fn closest_match_hint(id: &str, differences: &[(&'static str, crate::matcher::Di
     }
     let (field, first) = &differences[0];
     use std::fmt::Write;
-    let mut hint = format!("expectation {id}: {field} did not match ({})", first.hint_reason());
+    let reason = first.hint_reason();
+    // written once into a buffer of its length: `format!` grew it a few times
+    let mut hint = String::with_capacity(id.len() + field.len() + reason.len() + 64);
+    let _ = write!(hint, "expectation {id}: {field} did not match ({reason})");
     if differences.len() > 1 {
         let _ = write!(hint, "; +{} more field(s) differ", differences.len() - 1);
     }

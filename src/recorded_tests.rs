@@ -621,3 +621,28 @@ fn a_quoted_request_is_written_as_its_logged_json_prints() {
         assert_eq!(unrendered, rendered);
     }
 }
+
+/// A request's argument block is written in one pass as the block of its text, line terminators inside its strings
+/// (which the block indents after too) included.
+#[test]
+fn a_quoted_request_block_is_the_block_of_its_text() {
+    let mut requests = quoted_requests();
+    for terminator in ["\u{85}", "\u{2028}", "\u{2029}", "\u{e9}"] {
+        let mut request = requests[0].clone();
+        request.headers = vec![("x-line".to_string(), vec![format!("a{terminator}b")])].into();
+        requests.push(request);
+        let mut body = requests[0].clone();
+        body.headers = vec![("Content-Type".to_string(), vec!["application/json".to_string()])].into();
+        body.body = bytes::Bytes::from(format!(r#"{{"k":["a{terminator}b",{{"n":1.50}}]}}"#));
+        requests.push(body);
+    }
+    for request in requests {
+        let mut text = String::new();
+        crate::recorded::logged_text_into(&mut text, &request);
+        let mut expected = String::from("before:");
+        crate::matcher::argument_block_into(&mut expected, 0, &text);
+        let mut block = String::from("before:");
+        crate::recorded::logged_block_into(&mut block, &request);
+        assert_eq!(block, expected, "{request:?}");
+    }
+}

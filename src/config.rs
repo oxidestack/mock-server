@@ -344,6 +344,12 @@ impl Config {
         self.runtime_generation.fetch_add(1, std::sync::atomic::Ordering::Release);
     }
 
+    /// How many runtime values were set so far: what is read of the configuration at one count is what it said then.
+    pub fn runtime_generation(&self) -> u64 {
+        // Acquire: a read at this generation sees every runtime value counted into it
+        self.runtime_generation.load(std::sync::atomic::Ordering::Acquire)
+    }
+
     /// `ConfigurationProperties.<name>(value)` from an embedder: takes effect like [`Config::set_runtime`], but the
     /// effective configuration reports it as a `system-property`.
     pub fn set_embedder_property(&self, name: &str, value: String) {
